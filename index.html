@@ -42,8 +42,6 @@
         .driver-badge .status-online { background: #0a2a1a; color: #2ecc71; }
         .driver-badge .status-standby { background: #2a2a0a; color: #f1c40f; }
         .driver-badge .status-offline { background: #2a0a0a; color: #e74c3c; }
-        .driver-badge .status-indicator .pulse { animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 
         .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
@@ -81,7 +79,7 @@
         .driver-modal .modal-stops .stop-item { background: #12121c; }
 
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
-        .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 520px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
+        .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 580px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
         .settings-card h2 { margin-bottom: 20px; }
         .settings-card .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
         .settings-card .field label { font-weight: 600; font-size: 14px; }
@@ -91,10 +89,16 @@
         .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; outline: none; }
         .settings-card .driver-row input.color-pick { width: 40px; padding: 0; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; }
         .settings-card .driver-row .remove-driver { background: transparent; border: none; color: #e74c3c; font-weight: 700; cursor: pointer; font-size: 18px; }
-        .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; flex-wrap: wrap; }
         .settings-actions button { padding: 10px 24px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
         .settings-actions .save-btn { background: var(--accent); color: #0b0b14; }
+        .settings-actions .test-btn { background: #1a3a2a; color: #2ecc71; border: 1px solid #2ecc71; }
         .settings-actions .close-btn { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 200px; overflow-y: auto; color: var(--muted); line-height: 1.6; }
+        .settings-card .debug-box .success { color: #2ecc71; }
+        .settings-card .debug-box .error { color: #e74c3c; }
+        .settings-card .debug-box .info { color: #f1c40f; }
+        .settings-card .debug-box .device-id { color: var(--accent); font-weight: 700; background: #1a1a2e; padding: 2px 8px; border-radius: 4px; }
 
         .gps-status-legend { display: flex; gap: 16px; padding: 8px 12px; background: var(--card2); border-radius: 30px; border: 1px solid var(--border); font-size: 12px; margin-bottom: 8px; flex-wrap: wrap; }
         .gps-status-legend .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -106,6 +110,8 @@
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } .gps-status-legend { font-size: 10px; gap: 10px; } }
         .hidden { display: none !important; }
+        .mt-2 { margin-top: 12px; }
+        .mb-2 { margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -152,11 +158,10 @@
                 </div>
             </div>
 
-            <!-- GPS Status Legend -->
             <div class="gps-status-legend">
-                <span class="legend-item"><span class="legend-dot online"></span> Online</span>
-                <span class="legend-item"><span class="legend-dot standby"></span> Standby</span>
-                <span class="legend-item"><span class="legend-dot offline"></span> Offline</span>
+                <span class="legend-item"><span class="legend-dot online"></span> Online (&lt;5m)</span>
+                <span class="legend-item"><span class="legend-dot standby"></span> Standby (5-15m)</span>
+                <span class="legend-item"><span class="legend-dot offline"></span> Offline (&gt;15m)</span>
                 <span style="color:var(--muted); margin-left:auto;" id="lastGlobalUpdate">Updating...</span>
             </div>
 
@@ -192,21 +197,37 @@
 <!-- Settings Modal -->
 <div class="settings-modal" id="settingsModal">
     <div class="settings-card">
-        <h2>⚙️ Drivers &amp; API</h2>
+        <h2>⚙️ Drivers &amp; PAJ GPS</h2>
+        
         <div class="field">
-            <label>PAJ GPS Master Email</label>
-            <input type="email" id="pajEmail" placeholder="admin@company.com">
+            <label>PAJ GPS Email (your login at connect.paj-gps.de)</label>
+            <input type="email" id="pajEmail" placeholder="your-email@example.com">
         </div>
         <div class="field">
             <label>PAJ GPS Password</label>
-            <input type="password" id="pajPassword" placeholder="••••••••">
+            <input type="password" id="pajPassword" placeholder="Your PAJ GPS password">
         </div>
+        
         <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
+        
         <div id="driverSettingsList"></div>
         <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
+        
+        <!-- Test Connection Button - THIS IS WHAT YOU NEED -->
+        <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
+            <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
+            <button onclick="testPAJConnection()" style="background:#1a3a2a; border:2px solid #2ecc71; color:#2ecc71; padding:10px 20px; border-radius:30px; cursor:pointer; font-weight:700; font-size:14px; width:100%;">
+                🔍 Test Connection & List Devices
+            </button>
+            <div class="debug-box" id="debugOutput">
+                <span class="info">💡 Click the green button above to find your Device IDs.</span>
+            </div>
+        </div>
+
         <div class="settings-actions">
-            <button class="save-btn" onclick="saveSettings()">Save</button>
-            <button class="close-btn" onclick="closeSettings()">Close</button>
+            <button class="save-btn" onclick="saveSettings()">💾 Save</button>
+            <button class="close-btn" onclick="closeSettings()">✕ Close</button>
         </div>
     </div>
 </div>
@@ -276,8 +297,8 @@ let sortableInstance = null;
 let gpsInterval = null;
 let pajToken = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
-const STANDBY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-const OFFLINE_THRESHOLD = 15 * 60 * 1000; // 15 minutes
+const STANDBY_THRESHOLD = 5 * 60 * 1000;
+const OFFLINE_THRESHOLD = 15 * 60 * 1000;
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -285,7 +306,7 @@ function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_con
 
 // ===== GPS STATUS HELPER =====
 function getGPSStatus(lastUpdated) {
-    if (!lastUpdated) return { status: 'offline', label: 'Offline', class: 'status-offline' };
+    if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
     const now = Date.now();
     const diff = now - lastUpdated;
     if (diff < STANDBY_THRESHOLD) {
@@ -294,6 +315,77 @@ function getGPSStatus(lastUpdated) {
         return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
     } else {
         return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+    }
+}
+
+// ===== TEST PAJ CONNECTION - THIS FINDS YOUR DEVICE IDs =====
+async function testPAJConnection() {
+    const debug = document.getElementById('debugOutput');
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    
+    debug.innerHTML = '<span class="info">⏳ Testing connection...</span>';
+    
+    if (!email || !pass) {
+        debug.innerHTML = '<span class="error">❌ Please enter your PAJ GPS email and password first.</span>';
+        return;
+    }
+    
+    try {
+        // Login to PAJ GPS
+        debug.innerHTML = '<span class="info">⏳ Logging in to PAJ GPS...</span>';
+        const loginRes = await fetch(`${PAJ_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const loginData = await loginRes.json();
+        
+        if (!loginData.token) {
+            debug.innerHTML = `<span class="error">❌ Login failed. Check your email and password.</span>`;
+            return;
+        }
+        
+        const token = loginData.token;
+        debug.innerHTML = '<span class="success">✅ Login successful! Fetching your devices...</span>';
+        
+        // Get all devices
+        const deviceRes = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const devices = await deviceRes.json();
+        
+        if (!Array.isArray(devices) || devices.length === 0) {
+            debug.innerHTML = '<span class="error">❌ No devices found. Make sure your PAJ GPS account has Salind 11 4G devices added.</span>';
+            return;
+        }
+        
+        // Show devices with their IDs
+        let html = '<span class="success">✅ Found ' + devices.length + ' device(s):</span><br><br>';
+        devices.forEach((d, i) => {
+            const devId = d.id || d.deviceId || 'Unknown';
+            const name = d.name || d.deviceName || 'Unnamed';
+            const pos = d.lastPosition || d.position || {};
+            const hasPos = pos.lat && pos.lng;
+            
+            html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
+            html += `   📱 Device ID: <span class="device-id">${devId}</span><br>`;
+            if (hasPos) {
+                html += `   📍 Location: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}<br>`;
+            } else {
+                html += `   ⚠️ No location data yet<br>`;
+            }
+            html += `<br>`;
+        });
+        html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span>`;
+        debug.innerHTML = html;
+        
+        // Store token for later use
+        pajToken = token;
+        getMasterRef().update({ paj_token: token });
+        
+    } catch(e) {
+        debug.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
     }
 }
 
@@ -379,7 +471,7 @@ async function fetchAllDevicePositions() {
             const pos = d.lastPosition || d.position || {};
             if (pos.lat && pos.lng) {
                 for (let [did, drv] of Object.entries(drivers)) {
-                    if (drv.deviceId == devId) {
+                    if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
                         drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
                         getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
                         updated = true;
@@ -418,7 +510,6 @@ function updateAllMarkers() {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
         const status = getGPSStatus(pos.updatedAt);
-        // Color the marker based on status
         let markerColor = drv.color || '#f7c948';
         if (status.status === 'standby') markerColor = '#f1c40f';
         else if (status.status === 'offline') markerColor = '#95a5a6';
@@ -426,20 +517,8 @@ function updateAllMarkers() {
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
-            label: { 
-                text: drv.name || 'Driver', 
-                color: '#fff', 
-                fontWeight: 'bold', 
-                fontSize: '12px' 
-            },
-            icon: { 
-                path: google.maps.SymbolPath.CIRCLE, 
-                scale: 14, 
-                fillColor: markerColor, 
-                fillOpacity: status.status === 'offline' ? 0.5 : 1,
-                strokeColor: '#fff', 
-                strokeWeight: 2 
-            }
+            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: markerColor, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
         });
         mapMarkers[id] = marker;
     }
@@ -464,7 +543,6 @@ function renderDriverBadges() {
         const statusLabel = status.label;
         const statusClass = status.class;
         
-        // Show last update time in minutes
         let lastUpdateText = '—';
         if (drv.lastLocation?.updatedAt) {
             const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
