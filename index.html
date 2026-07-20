@@ -316,7 +316,7 @@ function getGPSStatus(lastUpdated) {
     }
 }
 
-// ===== TEST PAJ CONNECTION - DETAILED DEBUG =====
+// ===== TEST PAJ CONNECTION - FIXED VERSION =====
 async function testPAJConnection() {
     const debug = document.getElementById('debugOutput');
     const email = document.getElementById('pajEmail').value.trim();
@@ -330,14 +330,8 @@ async function testPAJConnection() {
     }
     
     try {
-        // Show what we're sending
-        debug.innerHTML = `<span class="info">⏳ Attempting login to PAJ GPS API...</span><br>`;
+        debug.innerHTML = `<span class="info">⏳ Logging in to PAJ GPS API...</span><br>`;
         debug.innerHTML += `<span class="info">📧 Email: ${email}</span><br>`;
-        debug.innerHTML += `<span class="info">🔑 Password: ${'•'.repeat(pass.length)}</span><br>`;
-        debug.innerHTML += `<span class="info">🌐 URL: ${PAJ_BASE}/login</span><br><br>`;
-        
-        // Try login
-        debug.innerHTML += `<span class="info">⏳ Sending request...</span><br>`;
         
         const loginRes = await fetch(`${PAJ_BASE}/login`, {
             method: 'POST',
@@ -345,42 +339,36 @@ async function testPAJConnection() {
             body: JSON.stringify({ email, password: pass })
         });
         
-        debug.innerHTML += `<span class="info">📡 Response status: ${loginRes.status}</span><br>`;
-        
-        // Get response text first
         const responseText = await loginRes.text();
-        debug.innerHTML += `<span class="info">📄 Raw response: ${responseText.substring(0, 200)}</span><br><br>`;
-        
         let loginData;
         try {
             loginData = JSON.parse(responseText);
         } catch(e) {
-            debug.innerHTML += `<span class="error">❌ Failed to parse response as JSON. The API might be down or your credentials are wrong.</span><br>`;
-            debug.innerHTML += `<span class="error">Response was: ${responseText}</span>`;
+            debug.innerHTML += `<span class="error">❌ Failed to parse response.</span>`;
             return;
         }
         
-        if (!loginData.token) {
+        // FIX: The token is inside "success" object
+        let token = null;
+        if (loginData.success && loginData.success.token) {
+            token = loginData.success.token;
+        } else if (loginData.token) {
+            token = loginData.token;
+        }
+        
+        if (!token) {
             debug.innerHTML += `<span class="error">❌ Login failed. No token received.</span><br>`;
-            debug.innerHTML += `<span class="error">Response: ${JSON.stringify(loginData, null, 2)}</span><br><br>`;
-            debug.innerHTML += `<span class="info">💡 Common issues:</span><br>`;
-            debug.innerHTML += `<span class="info">1. Wrong email or password</span><br>`;
-            debug.innerHTML += `<span class="info">2. PAJ GPS account doesn't exist</span><br>`;
-            debug.innerHTML += `<span class="info">3. API is temporarily down</span><br>`;
-            debug.innerHTML += `<span class="info">4. Try logging in at https://connect.paj-gps.de to verify credentials</span>`;
+            debug.innerHTML += `<span class="error">Response: ${JSON.stringify(loginData, null, 2)}</span>`;
             return;
         }
         
-        const token = loginData.token;
-        debug.innerHTML += `<span class="success">✅ Login successful! Token received.</span><br><br>`;
+        debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
         debug.innerHTML += `<span class="info">⏳ Fetching your devices...</span><br>`;
         
-        // Get devices
+        // Get devices with the token
         const deviceRes = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        debug.innerHTML += `<span class="info">📡 Device response status: ${deviceRes.status}</span><br>`;
         
         const devicesText = await deviceRes.text();
         let devices;
@@ -421,8 +409,7 @@ async function testPAJConnection() {
         getMasterRef().update({ paj_token: token });
         
     } catch(e) {
-        debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span><br>`;
-        debug.innerHTML += `<span class="error">Stack: ${e.stack}</span>`;
+        debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`;
     }
 }
 
@@ -484,9 +471,11 @@ async function authenticatePAJ() {
             body: JSON.stringify({ email, password: pass })
         });
         const data = await response.json();
-        if (data.token) {
-            pajToken = data.token;
-            getMasterRef().update({ paj_token: pajToken });
+        // FIX: Check both locations for token
+        let token = data.success?.token || data.token;
+        if (token) {
+            pajToken = token;
+            getMasterRef().update({ paj_token: token });
             fetchAllDevicePositions();
         }
     } catch(e) { console.warn('PAJ auth error:', e); }
