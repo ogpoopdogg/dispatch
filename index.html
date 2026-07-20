@@ -937,11 +937,11 @@
         let detailsData = {};
         let pendingShareDate = null;
 
-        // NEW: driver management
+        // Driver management
         let drivers = {};
         let currentTab = 'dashboard';
-        let driverMarkers = {}; // stores Google Maps markers for each driver on the dashboard map
-        let driverMapInstances = {}; // stores map objects for each driver tab
+        let driverMarkers = {};
+        let driverMapInstances = {};
 
         // Theme handling
         if (localStorage.getItem('ec_theme') === 'light') document.body.classList.add('light-mode');
@@ -1031,8 +1031,10 @@
                 drivers = snap.val() || {};
                 renderDriverList();
                 updateAllMaps();
-                // Start fetching GPS for drivers with credentials
-                fetchAllDriverGPS();
+                // Only start fetching GPS if we have driver data
+                if (Object.keys(drivers).length > 0) {
+                    fetchAllDriverGPS();
+                }
             });
 
             initPlaces();
@@ -1417,6 +1419,8 @@
                 if (!job || job.status === 'done') return;
                 const isPriority = job.manual_priority || false;
                 const starClass = isPriority ? 'active' : '';
+                // Filter driver keys to only driver1 and driver2
+                const driverKeys = Object.keys(drivers).filter(key => key.startsWith('driver'));
                 html += `
                     <div class="job-item" data-id="${id}">
                         <span class="job-number">${index + 1}</span>
@@ -1426,7 +1430,7 @@
                         </div>
                         <select class="driver-assign" data-id="${id}" style="padding:4px 8px; border-radius:4px; background:var(--input-bg); color:var(--text); border:1px solid var(--border); font-size:12px;">
                             <option value="">Unassigned</option>
-                            ${Object.keys(drivers).map(driverId => `<option value="${driverId}" ${job.assignedDriver === driverId ? 'selected' : ''}>${drivers[driverId]?.name || driverId}</option>`).join('')}
+                            ${driverKeys.map(driverId => `<option value="${driverId}" ${job.assignedDriver === driverId ? 'selected' : ''}>${drivers[driverId]?.name || driverId}</option>`).join('')}
                         </select>
                         <button class="btn-done" data-id="${id}" style="background:#22c55e; color:#000; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Done</button>
                         <svg class="delete-icon" viewBox="0 0 24 24" onclick="deleteJob('${id}')">
@@ -1736,7 +1740,8 @@
                 return;
             }
             let html = '';
-            Object.keys(drivers).forEach(driverId => {
+            // Only process driver1 and driver2
+            Object.keys(drivers).filter(key => key.startsWith('driver')).forEach(driverId => {
                 const driver = drivers[driverId];
                 html += `
                     <div style="border-bottom:1px solid var(--border); padding:12px 0;">
@@ -1835,14 +1840,18 @@
                 return;
             }
             console.log('Fetching GPS for all drivers...');
-            for (let driverId of Object.keys(drivers)) {
-                const loc = await fetchDriverGPS(driverId);
-                if (loc) {
-                    await db.ref(`drivers/${driverId}`).update({
-                        currentLat: loc.lat,
-                        currentLng: loc.lng,
-                        lastUpdated: Date.now()
-                    });
+            // Explicitly use driver1 and driver2 keys (ignore any other keys)
+            const driverKeys = ['driver1', 'driver2'];
+            for (let driverId of driverKeys) {
+                if (drivers[driverId]) {
+                    const loc = await fetchDriverGPS(driverId);
+                    if (loc) {
+                        await db.ref(`drivers/${driverId}`).update({
+                            currentLat: loc.lat,
+                            currentLng: loc.lng,
+                            lastUpdated: Date.now()
+                        });
+                    }
                 }
             }
             // Update maps after all fetches
@@ -1923,8 +1932,8 @@
                 dashMap._markers.forEach(m => m.setMap(null));
             }
             dashMap._markers = [];
-            // Add markers for each driver
-            Object.keys(drivers).forEach(driverId => {
+            // Add markers for each driver – only driver1 and driver2
+            Object.keys(drivers).filter(key => key.startsWith('driver')).forEach(driverId => {
                 const driver = drivers[driverId];
                 if (driver && driver.currentLat && driver.currentLng) {
                     const pos = new google.maps.LatLng(driver.currentLat, driver.currentLng);
@@ -2172,7 +2181,7 @@
                 updateDashboardMap(dashMapDiv._map);
             }
             // Update each driver map if it exists
-            Object.keys(drivers).forEach(driverId => {
+            Object.keys(drivers).filter(key => key.startsWith('driver')).forEach(driverId => {
                 const mapDiv = document.getElementById(`driver-map-${driverId}`);
                 if (mapDiv && mapDiv._map) {
                     updateDriverMap(driverId, mapDiv._map);
