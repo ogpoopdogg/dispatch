@@ -727,9 +727,10 @@
     </div>
 </header>
 
-    <!-- Driver Management Button -->
+    <!-- Driver Management Button & Refresh -->
     <div style="display: flex; justify-content: flex-end; padding: 0 20px 10px 20px; gap: 10px;">
         <button id="manage-drivers-btn" class="btn-save" onclick="openDriverModal()">Manage Drivers</button>
+        <button onclick="fetchAllDriverGPS()" class="btn-save">Refresh GPS</button>
     </div>
 
     <!-- Driver Management Modal -->
@@ -1774,36 +1775,51 @@
         }
 
         // ---------- PAJ GPS FETCH ----------
+        let gpsInterval = null;
+
         async function fetchDriverGPS(driverId) {
             const driver = drivers[driverId];
-            if (!driver || !driver.pajEmail || !driver.pajPassword || !driver.pajDeviceId) {
-                console.warn(`Driver ${driverId} missing PAJ credentials`);
+            if (!driver) {
+                console.warn(`Driver ${driverId} not found in drivers object`);
+                return null;
+            }
+            // Check required fields (trim to avoid empty strings)
+            const email = (driver.pajEmail || '').trim();
+            const password = (driver.pajPassword || '').trim();
+            const deviceId = (driver.pajDeviceId || '').trim();
+            if (!email || !password || !deviceId) {
+                console.warn(`Driver ${driverId} (${driver.name || 'unnamed'}) missing PAJ credentials – Email: ${email ? '✓' : '✗'}, Password: ${password ? '✓' : '✗'}, Device ID: ${deviceId ? '✓' : '✗'}`);
                 return null;
             }
             try {
+                console.log(`Fetching GPS for ${driverId} (${driver.name})...`);
                 // Login to PAJ
                 const loginResponse = await fetch('https://connect.paj-gps.de/api/v1/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: driver.pajEmail, password: driver.pajPassword })
+                    body: JSON.stringify({ email: email, password: password })
                 });
                 const loginData = await loginResponse.json();
+                console.log(`Login response for ${driverId}:`, loginData);
                 if (!loginData.success || !loginData.success.token) {
-                    console.error(`PAJ login failed for ${driverId}`);
+                    console.error(`PAJ login failed for ${driverId}:`, loginData);
                     return null;
                 }
                 const token = loginData.success.token;
                 // Get last point
-                const deviceUrl = `https://connect.paj-gps.de/api/v1/trackerdata/${driver.pajDeviceId}/last_points?lastPoints=1&gps=1&wifi=0`;
+                const deviceUrl = `https://connect.paj-gps.de/api/v1/trackerdata/${deviceId}/last_points?lastPoints=1&gps=1&wifi=0`;
+                console.log(`Fetching device data from: ${deviceUrl}`);
                 const deviceResponse = await fetch(deviceUrl, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const deviceData = await deviceResponse.json();
+                console.log(`Device data for ${driverId}:`, deviceData);
                 if (deviceData.success && deviceData.success.length > 0) {
                     const point = deviceData.success[0];
+                    console.log(`Got GPS for ${driverId}:`, point);
                     return { lat: point.lat, lng: point.lng };
                 } else {
-                    console.error(`No GPS data for ${driverId}`);
+                    console.error(`No GPS data for ${driverId}:`, deviceData);
                     return null;
                 }
             } catch (e) {
@@ -1813,18 +1829,27 @@
         }
 
         async function fetchAllDriverGPS() {
+            // Only run if we have drivers data
+            if (!drivers || Object.keys(drivers).length === 0) {
+                console.warn('No drivers data available yet.');
+                return;
+            }
+            console.log('Fetching GPS for all drivers...');
             for (let driverId of Object.keys(drivers)) {
                 const loc = await fetchDriverGPS(driverId);
                 if (loc) {
-                    db.ref(`drivers/${driverId}`).update({
+                    await db.ref(`drivers/${driverId}`).update({
                         currentLat: loc.lat,
                         currentLng: loc.lng,
                         lastUpdated: Date.now()
                     });
                 }
             }
-            // Schedule next fetch in 30 seconds
-            setTimeout(fetchAllDriverGPS, 30000);
+            // Update maps after all fetches
+            updateAllMaps();
+            // Schedule next fetch in 30 seconds (clear old interval if any)
+            if (gpsInterval) clearTimeout(gpsInterval);
+            gpsInterval = setTimeout(fetchAllDriverGPS, 30000);
         }
 
         // ---------- TAB SWITCHING ----------
