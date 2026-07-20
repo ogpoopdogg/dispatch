@@ -576,48 +576,20 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// Helper to extract PAJ timestamp from device object (not used with new endpoint, but kept)
-function getPAJTimestamp(device) {
-    // Try common timestamp fields
-    let ts = device.lastUpdate ?? device.lastPositionTime ?? device.last_dateunix ?? device.devicezeit ?? null;
-    if (ts) {
-        // If it's a string, try to parse it
-        if (typeof ts === 'string') {
-            // Try to parse as date string
-            const parsed = Date.parse(ts);
-            if (!isNaN(parsed)) return parsed;
-            // If it's a unix timestamp in seconds, convert to ms
-            const num = Number(ts);
-            if (!isNaN(num)) {
-                // Check if it's seconds (10 digits) or milliseconds (13 digits)
-                if (num < 10000000000) return num * 1000;
-                return num;
-            }
-        } else if (typeof ts === 'number') {
-            // If it's a unix timestamp in seconds, convert to ms
-            if (ts < 10000000000) return ts * 1000;
-            return ts;
-        }
-    }
-    // Fallback to current time
-    return Date.now();
-}
-
-// ===== FETCH POSITIONS - CORRECT ENDPOINT: /getAllDeviceStatus =====
+// ===== FETCH POSITIONS - CORRECT ENDPOINT: /getAllLastPosition =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     try {
-        // Use the POST endpoint that returns status for all devices
-        const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
+        // Use the POST endpoint that returns all last positions for all devices
+        const response = await fetch(`${PAJ_BASE}/getAllLastPosition`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${pajToken}`,
                 'Content-Type': 'application/json'
             },
-            // Empty body, but can also send {} if needed
-            body: JSON.stringify({})
+            body: JSON.stringify({}) // empty object works
         });
         
         if (response.status === 401 || response.status === 403) {
@@ -633,12 +605,12 @@ async function fetchAllDevicePositions() {
         }
         
         if (!response.ok) {
-            console.warn('PAJ getAllDeviceStatus request failed with status:', response.status);
+            console.warn('PAJ getAllLastPosition request failed with status:', response.status);
             return;
         }
         
         const data = await response.json();
-        console.log('getAllDeviceStatus response:', data);
+        console.log('getAllLastPosition response:', data);
         
         if (!data.success || typeof data.success !== 'object') {
             console.warn('PAJ response missing success object:', data);
@@ -649,32 +621,37 @@ async function fetchAllDevicePositions() {
         let updated = false;
         
         // Iterate over each device in the success object
-        for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
+        for (const [deviceIdStr, points] of Object.entries(data.success)) {
             const devId = parseInt(deviceIdStr, 10);
             if (!devId) continue;
             
-            // Extract the lastPoint
-            const lastPoint = deviceData.lastPoint;
-            if (!lastPoint || typeof lastPoint !== 'object') {
-                console.warn(`No lastPoint for device ${devId}`);
+            // points is an array of points, the first one is the latest
+            if (!Array.isArray(points) || points.length === 0) {
+                console.warn(`No points for device ${devId}`);
                 continue;
             }
             
-            const lat = lastPoint.lat;
-            const lng = lastPoint.lng;
+            const latestPoint = points[0];
+            if (!latestPoint || typeof latestPoint !== 'object') {
+                console.warn(`Invalid latest point for device ${devId}`);
+                continue;
+            }
+            
+            const lat = latestPoint.lat;
+            const lng = latestPoint.lng;
             if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
                 console.warn(`Invalid coordinates for device ${devId}: lat=${lat}, lng=${lng}`);
                 continue;
             }
             
             // Timestamp: dateunix is in seconds, convert to ms
-            const timestampSec = lastPoint.dateunix;
+            const timestampSec = latestPoint.dateunix;
             let pajTimestamp = now;
             if (timestampSec && !isNaN(timestampSec)) {
                 pajTimestamp = timestampSec * 1000;
             }
             
-            console.log(`PAJ device: ${deviceData.deviceStatus?.id || devId}, Device ID: ${devId}, Timestamp: ${pajTimestamp}`);
+            console.log(`PAJ device: ${devId}, Timestamp: ${pajTimestamp}`);
             
             let matched = false;
             for (let [did, drv] of Object.entries(drivers)) {
@@ -682,7 +659,6 @@ async function fetchAllDevicePositions() {
                 const pajDeviceId = String(devId).trim();
                 if (drvDeviceId && pajDeviceId && drvDeviceId === pajDeviceId) {
                     matched = true;
-                    // Only update if we have valid coordinates
                     if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
                         drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
                         getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
