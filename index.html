@@ -575,6 +575,7 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
+// ULTIMATE FIX: Enhanced position extraction with logging
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     try {
@@ -583,61 +584,113 @@ async function fetchAllDevicePositions() {
         });
         const data = await response.json();
         let devices = data.success || data.data || data;
-        if (!Array.isArray(devices)) return;
+        if (!Array.isArray(devices)) {
+            console.warn('PAJ devices response is not an array:', devices);
+            return;
+        }
+        // Log to console for debugging
+        console.log('PAJ devices response:', devices);
+        if (devices.length > 0) {
+            console.log('Sample device:', devices[0]);
+        }
+        
         const now = Date.now();
         let updated = false;
+        
         for (let d of devices) {
             const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
             
-            // Comprehensive position extraction
+            // Comprehensive coordinate extraction
             let lat = null, lng = null;
-            const candidates = [
-                d.lastPosition, d.position, d.gps, d.coords, d.location,
-                d.lastPos, d.last_location, d.latestPosition, d.currentPosition,
-                d.latest_location, d.current_location
-            ];
-            for (let obj of candidates) {
-                if (obj && typeof obj === 'object') {
-                    // Check for common keys
-                    lat = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
-                    lng = obj.lng ?? obj.longitude ?? obj.Lng ?? obj.Longitude ?? null;
-                    if (lat !== null && lng !== null) break;
+            
+            // Helper to recursively search for lat/lng in an object
+            function findCoords(obj, depth = 0) {
+                if (depth > 3) return null;
+                if (obj === null || typeof obj !== 'object') return null;
+                // If object has numeric lat/lng properties
+                let latVal = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
+                let lngVal = obj.lng ?? obj.longitude ?? obj.Lon ?? obj.Longitude ?? obj.lon ?? null;
+                if (latVal !== null && lngVal !== null) {
+                    latVal = parseFloat(latVal);
+                    lngVal = parseFloat(lngVal);
+                    if (!isNaN(latVal) && !isNaN(lngVal) && (latVal !== 0 || lngVal !== 0)) {
+                        return { lat: latVal, lng: lngVal };
+                    }
                 }
-            }
-            // If still null, check direct fields on device
-            if (lat === null || lng === null) {
-                lat = d.lat ?? d.latitude ?? d.Lat ?? d.Latitude ?? d.lastLat ?? d.last_lat ?? null;
-                lng = d.lng ?? d.longitude ?? d.Lng ?? d.Longitude ?? d.lastLng ?? d.last_lng ?? null;
-            }
-            // If still null, check nested data
-            if (lat === null || lng === null) {
-                if (d.data && typeof d.data === 'object') {
-                    lat = d.data.lat ?? d.data.latitude ?? null;
-                    lng = d.data.lng ?? d.data.longitude ?? null;
+                // If the object has a 'data' property that might contain coordinates
+                if (obj.data && typeof obj.data === 'object') {
+                    const res = findCoords(obj.data, depth + 1);
+                    if (res) return res;
                 }
+                // If object has a 'position' property (string or object)
+                if (obj.position) {
+                    if (typeof obj.position === 'string' && obj.position.includes(',')) {
+                        const parts = obj.position.split(',').map(s => parseFloat(s.trim()));
+                        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                            return { lat: parts[0], lng: parts[1] };
+                        }
+                    } else if (typeof obj.position === 'object') {
+                        const res = findCoords(obj.position, depth + 1);
+                        if (res) return res;
+                    }
+                }
+                // Check for 'gps' property
+                if (obj.gps) {
+                    const res = findCoords(obj.gps, depth + 1);
+                    if (res) return res;
+                }
+                // Check for 'location' property
+                if (obj.location) {
+                    const res = findCoords(obj.location, depth + 1);
+                    if (res) return res;
+                }
+                // Check for 'lastPosition' property
+                if (obj.lastPosition) {
+                    const res = findCoords(obj.lastPosition, depth + 1);
+                    if (res) return res;
+                }
+                // If object has an array of values that might be coordinates (e.g., [lat, lng])
+                for (let key of ['coords', 'coord', 'positionArray']) {
+                    if (Array.isArray(obj[key]) && obj[key].length >= 2) {
+                        const a = parseFloat(obj[key][0]);
+                        const b = parseFloat(obj[key][1]);
+                        if (!isNaN(a) && !isNaN(b) && (a !== 0 || b !== 0)) {
+                            return { lat: a, lng: b };
+                        }
+                    }
+                }
+                // If no direct match, recursively search all object properties
+                for (let key of Object.keys(obj)) {
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        const res = findCoords(obj[key], depth + 1);
+                        if (res) return res;
+                    }
+                }
+                return null;
             }
-            // If still null, try to parse a string like "49.123,-123.456"
+            
+            const coords = findCoords(d);
+            if (coords) {
+                lat = coords.lat;
+                lng = coords.lng;
+            }
+            
+            // If still not found, try to parse any string field that looks like "lat,lng"
             if (lat === null || lng === null) {
-                let posStr = d.positionStr || d.locationStr || d.pos || d.locationString || '';
-                if (!posStr) {
-                    // also check if any field is a string containing a comma and numbers
-                    for (let key of ['position', 'location', 'gps', 'coords', 'lastPosition']) {
-                        if (d[key] && typeof d[key] === 'string' && d[key].includes(',')) {
-                            posStr = d[key];
+                for (let key of Object.keys(d)) {
+                    if (typeof d[key] === 'string' && d[key].includes(',') && d[key].includes('.')) {
+                        const parts = d[key].split(',').map(s => parseFloat(s.trim()));
+                        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                            lat = parts[0];
+                            lng = parts[1];
                             break;
                         }
                     }
                 }
-                if (posStr && typeof posStr === 'string') {
-                    const parts = posStr.split(',').map(s => parseFloat(s.trim()));
-                    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                        lat = parts[0];
-                        lng = parts[1];
-                    }
-                }
             }
-            // Convert to numbers
+            
+            // Validate coordinates
             if (lat !== null && lng !== null) {
                 lat = parseFloat(lat);
                 lng = parseFloat(lng);
@@ -647,6 +700,7 @@ async function fetchAllDevicePositions() {
                             drv.lastLocation = { lat: lat, lng: lng, updatedAt: now };
                             getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
                             updated = true;
+                            console.log(`Updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
                             break;
                         }
                     }
