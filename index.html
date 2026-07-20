@@ -94,7 +94,7 @@
         .settings-actions .save-btn { background: var(--accent); color: #0b0b14; }
         .settings-actions .test-btn { background: #1a3a2a; color: #2ecc71; border: 1px solid #2ecc71; }
         .settings-actions .close-btn { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 200px; overflow-y: auto; color: var(--muted); line-height: 1.6; }
+        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 300px; overflow-y: auto; color: var(--muted); line-height: 1.8; }
         .settings-card .debug-box .success { color: #2ecc71; }
         .settings-card .debug-box .error { color: #e74c3c; }
         .settings-card .debug-box .info { color: #f1c40f; }
@@ -110,8 +110,6 @@
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } .gps-status-legend { font-size: 10px; gap: 10px; } }
         .hidden { display: none !important; }
-        .mt-2 { margin-top: 12px; }
-        .mb-2 { margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -213,7 +211,7 @@
         <div id="driverSettingsList"></div>
         <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
         
-        <!-- Test Connection Button - THIS IS WHAT YOU NEED -->
+        <!-- Test Connection Button -->
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
             <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
             <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
@@ -318,7 +316,7 @@ function getGPSStatus(lastUpdated) {
     }
 }
 
-// ===== TEST PAJ CONNECTION - THIS FINDS YOUR DEVICE IDs =====
+// ===== TEST PAJ CONNECTION - DETAILED DEBUG =====
 async function testPAJConnection() {
     const debug = document.getElementById('debugOutput');
     const email = document.getElementById('pajEmail').value.trim();
@@ -332,36 +330,74 @@ async function testPAJConnection() {
     }
     
     try {
-        // Login to PAJ GPS
-        debug.innerHTML = '<span class="info">⏳ Logging in to PAJ GPS...</span>';
+        // Show what we're sending
+        debug.innerHTML = `<span class="info">⏳ Attempting login to PAJ GPS API...</span><br>`;
+        debug.innerHTML += `<span class="info">📧 Email: ${email}</span><br>`;
+        debug.innerHTML += `<span class="info">🔑 Password: ${'•'.repeat(pass.length)}</span><br>`;
+        debug.innerHTML += `<span class="info">🌐 URL: ${PAJ_BASE}/login</span><br><br>`;
+        
+        // Try login
+        debug.innerHTML += `<span class="info">⏳ Sending request...</span><br>`;
+        
         const loginRes = await fetch(`${PAJ_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password: pass })
         });
-        const loginData = await loginRes.json();
+        
+        debug.innerHTML += `<span class="info">📡 Response status: ${loginRes.status}</span><br>`;
+        
+        // Get response text first
+        const responseText = await loginRes.text();
+        debug.innerHTML += `<span class="info">📄 Raw response: ${responseText.substring(0, 200)}</span><br><br>`;
+        
+        let loginData;
+        try {
+            loginData = JSON.parse(responseText);
+        } catch(e) {
+            debug.innerHTML += `<span class="error">❌ Failed to parse response as JSON. The API might be down or your credentials are wrong.</span><br>`;
+            debug.innerHTML += `<span class="error">Response was: ${responseText}</span>`;
+            return;
+        }
         
         if (!loginData.token) {
-            debug.innerHTML = `<span class="error">❌ Login failed. Check your email and password.</span>`;
+            debug.innerHTML += `<span class="error">❌ Login failed. No token received.</span><br>`;
+            debug.innerHTML += `<span class="error">Response: ${JSON.stringify(loginData, null, 2)}</span><br><br>`;
+            debug.innerHTML += `<span class="info">💡 Common issues:</span><br>`;
+            debug.innerHTML += `<span class="info">1. Wrong email or password</span><br>`;
+            debug.innerHTML += `<span class="info">2. PAJ GPS account doesn't exist</span><br>`;
+            debug.innerHTML += `<span class="info">3. API is temporarily down</span><br>`;
+            debug.innerHTML += `<span class="info">4. Try logging in at https://connect.paj-gps.de to verify credentials</span>`;
             return;
         }
         
         const token = loginData.token;
-        debug.innerHTML = '<span class="success">✅ Login successful! Fetching your devices...</span>';
+        debug.innerHTML += `<span class="success">✅ Login successful! Token received.</span><br><br>`;
+        debug.innerHTML += `<span class="info">⏳ Fetching your devices...</span><br>`;
         
-        // Get all devices
+        // Get devices
         const deviceRes = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const devices = await deviceRes.json();
+        
+        debug.innerHTML += `<span class="info">📡 Device response status: ${deviceRes.status}</span><br>`;
+        
+        const devicesText = await deviceRes.text();
+        let devices;
+        try {
+            devices = JSON.parse(devicesText);
+        } catch(e) {
+            debug.innerHTML += `<span class="error">❌ Failed to parse device list: ${devicesText.substring(0, 200)}</span>`;
+            return;
+        }
         
         if (!Array.isArray(devices) || devices.length === 0) {
-            debug.innerHTML = '<span class="error">❌ No devices found. Make sure your PAJ GPS account has Salind 11 4G devices added.</span>';
+            debug.innerHTML += `<span class="error">❌ No devices found. Make sure your PAJ GPS account has Salind 11 4G devices added.</span>`;
             return;
         }
         
         // Show devices with their IDs
-        let html = '<span class="success">✅ Found ' + devices.length + ' device(s):</span><br><br>';
+        let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
         devices.forEach((d, i) => {
             const devId = d.id || d.deviceId || 'Unknown';
             const name = d.name || d.deviceName || 'Unnamed';
@@ -380,12 +416,13 @@ async function testPAJConnection() {
         html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span>`;
         debug.innerHTML = html;
         
-        // Store token for later use
+        // Store token
         pajToken = token;
         getMasterRef().update({ paj_token: token });
         
     } catch(e) {
-        debug.innerHTML = `<span class="error">❌ Error: ${e.message}</span>`;
+        debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span><br>`;
+        debug.innerHTML += `<span class="error">Stack: ${e.stack}</span>`;
     }
 }
 
