@@ -576,83 +576,136 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== FETCH POSITIONS - CORRECT ENDPOINT: /getAllLastPosition =====
+// ===== FETCH POSITIONS - USING /getAllDeviceStatus WITH SMART PAYLOAD DETECTION =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     try {
-        // Use the POST endpoint that returns all last positions for all devices
-        const response = await fetch(`${PAJ_BASE}/getAllLastPosition`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${pajToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({}) // empty object works
+        // First, try to get the device list from /device to have the IDs
+        const deviceListRes = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
         });
-        
-        if (response.status === 401 || response.status === 403) {
-            console.warn('PAJ token expired, re-authenticating...');
-            if (!authRetryInProgress) {
-                authRetryInProgress = true;
-                await authenticatePAJ();
-                authRetryInProgress = false;
-                console.log('Retrying fetchAllDevicePositions after re-auth...');
-                await fetchAllDevicePositions();
+        let deviceIds = [];
+        if (deviceListRes.ok) {
+            const deviceData = await deviceListRes.json();
+            let devices = deviceData.success || deviceData.data || deviceData;
+            if (Array.isArray(devices)) {
+                deviceIds = devices.map(d => d.id || d.deviceId || d.imei).filter(id => id);
+            }
+        }
+        console.log('Device IDs from /device:', deviceIds);
+
+        // Build payload candidates
+        const payloadCandidates = [
+            {},  // empty object
+            { device_ids: deviceIds },  // array of ids
+            { device_ids: [] },
+            { ids: deviceIds },
+            { ids: [] },
+            { devices: deviceIds },
+            { devices: [] },
+            null,  // no body
+            undefined // will be omitted
+        ];
+
+        let success = false;
+        let responseData = null;
+        let usedPayload = null;
+
+        for (let payload of payloadCandidates) {
+            try {
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${pajToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                };
+                // Only add body if payload is not null or undefined
+                if (payload !== null && payload !== undefined) {
+                    options.body = JSON.stringify(payload);
+                }
+                // If payload is null, send POST with no body
+                const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, options);
+
+                if (response.status === 401 || response.status === 403) {
+                    console.warn('PAJ token expired, re-authenticating...');
+                    if (!authRetryInProgress) {
+                        authRetryInProgress = true;
+                        await authenticatePAJ();
+                        authRetryInProgress = false;
+                        console.log('Retrying fetchAllDevicePositions after re-auth...');
+                        await fetchAllDevicePositions();
+                        return;
+                    }
+                    continue;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`getAllDeviceStatus response (payload: ${JSON.stringify(payload)}):`, data);
+                    if (data.success && typeof data.success === 'object' && Object.keys(data.success).length > 0) {
+                        success = true;
+                        responseData = data;
+                        usedPayload = payload;
+                        break;
+                    } else {
+                        console.log(`Payload ${JSON.stringify(payload)} returned success with empty or invalid data`);
+                    }
+                } else {
+                    console.log(`Payload ${JSON.stringify(payload)} failed with status ${response.status}`);
+                }
+            } catch(e) {
+                console.warn(`Error with payload ${JSON.stringify(payload)}:`, e);
+            }
+        }
+
+        // If /getAllDeviceStatus failed, fallback to /device (which may have lastPoint as null, but we try anyway)
+        if (!success || !responseData) {
+            console.warn('All getAllDeviceStatus payloads failed, falling back to /device endpoint (may not have positions)');
+            const fallbackRes = await fetch(`${PAJ_BASE}/device`, {
+                headers: { 'Authorization': `Bearer ${pajToken}` }
+            });
+            if (fallbackRes.ok) {
+                const fallbackData = await fallbackRes.json();
+                // The /device response doesn't have lastPoint, so we can't get positions.
+                // We'll just log and exit.
+                console.log('Falling back to /device, but it does not contain lastPoint. No updates will be made.');
+                return;
             }
             return;
         }
-        
-        if (!response.ok) {
-            console.warn('PAJ getAllLastPosition request failed with status:', response.status);
-            return;
-        }
-        
-        const data = await response.json();
-        console.log('getAllLastPosition response:', data);
-        
-        if (!data.success || typeof data.success !== 'object') {
-            console.warn('PAJ response missing success object:', data);
-            return;
-        }
-        
+
+        // Process the successful response
         const now = Date.now();
         let updated = false;
-        
-        // Iterate over each device in the success object
-        for (const [deviceIdStr, points] of Object.entries(data.success)) {
+
+        for (const [deviceIdStr, deviceData] of Object.entries(responseData.success)) {
             const devId = parseInt(deviceIdStr, 10);
             if (!devId) continue;
-            
-            // points is an array of points, the first one is the latest
-            if (!Array.isArray(points) || points.length === 0) {
-                console.warn(`No points for device ${devId}`);
+
+            const lastPoint = deviceData.lastPoint;
+            if (!lastPoint || typeof lastPoint !== 'object') {
+                console.warn(`No lastPoint for device ${devId}`);
                 continue;
             }
-            
-            const latestPoint = points[0];
-            if (!latestPoint || typeof latestPoint !== 'object') {
-                console.warn(`Invalid latest point for device ${devId}`);
-                continue;
-            }
-            
-            const lat = latestPoint.lat;
-            const lng = latestPoint.lng;
+
+            const lat = lastPoint.lat;
+            const lng = lastPoint.lng;
             if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
                 console.warn(`Invalid coordinates for device ${devId}: lat=${lat}, lng=${lng}`);
                 continue;
             }
-            
-            // Timestamp: dateunix is in seconds, convert to ms
-            const timestampSec = latestPoint.dateunix;
+
+            const timestampSec = lastPoint.dateunix;
             let pajTimestamp = now;
             if (timestampSec && !isNaN(timestampSec)) {
                 pajTimestamp = timestampSec * 1000;
             }
-            
-            console.log(`PAJ device: ${devId}, Timestamp: ${pajTimestamp}`);
-            
+
+            console.log(`PAJ device: ${deviceData.deviceStatus?.id || devId}, Device ID: ${devId}, Timestamp: ${pajTimestamp}`);
+
             let matched = false;
             for (let [did, drv] of Object.entries(drivers)) {
                 const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
@@ -678,7 +731,7 @@ async function fetchAllDevicePositions() {
                 console.log(`No configured driver matches PAJ Device ID ${devId}`);
             }
         }
-        
+
         if (updated) {
             updateAllMarkers();
             renderDriverBadges();
