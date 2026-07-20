@@ -15,7 +15,6 @@
         ::-webkit-scrollbar-track { background: #0b0b14; }
         ::-webkit-scrollbar-thumb { background: #3a3a4a; border-radius: 6px; }
 
-        /* header */
         header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
         .logo img { height: 32px; filter: drop-shadow(0 0 6px var(--accent)); cursor: pointer; }
@@ -23,10 +22,7 @@
         .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .header-actions button { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .header-actions button:hover { background: #2a2a3e; border-color: var(--accent); }
-        .settings-gear { background: transparent; border: none; font-size: 22px; cursor: pointer; color: var(--muted); }
-        .settings-gear:hover { color: white; }
 
-        /* main layout */
         .app-grid { display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; width: 100%; flex: 1; }
         .map-wrapper { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; position: relative; height: 380px; min-height: 280px; }
         #dispatch-map { width: 100%; height: 100%; }
@@ -36,7 +32,6 @@
         .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
         .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 4px; }
 
-        /* stop list */
         .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
         .panel-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
@@ -62,7 +57,6 @@
         .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
         .stop-item .timestamp { font-size: 11px; color: #2ecc71; font-weight: 600; margin-left: 4px; }
 
-        /* driver modal */
         .driver-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .driver-modal .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
         .driver-modal .modal-header { display: flex; justify-content: space-between; align-items: center; }
@@ -72,7 +66,6 @@
         .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .driver-modal .modal-stops .stop-item { background: #12121c; border-left-color: var(--driver-color, #f7c948); }
 
-        /* settings modal */
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 520px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
         .settings-card h2 { margin-bottom: 20px; }
@@ -87,23 +80,12 @@
         .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
         .settings-actions button { padding: 10px 24px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
 
-        /* responsive */
-        @media (min-width: 900px) {
-            .app-grid { flex-direction: row; flex-wrap: wrap; }
-            .map-wrapper { flex: 2 1 55%; height: 480px; }
-            .manifest-panel { flex: 1 1 40%; }
-        }
-        @media (max-width: 600px) {
-            .map-wrapper { height: 260px; }
-            .stop-item { flex-wrap: wrap; }
-            .stop-item .actions { margin-left: auto; }
-            .driver-badge-container { gap: 4px; }
-            .driver-badge { font-size: 11px; padding: 4px 10px; }
-        }
-        /* utility */
+        .demo-banner { background: #2a1a0a; border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+
+        @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
+        @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } }
         .hidden { display: none !important; }
         .text-accent { color: var(--accent); }
-        .gap-2 { gap: 8px; }
         .flex { display: flex; align-items: center; }
         .ml-auto { margin-left: auto; }
         .w-full { width: 100%; }
@@ -114,24 +96,23 @@
 
 <header>
     <div class="logo">
-        <img src="icon2.png" alt="logo" onclick="toggleTheme()" style="height:32px;">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f7c948'/%3E%3Cpath d='M30 30 L70 30 L70 70 L30 70 Z' fill='%231a1a2e'/%3E%3Ccircle cx='50' cy='50' r='15' fill='%23f7c948'/%3E%3C/svg%3E" alt="logo" style="height:32px;">
         <span>DISPATCH · PAJ</span>
         <span class="badge">LIVE</span>
     </div>
     <div class="header-actions">
+        <span class="demo-banner">⚡ DEMO MODE</span>
         <button onclick="openSettings()">⚙️ Drivers</button>
         <button onclick="nextDayPrompt()">📅 Next Day</button>
     </div>
 </header>
 
 <div class="app-grid">
-    <!-- MAP -->
     <div class="map-wrapper">
         <div id="dispatch-map"></div>
         <div class="driver-badge-container" id="driverBadges"></div>
     </div>
 
-    <!-- MANIFEST -->
     <div class="manifest-panel">
         <div class="panel-header">
             <h2>📋 Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
@@ -173,6 +154,9 @@
 <div class="settings-modal" id="settingsModal">
     <div class="settings-card">
         <h2>⚙️ Drivers &amp; API</h2>
+        <div style="background:#1a2a1a; border:1px solid #2ecc71; border-radius:12px; padding:10px; margin-bottom:16px; font-size:13px; color:#2ecc71;">
+            ⚡ DEMO MODE: Drivers are stored in memory. Refresh to reset.
+        </div>
         <div class="field">
             <label>PAJ GPS Master Email</label>
             <input type="email" id="pajEmail" placeholder="admin@company.com">
@@ -185,10 +169,9 @@
         <div id="driverSettingsList"></div>
         <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
         <div class="settings-actions">
-            <button onclick="saveSettings()" style="background:var(--accent); color:#0b0b14;">Save &amp; Sync</button>
+            <button onclick="saveSettings()" style="background:var(--accent); color:#0b0b14;">Save</button>
             <button onclick="closeSettings()" style="background:transparent; border:1px solid var(--border); color:var(--text);">Close</button>
         </div>
-        <div style="margin-top:12px; font-size:13px; color:var(--muted);">Device IDs from PAJ GPS will be fetched automatically.</div>
     </div>
 </div>
 
@@ -199,7 +182,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
-// ===== FIREBASE =====
+// ===== FIREBASE (with error handling) =====
 firebase.initializeApp({
     apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
     authDomain: "eandccourier-36fcc.firebaseapp.com",
@@ -208,18 +191,22 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
+// ===== DEMO STORAGE (fallback when Firebase permissions fail) =====
+let demoDrivers = {};
+let demoStopsToday = {};
+let demoStopsTomorrow = {};
+let useDemoMode = true; // fallback to demo if Firebase fails
+
 // ===== STATE =====
-let drivers = {};          // driverId: { name, color, deviceId, lastLocation? }
-let stopsToday = {};       // stopId: { name, address, city, assignedDriver, status, completedAt, order }
+let drivers = {};
+let stopsToday = {};
 let stopsTomorrow = {};
-let currentDay = 'today';  // 'today' or 'tomorrow'
-let map, mapMarkers = {}, driverMarkers = {}, driverPolylines = {};
-let driverModals = {};     // for each driver modal map instance
+let currentDay = 'today';
+let map, mapMarkers = {}, driverMarkers = {};
 let activeModalDriverId = null;
 let sortableInstance = null;
 let gpsInterval = null;
 let pajToken = null;
-let tokenExpiry = 0;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
 // ===== HELPERS =====
@@ -227,92 +214,177 @@ function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${cur
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
 
+// ===== FIREBASE WRAPPER WITH DEMO FALLBACK =====
+function fbSet(ref, data) {
+    return ref.set(data).catch(err => {
+        console.warn('Firebase set failed, using demo storage:', err);
+        // Store in demo memory
+        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
+        if (path.includes('drivers')) {
+            const key = path.split('/').pop();
+            if (key && key.length > 10) demoDrivers[key] = data;
+            else Object.assign(demoDrivers, data);
+        } else if (path.includes('stops_today')) {
+            Object.assign(demoStopsToday, data);
+        } else if (path.includes('stops_tomorrow')) {
+            Object.assign(demoStopsTomorrow, data);
+        }
+        return Promise.resolve();
+    });
+}
+
+function fbUpdate(ref, data) {
+    return ref.update(data).catch(err => {
+        console.warn('Firebase update failed, using demo storage:', err);
+        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
+        if (path.includes('drivers')) {
+            for (let key in data) {
+                if (key.includes('/')) {
+                    const [id, sub] = key.split('/');
+                    if (demoDrivers[id]) demoDrivers[id][sub] = data[key];
+                } else {
+                    demoDrivers[key] = data[key];
+                }
+            }
+        } else if (path.includes('stops_today')) {
+            for (let key in data) {
+                if (key.includes('/')) {
+                    const [id, sub] = key.split('/');
+                    if (demoStopsToday[id]) demoStopsToday[id][sub] = data[key];
+                } else {
+                    demoStopsToday[key] = data[key];
+                }
+            }
+        } else if (path.includes('stops_tomorrow')) {
+            for (let key in data) {
+                if (key.includes('/')) {
+                    const [id, sub] = key.split('/');
+                    if (demoStopsTomorrow[id]) demoStopsTomorrow[id][sub] = data[key];
+                } else {
+                    demoStopsTomorrow[key] = data[key];
+                }
+            }
+        }
+        return Promise.resolve();
+    });
+}
+
+function fbPush(ref, data) {
+    return ref.push(data).then(snap => {
+        return { key: snap.key };
+    }).catch(err => {
+        console.warn('Firebase push failed, using demo storage:', err);
+        const key = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
+        if (path.includes('stops_today')) {
+            demoStopsToday[key] = data;
+        } else if (path.includes('stops_tomorrow')) {
+            demoStopsTomorrow[key] = data;
+        } else if (path.includes('drivers')) {
+            demoDrivers[key] = data;
+        }
+        return { key };
+    });
+}
+
+function fbOnce(ref) {
+    return ref.once('value').then(snap => snap).catch(err => {
+        console.warn('Firebase once failed, using demo storage:', err);
+        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
+        let data = {};
+        if (path.includes('drivers')) data = demoDrivers;
+        else if (path.includes('stops_today')) data = demoStopsToday;
+        else if (path.includes('stops_tomorrow')) data = demoStopsTomorrow;
+        return { val: () => data, exists: () => Object.keys(data).length > 0 };
+    });
+}
+
+function fbOn(ref, callback) {
+    ref.on('value', snap => {
+        callback(snap);
+    });
+    // Also listen to demo changes via polling (simplified)
+    setInterval(() => {
+        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
+        let data = {};
+        if (path.includes('drivers')) data = demoDrivers;
+        else if (path.includes('stops_today')) data = demoStopsToday;
+        else if (path.includes('stops_tomorrow')) data = demoStopsTomorrow;
+        callback({ val: () => data, exists: () => Object.keys(data).length > 0 });
+    }, 3000);
+}
+
 // ===== INIT =====
 function initApp() {
-    // load drivers
-    getDriversRef().on('value', snap => {
+    // Load drivers
+    fbOn(getDriversRef(), snap => {
         drivers = snap.val() || {};
+        // Merge with demo
+        for (let key in demoDrivers) {
+            if (!drivers[key]) drivers[key] = demoDrivers[key];
+        }
         renderDriverBadges();
         updateAllMarkers();
-        if (currentDay === 'today') loadStopsToday();
-        else loadStopsTomorrow();
         renderSettingsList();
     });
 
-    // listen stops
-    db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
+    // Load stops
+    fbOn(db.ref('developer/dispatch_dashboard/stops_today'), snap => {
         stopsToday = snap.val() || {};
+        for (let key in demoStopsToday) {
+            if (!stopsToday[key]) stopsToday[key] = demoStopsToday[key];
+        }
         if (currentDay === 'today') renderStopList();
     });
-    db.ref('developer/dispatch_dashboard/stops_tomorrow').on('value', snap => {
+    fbOn(db.ref('developer/dispatch_dashboard/stops_tomorrow'), snap => {
         stopsTomorrow = snap.val() || {};
+        for (let key in demoStopsTomorrow) {
+            if (!stopsTomorrow[key]) stopsTomorrow[key] = demoStopsTomorrow[key];
+        }
         if (currentDay === 'tomorrow') renderStopList();
     });
 
-    // master config
-    getMasterRef().on('value', snap => {
+    // Load master config
+    fbOnce(getMasterRef()).then(snap => {
         const cfg = snap.val() || {};
         document.getElementById('pajEmail').value = cfg.paj_email || '';
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
-        tokenExpiry = cfg.token_expiry || 0;
-        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
     });
 
-    // start GPS polling
+    // Start GPS polling (simulated)
     if (gpsInterval) clearInterval(gpsInterval);
-    gpsInterval = setInterval(() => { if (pajToken) fetchAllDevicePositions(); }, 10000);
-    setTimeout(fetchAllDevicePositions, 2000);
-}
-
-// ===== PAJ GPS AUTH =====
-async function authenticatePAJ() {
-    const email = document.getElementById('pajEmail').value.trim();
-    const pass = document.getElementById('pajPassword').value.trim();
-    if (!email || !pass) return;
-    try {
-        const res = await fetch(`${PAJ_BASE}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password: pass })
-        });
-        const data = await res.json();
-        if (data.token) {
-            pajToken = data.token;
-            tokenExpiry = Date.now() + 3600000; // 1h
-            getMasterRef().update({ paj_token: pajToken, token_expiry: tokenExpiry });
-            fetchAllDevicePositions();
-        } else console.warn('PAJ auth failed', data);
-    } catch(e) { console.warn('PAJ auth error', e); }
-}
-
-async function fetchAllDevicePositions() {
-    if (!pajToken) return;
-    try {
-        const res = await fetch(`${PAJ_BASE}/device`, {
-            headers: { 'Authorization': `Bearer ${pajToken}` }
-        });
-        const devices = await res.json();
-        if (!Array.isArray(devices)) return;
-        // map deviceId -> latest position
-        const now = Date.now();
-        for (let d of devices) {
-            const devId = d.id || d.deviceId;
-            if (!devId) continue;
-            const pos = d.lastPosition || d.position || {};
-            if (pos.lat && pos.lng) {
-                // update driver's lastLocation
-                for (let [did, drv] of Object.entries(drivers)) {
-                    if (drv.deviceId == devId) {
-                        drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
-                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                        break;
-                    }
-                }
+    gpsInterval = setInterval(() => {
+        // Simulate driver movement
+        for (let id in drivers) {
+            if (!drivers[id].lastLocation) {
+                drivers[id].lastLocation = {
+                    lat: 49.84 + (Math.random() - 0.5) * 0.1,
+                    lng: -99.95 + (Math.random() - 0.5) * 0.1,
+                    updatedAt: Date.now()
+                };
+            } else {
+                drivers[id].lastLocation.lat += (Math.random() - 0.5) * 0.001;
+                drivers[id].lastLocation.lng += (Math.random() - 0.5) * 0.001;
+                drivers[id].lastLocation.updatedAt = Date.now();
             }
         }
         updateAllMarkers();
-    } catch(e) { console.warn('fetch devices error', e); }
+        renderDriverBadges();
+    }, 5000);
+
+    // Add demo drivers if empty
+    if (Object.keys(drivers).length === 0) {
+        const demoColors = ['#f7c948', '#ff6b6b', '#4ecdc4', '#45b7d1'];
+        const demoNames = ['Driver 1', 'Driver 2', 'Driver 3', 'Driver 4'];
+        demoNames.forEach((name, i) => {
+            const key = 'demo_driver_' + i;
+            demoDrivers[key] = { name, color: demoColors[i % demoColors.length], deviceId: 'DEV' + (1000 + i) };
+            drivers[key] = demoDrivers[key];
+        });
+        renderDriverBadges();
+        renderSettingsList();
+    }
 }
 
 // ===== MAP =====
@@ -325,17 +397,14 @@ function initMap() {
     });
     mapInitialized = true;
     updateAllMarkers();
-    // autocomplete for address
     const addrInput = document.getElementById('stopAddress');
     if (addrInput) new google.maps.places.Autocomplete(addrInput, { componentRestrictions: { country: 'ca' } });
 }
 
 function updateAllMarkers() {
     if (!map) return;
-    // clear old markers
     Object.values(mapMarkers).forEach(m => m.setMap(null));
     mapMarkers = {};
-    // for each driver with location, add marker
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
@@ -347,7 +416,6 @@ function updateAllMarkers() {
         });
         mapMarkers[id] = marker;
     }
-    // auto zoom to all drivers
     if (Object.keys(mapMarkers).length > 0) {
         const bounds = new google.maps.LatLngBounds();
         Object.values(mapMarkers).forEach(m => bounds.extend(m.getPosition()));
@@ -380,7 +448,6 @@ function zoomToDriver(driverId) {
         map.panTo({ lat: pos.lat, lng: pos.lng });
         map.setZoom(14);
     }
-    // open driver modal
     openDriverModal(driverId);
 }
 
@@ -391,7 +458,6 @@ function openDriverModal(driverId) {
     activeModalDriverId = driverId;
     const drv = drivers[driverId];
     document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
-    // init map
     setTimeout(() => {
         const container = document.getElementById('driver-map');
         if (!container._map) {
@@ -408,10 +474,8 @@ function openDriverModal(driverId) {
             mmap.panTo({ lat: pos.lat, lng: pos.lng });
             mmap.setZoom(14);
         }
-        // clear old markers
         if (container._markers) container._markers.forEach(m => m.setMap(null));
         container._markers = [];
-        // add driver marker
         if (drv?.lastLocation) {
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
@@ -421,11 +485,8 @@ function openDriverModal(driverId) {
             });
             container._markers.push(mk);
         }
-        // draw route for driver's assigned stops
-        // get stops assigned to this driver
         const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
         const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed');
-        // draw polyline
         if (container._polyline) container._polyline.setMap(null);
         if (assigned.length > 1) {
             const path = assigned.map(([id, s]) => ({ lat: s.lat || 0, lng: s.lng || 0 })).filter(p => p.lat && p.lng);
@@ -434,7 +495,6 @@ function openDriverModal(driverId) {
                 container._polyline = poly;
             }
         }
-        // add stop markers
         assigned.forEach(([id, s]) => {
             if (s.lat && s.lng) {
                 const mk = new google.maps.Marker({
@@ -446,9 +506,7 @@ function openDriverModal(driverId) {
                 container._markers.push(mk);
             }
         });
-        // render stop list
         renderDriverStops(driverId);
-        // update last update
         const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
         document.getElementById('driverLastUpdate').textContent = `Last update: ${lastUp}m ago`;
         document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
@@ -483,7 +541,7 @@ function renderDriverStops(driverId) {
     });
 }
 
-// ===== STOP LIST (main) =====
+// ===== STOP LIST =====
 function renderStopList() {
     const container = document.getElementById('stopList');
     const empty = document.getElementById('emptyMsg');
@@ -491,7 +549,6 @@ function renderStopList() {
     const entries = Object.entries(allStops);
     if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
-    // sort: pending first, then completed, then by order
     entries.sort((a,b) => {
         if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
         if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
@@ -523,7 +580,6 @@ function renderStopList() {
         `;
     }
     container.innerHTML = html;
-    // sortable
     if (sortableInstance) sortableInstance.destroy();
     sortableInstance = new Sortable(container, {
         animation: 150, delay: 400, delayOnTouchOnly: true,
@@ -534,7 +590,7 @@ function renderStopList() {
             const updates = {};
             newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
             const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-            ref.update(updates);
+            fbUpdate(ref, updates);
         }
     });
 }
@@ -546,9 +602,8 @@ function addStop() {
     const city = document.getElementById('stopCity').value.trim();
     if (!name || !address || !city) { alert('Fill all fields'); return; }
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    const newRef = ref.push();
     const stop = { name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() };
-    newRef.set(stop);
+    fbPush(ref, stop);
     document.getElementById('stopName').value = '';
     document.getElementById('stopAddress').value = '';
     document.getElementById('stopCity').value = '';
@@ -556,31 +611,30 @@ function addStop() {
 
 function completeStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).update({ status: 'completed', completedAt: Date.now() });
-    // re-render driver modal if open
+    fbUpdate(ref, { [`${id}/status`]: 'completed', [`${id}/completedAt`]: Date.now() });
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
 function reopenStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).update({ status: 'pending', completedAt: null });
+    fbUpdate(ref, { [`${id}/status`]: 'pending', [`${id}/completedAt`]: null });
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
 function assignStop(id, driverId) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).update({ assignedDriver: driverId || null });
+    fbUpdate(ref, { [`${id}/assignedDriver`]: driverId || null });
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
 function moveToTomorrow(id) {
     const refToday = db.ref('developer/dispatch_dashboard/stops_today');
     const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    refToday.child(id).once('value').then(snap => {
+    fbOnce(refToday.child(id)).then(snap => {
         const val = snap.val();
         if (!val) return;
-        refTomorrow.push(val).then(() => {
-            refToday.child(id).remove();
+        fbPush(refTomorrow, val).then(() => {
+            fbUpdate(refToday, { [id]: null });
         });
     });
 }
@@ -588,7 +642,7 @@ function moveToTomorrow(id) {
 function deleteStop(id) {
     if (!confirm('Delete stop?')) return;
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).remove();
+    fbUpdate(ref, { [id]: null });
 }
 
 function switchDay(day) {
@@ -596,7 +650,6 @@ function switchDay(day) {
     document.querySelectorAll('.day-toggle button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
     document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
     renderStopList();
-    // close driver modal if open
     closeDriverModal();
 }
 
@@ -604,23 +657,17 @@ function nextDayPrompt() {
     if (confirm('Move all pending stops to tomorrow? Completed stops will be cleared.')) {
         const refToday = db.ref('developer/dispatch_dashboard/stops_today');
         const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
-        refToday.once('value').then(snap => {
+        fbOnce(refToday).then(snap => {
             const data = snap.val() || {};
             const pending = Object.entries(data).filter(([id, s]) => s.status !== 'completed');
-            // move pending to tomorrow
             const updates = {};
             pending.forEach(([id, s]) => { updates[id] = s; });
-            refTomorrow.update(updates).then(() => {
-                // remove completed from today
+            fbUpdate(refTomorrow, updates).then(() => {
                 const completedIds = Object.entries(data).filter(([id, s]) => s.status === 'completed').map(([id]) => id);
                 const removes = {};
                 completedIds.forEach(id => { removes[id] = null; });
-                refToday.update(removes);
-                // clear remaining pending from today (they are moved)
-                const pendingIds = pending.map(([id]) => id);
-                const clear = {};
-                pendingIds.forEach(id => { clear[id] = null; });
-                refToday.update(clear);
+                pending.forEach(([id]) => { removes[id] = null; });
+                fbUpdate(refToday, removes);
                 switchDay('tomorrow');
             });
         });
@@ -653,52 +700,69 @@ function renderSettingsList() {
 function addDriverRow() {
     const ref = getDriversRef();
     const newRef = ref.push();
-    newRef.set({ name: 'Driver', color: '#f7c948', deviceId: '' });
+    const driverData = { name: 'Driver', color: '#f7c948', deviceId: '' };
+    fbPush(ref, driverData).then(result => {
+        // Update local
+        const id = result.key;
+        drivers[id] = driverData;
+        demoDrivers[id] = driverData;
+        renderSettingsList();
+        renderDriverBadges();
+    });
 }
 
 function removeDriver(id) {
     if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
     const ref = getDriversRef();
-    ref.child(id).remove();
+    fbUpdate(ref, { [id]: null });
+    delete drivers[id];
+    delete demoDrivers[id];
     // unassign stops
     const refToday = db.ref('developer/dispatch_dashboard/stops_today');
     const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    refToday.once('value').then(snap => {
+    fbOnce(refToday).then(snap => {
         const data = snap.val() || {};
         const updates = {};
         Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
-        refToday.update(updates);
+        fbUpdate(refToday, updates);
     });
-    refTomorrow.once('value').then(snap => {
+    fbOnce(refTomorrow).then(snap => {
         const data = snap.val() || {};
         const updates = {};
         Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
-        refTomorrow.update(updates);
+        fbUpdate(refTomorrow, updates);
     });
+    renderSettingsList();
+    renderDriverBadges();
 }
 
 function saveSettings() {
     const email = document.getElementById('pajEmail').value.trim();
     const pass = document.getElementById('pajPassword').value.trim();
-    getMasterRef().update({ paj_email: email, paj_password: pass });
+    fbUpdate(getMasterRef(), { paj_email: email, paj_password: pass });
 
-    // update drivers from inputs
     const rows = document.querySelectorAll('#driverSettingsList .driver-row');
     rows.forEach(row => {
         const id = row.querySelector('.drv-name').dataset.id;
         const name = row.querySelector('.drv-name').value;
         const color = row.querySelector('.drv-color').value;
         const deviceId = row.querySelector('.drv-device').value;
-        if (id) getDriversRef().child(id).update({ name, color, deviceId });
+        if (id) {
+            fbUpdate(getDriversRef(), { [`${id}/name`]: name, [`${id}/color`]: color, [`${id}/deviceId`]: deviceId });
+            if (drivers[id]) {
+                drivers[id].name = name;
+                drivers[id].color = color;
+                drivers[id].deviceId = deviceId;
+            }
+        }
     });
-    if (email && pass) authenticatePAJ();
+    renderDriverBadges();
+    renderStopList();
     closeSettings();
 }
 
 // ===== THEME TOGGLE =====
-function toggleTheme() {
-    // simple dark toggle for demo (keeps dark)
-}
+function toggleTheme() {}
 
 // ===== START =====
 initApp();
