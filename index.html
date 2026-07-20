@@ -676,6 +676,7 @@
                 renderSavedPills(snap.val() || {});
             });
 
+            // Ensure drivers exist
             db.ref('drivers').once('value', snap => {
                 if (!snap.exists()) {
                     db.ref('drivers').set({
@@ -1365,13 +1366,20 @@
         function renderDriverList() {
             const container = document.getElementById('driver-list-container');
             if (!container) return;
+            // If no drivers data yet, show a message and init button
             if (!drivers || Object.keys(drivers).length === 0) {
-                container.innerHTML = '<p style="color:#888;">No drivers configured.</p>';
+                container.innerHTML = `
+                    <p style="color:#888; text-align:center; padding:20px;">No drivers configured. Loading data or click below to initialize.</p>
+                    <div style="display:flex; justify-content:center; margin-top:10px;">
+                        <button onclick="initializeDefaultDrivers()" class="btn-save">Initialize Default Drivers</button>
+                    </div>
+                `;
                 return;
             }
             let html = '';
             Object.keys(drivers).filter(key => key.startsWith('driver')).forEach(driverId => {
                 const driver = drivers[driverId];
+                if (!driver) return;
                 html += `
                     <div style="border-bottom:1px solid var(--border); padding:12px 0;">
                         <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
@@ -1388,6 +1396,16 @@
                 `;
             });
             container.innerHTML = html;
+        }
+
+        function initializeDefaultDrivers() {
+            db.ref('drivers').set({
+                driver1: { name: 'Driver 1', pajEmail: '', pajPassword: '', pajDeviceId: '', currentLat: 49.8425, currentLng: -99.9497, lastUpdated: Date.now() },
+                driver2: { name: 'Driver 2', pajEmail: '', pajPassword: '', pajDeviceId: '', currentLat: 49.8425, currentLng: -99.9497, lastUpdated: Date.now() }
+            }).then(() => {
+                alert('Default drivers created. Please refresh or reopen the modal.');
+                renderDriverList();
+            }).catch(err => alert('Error creating drivers: ' + err.message));
         }
 
         function saveDriver(driverId) {
