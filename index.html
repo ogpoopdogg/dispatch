@@ -316,7 +316,7 @@ function getGPSStatus(lastUpdated) {
     }
 }
 
-// ===== TEST PAJ CONNECTION - WITH MULTIPLE ENDPOINTS =====
+// ===== TEST PAJ CONNECTION - FIXED =====
 async function testPAJConnection() {
     const debug = document.getElementById('debugOutput');
     const email = document.getElementById('pajEmail').value.trim();
@@ -357,92 +357,69 @@ async function testPAJConnection() {
         
         if (!token) {
             debug.innerHTML += `<span class="error">❌ Login failed. No token received.</span><br>`;
-            debug.innerHTML += `<span class="error">Response: ${JSON.stringify(loginData, null, 2)}</span>`;
             return;
         }
         
         debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
         
-        // Try multiple endpoints to find devices
-        const endpoints = [
-            '/device',
-            '/devices',
-            '/device/list',
-            '/vehicles',
-            '/tracker'
-        ];
+        // Fetch devices - the response is { "success": [ { device1 }, { device2 } ] }
+        debug.innerHTML += `<span class="info">⏳ Fetching your devices from PAJ GPS...</span><br>`;
         
-        let foundDevices = null;
-        let usedEndpoint = '';
+        const deviceRes = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         
-        for (let endpoint of endpoints) {
-            debug.innerHTML += `<span class="info">⏳ Trying endpoint: ${endpoint}...</span><br>`;
-            try {
-                const deviceRes = await fetch(`${PAJ_BASE}${endpoint}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const text = await deviceRes.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch(e) {
-                    continue;
-                }
-                
-                // Check if this looks like a device list
-                if (Array.isArray(data) && data.length > 0) {
-                    foundDevices = data;
-                    usedEndpoint = endpoint;
-                    break;
-                } else if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-                    foundDevices = data.data;
-                    usedEndpoint = endpoint;
-                    break;
-                } else if (data.devices && Array.isArray(data.devices) && data.devices.length > 0) {
-                    foundDevices = data.devices;
-                    usedEndpoint = endpoint;
-                    break;
-                } else if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-                    foundDevices = data.results;
-                    usedEndpoint = endpoint;
-                    break;
-                } else {
-                    // Show what we got for debugging
-                    debug.innerHTML += `<span class="info">   Response: ${JSON.stringify(data).substring(0, 100)}...</span><br>`;
-                }
-            } catch(e) {
-                debug.innerHTML += `<span class="error">   Error: ${e.message}</span><br>`;
-            }
-        }
-        
-        if (!foundDevices || foundDevices.length === 0) {
-            debug.innerHTML += `<br><span class="error">❌ No devices found on any endpoint.</span><br><br>`;
-            debug.innerHTML += `<span class="info">💡 Possible reasons:</span><br>`;
-            debug.innerHTML += `<span class="info">1. No Salind 11 4G devices are added to this account</span><br>`;
-            debug.innerHTML += `<span class="info">2. Devices need to be activated first on the PAJ GPS portal</span><br>`;
-            debug.innerHTML += `<span class="info">3. The API endpoint might have changed</span><br>`;
-            debug.innerHTML += `<span class="info">4. Check at https://connect.paj-gps.de if your devices appear</span><br>`;
+        const devicesText = await deviceRes.text();
+        let devicesData;
+        try {
+            devicesData = JSON.parse(devicesText);
+        } catch(e) {
+            debug.innerHTML += `<span class="error">❌ Failed to parse device list: ${devicesText.substring(0, 200)}</span>`;
             return;
         }
         
-        // Show devices
-        let html = `<span class="success">✅ Found ${foundDevices.length} device(s) (via ${usedEndpoint}):</span><br><br>`;
-        foundDevices.forEach((d, i) => {
-            const devId = d.id || d.deviceId || d.vehicleId || d.trackerId || 'Unknown';
-            const name = d.name || d.deviceName || d.vehicleName || d.trackerName || 'Unnamed';
+        // The devices are inside "success" array
+        let devices = [];
+        if (devicesData.success && Array.isArray(devicesData.success)) {
+            devices = devicesData.success;
+        } else if (Array.isArray(devicesData)) {
+            devices = devicesData;
+        } else if (devicesData.data && Array.isArray(devicesData.data)) {
+            devices = devicesData.data;
+        }
+        
+        if (!devices || devices.length === 0) {
+            debug.innerHTML += `<span class="error">❌ No devices found. Make sure your PAJ GPS account has Salind 11 4G devices added.</span><br>`;
+            debug.innerHTML += `<span class="error">Raw response: ${devicesText.substring(0, 300)}</span>`;
+            return;
+        }
+        
+        // Show devices with their IDs
+        let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
+        devices.forEach((d, i) => {
+            // Different possible ID fields
+            const devId = d.id || d.deviceId || d.imei || d.vehicleId || d.trackerId || 'Unknown';
+            const name = d.name || d.deviceName || d.vehicleName || d.trackerName || `Device ${i+1}`;
             const pos = d.lastPosition || d.position || d.location || {};
             const hasPos = pos.lat && pos.lng;
             
             html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
             html += `   📱 Device ID: <span class="device-id">${devId}</span><br>`;
+            if (d.imei) {
+                html += `   📶 IMEI: ${d.imei}<br>`;
+            }
+            if (d.model_nr) {
+                html += `   📟 Model: ${d.model_nr}<br>`;
+            }
             if (hasPos) {
                 html += `   📍 Location: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}<br>`;
             } else {
-                html += `   ⚠️ No location data yet<br>`;
+                html += `   ⚠️ No location data yet (device may be offline)<br>`;
             }
             html += `<br>`;
         });
-        html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span>`;
+        html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span><br>`;
+        html += `<span class="info">💡 Also note: You can use the IMEI number as the Device ID if the ID doesn't work.</span>`;
         debug.innerHTML = html;
         
         pajToken = token;
@@ -526,12 +503,13 @@ async function fetchAllDevicePositions() {
         const response = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${pajToken}` }
         });
-        const devices = await response.json();
+        const data = await response.json();
+        let devices = data.success || data.data || data;
         if (!Array.isArray(devices)) return;
         const now = Date.now();
         let updated = false;
         for (let d of devices) {
-            const devId = d.id || d.deviceId;
+            const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
             const pos = d.lastPosition || d.position || {};
             if (pos.lat && pos.lng) {
