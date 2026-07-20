@@ -80,7 +80,7 @@
         .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
         .settings-actions button { padding: 10px 24px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
 
-        .demo-banner { background: #2a1a0a; border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+        .error-banner { background: #2a0a0a; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
 
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } }
@@ -101,7 +101,7 @@
         <span class="badge">LIVE</span>
     </div>
     <div class="header-actions">
-        <span class="demo-banner">⚡ DEMO MODE</span>
+        <span id="connectionStatus" class="error-banner" style="display:none;">⚠️ Offline</span>
         <button onclick="openSettings()">⚙️ Drivers</button>
         <button onclick="nextDayPrompt()">📅 Next Day</button>
     </div>
@@ -154,9 +154,6 @@
 <div class="settings-modal" id="settingsModal">
     <div class="settings-card">
         <h2>⚙️ Drivers &amp; API</h2>
-        <div style="background:#1a2a1a; border:1px solid #2ecc71; border-radius:12px; padding:10px; margin-bottom:16px; font-size:13px; color:#2ecc71;">
-            ⚡ DEMO MODE: Drivers are stored in memory. Refresh to reset.
-        </div>
         <div class="field">
             <label>PAJ GPS Master Email</label>
             <input type="email" id="pajEmail" placeholder="admin@company.com">
@@ -182,7 +179,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
-// ===== FIREBASE (with error handling) =====
+// ===== FIREBASE =====
 firebase.initializeApp({
     apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
     authDomain: "eandccourier-36fcc.firebaseapp.com",
@@ -190,12 +187,6 @@ firebase.initializeApp({
     projectId: "eandccourier-36fcc",
 });
 const db = firebase.database();
-
-// ===== DEMO STORAGE (fallback when Firebase permissions fail) =====
-let demoDrivers = {};
-let demoStopsToday = {};
-let demoStopsTomorrow = {};
-let useDemoMode = true; // fallback to demo if Firebase fails
 
 // ===== STATE =====
 let drivers = {};
@@ -207,6 +198,7 @@ let activeModalDriverId = null;
 let sortableInstance = null;
 let gpsInterval = null;
 let pajToken = null;
+let isOnline = false;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
 // ===== HELPERS =====
@@ -214,104 +206,58 @@ function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${cur
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
 
-// ===== FIREBASE WRAPPER WITH DEMO FALLBACK =====
+// ===== FIREBASE WITH PERMISSION HANDLING =====
 function fbSet(ref, data) {
     return ref.set(data).catch(err => {
-        console.warn('Firebase set failed, using demo storage:', err);
-        // Store in demo memory
-        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
-        if (path.includes('drivers')) {
-            const key = path.split('/').pop();
-            if (key && key.length > 10) demoDrivers[key] = data;
-            else Object.assign(demoDrivers, data);
-        } else if (path.includes('stops_today')) {
-            Object.assign(demoStopsToday, data);
-        } else if (path.includes('stops_tomorrow')) {
-            Object.assign(demoStopsTomorrow, data);
-        }
-        return Promise.resolve();
+        console.error('Firebase set error:', err);
+        updateConnectionStatus(false);
+        throw err;
     });
 }
 
 function fbUpdate(ref, data) {
     return ref.update(data).catch(err => {
-        console.warn('Firebase update failed, using demo storage:', err);
-        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
-        if (path.includes('drivers')) {
-            for (let key in data) {
-                if (key.includes('/')) {
-                    const [id, sub] = key.split('/');
-                    if (demoDrivers[id]) demoDrivers[id][sub] = data[key];
-                } else {
-                    demoDrivers[key] = data[key];
-                }
-            }
-        } else if (path.includes('stops_today')) {
-            for (let key in data) {
-                if (key.includes('/')) {
-                    const [id, sub] = key.split('/');
-                    if (demoStopsToday[id]) demoStopsToday[id][sub] = data[key];
-                } else {
-                    demoStopsToday[key] = data[key];
-                }
-            }
-        } else if (path.includes('stops_tomorrow')) {
-            for (let key in data) {
-                if (key.includes('/')) {
-                    const [id, sub] = key.split('/');
-                    if (demoStopsTomorrow[id]) demoStopsTomorrow[id][sub] = data[key];
-                } else {
-                    demoStopsTomorrow[key] = data[key];
-                }
-            }
-        }
-        return Promise.resolve();
+        console.error('Firebase update error:', err);
+        updateConnectionStatus(false);
+        throw err;
     });
 }
 
 function fbPush(ref, data) {
-    return ref.push(data).then(snap => {
-        return { key: snap.key };
-    }).catch(err => {
-        console.warn('Firebase push failed, using demo storage:', err);
-        const key = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
-        if (path.includes('stops_today')) {
-            demoStopsToday[key] = data;
-        } else if (path.includes('stops_tomorrow')) {
-            demoStopsTomorrow[key] = data;
-        } else if (path.includes('drivers')) {
-            demoDrivers[key] = data;
-        }
-        return { key };
+    return ref.push(data).catch(err => {
+        console.error('Firebase push error:', err);
+        updateConnectionStatus(false);
+        throw err;
     });
 }
 
 function fbOnce(ref) {
-    return ref.once('value').then(snap => snap).catch(err => {
-        console.warn('Firebase once failed, using demo storage:', err);
-        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
-        let data = {};
-        if (path.includes('drivers')) data = demoDrivers;
-        else if (path.includes('stops_today')) data = demoStopsToday;
-        else if (path.includes('stops_tomorrow')) data = demoStopsTomorrow;
-        return { val: () => data, exists: () => Object.keys(data).length > 0 };
+    return ref.once('value').catch(err => {
+        console.error('Firebase once error:', err);
+        updateConnectionStatus(false);
+        throw err;
     });
 }
 
 function fbOn(ref, callback) {
     ref.on('value', snap => {
+        updateConnectionStatus(true);
         callback(snap);
+    }, err => {
+        console.error('Firebase on error:', err);
+        updateConnectionStatus(false);
     });
-    // Also listen to demo changes via polling (simplified)
-    setInterval(() => {
-        const path = ref.toString().replace('https://eandccourier-36fcc-default-rtdb.firebaseio.com/', '');
-        let data = {};
-        if (path.includes('drivers')) data = demoDrivers;
-        else if (path.includes('stops_today')) data = demoStopsToday;
-        else if (path.includes('stops_tomorrow')) data = demoStopsTomorrow;
-        callback({ val: () => data, exists: () => Object.keys(data).length > 0 });
-    }, 3000);
+}
+
+function updateConnectionStatus(online) {
+    isOnline = online;
+    const status = document.getElementById('connectionStatus');
+    if (!online) {
+        status.style.display = 'inline-flex';
+        status.textContent = '⚠️ Offline - Check Firebase Rules';
+    } else {
+        status.style.display = 'none';
+    }
 }
 
 // ===== INIT =====
@@ -319,10 +265,6 @@ function initApp() {
     // Load drivers
     fbOn(getDriversRef(), snap => {
         drivers = snap.val() || {};
-        // Merge with demo
-        for (let key in demoDrivers) {
-            if (!drivers[key]) drivers[key] = demoDrivers[key];
-        }
         renderDriverBadges();
         updateAllMarkers();
         renderSettingsList();
@@ -331,16 +273,10 @@ function initApp() {
     // Load stops
     fbOn(db.ref('developer/dispatch_dashboard/stops_today'), snap => {
         stopsToday = snap.val() || {};
-        for (let key in demoStopsToday) {
-            if (!stopsToday[key]) stopsToday[key] = demoStopsToday[key];
-        }
         if (currentDay === 'today') renderStopList();
     });
     fbOn(db.ref('developer/dispatch_dashboard/stops_tomorrow'), snap => {
         stopsTomorrow = snap.val() || {};
-        for (let key in demoStopsTomorrow) {
-            if (!stopsTomorrow[key]) stopsTomorrow[key] = demoStopsTomorrow[key];
-        }
         if (currentDay === 'tomorrow') renderStopList();
     });
 
@@ -350,40 +286,71 @@ function initApp() {
         document.getElementById('pajEmail').value = cfg.paj_email || '';
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
+        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
+    }).catch(() => {
+        // If master_config doesn't exist yet, create it
+        getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
 
-    // Start GPS polling (simulated)
+    // Start GPS polling
     if (gpsInterval) clearInterval(gpsInterval);
     gpsInterval = setInterval(() => {
-        // Simulate driver movement
-        for (let id in drivers) {
-            if (!drivers[id].lastLocation) {
-                drivers[id].lastLocation = {
-                    lat: 49.84 + (Math.random() - 0.5) * 0.1,
-                    lng: -99.95 + (Math.random() - 0.5) * 0.1,
-                    updatedAt: Date.now()
-                };
-            } else {
-                drivers[id].lastLocation.lat += (Math.random() - 0.5) * 0.001;
-                drivers[id].lastLocation.lng += (Math.random() - 0.5) * 0.001;
-                drivers[id].lastLocation.updatedAt = Date.now();
+        if (pajToken) fetchAllDevicePositions();
+    }, 10000);
+    setTimeout(fetchAllDevicePositions, 2000);
+}
+
+// ===== PAJ GPS AUTH =====
+async function authenticatePAJ() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    if (!email || !pass) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const data = await response.json();
+        if (data.token) {
+            pajToken = data.token;
+            getMasterRef().update({ paj_token: pajToken, token_expiry: Date.now() + 3600000 });
+            fetchAllDevicePositions();
+        } else {
+            console.warn('PAJ auth failed:', data);
+        }
+    } catch(e) {
+        console.warn('PAJ auth error:', e);
+    }
+}
+
+async function fetchAllDevicePositions() {
+    if (!pajToken) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
+        });
+        const devices = await response.json();
+        if (!Array.isArray(devices)) return;
+        const now = Date.now();
+        for (let d of devices) {
+            const devId = d.id || d.deviceId;
+            if (!devId) continue;
+            const pos = d.lastPosition || d.position || {};
+            if (pos.lat && pos.lng) {
+                for (let [did, drv] of Object.entries(drivers)) {
+                    if (drv.deviceId == devId) {
+                        drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        break;
+                    }
+                }
             }
         }
         updateAllMarkers();
         renderDriverBadges();
-    }, 5000);
-
-    // Add demo drivers if empty
-    if (Object.keys(drivers).length === 0) {
-        const demoColors = ['#f7c948', '#ff6b6b', '#4ecdc4', '#45b7d1'];
-        const demoNames = ['Driver 1', 'Driver 2', 'Driver 3', 'Driver 4'];
-        demoNames.forEach((name, i) => {
-            const key = 'demo_driver_' + i;
-            demoDrivers[key] = { name, color: demoColors[i % demoColors.length], deviceId: 'DEV' + (1000 + i) };
-            drivers[key] = demoDrivers[key];
-        });
-        renderDriverBadges();
-        renderSettingsList();
+    } catch(e) {
+        console.warn('fetch devices error:', e);
     }
 }
 
@@ -398,7 +365,13 @@ function initMap() {
     mapInitialized = true;
     updateAllMarkers();
     const addrInput = document.getElementById('stopAddress');
-    if (addrInput) new google.maps.places.Autocomplete(addrInput, { componentRestrictions: { country: 'ca' } });
+    if (addrInput) {
+        try {
+            new google.maps.places.Autocomplete(addrInput, { componentRestrictions: { country: 'ca' } });
+        } catch(e) {
+            console.warn('Places Autocomplete not available:', e);
+        }
+    }
 }
 
 function updateAllMarkers() {
@@ -581,18 +554,22 @@ function renderStopList() {
     }
     container.innerHTML = html;
     if (sortableInstance) sortableInstance.destroy();
-    sortableInstance = new Sortable(container, {
-        animation: 150, delay: 400, delayOnTouchOnly: true,
-        onEnd: function(evt) {
-            const items = container.querySelectorAll('.stop-item');
-            const newOrder = Array.from(items).map(el => el.dataset.id);
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const updates = {};
-            newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
-            const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-            fbUpdate(ref, updates);
-        }
-    });
+    try {
+        sortableInstance = new Sortable(container, {
+            animation: 150, delay: 400, delayOnTouchOnly: true,
+            onEnd: function(evt) {
+                const items = container.querySelectorAll('.stop-item');
+                const newOrder = Array.from(items).map(el => el.dataset.id);
+                const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+                const updates = {};
+                newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
+                const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+                fbUpdate(ref, updates).catch(() => {});
+            }
+        });
+    } catch(e) {
+        console.warn('Sortable init failed:', e);
+    }
 }
 
 // ===== STOP ACTIONS =====
@@ -603,27 +580,28 @@ function addStop() {
     if (!name || !address || !city) { alert('Fill all fields'); return; }
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
     const stop = { name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() };
-    fbPush(ref, stop);
-    document.getElementById('stopName').value = '';
-    document.getElementById('stopAddress').value = '';
-    document.getElementById('stopCity').value = '';
+    fbPush(ref, stop).then(() => {
+        document.getElementById('stopName').value = '';
+        document.getElementById('stopAddress').value = '';
+        document.getElementById('stopCity').value = '';
+    }).catch(() => {});
 }
 
 function completeStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    fbUpdate(ref, { [`${id}/status`]: 'completed', [`${id}/completedAt`]: Date.now() });
+    fbUpdate(ref, { [`${id}/status`]: 'completed', [`${id}/completedAt`]: Date.now() }).catch(() => {});
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
 function reopenStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    fbUpdate(ref, { [`${id}/status`]: 'pending', [`${id}/completedAt`]: null });
+    fbUpdate(ref, { [`${id}/status`]: 'pending', [`${id}/completedAt`]: null }).catch(() => {});
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
 function assignStop(id, driverId) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    fbUpdate(ref, { [`${id}/assignedDriver`]: driverId || null });
+    fbUpdate(ref, { [`${id}/assignedDriver`]: driverId || null }).catch(() => {});
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
 }
 
@@ -634,15 +612,15 @@ function moveToTomorrow(id) {
         const val = snap.val();
         if (!val) return;
         fbPush(refTomorrow, val).then(() => {
-            fbUpdate(refToday, { [id]: null });
-        });
-    });
+            fbUpdate(refToday, { [id]: null }).catch(() => {});
+        }).catch(() => {});
+    }).catch(() => {});
 }
 
 function deleteStop(id) {
     if (!confirm('Delete stop?')) return;
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    fbUpdate(ref, { [id]: null });
+    fbUpdate(ref, { [id]: null }).catch(() => {});
 }
 
 function switchDay(day) {
@@ -663,14 +641,12 @@ function nextDayPrompt() {
             const updates = {};
             pending.forEach(([id, s]) => { updates[id] = s; });
             fbUpdate(refTomorrow, updates).then(() => {
-                const completedIds = Object.entries(data).filter(([id, s]) => s.status === 'completed').map(([id]) => id);
                 const removes = {};
-                completedIds.forEach(id => { removes[id] = null; });
-                pending.forEach(([id]) => { removes[id] = null; });
-                fbUpdate(refToday, removes);
+                Object.keys(data).forEach(id => { removes[id] = null; });
+                fbUpdate(refToday, removes).catch(() => {});
                 switchDay('tomorrow');
-            });
-        });
+            }).catch(() => {});
+        }).catch(() => {});
     }
 }
 
@@ -699,47 +675,40 @@ function renderSettingsList() {
 
 function addDriverRow() {
     const ref = getDriversRef();
-    const newRef = ref.push();
-    const driverData = { name: 'Driver', color: '#f7c948', deviceId: '' };
-    fbPush(ref, driverData).then(result => {
-        // Update local
-        const id = result.key;
-        drivers[id] = driverData;
-        demoDrivers[id] = driverData;
+    const driverData = { name: 'Driver', color: '#f7c948', deviceId: '', lastLocation: null };
+    fbPush(ref, driverData).then(() => {
         renderSettingsList();
-        renderDriverBadges();
-    });
+    }).catch(() => {});
 }
 
 function removeDriver(id) {
     if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
     const ref = getDriversRef();
-    fbUpdate(ref, { [id]: null });
-    delete drivers[id];
-    delete demoDrivers[id];
-    // unassign stops
-    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
-    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    fbOnce(refToday).then(snap => {
-        const data = snap.val() || {};
-        const updates = {};
-        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
-        fbUpdate(refToday, updates);
-    });
-    fbOnce(refTomorrow).then(snap => {
-        const data = snap.val() || {};
-        const updates = {};
-        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
-        fbUpdate(refTomorrow, updates);
-    });
-    renderSettingsList();
-    renderDriverBadges();
+    fbUpdate(ref, { [id]: null }).then(() => {
+        // unassign stops
+        const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+        const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+        fbOnce(refToday).then(snap => {
+            const data = snap.val() || {};
+            const updates = {};
+            Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+            fbUpdate(refToday, updates).catch(() => {});
+        }).catch(() => {});
+        fbOnce(refTomorrow).then(snap => {
+            const data = snap.val() || {};
+            const updates = {};
+            Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+            fbUpdate(refTomorrow, updates).catch(() => {});
+        }).catch(() => {});
+        renderSettingsList();
+        renderDriverBadges();
+    }).catch(() => {});
 }
 
 function saveSettings() {
     const email = document.getElementById('pajEmail').value.trim();
     const pass = document.getElementById('pajPassword').value.trim();
-    fbUpdate(getMasterRef(), { paj_email: email, paj_password: pass });
+    fbUpdate(getMasterRef(), { paj_email: email, paj_password: pass }).catch(() => {});
 
     const rows = document.querySelectorAll('#driverSettingsList .driver-row');
     rows.forEach(row => {
@@ -748,21 +717,14 @@ function saveSettings() {
         const color = row.querySelector('.drv-color').value;
         const deviceId = row.querySelector('.drv-device').value;
         if (id) {
-            fbUpdate(getDriversRef(), { [`${id}/name`]: name, [`${id}/color`]: color, [`${id}/deviceId`]: deviceId });
-            if (drivers[id]) {
-                drivers[id].name = name;
-                drivers[id].color = color;
-                drivers[id].deviceId = deviceId;
-            }
+            fbUpdate(getDriversRef(), { [`${id}/name`]: name, [`${id}/color`]: color, [`${id}/deviceId`]: deviceId }).catch(() => {});
         }
     });
+    if (email && pass) authenticatePAJ();
     renderDriverBadges();
     renderStopList();
     closeSettings();
 }
-
-// ===== THEME TOGGLE =====
-function toggleTheme() {}
 
 // ===== START =====
 initApp();
