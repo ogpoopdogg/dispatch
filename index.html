@@ -603,28 +603,71 @@ function getPAJTimestamp(device) {
     return Date.now();
 }
 
-// ===== FETCH POSITIONS - DIRECT APPROACH =====
-// Track if we're already retrying to avoid loops
+// ===== RECURSIVE SEARCH FOR COORDINATES =====
+function findCoordinatesInObject(obj, path = 'root') {
+    if (obj === null || typeof obj !== 'object') return null;
+    
+    // Check if this object has numeric lat and lng (or latitude/longitude)
+    let lat = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
+    let lng = obj.lng ?? obj.longitude ?? obj.Lon ?? obj.Longitude ?? obj.lon ?? null;
+    if (lat !== null && lng !== null) {
+        lat = parseFloat(lat);
+        lng = parseFloat(lng);
+        if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            console.log(`Found coordinates at ${path}: lat=${lat}, lng=${lng}`);
+            return { lat, lng };
+        }
+    }
+    
+    // Check for arrays that might be [lat, lng]
+    if (Array.isArray(obj) && obj.length >= 2) {
+        const a = parseFloat(obj[0]);
+        const b = parseFloat(obj[1]);
+        if (!isNaN(a) && !isNaN(b) && (a !== 0 || b !== 0) && a >= -90 && a <= 90 && b >= -180 && b <= 180) {
+            console.log(`Found coordinates in array at ${path}: [${a}, ${b}]`);
+            return { lat: a, lng: b };
+        }
+    }
+    
+    // Check for string that looks like "lat,lng"
+    if (typeof obj === 'string' && obj.includes(',') && obj.includes('.')) {
+        const parts = obj.split(',').map(s => parseFloat(s.trim()));
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] >= -90 && parts[0] <= 90 && parts[1] >= -180 && parts[1] <= 180) {
+            console.log(`Found coordinates in string at ${path}: ${obj}`);
+            return { lat: parts[0], lng: parts[1] };
+        }
+    }
+    
+    // Recursively search nested objects
+    if (typeof obj === 'object') {
+        for (let key of Object.keys(obj)) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                const result = findCoordinatesInObject(obj[key], `${path}.${key}`);
+                if (result) return result;
+            }
+        }
+    }
+    return null;
+}
+
+// ===== FETCH POSITIONS =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     try {
-        // 1. Get the list of devices
         const deviceRes = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${pajToken}` }
         });
         
-        // Handle authentication errors
         if (deviceRes.status === 401 || deviceRes.status === 403) {
             console.warn('PAJ token expired, re-authenticating...');
             if (!authRetryInProgress) {
                 authRetryInProgress = true;
                 await authenticatePAJ();
                 authRetryInProgress = false;
-                // Retry the request once after authentication
                 console.log('Retrying fetchAllDevicePositions after re-auth...');
-                await fetchAllDevicePositions(); // Recursive retry
+                await fetchAllDevicePositions();
             }
             return;
         }
@@ -644,9 +687,8 @@ async function fetchAllDevicePositions() {
         if (devices.length > 0) {
             console.log('Sample device:', devices[0]);
             console.log('Keys of sample device:', Object.keys(devices[0]));
-            // Log radius_lat and radius_lng values
-            console.log('radius_lat:', devices[0].radius_lat, 'radius_lng:', devices[0].radius_lng);
-            console.log('last_lat_symbol:', devices[0].last_lat_symbol, 'last_lng_symbol:', devices[0].last_lng_symbol);
+            // Log full device object for debugging
+            console.log('Full device object:', JSON.stringify(devices[0], null, 2));
         }
         
         let updated = false;
@@ -655,51 +697,12 @@ async function fetchAllDevicePositions() {
             const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
             
-            // --- NEW COORDINATE EXTRACTION ---
-            let lat = null, lng = null;
+            // Attempt to find coordinates recursively in the device object
+            let coords = findCoordinatesInObject(d, 'device');
+            let lat = coords ? coords.lat : null;
+            let lng = coords ? coords.lng : null;
             
-            // 1. Check for lastPosition or position objects
-            const posObj = d.lastPosition || d.position || null;
-            if (posObj && typeof posObj === 'object') {
-                // Try to get lat/lng from the object
-                let pLat = posObj.lat ?? posObj.latitude ?? posObj.Lat ?? null;
-                let pLng = posObj.lng ?? posObj.longitude ?? posObj.Lon ?? posObj.lon ?? null;
-                if (pLat !== null && pLng !== null) {
-                    lat = parseFloat(pLat);
-                    lng = parseFloat(pLng);
-                    if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                        console.log(`Using lastPosition/position for device ${devId}: ${lat}, ${lng}`);
-                    } else {
-                        lat = null; lng = null;
-                    }
-                }
-            }
-            
-            // 2. If not found, try radius_lat/radius_lng
-            if (lat === null || lng === null) {
-                if (d.radius_lat !== undefined && d.radius_lng !== undefined) {
-                    const rLat = parseFloat(d.radius_lat);
-                    const rLng = parseFloat(d.radius_lng);
-                    if (!isNaN(rLat) && !isNaN(rLng) && (rLat !== 0 || rLng !== 0) && rLat >= -90 && rLat <= 90 && rLng >= -180 && rLng <= 180) {
-                        lat = rLat; lng = rLng;
-                        console.log(`Using radius_lat/lng for device ${devId}: ${lat}, ${lng}`);
-                    }
-                }
-            }
-            
-            // 3. If not found, try last_lat_symbol/last_lng_symbol
-            if (lat === null || lng === null) {
-                if (d.last_lat_symbol !== undefined && d.last_lng_symbol !== undefined) {
-                    const sLat = parseFloat(d.last_lat_symbol);
-                    const sLng = parseFloat(d.last_lng_symbol);
-                    if (!isNaN(sLat) && !isNaN(sLng) && (sLat !== 0 || sLng !== 0) && sLat >= -90 && sLat <= 90 && sLng >= -180 && sLng <= 180) {
-                        lat = sLat; lng = sLng;
-                        console.log(`Using last_lat_symbol/lng for device ${devId}: ${lat}, ${lng}`);
-                    }
-                }
-            }
-            
-            // 4. If still not found, try to get from position endpoint
+            // If not found, try to get from position endpoint
             if (lat === null || lng === null) {
                 // Try with device ID
                 try {
@@ -720,23 +723,20 @@ async function fetchAllDevicePositions() {
                         const posData = await posRes.json();
                         const pos = posData.success || posData.data || posData;
                         if (pos) {
-                            let pLat = pos.lat ?? pos.latitude ?? pos.Lat ?? null;
-                            let pLng = pos.lng ?? pos.longitude ?? pos.Lon ?? pos.lon ?? null;
-                            if (pLat !== null && pLng !== null) {
-                                lat = parseFloat(pLat);
-                                lng = parseFloat(pLng);
-                                if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                                    console.log(`Using position endpoint (id) for device ${devId}: ${lat}, ${lng}`);
-                                } else {
-                                    lat = null; lng = null;
-                                }
+                            const posCoords = findCoordinatesInObject(pos, 'positionEndpoint');
+                            if (posCoords) {
+                                lat = posCoords.lat;
+                                lng = posCoords.lng;
+                                console.log(`Using position endpoint (id) for device ${devId}: ${lat}, ${lng}`);
                             }
                         }
+                    } else {
+                        console.log(`Position endpoint for device ${devId} returned status ${posRes.status}`);
                     }
                 } catch(e) { /* ignore */ }
             }
             
-            // 5. If still not found, try with IMEI
+            // If still not found and we have an IMEI, try with that
             if (lat === null || lng === null && d.imei) {
                 try {
                     const posRes = await fetch(`${PAJ_BASE}/device/${d.imei}/position`, {
@@ -746,16 +746,11 @@ async function fetchAllDevicePositions() {
                         const posData = await posRes.json();
                         const pos = posData.success || posData.data || posData;
                         if (pos) {
-                            let pLat = pos.lat ?? pos.latitude ?? pos.Lat ?? null;
-                            let pLng = pos.lng ?? pos.longitude ?? pos.Lon ?? pos.lon ?? null;
-                            if (pLat !== null && pLng !== null) {
-                                lat = parseFloat(pLat);
-                                lng = parseFloat(pLng);
-                                if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                                    console.log(`Using position endpoint (imei) for device ${devId}: ${lat}, ${lng}`);
-                                } else {
-                                    lat = null; lng = null;
-                                }
+                            const posCoords = findCoordinatesInObject(pos, 'positionEndpointImei');
+                            if (posCoords) {
+                                lat = posCoords.lat;
+                                lng = posCoords.lng;
+                                console.log(`Using position endpoint (imei) for device ${devId}: ${lat}, ${lng}`);
                             }
                         }
                     }
@@ -764,23 +759,19 @@ async function fetchAllDevicePositions() {
             
             // If we have valid coordinates, update the driver
             if (lat !== null && lng !== null) {
-                // Get PAJ timestamp
                 const pajTimestamp = getPAJTimestamp(d);
                 console.log(`PAJ device: ${d.name || 'Unnamed'}, Device ID: ${devId}, Timestamp: ${pajTimestamp}`);
                 
                 let matched = false;
                 for (let [did, drv] of Object.entries(drivers)) {
-                    // Safe comparison: trim, stringify, handle null/undefined
                     const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
                     const pajDeviceId = String(devId).trim();
                     if (drvDeviceId && pajDeviceId && drvDeviceId === pajDeviceId) {
                         matched = true;
-                        // Only update if we have valid coordinates, preserve existing if not
                         if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
                             drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
                             getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
                             updated = true;
-                            // Log status calculation details
                             const status = getGPSStatus(pajTimestamp);
                             console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
                             console.log(`   PAJ Last Update: ${new Date(pajTimestamp).toISOString()}`);
