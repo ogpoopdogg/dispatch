@@ -482,6 +482,9 @@ function initBusinessAutocomplete() {
         });
     }
     
+    // Load data immediately
+    loadAddressLookup();
+    
     input.addEventListener('focus', function() {
         loadAddressLookup();
         // Trigger initial suggestions
@@ -586,11 +589,15 @@ async function fetchAllDevicePositions() {
         for (let d of devices) {
             const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
-            const pos = d.lastPosition || d.position || {};
-            if (pos.lat && pos.lng) {
+            // Try to extract position from various possible fields
+            let pos = d.lastPosition || d.position || d.gps || {};
+            let lat = pos.lat ?? pos.latitude ?? pos.lat ?? d.lat ?? d.latitude ?? d.lastLat ?? null;
+            let lng = pos.lng ?? pos.longitude ?? pos.lon ?? d.lng ?? d.longitude ?? d.lastLng ?? null;
+            // If lat/lng are numbers and not zero, update
+            if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) {
                 for (let [did, drv] of Object.entries(drivers)) {
                     if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
-                        drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
+                        drv.lastLocation = { lat: parseFloat(lat), lng: parseFloat(lng), updatedAt: now };
                         getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
                         updated = true;
                         break;
@@ -651,7 +658,12 @@ function updateAllMarkers() {
 function renderDriverBadges() {
     const container = document.getElementById('driverBadges');
     container.innerHTML = '';
-    for (let [id, drv] of Object.entries(drivers)) {
+    const driverEntries = Object.entries(drivers);
+    if (driverEntries.length === 0) {
+        container.innerHTML = '<span style="color:var(--muted); font-size:13px; background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:20px;">No drivers — add in Settings</span>';
+        return;
+    }
+    for (let [id, drv] of driverEntries) {
         const badge = document.createElement('div');
         badge.className = 'driver-badge';
         badge.style.borderLeftColor = drv.color || '#f7c948';
