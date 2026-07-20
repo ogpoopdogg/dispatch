@@ -575,100 +575,32 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== FETCH POSITIONS INDIVIDUALLY =====
-async function fetchAllDevicePositions() {
-    if (!pajToken) return;
-    try {
-        // Get device list first
-        const response = await fetch(`${PAJ_BASE}/device`, {
-            headers: { 'Authorization': `Bearer ${pajToken}` }
-        });
-        const data = await response.json();
-        let devices = data.success || data.data || data;
-        if (!Array.isArray(devices)) {
-            console.warn('PAJ devices response is not an array:', devices);
-            return;
-        }
-        console.log('PAJ devices response:', devices);
-        if (devices.length > 0) {
-            console.log('Sample device:', devices[0]);
-            console.log('Keys of sample device:', Object.keys(devices[0]));
-        }
-        
-        const now = Date.now();
-        let updated = false;
-        
-        // For each device, fetch its position individually
-        for (let d of devices) {
-            const devId = d.id || d.deviceId || d.imei;
-            if (!devId) continue;
-            
-            // Try to get position from the device object itself first
-            let coords = findCoordinates(d, 'device');
-            if (!coords) {
-                // If not found, try fetching device details (which may include position)
-                try {
-                    const detailRes = await fetch(`${PAJ_BASE}/device/${devId}`, {
-                        headers: { 'Authorization': `Bearer ${pajToken}` }
-                    });
-                    if (detailRes.ok) {
-                        const detail = await detailRes.json();
-                        const deviceDetail = detail.success || detail.data || detail;
-                        if (deviceDetail) {
-                            coords = findCoordinates(deviceDetail, 'deviceDetail');
-                            if (coords) {
-                                console.log(`Found coordinates in detail for device ${devId}:`, coords);
-                            }
-                        }
-                    }
-                } catch(e) { /* ignore */ }
-            }
-            
-            // If still no coords, try the position endpoint
-            if (!coords) {
-                try {
-                    const posRes = await fetch(`${PAJ_BASE}/device/${devId}/position`, {
-                        headers: { 'Authorization': `Bearer ${pajToken}` }
-                    });
-                    if (posRes.ok) {
-                        const posData = await posRes.json();
-                        const position = posData.success || posData.data || posData;
-                        coords = findCoordinates(position, 'positionEndpoint');
-                        if (coords) {
-                            console.log(`Found coordinates in position endpoint for device ${devId}:`, coords);
-                        }
-                    }
-                } catch(e) { /* ignore */ }
-            }
-            
-            if (coords) {
-                for (let [did, drv] of Object.entries(drivers)) {
-                    if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
-                        drv.lastLocation = { lat: coords.lat, lng: coords.lng, updatedAt: now };
-                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                        updated = true;
-                        console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${coords.lat},${coords.lng}`);
-                        break;
-                    }
-                }
-            } else {
-                console.warn(`No coordinates found for device ${devId} after trying all methods`);
-            }
-        }
-        if (updated) {
-            updateAllMarkers();
-            renderDriverBadges();
-        }
-    } catch(e) { console.warn('fetch devices error:', e); }
-}
-
 // ===== RECURSIVE COORDINATE SEARCH =====
 function findCoordinates(obj, path = 'root') {
     if (obj === null || typeof obj !== 'object') return null;
     
-    // Check if this object has numeric lat and lng (or latitude/longitude)
-    let lat = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
-    let lng = obj.lng ?? obj.longitude ?? obj.Lon ?? obj.Longitude ?? obj.lon ?? null;
+    // First, check for specific PAJ fields (radius_lat/radius_lng, last_lat_symbol/last_lng_symbol)
+    let lat = null, lng = null;
+    if (obj.radius_lat !== undefined && obj.radius_lng !== undefined) {
+        lat = parseFloat(obj.radius_lat);
+        lng = parseFloat(obj.radius_lng);
+        if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            console.log(`Found coordinates via radius fields at ${path}: lat=${lat}, lng=${lng}`);
+            return { lat, lng };
+        }
+    }
+    if (obj.last_lat_symbol !== undefined && obj.last_lng_symbol !== undefined) {
+        lat = parseFloat(obj.last_lat_symbol);
+        lng = parseFloat(obj.last_lng_symbol);
+        if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            console.log(`Found coordinates via last_lat_symbol/last_lng_symbol at ${path}: lat=${lat}, lng=${lng}`);
+            return { lat, lng };
+        }
+    }
+    
+    // Then check for common lat/lng keys
+    lat = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
+    lng = obj.lng ?? obj.longitude ?? obj.Lon ?? obj.Longitude ?? obj.lon ?? null;
     if (lat !== null && lng !== null) {
         lat = parseFloat(lat);
         lng = parseFloat(lng);
@@ -721,6 +653,89 @@ function findCoordinates(obj, path = 'root') {
         }
     }
     return null;
+}
+
+async function fetchAllDevicePositions() {
+    if (!pajToken) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
+        });
+        const data = await response.json();
+        let devices = data.success || data.data || data;
+        if (!Array.isArray(devices)) {
+            console.warn('PAJ devices response is not an array:', devices);
+            return;
+        }
+        console.log('PAJ devices response:', devices);
+        if (devices.length > 0) {
+            console.log('Sample device:', devices[0]);
+            console.log('Keys of sample device:', Object.keys(devices[0]));
+        }
+        
+        const now = Date.now();
+        let updated = false;
+        
+        for (let d of devices) {
+            const devId = d.id || d.deviceId || d.imei;
+            if (!devId) continue;
+            
+            // First try to find coordinates in the main device object
+            let coords = findCoordinates(d, 'device');
+            if (!coords) {
+                // If not found, try fetching device detail (might have position)
+                try {
+                    const detailRes = await fetch(`${PAJ_BASE}/device/${devId}`, {
+                        headers: { 'Authorization': `Bearer ${pajToken}` }
+                    });
+                    if (detailRes.ok) {
+                        const detail = await detailRes.json();
+                        const deviceDetail = detail.success || detail.data || detail;
+                        if (deviceDetail) {
+                            coords = findCoordinates(deviceDetail, 'deviceDetail');
+                            if (coords) {
+                                console.log(`Found coordinates in detail for device ${devId}:`, coords);
+                            }
+                        }
+                    }
+                } catch(e) { /* ignore */ }
+            }
+            // If still no coords, try the position endpoint
+            if (!coords) {
+                try {
+                    const posRes = await fetch(`${PAJ_BASE}/device/${devId}/position`, {
+                        headers: { 'Authorization': `Bearer ${pajToken}` }
+                    });
+                    if (posRes.ok) {
+                        const posData = await posRes.json();
+                        const position = posData.success || posData.data || posData;
+                        coords = findCoordinates(position, 'positionEndpoint');
+                        if (coords) {
+                            console.log(`Found coordinates in position endpoint for device ${devId}:`, coords);
+                        }
+                    }
+                } catch(e) { /* ignore */ }
+            }
+            
+            if (coords) {
+                for (let [did, drv] of Object.entries(drivers)) {
+                    if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
+                        drv.lastLocation = { lat: coords.lat, lng: coords.lng, updatedAt: now };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        updated = true;
+                        console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${coords.lat},${coords.lng}`);
+                        break;
+                    }
+                }
+            } else {
+                console.warn(`No coordinates found for device ${devId} after trying all methods`);
+            }
+        }
+        if (updated) {
+            updateAllMarkers();
+            renderDriverBadges();
+        }
+    } catch(e) { console.warn('fetch devices error:', e); }
 }
 
 // ===== MAP =====
