@@ -589,18 +589,49 @@ async function fetchAllDevicePositions() {
         for (let d of devices) {
             const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
-            // Try to extract position from various possible fields
-            let pos = d.lastPosition || d.position || d.gps || {};
-            let lat = pos.lat ?? pos.latitude ?? pos.lat ?? d.lat ?? d.latitude ?? d.lastLat ?? null;
-            let lng = pos.lng ?? pos.longitude ?? pos.lon ?? d.lng ?? d.longitude ?? d.lastLng ?? null;
-            // If lat/lng are numbers and not zero, update
-            if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) {
-                for (let [did, drv] of Object.entries(drivers)) {
-                    if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
-                        drv.lastLocation = { lat: parseFloat(lat), lng: parseFloat(lng), updatedAt: now };
-                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                        updated = true;
-                        break;
+            
+            // Robust position extraction
+            let lat = null, lng = null;
+            // Try common position fields
+            const posObj = d.lastPosition || d.position || d.gps || d.coords || d.location || d.lastPos || d.last_location || {};
+            if (typeof posObj === 'object' && posObj !== null) {
+                lat = posObj.lat ?? posObj.latitude ?? posObj.lat ?? null;
+                lng = posObj.lng ?? posObj.longitude ?? posObj.lon ?? null;
+            }
+            // If not found, try direct fields on the device
+            if (lat === null || lng === null) {
+                lat = d.lat ?? d.latitude ?? d.lastLat ?? null;
+                lng = d.lng ?? d.longitude ?? d.lastLng ?? null;
+            }
+            // If still null, check for a 'data' property
+            if (lat === null || lng === null) {
+                if (d.data && typeof d.data === 'object') {
+                    lat = d.data.lat ?? d.data.latitude ?? null;
+                    lng = d.data.lng ?? d.data.longitude ?? d.data.lon ?? null;
+                }
+            }
+            // If still null, check if location is a string like "lat,lng"
+            if (lat === null || lng === null) {
+                if (d.location && typeof d.location === 'string') {
+                    const parts = d.location.split(',').map(s => parseFloat(s.trim()));
+                    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                        lat = parts[0];
+                        lng = parts[1];
+                    }
+                }
+            }
+            // Convert to numbers and validate
+            if (lat !== null && lng !== null) {
+                lat = parseFloat(lat);
+                lng = parseFloat(lng);
+                if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) {
+                    for (let [did, drv] of Object.entries(drivers)) {
+                        if (drv.deviceId && drv.deviceId.toString() === devId.toString()) {
+                            drv.lastLocation = { lat: lat, lng: lng, updatedAt: now };
+                            getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                            updated = true;
+                            break;
+                        }
                     }
                 }
             }
