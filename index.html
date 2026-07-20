@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dispatch · PAJ GPS</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a2e">
     <link href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -21,23 +20,31 @@
         .login-box input { width: 100%; padding: 14px; margin: 8px 0; background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 12px; font-size: 16px; outline: none; }
         .login-box input:focus { border-color: var(--accent); }
         .login-box button { width: 100%; padding: 14px; margin-top: 16px; background: var(--accent); border: none; color: #0b0b14; font-weight: 700; border-radius: 12px; cursor: pointer; font-size: 16px; }
+        #loginError { color: #e74c3c; margin-top: 12px; font-size: 14px; }
 
         header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
-        .logo img { height: 32px; filter: drop-shadow(0 0 6px var(--accent)); cursor: pointer; }
+        .logo svg { height: 32px; }
         .badge { background: var(--accent); color: #0b0b14; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
         .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .header-actions button { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .header-actions button:hover { background: #2a2a3e; border-color: var(--accent); }
+        .user-email { font-size: 13px; color: var(--muted); }
 
         .app-grid { display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; width: 100%; flex: 1; }
         .map-wrapper { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; position: relative; height: 380px; min-height: 280px; }
         #dispatch-map { width: 100%; height: 100%; }
-        .driver-badge-container { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 10; pointer-events: none; }
-        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .driver-badge:hover { background: rgba(30,30,50,0.9); transform: scale(1.02); }
-        .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
-        .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 4px; }
+        .driver-badge-container { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 10; pointer-events: none; max-width: calc(100% - 24px); }
+        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .driver-badge:hover { background: rgba(30,30,50,0.95); transform: scale(1.02); }
+        .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; flex-shrink: 0; }
+        .driver-badge .status-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 4px; }
+        .driver-badge .status-online { background: #0a2a1a; color: #2ecc71; }
+        .driver-badge .status-standby { background: #2a2a0a; color: #f1c40f; }
+        .driver-badge .status-offline { background: #2a0a0a; color: #e74c3c; }
+        .driver-badge .status-indicator .pulse { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 
         .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
@@ -46,8 +53,8 @@
         .day-toggle button { background: transparent; border: none; padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: 0.2s; }
         .day-toggle button.active { background: var(--accent); color: #0b0b14; }
         .add-stop-area { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; background: var(--card2); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
-        .add-stop-area input { flex: 1 1 160px; background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 30px; font-size: 14px; min-width: 120px; }
-        .add-stop-area input:focus { border-color: var(--accent); outline: none; }
+        .add-stop-area input { flex: 1 1 160px; background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 30px; font-size: 14px; min-width: 120px; outline: none; }
+        .add-stop-area input:focus { border-color: var(--accent); }
         .add-stop-area .btn-add { background: var(--accent); color: #0b0b14; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; }
         .stop-list { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
         .stop-item { background: var(--card2); border-radius: 14px; padding: 12px 16px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 12px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
@@ -71,17 +78,17 @@
         .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; }
         .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
         .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .driver-modal .modal-stops .stop-item { background: #12121c; border-left-color: var(--driver-color, #f7c948); }
+        .driver-modal .modal-stops .stop-item { background: #12121c; }
 
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 520px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
         .settings-card h2 { margin-bottom: 20px; }
         .settings-card .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
         .settings-card .field label { font-weight: 600; font-size: 14px; }
-        .settings-card .field input { background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 12px; }
-        .settings-card .field input:focus { border-color: var(--accent); outline: none; }
+        .settings-card .field input { background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 12px; outline: none; }
+        .settings-card .field input:focus { border-color: var(--accent); }
         .settings-card .driver-row { display: flex; gap: 8px; align-items: center; background: var(--card2); padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; }
-        .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; }
+        .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; outline: none; }
         .settings-card .driver-row input.color-pick { width: 40px; padding: 0; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; }
         .settings-card .driver-row .remove-driver { background: transparent; border: none; color: #e74c3c; font-weight: 700; cursor: pointer; font-size: 18px; }
         .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
@@ -89,10 +96,16 @@
         .settings-actions .save-btn { background: var(--accent); color: #0b0b14; }
         .settings-actions .close-btn { background: transparent; border: 1px solid var(--border); color: var(--text); }
 
+        .gps-status-legend { display: flex; gap: 16px; padding: 8px 12px; background: var(--card2); border-radius: 30px; border: 1px solid var(--border); font-size: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+        .gps-status-legend .legend-item { display: flex; align-items: center; gap: 6px; }
+        .gps-status-legend .legend-dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
+        .legend-dot.online { background: #2ecc71; }
+        .legend-dot.standby { background: #f1c40f; }
+        .legend-dot.offline { background: #e74c3c; }
+
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
-        @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } }
+        @media (max-width: 600px) { .map-wrapper { height: 260px; } .stop-item { flex-wrap: wrap; } .stop-item .actions { margin-left: auto; } .driver-badge-container { gap: 4px; } .driver-badge { font-size: 11px; padding: 4px 10px; } .gps-status-legend { font-size: 10px; gap: 10px; } }
         .hidden { display: none !important; }
-        .text-accent { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -104,7 +117,7 @@
         <input type="email" id="loginEmail" placeholder="Email (@ec.com)" autofocus>
         <input type="password" id="loginPassword" placeholder="Password">
         <button onclick="login()">Sign In</button>
-        <div id="loginError" style="color:#e74c3c; margin-top:12px; font-size:14px;"></div>
+        <div id="loginError"></div>
     </div>
 </div>
 
@@ -112,12 +125,12 @@
 <div id="app" style="display:none;">
     <header>
         <div class="logo">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f7c948'/%3E%3Cpath d='M30 30 L70 30 L70 70 L30 70 Z' fill='%231a1a2e'/%3E%3Ccircle cx='50' cy='50' r='15' fill='%23f7c948'/%3E%3C/svg%3E" alt="logo" style="height:32px;">
+            <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#f7c948"/><path d="M30 30 L70 30 L70 70 L30 70 Z" fill="#1a1a2e"/><circle cx="50" cy="50" r="15" fill="#f7c948"/></svg>
             <span>DISPATCH · PAJ</span>
             <span class="badge">LIVE</span>
         </div>
         <div class="header-actions">
-            <span id="userEmail" style="font-size:13px; color:var(--muted);"></span>
+            <span class="user-email" id="userEmail"></span>
             <button onclick="openSettings()">⚙️ Drivers</button>
             <button onclick="nextDayPrompt()">📅 Next Day</button>
             <button onclick="logout()" style="background:#2a0a0a; border-color:#e74c3c; color:#e74c3c;">Logout</button>
@@ -139,10 +152,18 @@
                 </div>
             </div>
 
+            <!-- GPS Status Legend -->
+            <div class="gps-status-legend">
+                <span class="legend-item"><span class="legend-dot online"></span> Online</span>
+                <span class="legend-item"><span class="legend-dot standby"></span> Standby</span>
+                <span class="legend-item"><span class="legend-dot offline"></span> Offline</span>
+                <span style="color:var(--muted); margin-left:auto;" id="lastGlobalUpdate">Updating...</span>
+            </div>
+
             <div class="add-stop-area">
-                <input type="text" id="stopName" placeholder="Business name" autocomplete="off">
-                <input type="text" id="stopAddress" placeholder="Address" autocomplete="off">
-                <input type="text" id="stopCity" placeholder="City" autocomplete="off">
+                <input type="text" id="stopName" placeholder="Business name">
+                <input type="text" id="stopAddress" placeholder="Address">
+                <input type="text" id="stopCity" placeholder="City">
                 <button class="btn-add" onclick="addStop()">+ Add</button>
             </div>
 
@@ -214,16 +235,10 @@ function login() {
     const password = document.getElementById('loginPassword').value.trim();
     const errorEl = document.getElementById('loginError');
     errorEl.textContent = '';
-    
-    if (!email || !password) {
-        errorEl.textContent = 'Please enter email and password.';
-        return;
-    }
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .catch(err => {
-            errorEl.textContent = 'Login failed: ' + err.message;
-        });
+    if (!email || !password) { errorEl.textContent = 'Please enter email and password.'; return; }
+    auth.signInWithEmailAndPassword(email, password).catch(err => {
+        errorEl.textContent = 'Login failed: ' + err.message;
+    });
 }
 
 function logout() {
@@ -261,24 +276,38 @@ let sortableInstance = null;
 let gpsInterval = null;
 let pajToken = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
+const STANDBY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+const OFFLINE_THRESHOLD = 15 * 60 * 1000; // 15 minutes
 
-// ===== HELPERS =====
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
 
+// ===== GPS STATUS HELPER =====
+function getGPSStatus(lastUpdated) {
+    if (!lastUpdated) return { status: 'offline', label: 'Offline', class: 'status-offline' };
+    const now = Date.now();
+    const diff = now - lastUpdated;
+    if (diff < STANDBY_THRESHOLD) {
+        return { status: 'online', label: '● Online', class: 'status-online' };
+    } else if (diff < OFFLINE_THRESHOLD) {
+        return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+    } else {
+        return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+    }
+}
+
 // ===== INIT =====
 function initApp() {
-    // Load drivers
     getDriversRef().on('value', snap => {
         drivers = snap.val() || {};
         renderDriverBadges();
         updateAllMarkers();
         renderSettingsList();
         renderStopList();
+        updateGlobalUpdateTime();
     });
 
-    // Load stops
     db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
         stopsToday = snap.val() || {};
         if (currentDay === 'today') renderStopList();
@@ -288,22 +317,30 @@ function initApp() {
         if (currentDay === 'tomorrow') renderStopList();
     });
 
-    // Load master config
     getMasterRef().once('value').then(snap => {
         const cfg = snap.val() || {};
         document.getElementById('pajEmail').value = cfg.paj_email || '';
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
+        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
 
-    // Start GPS polling
     if (gpsInterval) clearInterval(gpsInterval);
     gpsInterval = setInterval(() => {
         if (pajToken) fetchAllDevicePositions();
+        updateGlobalUpdateTime();
     }, 10000);
     setTimeout(fetchAllDevicePositions, 2000);
+}
+
+function updateGlobalUpdateTime() {
+    const el = document.getElementById('lastGlobalUpdate');
+    if (el) {
+        const now = new Date();
+        el.textContent = '⏱ ' + now.toLocaleTimeString();
+    }
 }
 
 // ===== PAJ GPS =====
@@ -335,6 +372,7 @@ async function fetchAllDevicePositions() {
         const devices = await response.json();
         if (!Array.isArray(devices)) return;
         const now = Date.now();
+        let updated = false;
         for (let d of devices) {
             const devId = d.id || d.deviceId;
             if (!devId) continue;
@@ -344,13 +382,16 @@ async function fetchAllDevicePositions() {
                     if (drv.deviceId == devId) {
                         drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
                         getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        updated = true;
                         break;
                     }
                 }
             }
         }
-        updateAllMarkers();
-        renderDriverBadges();
+        if (updated) {
+            updateAllMarkers();
+            renderDriverBadges();
+        }
     } catch(e) { console.warn('fetch devices error:', e); }
 }
 
@@ -376,11 +417,29 @@ function updateAllMarkers() {
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
+        const status = getGPSStatus(pos.updatedAt);
+        // Color the marker based on status
+        let markerColor = drv.color || '#f7c948';
+        if (status.status === 'standby') markerColor = '#f1c40f';
+        else if (status.status === 'offline') markerColor = '#95a5a6';
+        
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
-            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: drv.color || '#f7c948', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
+            label: { 
+                text: drv.name || 'Driver', 
+                color: '#fff', 
+                fontWeight: 'bold', 
+                fontSize: '12px' 
+            },
+            icon: { 
+                path: google.maps.SymbolPath.CIRCLE, 
+                scale: 14, 
+                fillColor: markerColor, 
+                fillOpacity: status.status === 'offline' ? 0.5 : 1,
+                strokeColor: '#fff', 
+                strokeWeight: 2 
+            }
         });
         mapMarkers[id] = marker;
     }
@@ -399,10 +458,25 @@ function renderDriverBadges() {
         const badge = document.createElement('div');
         badge.className = 'driver-badge';
         badge.style.borderLeftColor = drv.color || '#f7c948';
+        
         const dot = `<span class="dot" style="background:${drv.color || '#f7c948'}"></span>`;
-        const lastUpdate = drv.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
-        const updateText = drv.lastLocation ? `${lastUpdate}m ago` : 'offline';
-        badge.innerHTML = `${dot} ${drv.name || 'Driver'} <span class="last-update">${updateText}</span>`;
+        const status = getGPSStatus(drv.lastLocation?.updatedAt);
+        const statusLabel = status.label;
+        const statusClass = status.class;
+        
+        // Show last update time in minutes
+        let lastUpdateText = '—';
+        if (drv.lastLocation?.updatedAt) {
+            const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
+            lastUpdateText = `${mins}m`;
+        }
+        
+        badge.innerHTML = `
+            ${dot} 
+            ${drv.name || 'Driver'} 
+            <span class="status-indicator ${statusClass}">${statusLabel}</span>
+            <span class="last-update">${lastUpdateText}</span>
+        `;
         badge.onclick = () => { zoomToDriver(id); };
         container.appendChild(badge);
     }
@@ -441,11 +515,16 @@ function openDriverModal(driverId) {
         if (container._markers) container._markers.forEach(m => m.setMap(null));
         container._markers = [];
         if (drv?.lastLocation) {
+            const status = getGPSStatus(drv.lastLocation.updatedAt);
+            let color = drv.color || '#f7c948';
+            if (status.status === 'standby') color = '#f1c40f';
+            else if (status.status === 'offline') color = '#95a5a6';
+            
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
                 map: mmap,
                 label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
-                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: drv.color || '#f7c948', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
             });
             container._markers.push(mk);
         }
@@ -470,8 +549,9 @@ function openDriverModal(driverId) {
             }
         });
         renderDriverStops(driverId);
+        const status = getGPSStatus(drv?.lastLocation?.updatedAt);
         const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
-        document.getElementById('driverLastUpdate').textContent = `Last update: ${lastUp}m ago`;
+        document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
         document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
     }, 200);
 }
@@ -667,7 +747,6 @@ function removeDriver(id) {
     if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
     const ref = getDriversRef();
     ref.child(id).remove();
-    // Unassign stops
     const refToday = db.ref('developer/dispatch_dashboard/stops_today');
     const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
     refToday.once('value').then(snap => {
