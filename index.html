@@ -79,7 +79,7 @@
         .driver-modal .modal-stops .stop-item { background: #12121c; }
 
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
-        .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 580px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
+        .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 620px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
         .settings-card h2 { margin-bottom: 20px; }
         .settings-card .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
         .settings-card .field label { font-weight: 600; font-size: 14px; }
@@ -94,7 +94,7 @@
         .settings-actions .save-btn { background: var(--accent); color: #0b0b14; }
         .settings-actions .test-btn { background: #1a3a2a; color: #2ecc71; border: 1px solid #2ecc71; }
         .settings-actions .close-btn { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 300px; overflow-y: auto; color: var(--muted); line-height: 1.8; }
+        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 400px; overflow-y: auto; color: var(--muted); line-height: 1.8; }
         .settings-card .debug-box .success { color: #2ecc71; }
         .settings-card .debug-box .error { color: #e74c3c; }
         .settings-card .debug-box .info { color: #f1c40f; }
@@ -316,7 +316,7 @@ function getGPSStatus(lastUpdated) {
     }
 }
 
-// ===== TEST PAJ CONNECTION - FIXED VERSION =====
+// ===== TEST PAJ CONNECTION - WITH MULTIPLE ENDPOINTS =====
 async function testPAJConnection() {
     const debug = document.getElementById('debugOutput');
     const email = document.getElementById('pajEmail').value.trim();
@@ -348,7 +348,6 @@ async function testPAJConnection() {
             return;
         }
         
-        // FIX: The token is inside "success" object
         let token = null;
         if (loginData.success && loginData.success.token) {
             token = loginData.success.token;
@@ -363,33 +362,75 @@ async function testPAJConnection() {
         }
         
         debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
-        debug.innerHTML += `<span class="info">⏳ Fetching your devices...</span><br>`;
         
-        // Get devices with the token
-        const deviceRes = await fetch(`${PAJ_BASE}/device`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        // Try multiple endpoints to find devices
+        const endpoints = [
+            '/device',
+            '/devices',
+            '/device/list',
+            '/vehicles',
+            '/tracker'
+        ];
         
-        const devicesText = await deviceRes.text();
-        let devices;
-        try {
-            devices = JSON.parse(devicesText);
-        } catch(e) {
-            debug.innerHTML += `<span class="error">❌ Failed to parse device list: ${devicesText.substring(0, 200)}</span>`;
+        let foundDevices = null;
+        let usedEndpoint = '';
+        
+        for (let endpoint of endpoints) {
+            debug.innerHTML += `<span class="info">⏳ Trying endpoint: ${endpoint}...</span><br>`;
+            try {
+                const deviceRes = await fetch(`${PAJ_BASE}${endpoint}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const text = await deviceRes.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    continue;
+                }
+                
+                // Check if this looks like a device list
+                if (Array.isArray(data) && data.length > 0) {
+                    foundDevices = data;
+                    usedEndpoint = endpoint;
+                    break;
+                } else if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                    foundDevices = data.data;
+                    usedEndpoint = endpoint;
+                    break;
+                } else if (data.devices && Array.isArray(data.devices) && data.devices.length > 0) {
+                    foundDevices = data.devices;
+                    usedEndpoint = endpoint;
+                    break;
+                } else if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+                    foundDevices = data.results;
+                    usedEndpoint = endpoint;
+                    break;
+                } else {
+                    // Show what we got for debugging
+                    debug.innerHTML += `<span class="info">   Response: ${JSON.stringify(data).substring(0, 100)}...</span><br>`;
+                }
+            } catch(e) {
+                debug.innerHTML += `<span class="error">   Error: ${e.message}</span><br>`;
+            }
+        }
+        
+        if (!foundDevices || foundDevices.length === 0) {
+            debug.innerHTML += `<br><span class="error">❌ No devices found on any endpoint.</span><br><br>`;
+            debug.innerHTML += `<span class="info">💡 Possible reasons:</span><br>`;
+            debug.innerHTML += `<span class="info">1. No Salind 11 4G devices are added to this account</span><br>`;
+            debug.innerHTML += `<span class="info">2. Devices need to be activated first on the PAJ GPS portal</span><br>`;
+            debug.innerHTML += `<span class="info">3. The API endpoint might have changed</span><br>`;
+            debug.innerHTML += `<span class="info">4. Check at https://connect.paj-gps.de if your devices appear</span><br>`;
             return;
         }
         
-        if (!Array.isArray(devices) || devices.length === 0) {
-            debug.innerHTML += `<span class="error">❌ No devices found. Make sure your PAJ GPS account has Salind 11 4G devices added.</span>`;
-            return;
-        }
-        
-        // Show devices with their IDs
-        let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
-        devices.forEach((d, i) => {
-            const devId = d.id || d.deviceId || 'Unknown';
-            const name = d.name || d.deviceName || 'Unnamed';
-            const pos = d.lastPosition || d.position || {};
+        // Show devices
+        let html = `<span class="success">✅ Found ${foundDevices.length} device(s) (via ${usedEndpoint}):</span><br><br>`;
+        foundDevices.forEach((d, i) => {
+            const devId = d.id || d.deviceId || d.vehicleId || d.trackerId || 'Unknown';
+            const name = d.name || d.deviceName || d.vehicleName || d.trackerName || 'Unnamed';
+            const pos = d.lastPosition || d.position || d.location || {};
             const hasPos = pos.lat && pos.lng;
             
             html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
@@ -404,7 +445,6 @@ async function testPAJConnection() {
         html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span>`;
         debug.innerHTML = html;
         
-        // Store token
         pajToken = token;
         getMasterRef().update({ paj_token: token });
         
@@ -471,7 +511,6 @@ async function authenticatePAJ() {
             body: JSON.stringify({ email, password: pass })
         });
         const data = await response.json();
-        // FIX: Check both locations for token
         let token = data.success?.token || data.token;
         if (token) {
             pajToken = token;
