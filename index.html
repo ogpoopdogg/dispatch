@@ -590,37 +590,54 @@ async function fetchAllDevicePositions() {
             const devId = d.id || d.deviceId || d.imei;
             if (!devId) continue;
             
-            // Robust position extraction
+            // Comprehensive position extraction
             let lat = null, lng = null;
-            // Try common position fields
-            const posObj = d.lastPosition || d.position || d.gps || d.coords || d.location || d.lastPos || d.last_location || {};
-            if (typeof posObj === 'object' && posObj !== null) {
-                lat = posObj.lat ?? posObj.latitude ?? posObj.lat ?? null;
-                lng = posObj.lng ?? posObj.longitude ?? posObj.lon ?? null;
+            const candidates = [
+                d.lastPosition, d.position, d.gps, d.coords, d.location,
+                d.lastPos, d.last_location, d.latestPosition, d.currentPosition,
+                d.latest_location, d.current_location
+            ];
+            for (let obj of candidates) {
+                if (obj && typeof obj === 'object') {
+                    // Check for common keys
+                    lat = obj.lat ?? obj.latitude ?? obj.Lat ?? obj.Latitude ?? null;
+                    lng = obj.lng ?? obj.longitude ?? obj.Lng ?? obj.Longitude ?? null;
+                    if (lat !== null && lng !== null) break;
+                }
             }
-            // If not found, try direct fields on the device
+            // If still null, check direct fields on device
             if (lat === null || lng === null) {
-                lat = d.lat ?? d.latitude ?? d.lastLat ?? null;
-                lng = d.lng ?? d.longitude ?? d.lastLng ?? null;
+                lat = d.lat ?? d.latitude ?? d.Lat ?? d.Latitude ?? d.lastLat ?? d.last_lat ?? null;
+                lng = d.lng ?? d.longitude ?? d.Lng ?? d.Longitude ?? d.lastLng ?? d.last_lng ?? null;
             }
-            // If still null, check for a 'data' property
+            // If still null, check nested data
             if (lat === null || lng === null) {
                 if (d.data && typeof d.data === 'object') {
                     lat = d.data.lat ?? d.data.latitude ?? null;
-                    lng = d.data.lng ?? d.data.longitude ?? d.data.lon ?? null;
+                    lng = d.data.lng ?? d.data.longitude ?? null;
                 }
             }
-            // If still null, check if location is a string like "lat,lng"
+            // If still null, try to parse a string like "49.123,-123.456"
             if (lat === null || lng === null) {
-                if (d.location && typeof d.location === 'string') {
-                    const parts = d.location.split(',').map(s => parseFloat(s.trim()));
+                let posStr = d.positionStr || d.locationStr || d.pos || d.locationString || '';
+                if (!posStr) {
+                    // also check if any field is a string containing a comma and numbers
+                    for (let key of ['position', 'location', 'gps', 'coords', 'lastPosition']) {
+                        if (d[key] && typeof d[key] === 'string' && d[key].includes(',')) {
+                            posStr = d[key];
+                            break;
+                        }
+                    }
+                }
+                if (posStr && typeof posStr === 'string') {
+                    const parts = posStr.split(',').map(s => parseFloat(s.trim()));
                     if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
                         lat = parts[0];
                         lng = parts[1];
                     }
                 }
             }
-            // Convert to numbers and validate
+            // Convert to numbers
             if (lat !== null && lng !== null) {
                 lat = parseFloat(lat);
                 lng = parseFloat(lng);
