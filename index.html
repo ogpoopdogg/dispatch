@@ -603,7 +603,7 @@ function getPAJTimestamp(device) {
     return Date.now();
 }
 
-// ===== FETCH POSITIONS - CORRECT ENDPOINT =====
+// ===== FETCH POSITIONS - CORRECT ENDPOINT WITH PARAMETERS =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
@@ -652,9 +652,9 @@ async function fetchAllDevicePositions() {
             
             let lat = null, lng = null, pajTimestamp = null;
             
-            // Try the correct endpoint: /device/{device_id}/last_points
+            // Try the correct endpoint: /device/{device_id}/last_points?last_points=1
             try {
-                const pointsRes = await fetch(`${PAJ_BASE}/device/${devId}/last_points`, {
+                const pointsRes = await fetch(`${PAJ_BASE}/device/${devId}/last_points?last_points=1`, {
                     headers: { 'Authorization': `Bearer ${pajToken}` }
                 });
                 
@@ -673,8 +673,17 @@ async function fetchAllDevicePositions() {
                     const pointsData = await pointsRes.json();
                     console.log(`Points response for device ${devId}:`, pointsData);
                     
-                    // The response should be an array of points, take the first one (latest)
+                    // The response might be an array of points or an object with a points array
                     let points = pointsData.success || pointsData.data || pointsData;
+                    // If it's an object with a 'points' property, use that
+                    if (points && typeof points === 'object' && !Array.isArray(points) && points.points) {
+                        points = points.points;
+                    }
+                    // Also check for 'lastPoint' if it's not null
+                    if (!Array.isArray(points) && points && points.lastPoint) {
+                        points = [points.lastPoint];
+                    }
+                    
                     if (Array.isArray(points) && points.length > 0) {
                         const latest = points[0];
                         // Try to extract lat/lng from the point
@@ -713,10 +722,10 @@ async function fetchAllDevicePositions() {
                 console.warn(`Error fetching last_points for ${devId}:`, e);
             }
             
-            // If last_points didn't work, try the alternative: /trackerdata/{device_id}/last_points
+            // If last_points didn't work, try the alternative: /trackerdata/{device_id}/last_points?last_points=1
             if (lat === null || lng === null) {
                 try {
-                    const altRes = await fetch(`${PAJ_BASE}/trackerdata/${devId}/last_points`, {
+                    const altRes = await fetch(`${PAJ_BASE}/trackerdata/${devId}/last_points?last_points=1`, {
                         headers: { 'Authorization': `Bearer ${pajToken}` }
                     });
                     
@@ -725,6 +734,13 @@ async function fetchAllDevicePositions() {
                         console.log(`Alternative trackerdata response for device ${devId}:`, altData);
                         
                         let points = altData.success || altData.data || altData;
+                        if (points && typeof points === 'object' && !Array.isArray(points) && points.points) {
+                            points = points.points;
+                        }
+                        if (!Array.isArray(points) && points && points.lastPoint) {
+                            points = [points.lastPoint];
+                        }
+                        
                         if (Array.isArray(points) && points.length > 0) {
                             const latest = points[0];
                             let pLat = latest.lat ?? latest.latitude ?? latest.Lat ?? null;
