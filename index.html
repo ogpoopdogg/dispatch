@@ -576,7 +576,7 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// Helper to extract PAJ timestamp from device object
+// Helper to extract PAJ timestamp from device object (not used with new endpoint, but kept)
 function getPAJTimestamp(device) {
     // Try common timestamp fields
     let ts = device.lastUpdate ?? device.lastPositionTime ?? device.last_dateunix ?? device.devicezeit ?? null;
@@ -603,17 +603,24 @@ function getPAJTimestamp(device) {
     return Date.now();
 }
 
-// ===== ULTIMATE COORDINATE FETCHER =====
+// ===== FETCH POSITIONS - CORRECT ENDPOINT: /getAllDeviceStatus =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     try {
-        const deviceRes = await fetch(`${PAJ_BASE}/device`, {
-            headers: { 'Authorization': `Bearer ${pajToken}` }
+        // Use the POST endpoint that returns status for all devices
+        const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pajToken}`,
+                'Content-Type': 'application/json'
+            },
+            // Empty body, but can also send {} if needed
+            body: JSON.stringify({})
         });
         
-        if (deviceRes.status === 401 || deviceRes.status === 403) {
+        if (response.status === 401 || response.status === 403) {
             console.warn('PAJ token expired, re-authenticating...');
             if (!authRetryInProgress) {
                 authRetryInProgress = true;
@@ -625,183 +632,83 @@ async function fetchAllDevicePositions() {
             return;
         }
         
-        if (!deviceRes.ok) {
-            console.warn('PAJ device list request failed with status:', deviceRes.status);
+        if (!response.ok) {
+            console.warn('PAJ getAllDeviceStatus request failed with status:', response.status);
             return;
         }
         
-        const data = await deviceRes.json();
-        let devices = data.success || data.data || data;
-        if (!Array.isArray(devices)) {
-            console.warn('PAJ devices response is not an array:', devices);
+        const data = await response.json();
+        console.log('getAllDeviceStatus response:', data);
+        
+        if (!data.success || typeof data.success !== 'object') {
+            console.warn('PAJ response missing success object:', data);
             return;
         }
-        console.log('PAJ devices response:', devices);
-        if (devices.length > 0) {
-            console.log('Sample device:', devices[0]);
-            console.log('Keys of sample device:', Object.keys(devices[0]));
-        }
         
+        const now = Date.now();
         let updated = false;
-        let now = Date.now();
         
-        for (let d of devices) {
-            const devId = d.id || d.deviceId || d.imei;
+        // Iterate over each device in the success object
+        for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
+            const devId = parseInt(deviceIdStr, 10);
             if (!devId) continue;
             
-            let lat = null, lng = null, pajTimestamp = null;
-            
-            // Define a comprehensive list of attempts using both ID and IMEI, and various endpoints
-            const identifiers = [devId];
-            if (d.imei && d.imei !== devId) identifiers.push(d.imei);
-            
-            // Build all possible endpoint variations
-            const baseEndpoints = [
-                `${PAJ_BASE}/device`,
-                `${PAJ_BASE}/trackerdata`
-            ];
-            const suffixes = [
-                '/last_points',
-                '/position',
-                '/gps',
-                '/lastposition'
-            ];
-            const paramSets = [
-                '?last_minutes=1440',
-                '?last_points=1',
-                '?last_minutes=5',
-                '?last_minutes=60&last_points=1',
-                '?last_minutes=10080',
-                '' // no params
-            ];
-            
-            const attempts = [];
-            for (let id of identifiers) {
-                for (let base of baseEndpoints) {
-                    for (let suffix of suffixes) {
-                        for (let params of paramSets) {
-                            const url = `${base}/${id}${suffix}${params}`;
-                            attempts.push(url);
-                        }
-                    }
-                }
+            // Extract the lastPoint
+            const lastPoint = deviceData.lastPoint;
+            if (!lastPoint || typeof lastPoint !== 'object') {
+                console.warn(`No lastPoint for device ${devId}`);
+                continue;
             }
             
-            // Also try with date range using from/to timestamps
-            const from = now - (7 * 24 * 60 * 60 * 1000); // 7 days ago
-            const to = now;
-            for (let id of identifiers) {
-                attempts.push(`${PAJ_BASE}/device/${id}/last_points?from=${from}&to=${to}`);
-                attempts.push(`${PAJ_BASE}/trackerdata/${id}/last_points?from=${from}&to=${to}`);
+            const lat = lastPoint.lat;
+            const lng = lastPoint.lng;
+            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
+                console.warn(`Invalid coordinates for device ${devId}: lat=${lat}, lng=${lng}`);
+                continue;
             }
             
-            // Remove duplicates
-            const uniqueAttempts = [...new Set(attempts)];
-            console.log(`Total unique attempts for device ${devId}: ${uniqueAttempts.length}`);
+            // Timestamp: dateunix is in seconds, convert to ms
+            const timestampSec = lastPoint.dateunix;
+            let pajTimestamp = now;
+            if (timestampSec && !isNaN(timestampSec)) {
+                pajTimestamp = timestampSec * 1000;
+            }
             
-            for (let url of uniqueAttempts) {
-                if (lat !== null && lng !== null) break;
-                try {
-                    const res = await fetch(url, {
-                        headers: { 'Authorization': `Bearer ${pajToken}` }
-                    });
-                    if (res.status === 401 || res.status === 403) {
-                        console.warn('PAJ token expired during attempt, re-authenticating...');
-                        if (!authRetryInProgress) {
-                            authRetryInProgress = true;
-                            await authenticatePAJ();
-                            authRetryInProgress = false;
-                            await fetchAllDevicePositions();
-                            return;
-                        }
-                    }
-                    if (res.ok) {
-                        const result = await res.json();
-                        console.log(`Attempt ${url} response:`, JSON.stringify(result).substring(0, 500));
-                        // Extract points from various possible structures
-                        let points = result.success || result.data || result;
-                        if (points && typeof points === 'object' && !Array.isArray(points)) {
-                            if (points.points) points = points.points;
-                            else if (points.lastPoint) points = [points.lastPoint];
-                            else if (points.position) points = [points.position];
-                            else if (points.gps) points = [points.gps];
-                        }
-                        if (Array.isArray(points) && points.length > 0) {
-                            const latest = points[0];
-                            let pLat = latest.lat ?? latest.latitude ?? latest.Lat ?? latest.x ?? latest.lat0 ?? null;
-                            let pLng = latest.lng ?? latest.longitude ?? latest.Lon ?? latest.y ?? latest.lng0 ?? latest.lon ?? null;
-                            if (pLat !== null && pLng !== null) {
-                                lat = parseFloat(pLat);
-                                lng = parseFloat(pLng);
-                                if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                                    console.log(`✅ Got coordinates from ${url}: ${lat}, ${lng}`);
-                                    let ts = latest.timestamp ?? latest.time ?? latest.lastUpdate ?? latest.date ?? latest.createdate ?? null;
-                                    if (ts) {
-                                        if (typeof ts === 'string') {
-                                            const parsed = Date.parse(ts);
-                                            if (!isNaN(parsed)) pajTimestamp = parsed;
-                                            else {
-                                                const num = Number(ts);
-                                                if (!isNaN(num)) pajTimestamp = num < 10000000000 ? num * 1000 : num;
-                                            }
-                                        } else if (typeof ts === 'number') {
-                                            pajTimestamp = ts < 10000000000 ? ts * 1000 : ts;
-                                        }
-                                    }
-                                    if (!pajTimestamp) pajTimestamp = now;
-                                    break;
-                                } else {
-                                    lat = null; lng = null;
-                                }
-                            }
-                        }
+            console.log(`PAJ device: ${deviceData.deviceStatus?.id || devId}, Device ID: ${devId}, Timestamp: ${pajTimestamp}`);
+            
+            let matched = false;
+            for (let [did, drv] of Object.entries(drivers)) {
+                const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
+                const pajDeviceId = String(devId).trim();
+                if (drvDeviceId && pajDeviceId && drvDeviceId === pajDeviceId) {
+                    matched = true;
+                    // Only update if we have valid coordinates
+                    if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+                        drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        updated = true;
+                        const status = getGPSStatus(pajTimestamp);
+                        console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
+                        console.log(`   PAJ Last Update: ${new Date(pajTimestamp).toISOString()}`);
+                        console.log(`   Calculated Status: ${status.label} (${status.status})`);
+                        console.log(`   Diff: ${(Date.now() - pajTimestamp)/60000} min`);
                     } else {
-                        // console.log(`Attempt ${url} returned status ${res.status}`);
+                        console.warn(`Skipping update for ${drv.name}: invalid coordinates (${lat}, ${lng})`);
                     }
-                } catch(e) {
-                    // console.warn(`Error in attempt ${url}:`, e);
+                    break;
                 }
             }
-            
-            // If we have valid coordinates, update the driver
-            if (lat !== null && lng !== null) {
-                if (!pajTimestamp) pajTimestamp = getPAJTimestamp(d);
-                console.log(`PAJ device: ${d.name || 'Unnamed'}, Device ID: ${devId}, Timestamp: ${pajTimestamp}`);
-                
-                let matched = false;
-                for (let [did, drv] of Object.entries(drivers)) {
-                    const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
-                    const pajDeviceId = String(devId).trim();
-                    if (drvDeviceId && pajDeviceId && drvDeviceId === pajDeviceId) {
-                        matched = true;
-                        if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
-                            drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                            getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                            updated = true;
-                            const status = getGPSStatus(pajTimestamp);
-                            console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
-                            console.log(`   PAJ Last Update: ${new Date(pajTimestamp).toISOString()}`);
-                            console.log(`   Calculated Status: ${status.label} (${status.status})`);
-                            console.log(`   Diff: ${(Date.now() - pajTimestamp)/60000} min`);
-                        } else {
-                            console.warn(`Skipping update for ${drv.name}: invalid coordinates (${lat}, ${lng})`);
-                        }
-                        break;
-                    }
-                }
-                if (!matched) {
-                    console.log(`No configured driver matches PAJ Device ID ${devId}`);
-                }
-            } else {
-                console.warn(`No coordinates found for device ${devId} after ${uniqueAttempts.length} attempts`);
+            if (!matched) {
+                console.log(`No configured driver matches PAJ Device ID ${devId}`);
             }
         }
+        
         if (updated) {
             updateAllMarkers();
             renderDriverBadges();
         }
-    } catch(e) { 
-        console.warn('fetch devices error:', e); 
+    } catch(e) {
+        console.warn('fetch devices error:', e);
     }
 }
 
