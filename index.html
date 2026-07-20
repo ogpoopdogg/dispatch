@@ -3,1783 +3,705 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E&C Dispatch Dashboard</title>
+    <title>Dispatch · PAJ GPS</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a2e">
-    <link href="//fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS Variables --- */
-        :root {
-            --bg: #0f0f1a;
-            --card: #1a1a2e;
-            --card-hover: #252540;
-            --text: #e8e8f0;
-            --text-muted: #8888aa;
-            --accent: #facc15;
-            --border: #2a2a44;
-            --input-bg: #22223a;
-            --input-border: #3a3a5a;
-            --shadow: 0 8px 32px rgba(0,0,0,0.5);
-            --radius: 12px;
-            --green: #22c55e;
-            --green-bg: rgba(34, 197, 94, 0.15);
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --header-bg: #0a0a16;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            padding-bottom: 80px;
-        }
-        /* Scrollbar */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0b0b14; color: #eaeef2; padding: 0; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        :root { --accent: #f7c948; --card: #16161f; --card2: #1e1e2a; --border: #2a2a3a; --text: #eaeef2; --muted: #9aa0b0; }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #0b0b14; }
+        ::-webkit-scrollbar-thumb { background: #3a3a4a; border-radius: 6px; }
 
-        /* --- Header --- */
-        header {
-            padding: 12px 16px;
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header-logo {
-            height: 28px;
-            width: auto;
-            filter: drop-shadow(0 0 6px var(--accent));
-            cursor: pointer;
-        }
-        .shiny-text {
-            background: linear-gradient(to right, var(--accent) 20%, #aaa 50%, var(--accent) 80%);
-            background-size: 200% auto;
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: text-shine 3s linear infinite;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        @keyframes text-shine { to { background-position: 200% center; } }
+        /* header */
+        header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+        .logo img { height: 32px; filter: drop-shadow(0 0 6px var(--accent)); cursor: pointer; }
+        .badge { background: var(--accent); color: #0b0b14; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .header-actions button { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .header-actions button:hover { background: #2a2a3e; border-color: var(--accent); }
+        .settings-gear { background: transparent; border: none; font-size: 22px; cursor: pointer; color: var(--muted); }
+        .settings-gear:hover { color: white; }
 
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .header-btn {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .header-btn:hover {
-            background: var(--card-hover);
-            border-color: var(--accent);
-        }
-        .header-btn .badge {
-            background: var(--accent);
-            color: #000;
-            border-radius: 50%;
-            padding: 0 6px;
-            font-size: 10px;
-            font-weight: 700;
-            min-width: 18px;
-            text-align: center;
-        }
+        /* main layout */
+        .app-grid { display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; width: 100%; flex: 1; }
+        .map-wrapper { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; position: relative; height: 380px; min-height: 280px; }
+        #dispatch-map { width: 100%; height: 100%; }
+        .driver-badge-container { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 10; pointer-events: none; }
+        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .driver-badge:hover { background: rgba(30,30,50,0.9); transform: scale(1.02); }
+        .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
+        .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 4px; }
 
-        /* --- Login Overlay --- */
-        #login-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-        }
-        .login-box {
-            width: 100%;
-            max-width: 360px;
-            background: var(--card);
-            padding: 40px 32px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-        .login-box h2 {
-            color: var(--accent);
-            margin-bottom: 24px;
-            font-size: 20px;
-        }
-        .login-input {
-            width: 100%;
-            padding: 14px;
-            margin: 8px 0;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text);
-            border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .login-input:focus { border-color: var(--accent); }
-        .login-submit {
-            width: 100%;
-            padding: 14px;
-            margin-top: 16px;
-            background: var(--accent);
-            border: none;
-            color: #000;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            transition: opacity 0.2s;
-        }
-        .login-submit:hover { opacity: 0.85; }
+        /* stop list */
+        .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .panel-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .day-toggle { display: flex; gap: 6px; background: var(--card2); border-radius: 40px; padding: 4px; }
+        .day-toggle button { background: transparent; border: none; padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: 0.2s; }
+        .day-toggle button.active { background: var(--accent); color: #0b0b14; }
+        .add-stop-area { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; background: var(--card2); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
+        .add-stop-area input { flex: 1 1 160px; background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 30px; font-size: 14px; min-width: 120px; }
+        .add-stop-area input:focus { border-color: var(--accent); outline: none; }
+        .add-stop-area .btn-add { background: var(--accent); color: #0b0b14; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; }
+        .stop-list { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+        .stop-item { background: var(--card2); border-radius: 14px; padding: 12px 16px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 12px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
+        .stop-item:hover { border-color: #3a3a5a; }
+        .stop-item.completed { background: #0f2a1a; border-left-color: #2ecc71; opacity: 0.9; order: 999; }
+        .stop-item .info { flex: 1; min-width: 0; }
+        .stop-item .info .name { font-weight: 600; }
+        .stop-item .info .addr { font-size: 13px; color: var(--muted); }
+        .stop-item .info .city { font-size: 12px; color: var(--muted); }
+        .stop-item .assign-badge { background: #1a1a2e; padding: 4px 14px; border-radius: 30px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); white-space: nowrap; }
+        .stop-item .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px 6px; border-radius: 8px; transition: 0.2s; }
+        .stop-item .actions button:hover { background: #2a2a3e; color: white; }
+        .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+        .stop-item .timestamp { font-size: 11px; color: #2ecc71; font-weight: 600; margin-left: 4px; }
 
-        /* --- Settings Modal --- */
-        #settings-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-        }
-        #settings-modal.open { display: flex; }
-        .settings-box {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 30px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-        }
-        .settings-box h3 {
-            color: var(--accent);
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-        .settings-box label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin: 12px 0 4px;
-        }
-        .settings-box input {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text);
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-        .settings-box input:focus { border-color: var(--accent); }
-        .settings-box .driver-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin: 8px 0;
-            flex-wrap: wrap;
-        }
-        .settings-box .driver-row input[type="text"] { flex: 1; min-width: 80px; }
-        .settings-box .driver-row input[type="color"] {
-            width: 44px;
-            height: 44px;
-            padding: 0;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .settings-box .driver-row .remove-driver {
-            background: var(--red);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
-        .settings-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-        }
-        .settings-actions button {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-            transition: opacity 0.2s;
-        }
-        .settings-actions .save-settings { background: var(--accent); color: #000; }
-        .settings-actions .close-settings { background: var(--input-bg); color: var(--text); }
-        .settings-actions .add-driver { background: var(--blue); color: #fff; }
+        /* driver modal */
+        .driver-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
+        .driver-modal .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .driver-modal .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .driver-modal .modal-header h2 { display: flex; align-items: center; gap: 10px; }
+        .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; }
+        .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
+        .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .driver-modal .modal-stops .stop-item { background: #12121c; border-left-color: var(--driver-color, #f7c948); }
 
-        /* --- Main Layout --- */
-        .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 12px 16px;
-        }
+        /* settings modal */
+        .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
+        .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 520px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
+        .settings-card h2 { margin-bottom: 20px; }
+        .settings-card .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+        .settings-card .field label { font-weight: 600; font-size: 14px; }
+        .settings-card .field input { background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 12px; }
+        .settings-card .field input:focus { border-color: var(--accent); outline: none; }
+        .settings-card .driver-row { display: flex; gap: 8px; align-items: center; background: var(--card2); padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; }
+        .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; }
+        .settings-card .driver-row input.color-pick { width: 40px; padding: 0; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; }
+        .settings-card .driver-row .remove-driver { background: transparent; border: none; color: #e74c3c; font-weight: 700; cursor: pointer; }
+        .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .settings-actions button { padding: 10px 24px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
 
-        /* --- Map Container --- */
-        .map-wrapper {
-            background: var(--card);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            position: relative;
-            height: 420px;
-            margin-bottom: 16px;
+        /* responsive */
+        @media (min-width: 900px) {
+            .app-grid { flex-direction: row; flex-wrap: wrap; }
+            .map-wrapper { flex: 2 1 55%; height: 480px; }
+            .manifest-panel { flex: 1 1 40%; }
         }
-        #main-map {
-            width: 100%;
-            height: 100%;
+        @media (max-width: 600px) {
+            .map-wrapper { height: 260px; }
+            .stop-item { flex-wrap: wrap; }
+            .stop-item .actions { margin-left: auto; }
+            .driver-badge-container { gap: 4px; }
+            .driver-badge { font-size: 11px; padding: 4px 10px; }
         }
-        .map-overlay-controls {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .map-overlay-controls .driver-chip {
-            pointer-events: auto;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: var(--shadow);
-        }
-        .map-overlay-controls .driver-chip:hover {
-            transform: scale(1.05);
-            border-color: var(--accent);
-        }
-        .map-overlay-controls .driver-chip .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* --- Driver Tabs --- */
-        .driver-tabs {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 4px 0 12px;
-            flex-wrap: nowrap;
-            -webkit-overflow-scrolling: touch;
-        }
-        .driver-tabs::-webkit-scrollbar { height: 3px; }
-        .driver-tabs::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-
-        .driver-tab {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 8px 16px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .driver-tab .color-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .driver-tab .stop-count {
-            background: var(--input-bg);
-            border-radius: 12px;
-            padding: 0 8px;
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-        .driver-tab:hover { border-color: var(--accent); }
-        .driver-tab.active {
-            border-color: var(--accent);
-            background: var(--card-hover);
-        }
-        .driver-tab .offline-indicator {
-            font-size: 10px;
-            color: var(--red);
-        }
-
-        /* --- Driver Detail Modal --- */
-        #driver-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 3000;
-            padding: 16px;
-            backdrop-filter: blur(4px);
-            overflow-y: auto;
-        }
-        #driver-modal.open { display: flex; align-items: flex-start; justify-content: center; }
-        .driver-modal-content {
-            background: var(--card);
-            border-radius: var(--radius);
-            max-width: 900px;
-            width: 100%;
-            max-height: 95vh;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            padding: 20px;
-            position: relative;
-        }
-        .driver-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .driver-modal-header h3 {
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .driver-modal-header .close-modal {
-            background: var(--red);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 16px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .driver-modal-map {
-            height: 300px;
-            background: var(--bg);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-        }
-        .driver-modal-map .driver-map { width: 100%; height: 100%; }
-
-        /* --- Manifest / Stop List --- */
-        .manifest-section {
-            background: var(--card);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-        .manifest-header {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .manifest-header h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .manifest-header h4 span { color: var(--text); }
-        .manifest-actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .manifest-actions button {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .manifest-actions button:hover {
-            border-color: var(--accent);
-            background: var(--card-hover);
-        }
-        .manifest-actions .next-day-btn { background: var(--blue); color: #fff; border-color: var(--blue); }
-        .manifest-actions .clear-completed-btn { background: var(--red); color: #fff; border-color: var(--red); }
-
-        /* --- Add Stop Form --- */
-        .add-stop-form {
-            display: flex;
-            gap: 8px;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-            background: var(--input-bg);
-        }
-        .add-stop-form .input-wrap {
-            flex: 1;
-            min-width: 120px;
-            position: relative;
-        }
-        .add-stop-form input {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .add-stop-form input:focus { border-color: var(--accent); }
-        .add-stop-form .add-btn {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
-            transition: opacity 0.2s;
-            flex-shrink: 0;
-        }
-        .add-stop-form .add-btn:hover { opacity: 0.85; }
-
-        /* --- Stop List Items --- */
-        .stop-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .stop-list .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        .stop-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border);
-            cursor: grab;
-            transition: background 0.15s;
-            position: relative;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .stop-item:hover { background: var(--card-hover); }
-        .stop-item.sortable-ghost { opacity: 0.3; background: var(--accent); }
-        .stop-item .stop-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .stop-item .stop-name {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .stop-item .stop-address {
-            font-size: 12px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .stop-item .stop-assign {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 12px;
-            background: var(--input-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .stop-item .stop-assign.has-driver { color: #fff; border-color: transparent; }
-        .stop-item .stop-actions {
-            display: flex;
-            gap: 4px;
-            flex-shrink: 0;
-            align-items: center;
-        }
-        .stop-item .stop-actions button {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 4px;
-            font-size: 16px;
-            transition: all 0.2s;
-            line-height: 1;
-        }
-        .stop-item .stop-actions button:hover { color: var(--text); background: var(--input-bg); }
-        .stop-item .stop-actions .next-btn { color: var(--blue); }
-        .stop-item .stop-actions .next-btn:hover { color: #60a5fa; }
-        .stop-item .stop-status {
-            font-size: 12px;
-            font-weight: 600;
-            flex-shrink: 0;
-            min-width: 60px;
-            text-align: right;
-        }
-        .stop-item.completed {
-            background: var(--green-bg);
-            border-left: 3px solid var(--green);
-        }
-        .stop-item.completed .stop-status {
-            color: var(--green);
-        }
-        .stop-item .checkmark {
-            color: var(--green);
-            font-weight: 700;
-            margin-right: 4px;
-        }
-        .stop-item .completion-time {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-left: 4px;
-        }
-
-        /* --- Proximity highlight --- */
-        .stop-item.proximity-hint {
-            border-left: 4px solid var(--accent);
-            background: rgba(250, 204, 21, 0.08);
-        }
-
-        /* --- Responsive --- */
-        @media (max-width: 768px) {
-            .map-wrapper { height: 300px; }
-            .driver-modal-map { height: 220px; }
-            .add-stop-form input { font-size: 14px; }
-            .stop-item { flex-wrap: wrap; gap: 6px; }
-            .stop-item .stop-assign { font-size: 10px; padding: 2px 8px; }
-            .settings-box { padding: 20px; }
-        }
-        @media (min-width: 1024px) {
-            .map-wrapper { height: 500px; }
-            .driver-modal-map { height: 400px; }
-            .stop-list { max-height: 500px; }
-        }
-
-        /* --- Animations --- */
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
-            50% { box-shadow: 0 0 25px rgba(250, 204, 21, 0.4); }
-            100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
-        }
-        .map-wrapper.has-drivers { animation: pulse-glow 3s infinite; }
-
-        /* Toast / notification */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 12px 24px;
-            border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 14px;
-            z-index: 9999;
-            box-shadow: var(--shadow);
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            max-width: 90%;
-            text-align: center;
-        }
-        .toast.show { opacity: 1; pointer-events: auto; }
-        .toast.success { border-color: var(--green); }
-        .toast.error { border-color: var(--red); }
+        /* utility */
+        .hidden { display: none !important; }
+        .text-accent { color: var(--accent); }
+        .gap-2 { gap: 8px; }
+        .flex { display: flex; align-items: center; }
+        .ml-auto { margin-left: auto; }
+        .w-full { width: 100%; }
+        .mt-2 { margin-top: 12px; }
     </style>
 </head>
 <body>
 
-    <!-- ===== LOGIN OVERLAY ===== -->
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2>🚚 DISPATCH LOGIN</h2>
-            <input type="email" id="login-user" class="login-input" placeholder="Email" autofocus>
-            <input type="password" id="login-pin" class="login-input" placeholder="Password">
-            <button class="login-submit" onclick="attemptLogin()">Authorize</button>
-        </div>
+<header>
+    <div class="logo">
+        <img src="icon2.png" alt="logo" onclick="toggleTheme()" style="height:32px;">
+        <span>DISPATCH · PAJ</span>
+        <span class="badge">LIVE</span>
+    </div>
+    <div class="header-actions">
+        <button onclick="openSettings()">⚙️ Drivers</button>
+        <button onclick="nextDayPrompt()">📅 Next Day</button>
+    </div>
+</header>
+
+<div class="app-grid">
+    <!-- MAP -->
+    <div class="map-wrapper">
+        <div id="dispatch-map"></div>
+        <div class="driver-badge-container" id="driverBadges"></div>
     </div>
 
-    <!-- ===== SETTINGS MODAL ===== -->
-    <div id="settings-modal">
-        <div class="settings-box">
-            <h3>⚙️ Dispatch Settings</h3>
-
-            <label>PAJ GPS Master Account</label>
-            <input type="email" id="paj-email" placeholder="PAJ GPS Email">
-            <input type="password" id="paj-password" placeholder="PAJ GPS Password" style="margin-top:6px;">
-
-            <label style="margin-top:16px;">Drivers</label>
-            <div id="driver-settings-list"></div>
-
-            <button class="add-driver" onclick="addDriverSetting()" style="margin-top:10px; padding:8px 16px; border:none; border-radius:8px; background:var(--blue); color:#fff; font-weight:700; cursor:pointer;">
-                + Add Driver
-            </button>
-
-            <div class="settings-actions">
-                <button class="close-settings" onclick="closeSettings()">Cancel</button>
-                <button class="save-settings" onclick="saveSettings()">Save Settings</button>
+    <!-- MANIFEST -->
+    <div class="manifest-panel">
+        <div class="panel-header">
+            <h2>📋 Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
+            <div class="day-toggle">
+                <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
+                <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
             </div>
         </div>
+
+        <div class="add-stop-area" id="addStopArea">
+            <input type="text" id="stopName" placeholder="Business name" autocomplete="off">
+            <input type="text" id="stopAddress" placeholder="Address" autocomplete="off">
+            <input type="text" id="stopCity" placeholder="City" autocomplete="off">
+            <button class="btn-add" onclick="addStop()">+ Add</button>
+        </div>
+
+        <div class="stop-list" id="stopList"></div>
+        <div id="emptyMsg" style="text-align:center; color:var(--muted); padding:20px;">No stops — add one above.</div>
     </div>
+</div>
 
-    <!-- ===== DRIVER DETAIL MODAL ===== -->
-    <div id="driver-modal">
-        <div class="driver-modal-content">
-            <div class="driver-modal-header">
-                <h3 id="driver-modal-title">🚗 Driver Name</h3>
-                <button class="close-modal" onclick="closeDriverModal()">✕ Close</button>
-            </div>
-            <div class="driver-modal-map" id="driver-modal-map">
-                <div id="driver-map" class="driver-map"></div>
-            </div>
-            <div id="driver-stop-list" class="stop-list"></div>
+<!-- Driver Modal -->
+<div class="driver-modal" id="driverModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="driverModalTitle">👤 Driver</h2>
+            <button onclick="closeDriverModal()" style="background:transparent; border:none; color:white; font-size:28px; cursor:pointer;">✕</button>
         </div>
+        <div class="modal-map"><div id="driver-map"></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
+            <span id="driverLastUpdate" style="font-size:13px; color:var(--muted);">Last update: —</span>
+            <span id="driverStopCount" style="font-weight:600;">0 stops</span>
+        </div>
+        <div class="modal-stops" id="driverModalStops"></div>
     </div>
+</div>
 
-    <!-- ===== TOAST ===== -->
-    <div id="toast" class="toast"></div>
-
-    <!-- ===== MAIN APP ===== -->
-    <header>
-        <div class="header-left">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231a1a2e'/%3E%3Cpath d='M20 30 L80 30 L75 70 L25 70 Z' fill='%23facc15' opacity='0.8'/%3E%3Ccircle cx='40' cy='55' r='10' fill='%231a1a2e'/%3E%3Ccircle cx='60' cy='55' r='10' fill='%231a1a2e'/%3E%3C/svg%3E" class="header-logo" alt="Logo">
-            <span class="shiny-text">DISPATCH DASH</span>
+<!-- Settings Modal -->
+<div class="settings-modal" id="settingsModal">
+    <div class="settings-card">
+        <h2>⚙️ Drivers &amp; API</h2>
+        <div class="field">
+            <label>PAJ GPS Master Email</label>
+            <input type="email" id="pajEmail" placeholder="admin@company.com">
         </div>
-        <div class="header-right">
-            <button class="header-btn" onclick="openSettings()">⚙️ Settings</button>
-            <button class="header-btn" id="next-day-btn" onclick="showNextDayPrompt()">📅 Next Day</button>
-            <button class="header-btn" onclick="clearCompletedStops()">✅ Clear Done</button>
-            <span id="today-label" style="font-size:11px; color:var(--text-muted);"></span>
+        <div class="field">
+            <label>PAJ GPS Password</label>
+            <input type="password" id="pajPassword" placeholder="••••••••">
         </div>
-    </header>
-
-    <div class="app-container">
-
-        <!-- ===== MAP ===== -->
-        <div class="map-wrapper" id="map-wrapper">
-            <div id="main-map"></div>
-            <div class="map-overlay-controls" id="driver-chips"></div>
+        <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
+        <div id="driverSettingsList"></div>
+        <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
+        <div class="settings-actions">
+            <button onclick="saveSettings()" style="background:var(--accent); color:#0b0b14;">Save &amp; Sync</button>
+            <button onclick="closeSettings()" style="background:transparent; border:1px solid var(--border); color:var(--text);">Close</button>
         </div>
-
-        <!-- ===== DRIVER TABS ===== -->
-        <div class="driver-tabs" id="driver-tabs"></div>
-
-        <!-- ===== MANIFEST ===== -->
-        <div class="manifest-section">
-            <div class="manifest-header">
-                <h4>📋 Today's Manifest <span id="stop-count">(0)</span></h4>
-                <div class="manifest-actions">
-                    <button onclick="clearAllStops()">🗑️ Clear All</button>
-                </div>
-            </div>
-
-            <!-- Add Stop Form -->
-            <div class="add-stop-form">
-                <div class="input-wrap">
-                    <input type="text" id="f-name" placeholder="Business Name" autocomplete="off">
-                </div>
-                <div class="input-wrap">
-                    <input type="text" id="f-address" placeholder="Address" autocomplete="off">
-                </div>
-                <div class="input-wrap">
-                    <input type="text" id="f-city" placeholder="City" autocomplete="off">
-                </div>
-                <button class="add-btn" onclick="addStop()">+ Add</button>
-            </div>
-
-            <!-- Stop List -->
-            <div class="stop-list" id="stop-list">
-                <div class="empty-state">No stops yet. Add a stop above.</div>
-            </div>
-        </div>
+        <div style="margin-top:12px; font-size:13px; color:var(--muted);">Device IDs from PAJ GPS will be fetched automatically.</div>
     </div>
+</div>
 
-    <!-- ===== FIREBASE & MAPS SCRIPTS ===== -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMaps" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<!-- Firebase + Google Maps -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-    <script>
-        // ============================================================
-        //  FIREBASE CONFIG
-        // ============================================================
-        firebase.initializeApp({
-            apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
-            authDomain: "eandccourier-36fcc.firebaseapp.com",
-            databaseURL: "https://eandccourier-36fcc-default-rtdb.firebaseio.com",
-            projectId: "eandccourier-36fcc",
-            messagingSenderId: "1067680083511",
-            appId: "1:1067680083511:android:22d1eb3757302492bd19b2"
+<script>
+// ===== FIREBASE =====
+firebase.initializeApp({
+    apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
+    authDomain: "eandccourier-36fcc.firebaseapp.com",
+    databaseURL: "https://eandccourier-36fcc-default-rtdb.firebaseio.com",
+    projectId: "eandccourier-36fcc",
+});
+const db = firebase.database();
+
+// ===== STATE =====
+let drivers = {};          // driverId: { name, color, deviceId, lastLocation? }
+let stopsToday = {};       // stopId: { name, address, city, assignedDriver, status, completedAt, order }
+let stopsTomorrow = {};
+let currentDay = 'today';  // 'today' or 'tomorrow'
+let map, mapMarkers = {}, driverMarkers = {}, driverPolylines = {};
+let driverModals = {};     // for each driver modal map instance
+let activeModalDriverId = null;
+let sortableInstance = null;
+let gpsInterval = null;
+let pajToken = null;
+let tokenExpiry = 0;
+const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
+
+// ===== HELPERS =====
+function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
+function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
+function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
+
+// ===== INIT =====
+function initApp() {
+    // load drivers
+    getDriversRef().on('value', snap => {
+        drivers = snap.val() || {};
+        renderDriverBadges();
+        updateAllMarkers();
+        if (currentDay === 'today') loadStopsToday();
+        else loadStopsTomorrow();
+        renderSettingsList();
+    });
+
+    // listen stops
+    db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
+        stopsToday = snap.val() || {};
+        if (currentDay === 'today') renderStopList();
+    });
+    db.ref('developer/dispatch_dashboard/stops_tomorrow').on('value', snap => {
+        stopsTomorrow = snap.val() || {};
+        if (currentDay === 'tomorrow') renderStopList();
+    });
+
+    // master config
+    getMasterRef().on('value', snap => {
+        const cfg = snap.val() || {};
+        document.getElementById('pajEmail').value = cfg.paj_email || '';
+        document.getElementById('pajPassword').value = cfg.paj_password || '';
+        pajToken = cfg.paj_token || null;
+        tokenExpiry = cfg.token_expiry || 0;
+        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
+    });
+
+    // start GPS polling
+    if (gpsInterval) clearInterval(gpsInterval);
+    gpsInterval = setInterval(() => { if (pajToken) fetchAllDevicePositions(); }, 10000);
+    setTimeout(fetchAllDevicePositions, 2000);
+}
+
+// ===== PAJ GPS AUTH =====
+async function authenticatePAJ() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    if (!email || !pass) return;
+    try {
+        const res = await fetch(`${PAJ_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
         });
-        const auth = firebase.auth();
-        const db = firebase.database();
+        const data = await res.json();
+        if (data.token) {
+            pajToken = data.token;
+            tokenExpiry = Date.now() + 3600000; // 1h
+            getMasterRef().update({ paj_token: pajToken, token_expiry: tokenExpiry });
+            fetchAllDevicePositions();
+        } else console.warn('PAJ auth failed', data);
+    } catch(e) { console.warn('PAJ auth error', e); }
+}
 
-        // ============================================================
-        //  GLOBALS
-        // ============================================================
-        let currentUser = null;
-        let drivers = {};           // { id: { name, color, deviceId, ... } }
-        let stopsToday = {};        // { id: { name, address, city, assignedDriver, status, completedAt, order } }
-        let stopsTomorrow = {};     // same structure
-        let stopOrder = [];         // ordered list of stop IDs for today
-        let driverMapInstances = {}; // { driverId: google.maps.Map }
-        let driverMarkers = {};     // { driverId: google.maps.Marker }
-        let driverPolylines = {};   // { driverId: google.maps.Polyline }
-        let mainMap = null;
-        let mainMapMarkers = {};    // { driverId: marker }
-        let mainMapInitialized = false;
-        let allStopsMarkers = {};   // { stopId: marker } for driver maps
-        let selectedDriverId = null;
-        let autocompleteAddress = null;
-        let sortableInstance = null;
-        let pajToken = null;
-        let pajTokenExpiry = null;
-        let gpsInterval = null;
-        let driverLocationCache = {}; // { deviceId: { lat, lng, timestamp, lastUpdate } }
-
-        const DEPOT = { lat: 49.8425, lng: -99.9497 };
-
-        // ============================================================
-        //  LOGIN
-        // ============================================================
-        function attemptLogin() {
-            const email = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pin').value.trim();
-            if (!email || !pass) return;
-            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .then(() => auth.signInWithEmailAndPassword(email, pass))
-                .catch(err => showToast('Login Failed: ' + err.message, 'error'));
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                const email = user.email;
-                const username = email.split('@')[0].toLowerCase();
-                db.ref(`roles/${username}/command`).once('value').then(snap => {
-                    if (snap.val() === true) {
-                        currentUser = username;
-                        document.getElementById('login-overlay').style.display = 'none';
-                        initApp();
-                    } else {
-                        showToast('ACCESS DENIED', 'error');
-                        auth.signOut();
-                    }
-                });
-            } else {
-                document.getElementById('login-overlay').style.display = 'flex';
-            }
+async function fetchAllDevicePositions() {
+    if (!pajToken) return;
+    try {
+        const res = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
         });
-
-        // ============================================================
-        //  INIT APP
-        // ============================================================
-        function initApp() {
-            // Load drivers
-            db.ref('developer/dispatch_dashboard/drivers').on('value', snap => {
-                drivers = snap.val() || {};
-                renderDriverTabs();
-                renderDriverChips();
-                updateDriverSettingsUI();
-                // Rebuild driver maps if open
-                if (selectedDriverId) openDriverModal(selectedDriverId);
-                updateStopList();
-            });
-
-            // Load stops today
-            db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
-                stopsToday = snap.val() || {};
-                updateStopOrder();
-                updateStopList();
-                updateStopCount();
-                // Update driver stop lists if modal open
-                if (selectedDriverId) renderDriverStopList(selectedDriverId);
-                updateDriverTabCounts();
-            });
-
-            // Load stops tomorrow
-            db.ref('developer/dispatch_dashboard/stops_tomorrow').on('value', snap => {
-                stopsTomorrow = snap.val() || {};
-            });
-
-            // Load PAJ config
-            db.ref('developer/dispatch_dashboard/master_config').once('value', snap => {
-                const config = snap.val() || {};
-                if (config.paj_email) document.getElementById('paj-email').value = config.paj_email;
-                if (config.paj_password) document.getElementById('paj-password').value = config.paj_password;
-                if (config.paj_token) pajToken = config.paj_token;
-                if (config.token_expiry) pajTokenExpiry = config.token_expiry;
-                // Start GPS polling if we have token
-                if (pajToken) startGPSPolling();
-            });
-
-            // Set today's date
-            document.getElementById('today-label').textContent = new Date().toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-
-            // Init autocomplete
-            initPlacesAutocomplete();
-        }
-
-        // ============================================================
-        //  DRIVER SETTINGS UI
-        // ============================================================
-        function updateDriverSettingsUI() {
-            const container = document.getElementById('driver-settings-list');
-            container.innerHTML = '';
-            const ids = Object.keys(drivers);
-            if (ids.length === 0) {
-                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:8px 0;">No drivers configured. Add one below.</div>';
-                return;
-            }
-            ids.forEach(id => {
-                const d = drivers[id];
-                const row = document.createElement('div');
-                row.className = 'driver-row';
-                row.innerHTML = `
-                    <input type="text" class="driver-name-input" value="${d.name || ''}" placeholder="Driver Name" data-id="${id}">
-                    <input type="text" class="driver-device-input" value="${d.deviceId || ''}" placeholder="Device ID" data-id="${id}">
-                    <input type="color" class="driver-color-input" value="${d.color || '#facc15'}" data-id="${id}">
-                    <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function addDriverSetting() {
-            const newId = 'driver_' + Date.now();
-            const updates = {};
-            updates[newId] = { name: 'New Driver', color: '#facc15', deviceId: '' };
-            db.ref('developer/dispatch_dashboard/drivers').update(updates);
-        }
-
-        function removeDriver(id) {
-            if (!confirm('Remove this driver? All assigned stops will become unassigned.')) return;
-            // Unassign stops
-            const updates = {};
-            Object.keys(stopsToday).forEach(sid => {
-                if (stopsToday[sid].assignedDriver === id) {
-                    updates[`developer/dispatch_dashboard/stops_today/${sid}/assignedDriver`] = null;
-                }
-            });
-            db.ref('developer/dispatch_dashboard/stops_today').update(updates);
-            db.ref(`developer/dispatch_dashboard/drivers/${id}`).remove();
-        }
-
-        function saveSettings() {
-            const email = document.getElementById('paj-email').value.trim();
-            const password = document.getElementById('paj-password').value.trim();
-
-            // Save driver names/colors/device IDs from inputs
-            const nameInputs = document.querySelectorAll('.driver-name-input');
-            const deviceInputs = document.querySelectorAll('.driver-device-input');
-            const colorInputs = document.querySelectorAll('.driver-color-input');
-            const updates = {};
-            nameInputs.forEach(inp => {
-                const id = inp.dataset.id;
-                updates[`${id}/name`] = inp.value.trim() || 'Driver';
-            });
-            deviceInputs.forEach(inp => {
-                const id = inp.dataset.id;
-                updates[`${id}/deviceId`] = inp.value.trim() || '';
-            });
-            colorInputs.forEach(inp => {
-                const id = inp.dataset.id;
-                updates[`${id}/color`] = inp.value || '#facc15';
-            });
-
-            // Also update PAJ config
-            const configUpdates = {};
-            if (email) configUpdates['paj_email'] = email;
-            if (password) configUpdates['paj_password'] = password;
-
-            // Save all
-            const allUpdates = {};
-            Object.keys(updates).forEach(k => {
-                allUpdates[`developer/dispatch_dashboard/drivers/${k}`] = updates[k];
-            });
-            Object.keys(configUpdates).forEach(k => {
-                allUpdates[`developer/dispatch_dashboard/master_config/${k}`] = configUpdates[k];
-            });
-
-            db.ref().update(allUpdates).then(() => {
-                showToast('Settings saved!', 'success');
-                closeSettings();
-                // If PAJ credentials changed, re-authenticate
-                if (email && password) {
-                    authenticatePAJ(email, password);
-                }
-            }).catch(err => showToast('Error saving: ' + err.message, 'error'));
-        }
-
-        function openSettings() {
-            document.getElementById('settings-modal').classList.add('open');
-            updateDriverSettingsUI();
-            // Load PAJ config
-            db.ref('developer/dispatch_dashboard/master_config').once('value', snap => {
-                const config = snap.val() || {};
-                if (config.paj_email) document.getElementById('paj-email').value = config.paj_email;
-                if (config.paj_password) document.getElementById('paj-password').value = config.paj_password;
-            });
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.remove('open');
-        }
-
-        // ============================================================
-        //  PAJ GPS AUTHENTICATION
-        // ============================================================
-        async function authenticatePAJ(email, password) {
-            try {
-                const response = await fetch('https://connect.paj-gps.de/api/v1/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await response.json();
-                if (data.token) {
-                    pajToken = data.token;
-                    pajTokenExpiry = Date.now() + (data.expires_in || 3600) * 1000;
-                    await db.ref('developer/dispatch_dashboard/master_config').update({
-                        paj_token: pajToken,
-                        token_expiry: pajTokenExpiry
-                    });
-                    showToast('PAJ GPS Connected!', 'success');
-                    startGPSPolling();
-                } else {
-                    showToast('PAJ Login failed: ' + (data.message || 'Unknown error'), 'error');
-                }
-            } catch (e) {
-                showToast('PAJ Connection error: ' + e.message, 'error');
-            }
-        }
-
-        function startGPSPolling() {
-            if (gpsInterval) clearInterval(gpsInterval);
-            fetchDriverLocations();
-            gpsInterval = setInterval(fetchDriverLocations, 10000);
-        }
-
-        async function fetchDriverLocations() {
-            if (!pajToken) return;
-            try {
-                const response = await fetch('https://connect.paj-gps.de/api/v1/device', {
-                    headers: { 'Authorization': 'Bearer ' + pajToken }
-                });
-                const data = await response.json();
-                if (data.devices) {
-                    data.devices.forEach(device => {
-                        if (device.lastPosition) {
-                            const lat = device.lastPosition.lat;
-                            const lng = device.lastPosition.lng;
-                            const deviceId = device.id || device.deviceId;
-                            if (lat && lng && deviceId) {
-                                driverLocationCache[deviceId] = {
-                                    lat: lat,
-                                    lng: lng,
-                                    timestamp: device.lastPosition.timestamp || Date.now(),
-                                    lastUpdate: Date.now()
-                                };
-                            }
-                        }
-                    });
-                    updateDriverPositions();
-                }
-            } catch (e) {
-                console.warn('PAJ fetch error:', e);
-            }
-        }
-
-        function getDriverLocation(driverId) {
-            const driver = drivers[driverId];
-            if (!driver || !driver.deviceId) return null;
-            const cache = driverLocationCache[driver.deviceId];
-            if (!cache) return null;
-            const age = (Date.now() - cache.lastUpdate) / 1000 / 60;
-            return { ...cache, ageMinutes: age };
-        }
-
-        // ============================================================
-        //  MAP INITIALIZATION
-        // ============================================================
-        function initMaps() {
-            if (!google.maps) return;
-            const mapEl = document.getElementById('main-map');
-            if (!mapEl) return;
-
-            mainMap = new google.maps.Map(mapEl, {
-                center: DEPOT,
-                zoom: 11,
-                styles: [
-                    { featureType: 'all', elementType: 'all', stylers: [{ invert_lightness: true }, { saturation: 10 }, { lightness: 20 }, { gamma: 0.5 }, { hue: '#2a2a4a' }] }
-                ],
-                gestureHandling: 'greedy'
-            });
-            mainMapInitialized = true;
-
-            // Init Places autocomplete
-            initPlacesAutocomplete();
-
-            // Update driver positions after map is ready
-            setTimeout(updateDriverPositions, 500);
-        }
-
-        // ============================================================
-        //  PLACES AUTOCOMPLETE
-        // ============================================================
-        function initPlacesAutocomplete() {
-            const addressInput = document.getElementById('f-address');
-            if (!addressInput || !google.maps) return;
-            try {
-                autocompleteAddress = new google.maps.places.Autocomplete(addressInput, {
-                    componentRestrictions: { country: 'ca' },
-                    bounds: new google.maps.Circle({ center: DEPOT, radius: 50000 }).getBounds(),
-                    strictBounds: false
-                });
-                autocompleteAddress.addListener('place_changed', () => {
-                    const place = autocompleteAddress.getPlace();
-                    if (place.address_components) {
-                        for (let comp of place.address_components) {
-                            if (comp.types.includes('locality')) {
-                                document.getElementById('f-city').value = comp.long_name;
-                                break;
-                            }
-                        }
-                    }
-                });
-            } catch (e) {
-                console.warn('Places autocomplete error:', e);
-            }
-        }
-
-        // ============================================================
-        //  DRIVER TABS & CHIPS
-        // ============================================================
-        function renderDriverTabs() {
-            const container = document.getElementById('driver-tabs');
-            container.innerHTML = '';
-            const ids = Object.keys(drivers);
-            if (ids.length === 0) {
-                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:8px 0;">No drivers configured. Go to Settings.</div>';
-                return;
-            }
-            ids.forEach(id => {
-                const d = drivers[id];
-                const loc = getDriverLocation(id);
-                const isOffline = loc ? loc.ageMinutes > 5 : true;
-                const tab = document.createElement('div');
-                tab.className = 'driver-tab';
-                tab.innerHTML = `
-                    <span class="color-dot" style="background:${d.color || '#facc15'}"></span>
-                    ${d.name || 'Driver'}
-                    <span class="stop-count" id="tab-count-${id}">0</span>
-                    ${isOffline ? '<span class="offline-indicator">●</span>' : ''}
-                `;
-                tab.onclick = () => openDriverModal(id);
-                container.appendChild(tab);
-            });
-        }
-
-        function renderDriverChips() {
-            const container = document.getElementById('driver-chips');
-            container.innerHTML = '';
-            const ids = Object.keys(drivers);
-            ids.forEach(id => {
-                const d = drivers[id];
-                const loc = getDriverLocation(id);
-                const chip = document.createElement('div');
-                chip.className = 'driver-chip';
-                chip.innerHTML = `
-                    <span class="dot" style="background:${d.color || '#facc15'}"></span>
-                    ${d.name || 'Driver'}
-                    ${loc ? '' : ' ⚠️'}
-                `;
-                chip.onclick = () => zoomToDriver(id);
-                container.appendChild(chip);
-            });
-            if (ids.length > 0) {
-                document.getElementById('map-wrapper').classList.add('has-drivers');
-            } else {
-                document.getElementById('map-wrapper').classList.remove('has-drivers');
-            }
-        }
-
-        function updateDriverTabCounts() {
-            const ids = Object.keys(drivers);
-            ids.forEach(id => {
-                const count = Object.values(stopsToday).filter(s => s.assignedDriver === id && s.status !== 'completed').length;
-                const el = document.getElementById('tab-count-' + id);
-                if (el) el.textContent = count;
-            });
-        }
-
-        // ============================================================
-        //  DRIVER POSITION UPDATES (Main Map)
-        // ============================================================
-        function updateDriverPositions() {
-            if (!mainMap || !mainMapInitialized) return;
-            const ids = Object.keys(drivers);
-            let bounds = new google.maps.LatLngBounds();
-            let hasLocation = false;
-
-            // Clear old markers
-            Object.values(mainMapMarkers).forEach(m => m.setMap(null));
-            mainMapMarkers = {};
-
-            ids.forEach(id => {
-                const d = drivers[id];
-                const loc = getDriverLocation(id);
-                if (loc) {
-                    const pos = { lat: loc.lat, lng: loc.lng };
-                    const marker = new google.maps.Marker({
-                        position: pos,
-                        map: mainMap,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 14,
-                            fillColor: d.color || '#facc15',
-                            fillOpacity: 0.9,
-                            strokeColor: '#fff',
-                            strokeWeight: 2
-                        },
-                        label: {
-                            text: d.name || '',
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: '12px',
-                            className: 'driver-label'
-                        }
-                    });
-                    mainMapMarkers[id] = marker;
-                    bounds.extend(pos);
-                    hasLocation = true;
-
-                    // If offline indicator
-                    if (loc.ageMinutes > 5) {
-                        // Show offline label above marker
-                        const info = new google.maps.InfoWindow({
-                            content: `<div style="background:#000;color:#ff6b6b;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;">Last updated ${Math.round(loc.ageMinutes)} min ago</div>`,
-                            position: pos
-                        });
-                        // Store info window reference to close later? We'll manage via timeout.
-                        setTimeout(() => info.open(mainMap), 100);
-                        setTimeout(() => info.close(), 5000);
+        const devices = await res.json();
+        if (!Array.isArray(devices)) return;
+        // map deviceId -> latest position
+        const now = Date.now();
+        for (let d of devices) {
+            const devId = d.id || d.deviceId;
+            if (!devId) continue;
+            const pos = d.lastPosition || d.position || {};
+            if (pos.lat && pos.lng) {
+                // update driver's lastLocation
+                for (let [did, drv] of Object.entries(drivers)) {
+                    if (drv.deviceId == devId) {
+                        drv.lastLocation = { lat: pos.lat, lng: pos.lng, updatedAt: now };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        break;
                     }
                 }
+            }
+        }
+        updateAllMarkers();
+    } catch(e) { console.warn('fetch devices error', e); }
+}
+
+// ===== MAP =====
+let mapInitialized = false;
+function initMap() {
+    if (mapInitialized) return;
+    map = new google.maps.Map(document.getElementById('dispatch-map'), {
+        center: { lat: 49.8425, lng: -99.9497 }, zoom: 11,
+        styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
+    });
+    mapInitialized = true;
+    updateAllMarkers();
+    // autocomplete for address
+    const addrInput = document.getElementById('stopAddress');
+    if (addrInput) new google.maps.places.Autocomplete(addrInput, { componentRestrictions: { country: 'ca' } });
+}
+
+function updateAllMarkers() {
+    if (!map) return;
+    // clear old markers
+    Object.values(mapMarkers).forEach(m => m.setMap(null));
+    mapMarkers = {};
+    // for each driver with location, add marker
+    for (let [id, drv] of Object.entries(drivers)) {
+        if (!drv.lastLocation) continue;
+        const pos = drv.lastLocation;
+        const marker = new google.maps.Marker({
+            position: { lat: pos.lat, lng: pos.lng },
+            map: map,
+            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: drv.color || '#f7c948', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
+        });
+        mapMarkers[id] = marker;
+    }
+    // auto zoom to all drivers
+    if (Object.keys(mapMarkers).length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        Object.values(mapMarkers).forEach(m => bounds.extend(m.getPosition()));
+        map.fitBounds(bounds);
+    }
+}
+
+// ===== DRIVER BADGES =====
+function renderDriverBadges() {
+    const container = document.getElementById('driverBadges');
+    container.innerHTML = '';
+    for (let [id, drv] of Object.entries(drivers)) {
+        const badge = document.createElement('div');
+        badge.className = 'driver-badge';
+        badge.style.borderLeftColor = drv.color || '#f7c948';
+        const dot = `<span class="dot" style="background:${drv.color || '#f7c948'}"></span>`;
+        const lastUpdate = drv.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
+        const updateText = drv.lastLocation ? `${lastUpdate}m ago` : 'offline';
+        badge.innerHTML = `${dot} ${drv.name || 'Driver'} <span class="last-update">${updateText}</span>`;
+        badge.onclick = () => { zoomToDriver(id); };
+        container.appendChild(badge);
+    }
+}
+
+function zoomToDriver(driverId) {
+    const drv = drivers[driverId];
+    if (!drv || !drv.lastLocation) return;
+    const pos = drv.lastLocation;
+    if (map) {
+        map.panTo({ lat: pos.lat, lng: pos.lng });
+        map.setZoom(14);
+    }
+    // open driver modal
+    openDriverModal(driverId);
+}
+
+// ===== DRIVER MODAL =====
+function openDriverModal(driverId) {
+    const modal = document.getElementById('driverModal');
+    modal.style.display = 'flex';
+    activeModalDriverId = driverId;
+    const drv = drivers[driverId];
+    document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
+    // init map
+    setTimeout(() => {
+        const container = document.getElementById('driver-map');
+        if (!container._map) {
+            const m = new google.maps.Map(container, {
+                center: drv?.lastLocation ? { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng } : { lat: 49.8425, lng: -99.9497 },
+                zoom: 13,
+                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
             });
-
-            // Auto-zoom to fit all drivers
-            if (hasLocation && !document.getElementById('driver-modal').classList.contains('open')) {
-                mainMap.fitBounds(bounds);
-            }
-
-            // Update chips
-            renderDriverChips();
-            updateDriverTabCounts();
+            container._map = m;
         }
-
-        function zoomToDriver(id) {
-            const loc = getDriverLocation(id);
-            if (!loc) {
-                showToast('Driver location not available', 'error');
-                return;
-            }
-            const pos = { lat: loc.lat, lng: loc.lng };
-            if (mainMap) {
-                mainMap.panTo(pos);
-                mainMap.setZoom(15);
-            }
+        const mmap = container._map;
+        if (drv?.lastLocation) {
+            const pos = drv.lastLocation;
+            mmap.panTo({ lat: pos.lat, lng: pos.lng });
+            mmap.setZoom(14);
         }
-
-        // ============================================================
-        //  DRIVER MODAL
-        // ============================================================
-        function openDriverModal(id) {
-            selectedDriverId = id;
-            const d = drivers[id];
-            if (!d) return;
-            document.getElementById('driver-modal-title').textContent = '🚗 ' + (d.name || 'Driver');
-            document.getElementById('driver-modal').classList.add('open');
-
-            // Init driver map
-            setTimeout(() => {
-                const container = document.getElementById('driver-map');
-                if (!container) return;
-                if (!driverMapInstances[id]) {
-                    driverMapInstances[id] = new google.maps.Map(container, {
-                        center: DEPOT,
-                        zoom: 12,
-                        styles: [
-                            { featureType: 'all', elementType: 'all', stylers: [{ invert_lightness: true }, { saturation: 10 }, { lightness: 20 }, { gamma: 0.5 }, { hue: '#2a2a4a' }] }
-                        ],
-                        gestureHandling: 'greedy'
-                    });
-                }
-                const map = driverMapInstances[id];
-                google.maps.event.trigger(map, 'resize');
-
-                // Show driver location
-                const loc = getDriverLocation(id);
-                if (loc) {
-                    const pos = { lat: loc.lat, lng: loc.lng };
-                    map.setCenter(pos);
-                    map.setZoom(14);
-                    // Add driver marker
-                    if (driverMarkers[id]) driverMarkers[id].setMap(null);
-                    driverMarkers[id] = new google.maps.Marker({
-                        position: pos,
-                        map: map,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 16,
-                            fillColor: d.color || '#facc15',
-                            fillOpacity: 1,
-                            strokeColor: '#fff',
-                            strokeWeight: 3
-                        },
-                        label: {
-                            text: d.name || '',
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: '14px'
-                        }
-                    });
-                }
-
-                // Draw stops and polyline
-                renderDriverMapStops(id);
-
-            }, 200);
-
-            renderDriverStopList(id);
-        }
-
-        function closeDriverModal() {
-            document.getElementById('driver-modal').classList.remove('open');
-            selectedDriverId = null;
-            // Clean up markers
-            Object.values(allStopsMarkers).forEach(m => m.setMap(null));
-            allStopsMarkers = {};
-        }
-
-        function renderDriverMapStops(driverId) {
-            const map = driverMapInstances[driverId];
-            if (!map) return;
-
-            // Clear old markers
-            Object.values(allStopsMarkers).forEach(m => m.setMap(null));
-            allStopsMarkers = {};
-
-            // Get assigned stops (pending only)
-            const assigned = Object.entries(stopsToday)
-                .filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed')
-                .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-
-            if (assigned.length === 0) {
-                // Clear polyline
-                if (driverPolylines[driverId]) {
-                    driverPolylines[driverId].setMap(null);
-                    delete driverPolylines[driverId];
-                }
-                return;
-            }
-
-            // Build polyline path
-            const path = [];
-            const d = drivers[driverId];
-            const loc = getDriverLocation(driverId);
-
-            // Start from driver location if available
-            if (loc) {
-                path.push({ lat: loc.lat, lng: loc.lng });
-            } else {
-                path.push(DEPOT);
-            }
-
-            assigned.forEach(([id, stop]) => {
-                // Geocode stop address (use cached or approximate)
-                const pos = getStopPosition(stop);
-                if (pos) {
-                    path.push(pos);
-                    // Add marker
-                    const marker = new google.maps.Marker({
-                        position: pos,
-                        map: map,
-                        label: {
-                            text: stop.name || 'Stop',
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: '11px'
-                        },
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 10,
-                            fillColor: d.color || '#facc15',
-                            fillOpacity: 0.8,
-                            strokeColor: '#fff',
-                            strokeWeight: 2
-                        }
-                    });
-                    allStopsMarkers[id] = marker;
-                }
+        // clear old markers
+        if (container._markers) container._markers.forEach(m => m.setMap(null));
+        container._markers = [];
+        // add driver marker
+        if (drv?.lastLocation) {
+            const mk = new google.maps.Marker({
+                position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
+                map: mmap,
+                label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: drv.color || '#f7c948', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
             });
-
-            // Draw polyline
-            if (driverPolylines[driverId]) {
-                driverPolylines[driverId].setMap(null);
-            }
+            container._markers.push(mk);
+        }
+        // draw route for driver's assigned stops
+        // get stops assigned to this driver
+        const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+        const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed');
+        // draw polyline
+        if (container._polyline) container._polyline.setMap(null);
+        if (assigned.length > 1) {
+            const path = assigned.map(([id, s]) => ({ lat: s.lat || 0, lng: s.lng || 0 })).filter(p => p.lat && p.lng);
             if (path.length > 1) {
-                driverPolylines[driverId] = new google.maps.Polyline({
-                    path: path,
-                    geodesic: true,
-                    strokeColor: d.color || '#facc15',
-                    strokeOpacity: 0.8,
-                    strokeWeight: 4,
-                    map: map
+                const poly = new google.maps.Polyline({ path, map: mmap, strokeColor: drv.color || '#f7c948', strokeWeight: 4 });
+                container._polyline = poly;
+            }
+        }
+        // add stop markers
+        assigned.forEach(([id, s]) => {
+            if (s.lat && s.lng) {
+                const mk = new google.maps.Marker({
+                    position: { lat: s.lat, lng: s.lng },
+                    map: mmap,
+                    label: { text: s.name || 'Stop', color: '#fff', fontSize: '11px' },
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#2ecc71', fillOpacity: 0.8, strokeColor: '#fff', strokeWeight: 1 }
                 });
-
-                // Fit bounds
-                const bounds = new google.maps.LatLngBounds();
-                path.forEach(p => bounds.extend(p));
-                map.fitBounds(bounds);
-            }
-        }
-
-        function getStopPosition(stop) {
-            // Try to geocode the address for real position
-            // For simplicity, return a random-ish position near depot if not cached
-            // In production, you'd geocode properly.
-            if (stop._lat && stop._lng) return { lat: stop._lat, lng: stop._lng };
-            // For demo, return a position based on hash of address
-            const hash = stop.address ? stop.address.length : 0;
-            return {
-                lat: DEPOT.lat + (hash % 10) * 0.02 - 0.1,
-                lng: DEPOT.lng + (hash % 8) * 0.02 - 0.08
-            };
-        }
-
-        function renderDriverStopList(driverId) {
-            const container = document.getElementById('driver-stop-list');
-            if (!container) return;
-            const assigned = Object.entries(stopsToday)
-                .filter(([id, s]) => s.assignedDriver === driverId)
-                .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-
-            if (assigned.length === 0) {
-                container.innerHTML = '<div class="empty-state">No stops assigned to this driver.</div>';
-                return;
-            }
-
-            let html = '';
-            assigned.forEach(([id, stop]) => {
-                const isCompleted = stop.status === 'completed';
-                const timeStr = stop.completedAt ? new Date(stop.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                html += `
-                    <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}">
-                        <div class="stop-info">
-                            <div class="stop-name">${stop.name || 'No name'}</div>
-                            <div class="stop-address">${stop.address || ''}, ${stop.city || ''}</div>
-                        </div>
-                        <div class="stop-status">
-                            ${isCompleted ? '✓ Done' : 'Pending'}
-                            ${timeStr ? `<span class="completion-time">${timeStr}</span>` : ''}
-                        </div>
-                        <div class="stop-actions">
-                            <button onclick="toggleStopComplete('${id}')" title="Toggle complete">
-                                ${isCompleted ? '↩️' : '✅'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        //  STOP MANAGEMENT
-        // ============================================================
-        function addStop() {
-            const name = document.getElementById('f-name').value.trim();
-            const address = document.getElementById('f-address').value.trim();
-            const city = document.getElementById('f-city').value.trim();
-            if (!name || !address || !city) {
-                showToast('Please fill all fields', 'error');
-                return;
-            }
-
-            const newStop = {
-                name: name,
-                address: address,
-                city: city,
-                assignedDriver: null,
-                status: 'pending',
-                completedAt: null,
-                order: Object.keys(stopsToday).length,
-                createdAt: Date.now(),
-                createdBy: currentUser
-            };
-
-            const ref = db.ref('developer/dispatch_dashboard/stops_today').push();
-            ref.set(newStop).then(() => {
-                document.getElementById('f-name').value = '';
-                document.getElementById('f-address').value = '';
-                document.getElementById('f-city').value = '';
-                showToast('Stop added!', 'success');
-                // Update address lookup
-                const key = name.replace(/[.#$\[\]\/]/g, '').trim();
-                if (key) {
-                    db.ref('address_lookup').child(key).set({ address, city, last_edit_by: currentUser });
-                }
-            }).catch(err => showToast('Error: ' + err.message, 'error'));
-        }
-
-        function updateStopOrder() {
-            const ids = Object.keys(stopsToday);
-            stopOrder = ids.sort((a, b) => (stopsToday[a].order || 0) - (stopsToday[b].order || 0));
-        }
-
-        function updateStopList() {
-            const container = document.getElementById('stop-list');
-            if (!container) return;
-            const ids = Object.keys(stopsToday);
-            if (ids.length === 0) {
-                container.innerHTML = '<div class="empty-state">No stops yet. Add a stop above.</div>';
-                if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
-                return;
-            }
-
-            // Sort by order
-            const sorted = ids.sort((a, b) => (stopsToday[a].order || 0) - (stopsToday[b].order || 0));
-
-            let html = '';
-            sorted.forEach(id => {
-                const stop = stopsToday[id];
-                if (!stop) return;
-                const isCompleted = stop.status === 'completed';
-                const timeStr = stop.completedAt ? new Date(stop.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                const driverName = stop.assignedDriver ? (drivers[stop.assignedDriver]?.name || 'Unknown') : 'Unassigned';
-                const driverColor = stop.assignedDriver ? (drivers[stop.assignedDriver]?.color || '#666') : '#666';
-
-                // Check for proximity hint (if assignedDriver is null and we have a suggestion)
-                const hasProximity = stop._proximityHint || false;
-
-                html += `
-                    <div class="stop-item ${isCompleted ? 'completed' : ''} ${hasProximity ? 'proximity-hint' : ''}" data-id="${id}">
-                        <div class="stop-info" style="flex:1;">
-                            <div class="stop-name">${stop.name || 'No name'}</div>
-                            <div class="stop-address">${stop.address || ''}, ${stop.city || ''}</div>
-                        </div>
-                        <select class="stop-assign" data-id="${id}" style="background:${stop.assignedDriver ? driverColor : 'var(--input-bg)'}; color:${stop.assignedDriver ? '#fff' : 'var(--text-muted)'};">
-                            <option value="">Unassigned</option>
-                            ${Object.keys(drivers).map(did => `<option value="${did}" ${stop.assignedDriver === did ? 'selected' : ''}>${drivers[did].name}</option>`).join('')}
-                        </select>
-                        <div class="stop-status">
-                            ${isCompleted ? '✓ Done' : 'Pending'}
-                            ${timeStr ? `<span class="completion-time">${timeStr}</span>` : ''}
-                        </div>
-                        <div class="stop-actions">
-                            ${!isCompleted ? `<button class="next-btn" onclick="moveToTomorrow('${id}')" title="Move to tomorrow">→</button>` : ''}
-                            <button onclick="toggleStopComplete('${id}')" title="Toggle complete">
-                                ${isCompleted ? '↩️' : '✅'}
-                            </button>
-                            <button onclick="deleteStop('${id}')" title="Delete" style="color:var(--red);">✕</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-
-            // Attach change events to assignment dropdowns
-            container.querySelectorAll('.stop-assign').forEach(sel => {
-                sel.addEventListener('change', function() {
-                    const id = this.dataset.id;
-                    const val = this.value || null;
-                    assignDriver(id, val);
-                });
-            });
-
-            // Re-init Sortable
-            initSortable();
-            updateStopCount();
-            updateDriverTabCounts();
-        }
-
-        function initSortable() {
-            const container = document.getElementById('stop-list');
-            if (sortableInstance) {
-                sortableInstance.destroy();
-                sortableInstance = null;
-            }
-            if (!container || container.querySelectorAll('.stop-item').length === 0) return;
-            sortableInstance = new Sortable(container, {
-                animation: 150,
-                delay: 200,
-                delayOnTouchOnly: true,
-                draggable: '.stop-item',
-                ghostClass: 'sortable-ghost',
-                onEnd: function(evt) {
-                    const items = container.querySelectorAll('.stop-item');
-                    const updates = {};
-                    items.forEach((el, idx) => {
-                        const id = el.dataset.id;
-                        if (id) {
-                            updates[`${id}/order`] = idx;
-                        }
-                    });
-                    db.ref('developer/dispatch_dashboard/stops_today').update(updates);
-                }
-            });
-        }
-
-        function updateStopCount() {
-            const total = Object.keys(stopsToday).filter(id => stopsToday[id].status !== 'completed').length;
-            document.getElementById('stop-count').textContent = `(${total} pending)`;
-        }
-
-        // ============================================================
-        //  STOP ACTIONS
-        // ============================================================
-        function assignDriver(stopId, driverId) {
-            db.ref(`developer/dispatch_dashboard/stops_today/${stopId}/assignedDriver`).set(driverId || null)
-                .then(() => {
-                    if (driverId) {
-                        showToast(`Assigned to ${drivers[driverId]?.name || 'driver'}`, 'success');
-                    }
-                });
-        }
-
-        function toggleStopComplete(id) {
-            const stop = stopsToday[id];
-            if (!stop) return;
-            const newStatus = stop.status === 'completed' ? 'pending' : 'completed';
-            const updates = {
-                [`${id}/status`]: newStatus,
-                [`${id}/completedAt`]: newStatus === 'completed' ? Date.now() : null
-            };
-            db.ref('developer/dispatch_dashboard/stops_today').update(updates)
-                .then(() => {
-                    if (newStatus === 'completed') {
-                        showToast('✅ Stop completed!', 'success');
-                    } else {
-                        showToast('↩️ Re-opened', 'success');
-                    }
-                });
-        }
-
-        function deleteStop(id) {
-            if (!confirm('Delete this stop?')) return;
-            db.ref(`developer/dispatch_dashboard/stops_today/${id}`).remove();
-        }
-
-        function clearAllStops() {
-            if (!confirm('Delete ALL stops for today?')) return;
-            db.ref('developer/dispatch_dashboard/stops_today').remove();
-            showToast('All stops cleared', 'success');
-        }
-
-        function clearCompletedStops() {
-            const completed = Object.keys(stopsToday).filter(id => stopsToday[id].status === 'completed');
-            if (completed.length === 0) {
-                showToast('No completed stops to clear', 'error');
-                return;
-            }
-            if (!confirm(`Clear ${completed.length} completed stops?`)) return;
-            const updates = {};
-            completed.forEach(id => { updates[id] = null; });
-            db.ref('developer/dispatch_dashboard/stops_today').update(updates);
-            showToast(`Cleared ${completed.length} completed stops`, 'success');
-        }
-
-        // ============================================================
-        //  NEXT DAY / TOMORROW
-        // ============================================================
-        function showNextDayPrompt() {
-            const pending = Object.keys(stopsToday).filter(id => stopsToday[id].status !== 'completed');
-            if (pending.length === 0) {
-                showToast('No pending stops to move to tomorrow', 'error');
-                return;
-            }
-            if (!confirm(`Move ${pending.length} pending stops to tomorrow's list?`)) return;
-            movePendingToTomorrow();
-        }
-
-        function movePendingToTomorrow() {
-            const pending = Object.keys(stopsToday).filter(id => stopsToday[id].status !== 'completed');
-            if (pending.length === 0) return;
-
-            const updates = {};
-            pending.forEach(id => {
-                const stop = stopsToday[id];
-                // Copy to tomorrow
-                const newRef = db.ref('developer/dispatch_dashboard/stops_tomorrow').push();
-                const copy = { ...stop, order: null, createdAt: Date.now() };
-                updates[`stops_tomorrow/${newRef.key}`] = copy;
-                // Remove from today
-                updates[`stops_today/${id}`] = null;
-            });
-
-            db.ref('developer/dispatch_dashboard').update(updates)
-                .then(() => {
-                    showToast(`Moved ${pending.length} stops to tomorrow`, 'success');
-                });
-        }
-
-        function moveToTomorrow(id) {
-            const stop = stopsToday[id];
-            if (!stop) return;
-            if (stop.status === 'completed') {
-                showToast('Cannot move completed stops', 'error');
-                return;
-            }
-            if (!confirm(`Move "${stop.name}" to tomorrow?`)) return;
-
-            const copy = { ...stop, order: null, createdAt: Date.now() };
-            const newRef = db.ref('developer/dispatch_dashboard/stops_tomorrow').push();
-            const updates = {};
-            updates[`stops_tomorrow/${newRef.key}`] = copy;
-            updates[`stops_today/${id}`] = null;
-            db.ref('developer/dispatch_dashboard').update(updates)
-                .then(() => showToast(`Moved "${stop.name}" to tomorrow`, 'success'));
-        }
-
-        // ============================================================
-        //  TOAST
-        // ============================================================
-        function showToast(msg, type = 'info') {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.className = 'toast ' + type;
-            el.classList.add('show');
-            clearTimeout(el._timeout);
-            el._timeout = setTimeout(() => el.classList.remove('show'), 4000);
-        }
-
-        // ============================================================
-        //  KEYBOARD SHORTCUTS
-        // ============================================================
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && document.activeElement.closest('.add-stop-form')) {
-                addStop();
-            }
-            if (e.key === 'Escape') {
-                if (document.getElementById('driver-modal').classList.contains('open')) {
-                    closeDriverModal();
-                }
-                if (document.getElementById('settings-modal').classList.contains('open')) {
-                    closeSettings();
-                }
+                container._markers.push(mk);
             }
         });
+        // render stop list
+        renderDriverStops(driverId);
+        // update last update
+        const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
+        document.getElementById('driverLastUpdate').textContent = `Last update: ${lastUp}m ago`;
+        document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
+    }, 200);
+}
 
-        // ============================================================
-        //  BOOT
-        // ============================================================
-        console.log('🚚 Dispatch Dashboard initialized');
-        console.log('📌 PAJ GPS Integration: https://connect.paj-gps.de/api/v1');
-        console.log('📌 Firebase path: developer/dispatch_dashboard/');
+function closeDriverModal() {
+    document.getElementById('driverModal').style.display = 'none';
+    activeModalDriverId = null;
+}
 
-        // Expose functions globally for onclick
-        window.attemptLogin = attemptLogin;
-        window.addStop = addStop;
-        window.deleteStop = deleteStop;
-        window.toggleStopComplete = toggleStopComplete;
-        window.assignDriver = assignDriver;
-        window.clearAllStops = clearAllStops;
-        window.clearCompletedStops = clearCompletedStops;
-        window.openDriverModal = openDriverModal;
-        window.closeDriverModal = closeDriverModal;
-        window.zoomToDriver = zoomToDriver;
-        window.openSettings = openSettings;
-        window.closeSettings = closeSettings;
-        window.saveSettings = saveSettings;
-        window.addDriverSetting = addDriverSetting;
-        window.removeDriver = removeDriver;
-        window.moveToTomorrow = moveToTomorrow;
-        window.showNextDayPrompt = showNextDayPrompt;
-        window.initMaps = initMaps;
-    </script>
+function renderDriverStops(driverId) {
+    const container = document.getElementById('driverModalStops');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId);
+    container.innerHTML = '';
+    if (assigned.length === 0) { container.innerHTML = '<div style="color:var(--muted);padding:12px;">No assigned stops</div>'; return; }
+    assigned.sort((a,b) => (a[1].order || 0) - (b[1].order || 0));
+    assigned.forEach(([id, s]) => {
+        const div = document.createElement('div');
+        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''}`;
+        div.style.borderLeftColor = drivers[driverId]?.color || '#f7c948';
+        const ts = s.status === 'completed' ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        div.innerHTML = `
+            <div class="info"><div class="name">${s.name || 'No name'} ${ts}</div><div class="addr">${s.address || ''} ${s.city || ''}</div></div>
+            <div class="actions">
+                ${s.status === 'completed' ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ===== STOP LIST (main) =====
+function renderStopList() {
+    const container = document.getElementById('stopList');
+    const empty = document.getElementById('emptyMsg');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const entries = Object.entries(allStops);
+    if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    // sort: pending first, then completed, then by order
+    entries.sort((a,b) => {
+        if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
+        if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
+        return (a[1].order || 0) - (b[1].order || 0);
+    });
+    let html = '';
+    for (let [id, s] of entries) {
+        const isCompleted = s.status === 'completed';
+        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name : 'Unassigned';
+        const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
+        html += `
+            <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}" style="border-left-color:${color};">
+                <div class="info">
+                    <div class="name">${s.name || 'No name'} ${ts}</div>
+                    <div class="addr">${s.address || ''} ${s.city || ''}</div>
+                </div>
+                <div class="assign-badge" style="border-color:${color};">${driverName}</div>
+                <div class="actions">
+                    <select class="assign-select" onchange="assignStop('${id}', this.value)">
+                        <option value="">Unassign</option>
+                        ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
+                    </select>
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                    <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+                    <button onclick="deleteStop('${id}')" style="color:#e74c3c;">✕</button>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+    // sortable
+    if (sortableInstance) sortableInstance.destroy();
+    sortableInstance = new Sortable(container, {
+        animation: 150, delay: 400, delayOnTouchOnly: true,
+        onEnd: function(evt) {
+            const items = container.querySelectorAll('.stop-item');
+            const newOrder = Array.from(items).map(el => el.dataset.id);
+            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+            const updates = {};
+            newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
+            const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+            ref.update(updates);
+        }
+    });
+}
+
+// ===== STOP ACTIONS =====
+function addStop() {
+    const name = document.getElementById('stopName').value.trim();
+    const address = document.getElementById('stopAddress').value.trim();
+    const city = document.getElementById('stopCity').value.trim();
+    if (!name || !address || !city) { alert('Fill all fields'); return; }
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    const newRef = ref.push();
+    const stop = { name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() };
+    newRef.set(stop);
+    document.getElementById('stopName').value = '';
+    document.getElementById('stopAddress').value = '';
+    document.getElementById('stopCity').value = '';
+}
+
+function completeStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'completed', completedAt: Date.now() });
+    // re-render driver modal if open
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function reopenStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'pending', completedAt: null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function assignStop(id, driverId) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ assignedDriver: driverId || null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function moveToTomorrow(id) {
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.child(id).once('value').then(snap => {
+        const val = snap.val();
+        if (!val) return;
+        refTomorrow.push(val).then(() => {
+            refToday.child(id).remove();
+        });
+    });
+}
+
+function deleteStop(id) {
+    if (!confirm('Delete stop?')) return;
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).remove();
+}
+
+function switchDay(day) {
+    currentDay = day;
+    document.querySelectorAll('.day-toggle button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+    document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
+    renderStopList();
+    // close driver modal if open
+    closeDriverModal();
+}
+
+function nextDayPrompt() {
+    if (confirm('Move all pending stops to tomorrow? Completed stops will be cleared.')) {
+        const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+        const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+        refToday.once('value').then(snap => {
+            const data = snap.val() || {};
+            const pending = Object.entries(data).filter(([id, s]) => s.status !== 'completed');
+            // move pending to tomorrow
+            const updates = {};
+            pending.forEach(([id, s]) => { updates[id] = s; });
+            refTomorrow.update(updates).then(() => {
+                // remove completed from today
+                const completedIds = Object.entries(data).filter(([id, s]) => s.status === 'completed').map(([id]) => id);
+                const removes = {};
+                completedIds.forEach(id => { removes[id] = null; });
+                refToday.update(removes);
+                // clear remaining pending from today (they are moved)
+                const pendingIds = pending.map(([id]) => id);
+                const clear = {};
+                pendingIds.forEach(id => { clear[id] = null; });
+                refToday.update(clear);
+                switchDay('tomorrow');
+            });
+        });
+    }
+}
+
+// ===== SETTINGS =====
+function openSettings() {
+    document.getElementById('settingsModal').style.display = 'flex';
+    renderSettingsList();
+}
+function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+function renderSettingsList() {
+    const container = document.getElementById('driverSettingsList');
+    container.innerHTML = '';
+    for (let [id, drv] of Object.entries(drivers)) {
+        const row = document.createElement('div');
+        row.className = 'driver-row';
+        row.innerHTML = `
+            <input type="text" value="${drv.name || ''}" placeholder="Name" data-id="${id}" class="drv-name">
+            <input type="color" value="${drv.color || '#f7c948'}" data-id="${id}" class="drv-color color-pick">
+            <input type="text" value="${drv.deviceId || ''}" placeholder="Device ID" data-id="${id}" class="drv-device">
+            <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
+        `;
+        container.appendChild(row);
+    }
+}
+
+function addDriverRow() {
+    const ref = getDriversRef();
+    const newRef = ref.push();
+    newRef.set({ name: 'Driver', color: '#f7c948', deviceId: '' });
+}
+
+function removeDriver(id) {
+    if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
+    const ref = getDriversRef();
+    ref.child(id).remove();
+    // unassign stops
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refToday.update(updates);
+    });
+    refTomorrow.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refTomorrow.update(updates);
+    });
+}
+
+function saveSettings() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    getMasterRef().update({ paj_email: email, paj_password: pass });
+
+    // update drivers from inputs
+    const rows = document.querySelectorAll('#driverSettingsList .driver-row');
+    rows.forEach(row => {
+        const id = row.querySelector('.drv-name').dataset.id;
+        const name = row.querySelector('.drv-name').value;
+        const color = row.querySelector('.drv-color').value;
+        const deviceId = row.querySelector('.drv-device').value;
+        if (id) getDriversRef().child(id).update({ name, color, deviceId });
+    });
+    if (email && pass) authenticatePAJ();
+    closeSettings();
+}
+
+// ===== THEME TOGGLE =====
+function toggleTheme() {
+    // simple dark toggle for demo (keeps dark)
+}
+
+// ===== START =====
+initApp();
+</script>
 </body>
 </html>
