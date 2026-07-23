@@ -308,34 +308,23 @@ let gpsInterval = null;
 let pajToken = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
-// UPDATED THRESHOLDS - MORE LENIENT FOR SALIND 11 4G
-const STANDBY_THRESHOLD = 15 * 60 * 1000;  // 15 minutes
-const OFFLINE_THRESHOLD = 60 * 60 * 1000;  // 60 minutes
+const STANDBY_THRESHOLD = 15 * 60 * 1000;
+const OFFLINE_THRESHOLD = 60 * 60 * 1000;
 
-// Address lookup cache
 let addressLookupData = null;
 let addressLookupMap = {};
-
-// Manual override for PAJ data (if CORS fails) - kept for fallback
-let manualPAJData = null;
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
 
-// ===== GPS STATUS HELPER - UPDATED =====
 function getGPSStatus(lastUpdated) {
     if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
-    const now = Date.now();
-    const diff = now - lastUpdated;
-    console.log(`getGPSStatus: now=${now}, lastUpdated=${lastUpdated}, diff=${diff}ms (${diff/60000} min)`);
-    if (diff < STANDBY_THRESHOLD) {
-        return { status: 'online', label: '● Online', class: 'status-online' };
-    } else if (diff < OFFLINE_THRESHOLD) {
-        return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
-    } else {
-        return { status: 'offline', label: '○ Offline', class: 'status-offline' };
-    }
+    const diff = Date.now() - lastUpdated;
+    console.log(`⏱️ Status check: diff=${diff/60000} min`);
+    if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
+    if (diff < OFFLINE_THRESHOLD) return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+    return { status: 'offline', label: '○ Offline', class: 'status-offline' };
 }
 
 // ===== TEST PAJ CONNECTION =====
@@ -345,106 +334,43 @@ async function testPAJConnection() {
     const pass = document.getElementById('pajPassword').value.trim();
     
     debug.innerHTML = '<span class="info">⏳ Testing connection...</span>';
-    
     if (!email || !pass) {
         debug.innerHTML = '<span class="error">❌ Please enter your PAJ GPS email and password first.</span>';
         return;
     }
-    
     try {
-        debug.innerHTML = `<span class="info">⏳ Logging in to PAJ GPS API...</span><br>`;
-        debug.innerHTML += `<span class="info">📧 Email: ${email}</span><br>`;
-        
         const loginRes = await fetch(`${PAJ_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password: pass })
         });
-        
-        const responseText = await loginRes.text();
-        let loginData;
-        try {
-            loginData = JSON.parse(responseText);
-        } catch(e) {
-            debug.innerHTML += `<span class="error">❌ Failed to parse response.</span>`;
-            return;
-        }
-        
-        let token = null;
-        if (loginData.success && loginData.success.token) {
-            token = loginData.success.token;
-        } else if (loginData.token) {
-            token = loginData.token;
-        }
-        
+        const loginData = await loginRes.json();
+        let token = loginData.success?.token || loginData.token;
         if (!token) {
-            debug.innerHTML += `<span class="error">❌ Login failed. No token received.</span><br>`;
+            debug.innerHTML += `<span class="error">❌ Login failed.</span>`;
             return;
         }
-        
         debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
-        
-        debug.innerHTML += `<span class="info">⏳ Fetching your devices from PAJ GPS...</span><br>`;
-        
         const deviceRes = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        const devicesText = await deviceRes.text();
-        let devicesData;
-        try {
-            devicesData = JSON.parse(devicesText);
-        } catch(e) {
-            debug.innerHTML += `<span class="error">❌ Failed to parse device list: ${devicesText.substring(0, 200)}</span>`;
+        const devicesData = await deviceRes.json();
+        let devices = devicesData.success || devicesData.data || devicesData;
+        if (!Array.isArray(devices)) {
+            debug.innerHTML += `<span class="error">❌ No devices found.</span>`;
             return;
         }
-        
-        let devices = [];
-        if (devicesData.success && Array.isArray(devicesData.success)) {
-            devices = devicesData.success;
-        } else if (Array.isArray(devicesData)) {
-            devices = devicesData;
-        } else if (devicesData.data && Array.isArray(devicesData.data)) {
-            devices = devicesData.data;
-        }
-        
-        if (!devices || devices.length === 0) {
-            debug.innerHTML += `<span class="error">❌ No devices found.</span><br>`;
-            debug.innerHTML += `<span class="error">Raw response: ${devicesText.substring(0, 300)}</span>`;
-            return;
-        }
-        
-        // Show devices with their IDs
         let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
         devices.forEach((d, i) => {
             const devId = d.id || d.deviceId || d.imei || 'Unknown';
             const name = d.name || d.deviceName || `Device ${i+1}`;
-            const pos = d.lastPosition || d.position || {};
-            const hasPos = pos.lat && pos.lng;
-            const lastUpdate = d.lastUpdate || d.lastPositionTime || '';
-            
             html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
             html += `   📱 Device ID: <span class="device-id">${devId}</span><br>`;
-            if (d.imei) {
-                html += `   📶 IMEI: ${d.imei}<br>`;
-            }
-            if (hasPos) {
-                html += `   📍 Location: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}<br>`;
-                if (lastUpdate) {
-                    html += `   🕐 Last update: ${lastUpdate}<br>`;
-                }
-            } else {
-                html += `   ⚠️ No location data yet (device may be in standby)<br>`;
-            }
-            html += `<br>`;
         });
-        html += `<span class="info">💡 <strong>Copy the Device ID</strong> (in gold/yellow) and paste it into the "Device ID" field for each driver.</span><br>`;
-        html += `<span class="info">💡 The status thresholds have been adjusted: Online = within 15 minutes, Standby = 15-60 minutes, Offline = over 60 minutes.</span>`;
+        html += `<span class="info">💡 Copy the Device ID and paste into each driver's settings.</span>`;
         debug.innerHTML = html;
-        
         pajToken = token;
         getMasterRef().update({ paj_token: token });
-        
     } catch(e) {
         debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`;
     }
@@ -454,8 +380,6 @@ async function testPAJConnection() {
 function initBusinessAutocomplete() {
     const input = document.getElementById('stopName');
     const datalist = document.getElementById('businessSuggestions');
-    
-    // Load address lookup data once
     function loadAddressLookup() {
         if (addressLookupData !== null) return;
         db.ref('address_lookup').once('value').then(snap => {
@@ -465,16 +389,12 @@ function initBusinessAutocomplete() {
                 addressLookupMap = {};
                 Object.keys(data).forEach(key => {
                     const item = data[key];
-                    if (item.name) {
-                        addressLookupMap[item.name] = { address: item.address || '', city: item.city || '' };
-                    }
+                    if (item.name) addressLookupMap[item.name] = { address: item.address || '', city: item.city || '' };
                 });
-                // Populate datalist initially
                 updateSuggestions('');
             }
         }).catch(() => {});
     }
-    
     function updateSuggestions(query) {
         const q = query.toLowerCase().trim();
         const options = Object.keys(addressLookupMap).filter(name => name.toLowerCase().includes(q));
@@ -485,21 +405,15 @@ function initBusinessAutocomplete() {
             datalist.appendChild(opt);
         });
     }
-    
-    // Load data immediately
     loadAddressLookup();
-    
     input.addEventListener('focus', function() {
         loadAddressLookup();
-        // Trigger initial suggestions
         updateSuggestions(this.value);
     });
-    
     input.addEventListener('input', function() {
         if (addressLookupData === null) return;
         updateSuggestions(this.value);
     });
-    
     input.addEventListener('change', function() {
         const val = this.value;
         if (addressLookupMap[val]) {
@@ -519,7 +433,6 @@ function initApp() {
         renderStopList();
         updateGlobalUpdateTime();
     });
-
     db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
         stopsToday = snap.val() || {};
         if (currentDay === 'today') renderStopList();
@@ -528,7 +441,6 @@ function initApp() {
         stopsTomorrow = snap.val() || {};
         if (currentDay === 'tomorrow') renderStopList();
     });
-
     getMasterRef().once('value').then(snap => {
         const cfg = snap.val() || {};
         document.getElementById('pajEmail').value = cfg.paj_email || '';
@@ -538,23 +450,19 @@ function initApp() {
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
-
     if (gpsInterval) clearInterval(gpsInterval);
     gpsInterval = setInterval(() => {
         if (pajToken) fetchAllDevicePositions();
         updateGlobalUpdateTime();
     }, 10000);
     setTimeout(fetchAllDevicePositions, 2000);
-    
-    // Initialize business autocomplete
     initBusinessAutocomplete();
 }
 
 function updateGlobalUpdateTime() {
     const el = document.getElementById('lastGlobalUpdate');
     if (el) {
-        const now = new Date();
-        el.textContent = '⏱ ' + now.toLocaleTimeString();
+        el.textContent = '⏱ ' + new Date().toLocaleTimeString();
     }
 }
 
@@ -579,86 +487,26 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== MANUAL DATA INPUT (for CORS fallback) =====
-function applyManualPAJData(data) {
-    if (!data || !data.success) {
-        console.warn('Invalid manual data');
-        return;
-    }
-    manualPAJData = data;
-    console.log('Manual PAJ data applied:', manualPAJData);
-    processPAJData(data);
-}
-
-function processPAJData(data) {
-    if (!data || !data.success) return;
-    const now = Date.now();
-    let updated = false;
-    for (const [deviceIdStr, points] of Object.entries(data.success)) {
-        const devId = parseInt(deviceIdStr, 10);
-        if (!devId) continue;
-        if (!Array.isArray(points) || points.length === 0) continue;
-        const latestPoint = points[0];
-        if (!latestPoint || typeof latestPoint !== 'object') continue;
-        const lat = latestPoint.lat;
-        const lng = latestPoint.lng;
-        if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
-        const timestampSec = latestPoint.dateunix;
-        let pajTimestamp = now;
-        if (timestampSec && !isNaN(timestampSec)) pajTimestamp = timestampSec * 1000;
-        console.log(`Manual update for device ${devId}: lat=${lat}, lng=${lng}`);
-        let matched = false;
-        for (let [did, drv] of Object.entries(drivers)) {
-            const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
-            const pajDeviceId = String(devId).trim();
-            if (drvDeviceId && pajDeviceId && drvDeviceId === pajDeviceId) {
-                matched = true;
-                if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
-                    drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                    getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                    updated = true;
-                    const status = getGPSStatus(pajTimestamp);
-                    console.log(`✅ Manually updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
-                    console.log(`   PAJ Last Update: ${new Date(pajTimestamp).toISOString()}`);
-                    console.log(`   Calculated Status: ${status.label} (${status.status})`);
-                }
-                break;
-            }
-        }
-        if (!matched) console.log(`No driver matches device ${devId}`);
-    }
-    if (updated) {
-        updateAllMarkers();
-        renderDriverBadges();
-    }
-}
-
-// ===== FETCH POSITIONS - CORRECT ENDPOINT: /trackerdata/getalllastpositions =====
+// ===== FETCH POSITIONS =====
 let authRetryInProgress = false;
+let lastSuccessfulFetch = 0; // timestamp of last successful fetch
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
-    
-    // If manual data exists, use it and don't fetch
-    if (manualPAJData) {
-        console.log('Using manual PAJ data instead of fetching');
-        return;
-    }
-    
-    // Build device IDs list from drivers
+    // Build device IDs from drivers (skip empty)
     const deviceIds = Object.values(drivers)
         .map(drv => drv.deviceId ? String(drv.deviceId).trim() : null)
-        .filter(id => id && id.length > 0);
+        .filter(id => id && id.length > 0 && !isNaN(parseInt(id, 10)));
     if (deviceIds.length === 0) {
-        console.log('No drivers with device IDs configured.');
+        console.log('📡 No driver device IDs configured.');
         return;
     }
-    
-    // Build payload: array of { deviceId: ..., dateunix: current_timestamp }
     const nowSec = Math.floor(Date.now() / 1000);
-    const deviceIDs = deviceIds.map(id => ({ deviceId: parseInt(id, 10), dateunix: nowSec }));
-    const payload = { deviceIDs, fromLastPoint: true };
-    
+    const payload = {
+        deviceIDs: deviceIds.map(id => ({ deviceId: parseInt(id, 10), dateunix: nowSec })),
+        fromLastPoint: true
+    };
+    console.log('📡 Sending payload:', JSON.stringify(payload));
     try {
         const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
             method: 'POST',
@@ -668,79 +516,74 @@ async function fetchAllDevicePositions() {
             },
             body: JSON.stringify(payload)
         });
-        
         if (response.status === 401 || response.status === 403) {
-            console.warn('PAJ token expired, re-authenticating...');
+            console.warn('🔑 Token expired, re-authenticating...');
             if (!authRetryInProgress) {
                 authRetryInProgress = true;
                 await authenticatePAJ();
                 authRetryInProgress = false;
-                // Retry the request
-                await fetchAllDevicePositions();
-                return;
+                await fetchAllDevicePositions(); // retry once
             }
+            return;
         }
-        
         if (!response.ok) {
-            console.warn('trackerdata/getalllastpositions request failed with status:', response.status);
+            console.warn(`❌ API returned status ${response.status} - ${response.statusText}`);
+            // If we haven't updated recently, keep last known locations.
             return;
         }
-        
         const data = await response.json();
-        console.log('trackerdata/getalllastpositions response:', data);
-        
+        console.log('📨 API response:', data);
         if (!data.success || typeof data.success !== 'object') {
-            console.warn('Invalid response from trackerdata/getalllastpositions');
+            console.warn('⚠️ No success object in response.');
             return;
         }
-        
-        const now = Date.now();
         let updated = false;
-        
+        const now = Date.now();
         for (const [deviceIdStr, points] of Object.entries(data.success)) {
-            if (!Array.isArray(points) || points.length === 0) continue;
-            const latestPoint = points[0];
-            if (!latestPoint || typeof latestPoint !== 'object') continue;
-            const lat = latestPoint.lat;
-            const lng = latestPoint.lng;
-            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
-            
-            const timestampSec = latestPoint.dateunix;
-            let pajTimestamp = now;
-            if (timestampSec && !isNaN(timestampSec)) {
-                pajTimestamp = timestampSec * 1000;
+            if (!Array.isArray(points) || points.length === 0) {
+                console.log(`📭 No points for device ${deviceIdStr}`);
+                continue;
             }
-            
+            const latest = points[0];
+            if (!latest || typeof latest !== 'object') continue;
+            const lat = latest.lat;
+            const lng = latest.lng;
+            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
+            const tsSec = latest.dateunix;
+            let pajTimestamp = now;
+            if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
             const devId = parseInt(deviceIdStr, 10);
-            console.log(`Processing device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
-            
+            console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
             let matched = false;
             for (let [did, drv] of Object.entries(drivers)) {
                 const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
                 if (drvDeviceId && drvDeviceId === String(devId)) {
                     matched = true;
-                    drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                    getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                    updated = true;
-                    const status = getGPSStatus(pajTimestamp);
-                    console.log(`✅ Updated driver ${drv.name} (${drv.deviceId}) to position ${lat},${lng}`);
-                    console.log(`   PAJ Last Update: ${new Date(pajTimestamp).toISOString()}`);
-                    console.log(`   Calculated Status: ${status.label} (${status.status})`);
-                    console.log(`   Diff: ${(Date.now() - pajTimestamp)/60000} min`);
+                    // Only update if this point is newer than what we have
+                    const current = drv.lastLocation;
+                    if (!current || (current.updatedAt || 0) < pajTimestamp) {
+                        drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        updated = true;
+                        const status = getGPSStatus(pajTimestamp);
+                        console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
+                    } else {
+                        console.log(`⏩ Skipped ${drv.name} – older than current data.`);
+                    }
                     break;
                 }
             }
-            if (!matched) {
-                console.log(`No configured driver matches PAJ Device ID ${devId}`);
-            }
+            if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
         }
-        
         if (updated) {
+            lastSuccessfulFetch = Date.now();
             updateAllMarkers();
             renderDriverBadges();
+        } else {
+            console.log('ℹ️ No driver updates from this response.');
         }
     } catch(e) {
-        console.warn('fetch devices error:', e);
+        console.warn('❌ Fetch error:', e);
     }
 }
 
@@ -767,15 +610,14 @@ function updateAllMarkers() {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
         const status = getGPSStatus(pos.updatedAt);
-        let markerColor = drv.color || '#f7c948';
-        if (status.status === 'standby') markerColor = '#f1c40f';
-        else if (status.status === 'offline') markerColor = '#95a5a6';
-        
+        let color = drv.color || '#f7c948';
+        if (status.status === 'standby') color = '#f1c40f';
+        else if (status.status === 'offline') color = '#95a5a6';
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
             label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: markerColor, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
         });
         mapMarkers[id] = marker;
     }
@@ -790,31 +632,25 @@ function updateAllMarkers() {
 function renderDriverBadges() {
     const container = document.getElementById('driverBadges');
     container.innerHTML = '';
-    const driverEntries = Object.entries(drivers);
-    if (driverEntries.length === 0) {
+    const entries = Object.entries(drivers);
+    if (entries.length === 0) {
         container.innerHTML = '<span style="color:var(--muted); font-size:13px; background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:20px;">No drivers — add in Settings</span>';
         return;
     }
-    for (let [id, drv] of driverEntries) {
+    for (let [id, drv] of entries) {
         const badge = document.createElement('div');
         badge.className = 'driver-badge';
         badge.style.borderLeftColor = drv.color || '#f7c948';
-        
-        const dot = `<span class="dot" style="background:${drv.color || '#f7c948'}"></span>`;
         const status = getGPSStatus(drv.lastLocation?.updatedAt);
-        const statusLabel = status.label;
-        const statusClass = status.class;
-        
         let lastUpdateText = '—';
         if (drv.lastLocation?.updatedAt) {
             const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
             lastUpdateText = `${mins}m`;
         }
-        
         badge.innerHTML = `
-            ${dot} 
+            <span class="dot" style="background:${drv.color || '#f7c948'}"></span>
             ${drv.name || 'Driver'} 
-            <span class="status-indicator ${statusClass}">${statusLabel}</span>
+            <span class="status-indicator ${status.class}">${status.label}</span>
             <span class="last-update">${lastUpdateText}</span>
         `;
         badge.onclick = () => { zoomToDriver(id); };
@@ -859,7 +695,6 @@ function openDriverModal(driverId) {
             let color = drv.color || '#f7c948';
             if (status.status === 'standby') color = '#f1c40f';
             else if (status.status === 'offline') color = '#95a5a6';
-            
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
                 map: mmap,
@@ -924,7 +759,7 @@ function renderDriverStops(driverId) {
     });
 }
 
-// ===== STOP LIST =====
+// ===== STOP LIST (unchanged) =====
 function renderStopList() {
     const container = document.getElementById('stopList');
     const empty = document.getElementById('emptyMsg');
@@ -979,7 +814,7 @@ function renderStopList() {
     } catch(e) {}
 }
 
-// ===== STOP ACTIONS =====
+// ===== STOP ACTIONS (unchanged) =====
 function addStop() {
     const name = document.getElementById('stopName').value.trim();
     const address = document.getElementById('stopAddress').value.trim();
@@ -1107,7 +942,6 @@ function saveSettings() {
     const email = document.getElementById('pajEmail').value.trim();
     const pass = document.getElementById('pajPassword').value.trim();
     getMasterRef().update({ paj_email: email, paj_password: pass });
-
     const rows = document.querySelectorAll('#driverSettingsList .driver-row');
     rows.forEach(row => {
         const id = row.querySelector('.drv-name').dataset.id;
