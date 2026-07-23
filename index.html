@@ -511,15 +511,31 @@ async function fetchInitialDateUnix() {
             const data = await response.json();
             let devices = data.success || data.data || data;
             if (Array.isArray(devices)) {
+                console.log('📡 /device response (first 2):', devices.slice(0, 2));
                 devices.forEach(d => {
                     const devId = d.id || d.deviceId || d.imei;
-                    if (devId && d.last_dateunix) {
+                    if (devId) {
                         const idNum = parseInt(devId, 10);
-                        lastDateUnix[idNum] = d.last_dateunix;
-                        console.log(`📌 Initial dateunix for device ${idNum}: ${d.last_dateunix}`);
+                        // Look for last_dateunix; if not present, try last_update_by_service or other timestamp
+                        let ts = d.last_dateunix || d.last_update_by_service || d.last_dateunix_str || null;
+                        if (ts) {
+                            // Ensure it's a number (could be string)
+                            const numTs = parseInt(ts, 10);
+                            if (!isNaN(numTs)) {
+                                lastDateUnix[idNum] = numTs;
+                                console.log(`📌 Initial dateunix for device ${idNum}: ${numTs}`);
+                            }
+                        } else {
+                            console.warn(`⚠️ No timestamp for device ${idNum}, keys:`, Object.keys(d));
+                        }
                     }
                 });
+                console.log('📌 lastDateUnix after fetch:', lastDateUnix);
+            } else {
+                console.warn('⚠️ /device response is not an array:', devices);
             }
+        } else {
+            console.warn('⚠️ /device request failed with status:', response.status);
         }
     } catch(e) {
         console.warn('Failed to fetch initial dateunix:', e);
@@ -551,12 +567,19 @@ async function fetchAllDevicePositions() {
     if (needFetch) {
         console.log('📡 Missing dateunix for some devices, fetching...');
         await fetchInitialDateUnix();
+        // If still missing, fallback to current time - 60 seconds (to get recent points)
+        for (const [did, drv] of deviceEntries) {
+            const devId = parseInt(String(drv.deviceId).trim(), 10);
+            if (!lastDateUnix[devId]) {
+                console.warn(`⚠️ No timestamp for device ${devId}, using current time - 60s`);
+                lastDateUnix[devId] = Math.floor(Date.now() / 1000) - 60;
+            }
+        }
     }
     
     const nowSec = Math.floor(Date.now() / 1000);
     const deviceIDs = deviceEntries.map(([did, drv]) => {
         const devId = parseInt(String(drv.deviceId).trim(), 10);
-        // Use stored timestamp if available, otherwise use current time (fallback)
         const dateunix = lastDateUnix[devId] || nowSec;
         return { deviceId: devId, dateunix };
     });
