@@ -223,6 +223,7 @@
         <div id="driverSettingsList"></div>
         <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
         
+        <!-- Test Connection Button -->
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
             <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
             <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
@@ -485,4 +486,480 @@ async function authenticatePAJ() {
             getMasterRef().update({ paj_token: token });
             fetchAllDevicePositions();
         }
-    } catch(e) { console.warn('PAJ auth error:',
+    } catch(e) { console.warn('PAJ auth error:', e); }
+}
+
+// ===== FETCH POSITIONS =====
+let authRetryInProgress = false;
+
+async function fetchAllDevicePositions() {
+    if (!pajToken) return;
+    
+    // Build device IDs from drivers
+    const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !== '');
+    if (deviceEntries.length === 0) {
+        console.log('📡 No driver device IDs configured.');
+        return;
+    }
+    
+    // Build payload using stored lastDateUnix or fallback to current time
+    const nowSec = Math.floor(Date.now() / 1000);
+    const deviceIDs = deviceEntries.map(([did, drv]) => {
+        const devId = parseInt(String(drv.deviceId).trim(), 10);
+        const dateunix = lastDateUnix[devId] || nowSec; // use stored timestamp or current
+        return { deviceId: devId, dateunix };
+    });
+    
+    const payload = { deviceIDs, fromLastPoint: true };
+    console.log('📡 Sending payload:', JSON.stringify(payload));
+    
+    try {
+        const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pajToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.status === 401 || response.status === 403) {
+            console.warn('🔑 Token expired, re-authenticating...');
+            if (!authRetryInProgress) {
+                authRetryInProgress = true;
+                await authenticatePAJ();
+                authRetryInProgress = false;
+                await fetchAllDevicePositions();
+                return;
+            }
+            return;
+        }
+        if (!response.ok) {
+            console.warn('❌ API returned status', response.status);
+            return;
+        }
+        const data = await response.json();
+        console.log('📨 API response:', data);
+        if (!data.success || typeof data.success !== 'object') {
+            console.warn('⚠️ No success object in response.');
+            return;
+        }
+        let updated = false;
+        const now = Date.now();
+        for (const [deviceIdStr, points] of Object.entries(data.success)) {
+            if (!Array.isArray(points) || points.length === 0) continue;
+            const latest = points[0];
+            if (!latest || typeof latest !== 'object') continue;
+            const lat = latest.lat;
+            const lng = latest.lng;
+            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
+            const tsSec = latest.dateunix;
+            let pajTimestamp = now;
+            if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
+            const devId = parseInt(deviceIdStr, 10);
+            // Update stored timestamp for future requests
+            if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
+            console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
+            let matched = false;
+            for (let [did, drv] of Object.entries(drivers)) {
+                const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
+                if (drvDeviceId && drvDeviceId === String(devId)) {
+                    matched = true;
+                    const current = drv.lastLocation;
+                    if (!current || (current.updatedAt || 0) < pajTimestamp) {
+                        drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                        updated = true;
+                        const status = getGPSStatus(pajTimestamp);
+                        console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
+                    } else {
+                        console.log(`⏩ Skipped ${drv.name} – older than current data.`);
+                    }
+                    break;
+                }
+            }
+            if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
+        }
+        if (updated) {
+            updateAllMarkers();
+            renderDriverBadges();
+        } else {
+            console.log('ℹ️ No driver updates from this response.');
+        }
+    } catch(e) {
+        console.warn('❌ Fetch error:', e);
+    }
+}
+
+// ===== MAP =====
+let mapInitialized = false;
+function initMap() {
+    if (mapInitialized) return;
+    map = new google.maps.Map(document.getElementById('dispatch-map'), {
+        center: { lat: 49.8425, lng: -99.9497 }, zoom: 11,
+        styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
+    });
+    mapInitialized = true;
+    updateAllMarkers();
+    try {
+        new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
+    } catch(e) {}
+}
+
+function updateAllMarkers() {
+    if (!map) return;
+    Object.values(mapMarkers).forEach(m => m.setMap(null));
+    mapMarkers = {};
+    for (let [id, drv] of Object.entries(drivers)) {
+        if (!drv.lastLocation) continue;
+        const pos = drv.lastLocation;
+        const status = getGPSStatus(pos.updatedAt);
+        let color = drv.color || '#f7c948';
+        if (status.status === 'standby') color = '#f1c40f';
+        else if (status.status === 'offline') color = '#95a5a6';
+        const marker = new google.maps.Marker({
+            position: { lat: pos.lat, lng: pos.lng },
+            map: map,
+            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+        });
+        mapMarkers[id] = marker;
+    }
+    if (Object.keys(mapMarkers).length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        Object.values(mapMarkers).forEach(m => bounds.extend(m.getPosition()));
+        map.fitBounds(bounds);
+    }
+}
+
+// ===== DRIVER BADGES =====
+function renderDriverBadges() {
+    const container = document.getElementById('driverBadges');
+    container.innerHTML = '';
+    const entries = Object.entries(drivers);
+    if (entries.length === 0) {
+        container.innerHTML = '<span style="color:var(--muted); font-size:13px; background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:20px;">No drivers — add in Settings</span>';
+        return;
+    }
+    for (let [id, drv] of entries) {
+        const badge = document.createElement('div');
+        badge.className = 'driver-badge';
+        badge.style.borderLeftColor = drv.color || '#f7c948';
+        const status = getGPSStatus(drv.lastLocation?.updatedAt);
+        let lastUpdateText = '—';
+        if (drv.lastLocation?.updatedAt) {
+            const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
+            lastUpdateText = `${mins}m`;
+        }
+        badge.innerHTML = `
+            <span class="dot" style="background:${drv.color || '#f7c948'}"></span>
+            ${drv.name || 'Driver'} 
+            <span class="status-indicator ${status.class}">${status.label}</span>
+            <span class="last-update">${lastUpdateText}</span>
+        `;
+        badge.onclick = () => { zoomToDriver(id); };
+        container.appendChild(badge);
+    }
+}
+
+function zoomToDriver(driverId) {
+    const drv = drivers[driverId];
+    if (!drv || !drv.lastLocation) return;
+    if (map) {
+        map.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+        map.setZoom(14);
+    }
+    openDriverModal(driverId);
+}
+
+// ===== DRIVER MODAL =====
+function openDriverModal(driverId) {
+    document.getElementById('driverModal').style.display = 'flex';
+    activeModalDriverId = driverId;
+    const drv = drivers[driverId];
+    document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
+    setTimeout(() => {
+        const container = document.getElementById('driver-map');
+        if (!container._map) {
+            container._map = new google.maps.Map(container, {
+                center: drv?.lastLocation ? { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng } : { lat: 49.8425, lng: -99.9497 },
+                zoom: 13,
+                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
+            });
+        }
+        const mmap = container._map;
+        if (drv?.lastLocation) {
+            mmap.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+            mmap.setZoom(14);
+        }
+        if (container._markers) container._markers.forEach(m => m.setMap(null));
+        container._markers = [];
+        if (drv?.lastLocation) {
+            const status = getGPSStatus(drv.lastLocation.updatedAt);
+            let color = drv.color || '#f7c948';
+            if (status.status === 'standby') color = '#f1c40f';
+            else if (status.status === 'offline') color = '#95a5a6';
+            const mk = new google.maps.Marker({
+                position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
+                map: mmap,
+                label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+            });
+            container._markers.push(mk);
+        }
+        const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+        const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed');
+        if (container._polyline) container._polyline.setMap(null);
+        if (assigned.length > 1) {
+            const path = assigned.map(([id, s]) => ({ lat: s.lat || 0, lng: s.lng || 0 })).filter(p => p.lat && p.lng);
+            if (path.length > 1) {
+                container._polyline = new google.maps.Polyline({ path, map: mmap, strokeColor: drv.color || '#f7c948', strokeWeight: 4 });
+            }
+        }
+        assigned.forEach(([id, s]) => {
+            if (s.lat && s.lng) {
+                const mk = new google.maps.Marker({
+                    position: { lat: s.lat, lng: s.lng },
+                    map: mmap,
+                    label: { text: s.name || 'Stop', color: '#fff', fontSize: '11px' },
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#2ecc71', fillOpacity: 0.8, strokeColor: '#fff', strokeWeight: 1 }
+                });
+                container._markers.push(mk);
+            }
+        });
+        renderDriverStops(driverId);
+        const status = getGPSStatus(drv?.lastLocation?.updatedAt);
+        const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
+        document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
+        document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
+    }, 200);
+}
+
+function closeDriverModal() {
+    document.getElementById('driverModal').style.display = 'none';
+    activeModalDriverId = null;
+}
+
+function renderDriverStops(driverId) {
+    const container = document.getElementById('driverModalStops');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId);
+    container.innerHTML = '';
+    if (assigned.length === 0) { container.innerHTML = '<div style="color:var(--muted);padding:12px;">No assigned stops</div>'; return; }
+    assigned.sort((a,b) => (a[1].order || 0) - (b[1].order || 0));
+    assigned.forEach(([id, s]) => {
+        const div = document.createElement('div');
+        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''}`;
+        div.style.borderLeftColor = drivers[driverId]?.color || '#f7c948';
+        const ts = s.status === 'completed' ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        div.innerHTML = `
+            <div class="info"><div class="name">${s.name || 'No name'} ${ts}</div><div class="addr">${s.address || ''} ${s.city || ''}</div></div>
+            <div class="actions">
+                ${s.status === 'completed' ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ===== STOP LIST =====
+function renderStopList() {
+    const container = document.getElementById('stopList');
+    const empty = document.getElementById('emptyMsg');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const entries = Object.entries(allStops);
+    if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    entries.sort((a,b) => {
+        if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
+        if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
+        return (a[1].order || 0) - (b[1].order || 0);
+    });
+    let html = '';
+    for (let [id, s] of entries) {
+        const isCompleted = s.status === 'completed';
+        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name : 'Unassigned';
+        const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
+        html += `
+            <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}" style="border-left-color:${color};">
+                <div class="info">
+                    <div class="name">${s.name || 'No name'} ${ts}</div>
+                    <div class="addr">${s.address || ''} ${s.city || ''}</div>
+                </div>
+                <div class="assign-badge" style="border-color:${color};">${driverName}</div>
+                <div class="actions">
+                    <select class="assign-select" onchange="assignStop('${id}', this.value)">
+                        <option value="">Unassign</option>
+                        ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
+                    </select>
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                    <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+                    <button onclick="deleteStop('${id}')" style="color:#e74c3c;">✕</button>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+    if (sortableInstance) sortableInstance.destroy();
+    try {
+        sortableInstance = new Sortable(container, {
+            animation: 150, delay: 400, delayOnTouchOnly: true,
+            onEnd: function(evt) {
+                const items = container.querySelectorAll('.stop-item');
+                const newOrder = Array.from(items).map(el => el.dataset.id);
+                const updates = {};
+                newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
+                const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+                ref.update(updates);
+            }
+        });
+    } catch(e) {}
+}
+
+// ===== STOP ACTIONS =====
+function addStop() {
+    const name = document.getElementById('stopName').value.trim();
+    const address = document.getElementById('stopAddress').value.trim();
+    const city = document.getElementById('stopCity').value.trim();
+    if (!name || !address || !city) { alert('Fill all fields'); return; }
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() });
+    document.getElementById('stopName').value = '';
+    document.getElementById('stopAddress').value = '';
+    document.getElementById('stopCity').value = '';
+}
+
+function completeStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'completed', completedAt: Date.now() });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function reopenStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'pending', completedAt: null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function assignStop(id, driverId) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ assignedDriver: driverId || null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function moveToTomorrow(id) {
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.child(id).once('value').then(snap => {
+        const val = snap.val();
+        if (!val) return;
+        refTomorrow.push(val).then(() => {
+            refToday.child(id).remove();
+        });
+    });
+}
+
+function deleteStop(id) {
+    if (!confirm('Delete stop?')) return;
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).remove();
+}
+
+function switchDay(day) {
+    currentDay = day;
+    document.querySelectorAll('.day-toggle button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+    document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
+    renderStopList();
+    closeDriverModal();
+}
+
+function nextDayPrompt() {
+    if (confirm('Move all pending stops to tomorrow? Completed stops will be cleared.')) {
+        const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+        const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+        refToday.once('value').then(snap => {
+            const data = snap.val() || {};
+            const pending = Object.entries(data).filter(([id, s]) => s.status !== 'completed');
+            const updates = {};
+            pending.forEach(([id, s]) => { updates[id] = s; });
+            refTomorrow.update(updates).then(() => {
+                const removes = {};
+                Object.keys(data).forEach(id => { removes[id] = null; });
+                refToday.update(removes);
+                switchDay('tomorrow');
+            });
+        });
+    }
+}
+
+// ===== SETTINGS =====
+function openSettings() {
+    document.getElementById('settingsModal').style.display = 'flex';
+    renderSettingsList();
+}
+function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+function renderSettingsList() {
+    const container = document.getElementById('driverSettingsList');
+    container.innerHTML = '';
+    for (let [id, drv] of Object.entries(drivers)) {
+        const row = document.createElement('div');
+        row.className = 'driver-row';
+        row.innerHTML = `
+            <input type="text" value="${drv.name || ''}" placeholder="Name" data-id="${id}" class="drv-name">
+            <input type="color" value="${drv.color || '#f7c948'}" data-id="${id}" class="drv-color color-pick">
+            <input type="text" value="${drv.deviceId || ''}" placeholder="Device ID" data-id="${id}" class="drv-device">
+            <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
+        `;
+        container.appendChild(row);
+    }
+}
+
+function addDriverRow() {
+    const ref = getDriversRef();
+    ref.push({ name: 'Driver', color: '#f7c948', deviceId: '', lastLocation: null });
+}
+
+function removeDriver(id) {
+    if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
+    const ref = getDriversRef();
+    ref.child(id).remove();
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refToday.update(updates);
+    });
+    refTomorrow.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refTomorrow.update(updates);
+    });
+}
+
+function saveSettings() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    getMasterRef().update({ paj_email: email, paj_password: pass });
+    const rows = document.querySelectorAll('#driverSettingsList .driver-row');
+    rows.forEach(row => {
+        const id = row.querySelector('.drv-name').dataset.id;
+        const name = row.querySelector('.drv-name').value;
+        const color = row.querySelector('.drv-color').value;
+        const deviceId = row.querySelector('.drv-device').value;
+        if (id) {
+            getDriversRef().child(id).update({ name, color, deviceId });
+        }
+    });
+    if (email && pass) authenticatePAJ();
+    renderDriverBadges();
+    renderStopList();
+    closeSettings();
+}
+</script>
+</body>
+</html>
