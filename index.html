@@ -373,6 +373,9 @@ async function testPAJConnection() {
         debug.innerHTML = html;
         pajToken = token;
         getMasterRef().update({ paj_token: token });
+        // After login, fetch initial dateunix
+        await fetchInitialDateUnix();
+        await fetchAllDevicePositions();
     } catch(e) {
         debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`;
     }
@@ -448,7 +451,10 @@ function initApp() {
         document.getElementById('pajEmail').value = cfg.paj_email || '';
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
-        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
+        if (cfg.paj_email && cfg.paj_password) {
+            // We have credentials, authenticate and fetch data
+            authenticatePAJ();
+        }
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
@@ -457,7 +463,11 @@ function initApp() {
         if (pajToken) fetchAllDevicePositions();
         updateGlobalUpdateTime();
     }, 10000);
-    setTimeout(fetchAllDevicePositions, 2000);
+    setTimeout(() => {
+        if (pajToken) {
+            fetchInitialDateUnix().then(() => fetchAllDevicePositions());
+        }
+    }, 2000);
     initBusinessAutocomplete();
 }
 
@@ -484,9 +494,8 @@ async function authenticatePAJ() {
         if (token) {
             pajToken = token;
             getMasterRef().update({ paj_token: token });
-            // Fetch initial dateunix from /device
             await fetchInitialDateUnix();
-            fetchAllDevicePositions();
+            await fetchAllDevicePositions();
         }
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
@@ -505,8 +514,9 @@ async function fetchInitialDateUnix() {
                 devices.forEach(d => {
                     const devId = d.id || d.deviceId || d.imei;
                     if (devId && d.last_dateunix) {
-                        lastDateUnix[parseInt(devId, 10)] = d.last_dateunix;
-                        console.log(`📌 Initial dateunix for device ${devId}: ${d.last_dateunix}`);
+                        const idNum = parseInt(devId, 10);
+                        lastDateUnix[idNum] = d.last_dateunix;
+                        console.log(`📌 Initial dateunix for device ${idNum}: ${d.last_dateunix}`);
                     }
                 });
             }
@@ -522,24 +532,38 @@ let authRetryInProgress = false;
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     
-    // Build device IDs from drivers
+    // Ensure we have dateunix for all devices, try fetching if missing
     const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !== '');
     if (deviceEntries.length === 0) {
         console.log('📡 No driver device IDs configured.');
         return;
     }
     
-    // Build payload using stored lastDateUnix (if available) or current time as fallback
+    // Check if any device is missing dateunix, and try to fetch again
+    let needFetch = false;
+    for (const [did, drv] of deviceEntries) {
+        const devId = parseInt(String(drv.deviceId).trim(), 10);
+        if (!lastDateUnix[devId]) {
+            needFetch = true;
+            break;
+        }
+    }
+    if (needFetch) {
+        console.log('📡 Missing dateunix for some devices, fetching...');
+        await fetchInitialDateUnix();
+    }
+    
     const nowSec = Math.floor(Date.now() / 1000);
     const deviceIDs = deviceEntries.map(([did, drv]) => {
         const devId = parseInt(String(drv.deviceId).trim(), 10);
-        // Use stored timestamp if available, otherwise use current time (but API may return empty)
+        // Use stored timestamp if available, otherwise use current time (fallback)
         const dateunix = lastDateUnix[devId] || nowSec;
         return { deviceId: devId, dateunix };
     });
     
     const payload = { deviceIDs, fromLastPoint: true };
     console.log('📡 Sending payload:', JSON.stringify(payload));
+    console.log('📡 lastDateUnix map:', lastDateUnix);
     
     try {
         const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
