@@ -314,7 +314,7 @@ const OFFLINE_THRESHOLD = 60 * 60 * 1000;
 let addressLookupData = null;
 let addressLookupMap = {};
 
-// Store last known dateunix for each device ID
+// Store last known dateunix for each device ID (used for next poll)
 let lastDateUnix = {};
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
@@ -495,7 +495,7 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== FETCH POSITIONS - MULTIPLE STRATEGIES =====
+// ===== FETCH POSITIONS - SIMPLIFIED SINGLE STRATEGY =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
@@ -508,197 +508,68 @@ async function fetchAllDevicePositions() {
     }
     
     const nowSec = Math.floor(Date.now() / 1000);
-    let updated = false;
-    const now = Date.now();
-    
-    // Try multiple strategies
-    const strategies = [
-        // Strategy 1: /trackerdata/getalllastpositions with dateunix (current - 60s)
-        async () => {
-            const payload = {
-                deviceIDs: deviceEntries.map(([did, drv]) => {
-                    const devId = parseInt(String(drv.deviceId).trim(), 10);
-                    const dateunix = lastDateUnix[devId] || (nowSec - 60);
-                    return { deviceId: devId, dateunix };
-                }),
-                fromLastPoint: true
-            };
-            console.log('📡 Strategy 1 payload:', JSON.stringify(payload));
-            const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${pajToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📨 Strategy 1 response:', data);
-                if (data.success && typeof data.success === 'object' && Object.keys(data.success).length > 0) {
-                    return data;
-                }
-            }
-            return null;
-        },
-        // Strategy 2: /trackerdata/getalllastpositions with dateunix (current - 300s)
-        async () => {
-            const payload = {
-                deviceIDs: deviceEntries.map(([did, drv]) => {
-                    const devId = parseInt(String(drv.deviceId).trim(), 10);
-                    const dateunix = lastDateUnix[devId] || (nowSec - 300);
-                    return { deviceId: devId, dateunix };
-                }),
-                fromLastPoint: true
-            };
-            console.log('📡 Strategy 2 payload:', JSON.stringify(payload));
-            const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${pajToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📨 Strategy 2 response:', data);
-                if (data.success && typeof data.success === 'object' && Object.keys(data.success).length > 0) {
-                    return data;
-                }
-            }
-            return null;
-        },
-        // Strategy 3: /trackerdata/getalllastpositions with dateunix (current - 3600s)
-        async () => {
-            const payload = {
-                deviceIDs: deviceEntries.map(([did, drv]) => {
-                    const devId = parseInt(String(drv.deviceId).trim(), 10);
-                    const dateunix = lastDateUnix[devId] || (nowSec - 3600);
-                    return { deviceId: devId, dateunix };
-                }),
-                fromLastPoint: true
-            };
-            console.log('📡 Strategy 3 payload:', JSON.stringify(payload));
-            const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${pajToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📨 Strategy 3 response:', data);
-                if (data.success && typeof data.success === 'object' && Object.keys(data.success).length > 0) {
-                    return data;
-                }
-            }
-            return null;
-        },
-        // Strategy 4: /device/last_points for each device individually
-        async () => {
-            for (const [did, drv] of deviceEntries) {
-                const devId = parseInt(String(drv.deviceId).trim(), 10);
-                try {
-                    const response = await fetch(`${PAJ_BASE}/device/${devId}/last_points?last_points=1`, {
-                        headers: { 'Authorization': `Bearer ${pajToken}` }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`📨 Device ${devId} last_points response:`, data);
-                        // Check if we got a point
-                        let point = data.lastPoint || data.points?.[0] || data.data?.[0] || data.success?.[0] || null;
-                        if (!point && Array.isArray(data) && data.length > 0) point = data[0];
-                        if (point && point.lat && point.lng) {
-                            // Found a point for this device
-                            const lat = parseFloat(point.lat);
-                            const lng = parseFloat(point.lng);
-                            const tsSec = point.dateunix || point.timestamp || point.time || nowSec;
-                            const pajTimestamp = tsSec ? (tsSec * 1000) : now;
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                lastDateUnix[devId] = tsSec || nowSec;
-                                // Update driver
-                                for (let [did2, drv2] of Object.entries(drivers)) {
-                                    if (String(drv2.deviceId).trim() === String(devId)) {
-                                        const current = drv2.lastLocation;
-                                        if (!current || (current.updatedAt || 0) < pajTimestamp) {
-                                            drv2.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                                            getDriversRef().child(did2).update({ lastLocation: drv2.lastLocation });
-                                            updated = true;
-                                            const status = getGPSStatus(pajTimestamp);
-                                            console.log(`✅ Updated ${drv2.name} → ${lat},${lng} (${status.label}) via device/${devId}/last_points`);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch(e) {}
-            }
-            return null;
-        },
-        // Strategy 5: /getAllDeviceStatus (the original endpoint that worked)
-        async () => {
-            const payload = { device_ids: deviceEntries.map(([did, drv]) => parseInt(String(drv.deviceId).trim(), 10)) };
-            console.log('📡 Strategy 5 payload:', JSON.stringify(payload));
-            const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${pajToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📨 Strategy 5 response:', data);
-                if (data.success && typeof data.success === 'object') {
-                    let hasData = false;
-                    for (const [id, devData] of Object.entries(data.success)) {
-                        if (devData.lastPoint && devData.lastPoint.lat && devData.lastPoint.lng) {
-                            hasData = true;
-                            break;
-                        }
-                    }
-                    if (hasData) return data;
-                }
-            }
-            return null;
+    // Use dateunix = now - 3600 seconds (1 hour ago) – this worked reliably.
+    // For each device, use stored dateunix if available and not too old, else fallback to now-3600.
+    const deviceIDs = deviceEntries.map(([did, drv]) => {
+        const devId = parseInt(String(drv.deviceId).trim(), 10);
+        // If we have a stored timestamp and it's within the last 2 hours, use it; else use now-3600
+        let dateunix = lastDateUnix[devId];
+        if (!dateunix || (nowSec - dateunix) > 7200) {
+            dateunix = nowSec - 3600; // 1 hour ago
         }
-    ];
+        return { deviceId: devId, dateunix };
+    });
     
-    // Execute strategies in order
-    let result = null;
-    for (let i = 0; i < strategies.length; i++) {
-        if (result && Object.keys(result.success || {}).length > 0) break;
-        try {
-            console.log(`🔄 Trying strategy ${i+1}...`);
-            const res = await strategies[i]();
-            if (res && res.success && typeof res.success === 'object' && Object.keys(res.success).length > 0) {
-                // Check if any device has a point
-                let hasPoint = false;
-                for (const [id, points] of Object.entries(res.success)) {
-                    if (Array.isArray(points) && points.length > 0 && points[0].lat && points[0].lng) {
-                        hasPoint = true;
-                        break;
-                    }
-                }
-                if (hasPoint) {
-                    result = res;
-                    console.log(`✅ Strategy ${i+1} succeeded!`);
-                    break;
-                }
+    const payload = { deviceIDs, fromLastPoint: true };
+    console.log('📡 Sending payload:', JSON.stringify(payload));
+    
+    try {
+        const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pajToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.status === 401 || response.status === 403) {
+            console.warn('🔑 Token expired, re-authenticating...');
+            if (!authRetryInProgress) {
+                authRetryInProgress = true;
+                await authenticatePAJ();
+                authRetryInProgress = false;
+                await fetchAllDevicePositions();
+                return;
             }
-        } catch(e) {
-            console.warn(`Strategy ${i+1} failed:`, e);
+            return;
         }
-    }
-    
-    // Process the result
-    if (result && result.success) {
-        for (const [deviceIdStr, points] of Object.entries(result.success)) {
+        if (!response.ok) {
+            console.warn('❌ API returned status', response.status);
+            return;
+        }
+        const data = await response.json();
+        console.log('📨 API response:', data);
+        if (!data.success || typeof data.success !== 'object') {
+            console.warn('⚠️ No success object in response.');
+            return;
+        }
+        let updated = false;
+        const now = Date.now();
+        for (const [deviceIdStr, points] of Object.entries(data.success)) {
             if (!Array.isArray(points) || points.length === 0) continue;
             const latest = points[0];
             if (!latest || typeof latest !== 'object') continue;
             const lat = latest.lat;
             const lng = latest.lng;
             if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
-            const tsSec = latest.dateunix || latest.timestamp || latest.time || nowSec;
+            const tsSec = latest.dateunix;
             let pajTimestamp = now;
-            if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
+            if (tsSec && !isNaN(tsSec)) {
+                pajTimestamp = tsSec * 1000;
+                // Update stored dateunix for this device
+                lastDateUnix[parseInt(deviceIdStr, 10)] = tsSec;
+            }
             const devId = parseInt(deviceIdStr, 10);
-            if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
             console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
             let matched = false;
             for (let [did, drv] of Object.entries(drivers)) {
@@ -720,15 +591,14 @@ async function fetchAllDevicePositions() {
             }
             if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
         }
-    } else {
-        console.log('ℹ️ All strategies failed to get position data.');
-    }
-    
-    if (updated) {
-        updateAllMarkers();
-        renderDriverBadges();
-    } else {
-        console.log('ℹ️ No driver updates from this cycle.');
+        if (updated) {
+            updateAllMarkers();
+            renderDriverBadges();
+        } else {
+            console.log('ℹ️ No driver updates from this response.');
+        }
+    } catch(e) {
+        console.warn('❌ Fetch error:', e);
     }
 }
 
