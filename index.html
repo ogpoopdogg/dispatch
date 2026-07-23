@@ -223,7 +223,6 @@
         <div id="driverSettingsList"></div>
         <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
         
-        <!-- Test Connection Button -->
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
             <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
             <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
@@ -324,7 +323,6 @@ function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_con
 function getGPSStatus(lastUpdated) {
     if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
     const diff = Date.now() - lastUpdated;
-    console.log(`⏱️ Status check: diff=${diff/60000} min`);
     if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
     if (diff < OFFLINE_THRESHOLD) return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
     return { status: 'offline', label: '○ Offline', class: 'status-offline' };
@@ -476,4 +474,15 @@ async function authenticatePAJ() {
     if (!email || !pass) return;
     try {
         const response = await fetch(`${PAJ_BASE}/login`, {
-           
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const data = await response.json();
+        let token = data.success?.token || data.token;
+        if (token) {
+            pajToken = token;
+            getMasterRef().update({ paj_token: token });
+            fetchAllDevicePositions();
+        }
+    } catch(e) { console.warn('PAJ auth error:',
