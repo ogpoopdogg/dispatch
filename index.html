@@ -489,11 +489,10 @@ async function authenticatePAJ() {
 
 // ===== FETCH POSITIONS =====
 let authRetryInProgress = false;
-let lastSuccessfulFetch = 0; // timestamp of last successful fetch
+let lastSuccessfulFetch = 0;
 
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
-    // Build device IDs from drivers (skip empty)
     const deviceIds = Object.values(drivers)
         .map(drv => drv.deviceId ? String(drv.deviceId).trim() : null)
         .filter(id => id && id.length > 0 && !isNaN(parseInt(id, 10)));
@@ -501,89 +500,156 @@ async function fetchAllDevicePositions() {
         console.log('📡 No driver device IDs configured.');
         return;
     }
-    const nowSec = Math.floor(Date.now() / 1000);
-    const payload = {
-        deviceIDs: deviceIds.map(id => ({ deviceId: parseInt(id, 10), dateunix: nowSec })),
-        fromLastPoint: true
-    };
-    console.log('📡 Sending payload:', JSON.stringify(payload));
-    try {
-        const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${pajToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-        if (response.status === 401 || response.status === 403) {
-            console.warn('🔑 Token expired, re-authenticating...');
-            if (!authRetryInProgress) {
-                authRetryInProgress = true;
-                await authenticatePAJ();
-                authRetryInProgress = false;
-                await fetchAllDevicePositions(); // retry once
-            }
-            return;
-        }
-        if (!response.ok) {
-            console.warn(`❌ API returned status ${response.status} - ${response.statusText}`);
-            // If we haven't updated recently, keep last known locations.
-            return;
-        }
-        const data = await response.json();
-        console.log('📨 API response:', data);
-        if (!data.success || typeof data.success !== 'object') {
-            console.warn('⚠️ No success object in response.');
-            return;
-        }
-        let updated = false;
-        const now = Date.now();
-        for (const [deviceIdStr, points] of Object.entries(data.success)) {
-            if (!Array.isArray(points) || points.length === 0) {
-                console.log(`📭 No points for device ${deviceIdStr}`);
+    // Try multiple payload formats
+    const payloads = [
+        // Format 1: Original with deviceIDs array (matching the one that worked earlier)
+        {
+            deviceIDs: deviceIds.map(id => ({ deviceId: parseInt(id, 10), dateunix: Math.floor(Date.now() / 1000) })),
+            fromLastPoint: true
+        },
+        // Format 2: Just device IDs as an array
+        {
+            deviceIds: deviceIds.map(id => parseInt(id, 10)),
+            fromLastPoint: true
+        },
+        // Format 3: Just device IDs as a flat array (if API expects array directly)
+        deviceIds.map(id => parseInt(id, 10))
+    ];
+
+    let success = false;
+
+    for (let payload of payloads) {
+        if (success) break;
+        try {
+            console.log(`📡 Trying payload format: ${JSON.stringify(payload).substring(0, 200)}...`);
+            const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${pajToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (response.status === 401 || response.status === 403) {
+                console.warn('🔑 Token expired, re-authenticating...');
+                if (!authRetryInProgress) {
+                    authRetryInProgress = true;
+                    await authenticatePAJ();
+                    authRetryInProgress = false;
+                    await fetchAllDevicePositions();
+                    return;
+                }
                 continue;
             }
-            const latest = points[0];
-            if (!latest || typeof latest !== 'object') continue;
-            const lat = latest.lat;
-            const lng = latest.lng;
-            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
-            const tsSec = latest.dateunix;
-            let pajTimestamp = now;
-            if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
-            const devId = parseInt(deviceIdStr, 10);
-            console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
-            let matched = false;
-            for (let [did, drv] of Object.entries(drivers)) {
-                const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
-                if (drvDeviceId && drvDeviceId === String(devId)) {
-                    matched = true;
-                    // Only update if this point is newer than what we have
-                    const current = drv.lastLocation;
-                    if (!current || (current.updatedAt || 0) < pajTimestamp) {
-                        drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                        updated = true;
-                        const status = getGPSStatus(pajTimestamp);
-                        console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
-                    } else {
-                        console.log(`⏩ Skipped ${drv.name} – older than current data.`);
-                    }
-                    break;
-                }
+            if (!response.ok) {
+                console.warn(`❌ API returned status ${response.status} for payload format`);
+                continue;
             }
-            if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
+            const data = await response.json();
+            console.log(`📨 API response for payload format:`, data);
+            
+            // Check if we got data
+            if (data.success && Array.isArray(data.success) && data.success.length > 0) {
+                console.log(`✅ Got data with payload format!`);
+                // Data is in an array format
+                processPositionData(data);
+                success = true;
+                break;
+            } else if (data.success && typeof data.success === 'object' && Object.keys(data.success).length > 0) {
+                console.log(`✅ Got data with payload format!`);
+                processPositionData(data);
+                success = true;
+                break;
+            } else if (data.number_of_records && data.number_of_records > 0) {
+                console.log(`✅ Got data with payload format!`);
+                processPositionData(data);
+                success = true;
+                break;
+            } else {
+                console.log(`ℹ️ No data from this payload format`);
+            }
+        } catch(e) {
+            console.warn(`❌ Error with payload format:`, e);
         }
-        if (updated) {
-            lastSuccessfulFetch = Date.now();
-            updateAllMarkers();
-            renderDriverBadges();
-        } else {
-            console.log('ℹ️ No driver updates from this response.');
+    }
+
+    if (!success) {
+        console.log('❌ All payload formats failed. Please check the API response format in the network tab.');
+    }
+}
+
+function processPositionData(data) {
+    const now = Date.now();
+    let updated = false;
+    
+    // Handle different response formats
+    let devices = {};
+    if (data.success && typeof data.success === 'object') {
+        devices = data.success;
+    } else if (data.success && Array.isArray(data.success)) {
+        // Convert array to object format
+        devices = {};
+        data.success.forEach(item => {
+            if (item && item.iddevice) {
+                const key = String(item.iddevice);
+                if (!devices[key]) devices[key] = [];
+                devices[key].push(item);
+            }
+        });
+    } else if (data.number_of_records && data.number_of_records > 0 && Array.isArray(data.data)) {
+        devices = {};
+        data.data.forEach(item => {
+            if (item && item.iddevice) {
+                const key = String(item.iddevice);
+                if (!devices[key]) devices[key] = [];
+                devices[key].push(item);
+            }
+        });
+    }
+    
+    if (Object.keys(devices).length === 0) {
+        console.log('📭 No devices in response');
+        return;
+    }
+    
+    for (const [deviceIdStr, points] of Object.entries(devices)) {
+        if (!Array.isArray(points) || points.length === 0) continue;
+        const latest = points[0];
+        if (!latest || typeof latest !== 'object') continue;
+        const lat = latest.lat;
+        const lng = latest.lng;
+        if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
+        const tsSec = latest.dateunix;
+        let pajTimestamp = now;
+        if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
+        const devId = parseInt(deviceIdStr, 10);
+        console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
+        let matched = false;
+        for (let [did, drv] of Object.entries(drivers)) {
+            const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
+            if (drvDeviceId && drvDeviceId === String(devId)) {
+                matched = true;
+                const current = drv.lastLocation;
+                if (!current || (current.updatedAt || 0) < pajTimestamp) {
+                    drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                    getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                    updated = true;
+                    const status = getGPSStatus(pajTimestamp);
+                    console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
+                } else {
+                    console.log(`⏩ Skipped ${drv.name} – older than current data.`);
+                }
+                break;
+            }
         }
-    } catch(e) {
-        console.warn('❌ Fetch error:', e);
+        if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
+    }
+    if (updated) {
+        lastSuccessfulFetch = Date.now();
+        updateAllMarkers();
+        renderDriverBadges();
+    } else {
+        console.log('ℹ️ No driver updates from this response.');
     }
 }
 
