@@ -484,9 +484,36 @@ async function authenticatePAJ() {
         if (token) {
             pajToken = token;
             getMasterRef().update({ paj_token: token });
+            // Fetch initial dateunix from /device
+            await fetchInitialDateUnix();
             fetchAllDevicePositions();
         }
     } catch(e) { console.warn('PAJ auth error:', e); }
+}
+
+// ===== FETCH INITIAL DATEUNIX FROM /DEVICE =====
+async function fetchInitialDateUnix() {
+    if (!pajToken) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            let devices = data.success || data.data || data;
+            if (Array.isArray(devices)) {
+                devices.forEach(d => {
+                    const devId = d.id || d.deviceId || d.imei;
+                    if (devId && d.last_dateunix) {
+                        lastDateUnix[parseInt(devId, 10)] = d.last_dateunix;
+                        console.log(`📌 Initial dateunix for device ${devId}: ${d.last_dateunix}`);
+                    }
+                });
+            }
+        }
+    } catch(e) {
+        console.warn('Failed to fetch initial dateunix:', e);
+    }
 }
 
 // ===== FETCH POSITIONS =====
@@ -502,11 +529,12 @@ async function fetchAllDevicePositions() {
         return;
     }
     
-    // Build payload using stored lastDateUnix or fallback to current time
+    // Build payload using stored lastDateUnix (if available) or current time as fallback
     const nowSec = Math.floor(Date.now() / 1000);
     const deviceIDs = deviceEntries.map(([did, drv]) => {
         const devId = parseInt(String(drv.deviceId).trim(), 10);
-        const dateunix = lastDateUnix[devId] || nowSec; // use stored timestamp or current
+        // Use stored timestamp if available, otherwise use current time (but API may return empty)
+        const dateunix = lastDateUnix[devId] || nowSec;
         return { deviceId: devId, dateunix };
     });
     
@@ -556,7 +584,7 @@ async function fetchAllDevicePositions() {
             let pajTimestamp = now;
             if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
             const devId = parseInt(deviceIdStr, 10);
-            // Update stored timestamp for future requests
+            // Store the dateunix for future requests
             if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
             console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
             let matched = false;
