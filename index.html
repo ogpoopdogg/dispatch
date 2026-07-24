@@ -85,9 +85,14 @@
         .gear-btn:hover { background: #2a2a3e; border-color: var(--accent); }
         .share-btn { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; }
         .share-btn:hover { background: #2a2a3e; border-color: var(--accent); }
+        .dispatch-btn { background: var(--card2); border: 1px solid #3b82f6; color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .dispatch-btn:hover { background: #2a2a3e; border-color: var(--accent); }
+        .dispatch-active { background: #1a3a2a !important; border: 1px solid #2ecc71 !important; color: #2ecc71 !important; }
+        .map-open { background: rgba(0, 255, 0, 0.2) !important; border-color: #00ff00 !important; box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); }
 
         /* Map wrapper - full screen */
         .map-wrapper { flex: 1; width: 100%; height: calc(100vh - var(--header-height)); background: var(--card); border-radius: 0; overflow: hidden; position: relative; }
+        .map-wrapper.hidden { display: none; }
         #dispatch-map { width: 100%; height: 100%; }
 
         /* Driver badges container - floating over map */
@@ -522,6 +527,20 @@
         }
         .offline-banner.active { display: block; }
 
+        /* Dispatch overlay */
+        #dispatchOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9998;
+            cursor: pointer;
+        }
+        #dispatchOverlay.active { display: block; }
+
+        .manifest-panel.dispatch-mode { position: relative; z-index: 9999; }
+        .app-grid.dispatch-active .map-wrapper { position: relative; z-index: 9999; }
+
         /* Responsive tweaks */
         @media (max-width: 600px) {
             .fab { bottom: 150px; right: 16px; width: 56px; height: 56px; font-size: 30px; }
@@ -570,11 +589,19 @@
             <button class="gear-btn" onclick="openSettings()" title="Drivers">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
             </button>
+            <button onclick="toggleMapVisibility()" id="mapToggleBtn" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">
+                <svg viewBox="0 0 24 24" style="width:16px; height:16px; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:2;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                Map
+            </button>
+            <button onclick="toggleDispatchMode()" id="dispatchBtn" class="dispatch-btn">Dispatch</button>
         </div>
     </header>
 
     <!-- Offline Banner -->
     <div class="offline-banner" id="offlineBanner">⚠️ Offline – reconnecting…</div>
+
+    <!-- Dispatch Overlay -->
+    <div id="dispatchOverlay"></div>
 
     <!-- Map Wrapper -->
     <div class="map-wrapper" id="mainMapWrapper">
@@ -794,6 +821,9 @@ let assignmentMode = false;
 let selectedDriverId = null;
 let searchTerm = '';
 
+// Dispatch mode state
+let dispatchActive = false;
+
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
@@ -996,7 +1026,60 @@ function filterStops(term) {
     renderStopList(); // re-render with filter
 }
 
-// ===== MAP TOGGLE (removed, map always full) =====
+// ===== MAP TOGGLE =====
+function toggleMapVisibility() {
+    const wrapper = document.getElementById('mainMapWrapper');
+    wrapper.classList.toggle('hidden');
+    const btn = document.getElementById('mapToggleBtn');
+    const isHidden = wrapper.classList.contains('hidden');
+    if (isHidden) {
+        btn.classList.remove('map-open');
+        localStorage.setItem('ec_map_visible', 'false');
+    } else {
+        btn.classList.add('map-open');
+        localStorage.setItem('ec_map_visible', 'true');
+        if (map) {
+            setTimeout(() => {
+                google.maps.event.trigger(map, 'resize');
+            }, 100);
+        }
+    }
+}
+
+// ===== DISPATCH MODE =====
+function toggleDispatchMode() {
+    if (dispatchActive) {
+        exitDispatchMode();
+    } else {
+        enterDispatchMode();
+    }
+}
+
+function enterDispatchMode() {
+    dispatchActive = true;
+    document.getElementById('dispatchBtn').classList.add('dispatch-active');
+    document.getElementById('app').classList.add('dispatch-active');
+    // Show overlay
+    document.getElementById('dispatchOverlay').classList.add('active');
+    // Show add-stop-area
+    document.querySelector('.add-stop-area').classList.add('visible');
+    // Expand sheet
+    setSheetState('expanded');
+    // Scroll to manifest
+    document.getElementById('bottomSheet').scrollIntoView({ behavior: 'smooth' });
+    showToast('Dispatch mode: add stops', 1500);
+}
+
+function exitDispatchMode() {
+    dispatchActive = false;
+    document.getElementById('dispatchBtn').classList.remove('dispatch-active');
+    document.getElementById('app').classList.remove('dispatch-active');
+    document.getElementById('dispatchOverlay').classList.remove('active');
+    // Hide add-stop-area
+    document.querySelector('.add-stop-area').classList.remove('visible');
+    // Reset sheet
+    setSheetState('half');
+}
 
 // ===== ZOOM TO STOP =====
 function zoomToStop(stopId) {
@@ -1120,6 +1203,15 @@ function initApp() {
                 map.setZoom(cfg.map_zoom);
             }
         }
+        // Restore map visibility state
+        const mapVisible = localStorage.getItem('ec_map_visible');
+        if (mapVisible === 'false') {
+            const wrapper = document.getElementById('mainMapWrapper');
+            wrapper.classList.add('hidden');
+            document.getElementById('mapToggleBtn').classList.remove('map-open');
+        } else {
+            document.getElementById('mapToggleBtn').classList.add('map-open');
+        }
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
@@ -1163,6 +1255,13 @@ function initApp() {
             }
         });
     }
+
+    // Click on dispatch overlay to exit dispatch mode
+    document.getElementById('dispatchOverlay').addEventListener('click', function() {
+        if (dispatchActive) {
+            exitDispatchMode();
+        }
+    });
 
     // Initial sheet state
     setSheetState('half');
@@ -2032,9 +2131,6 @@ function saveSettings() {
     closeSettings();
     showToast('✅ Settings saved', 1500);
 }
-
-// Ensure map fit button on driver modal also triggers fit
-// (already in code)
 
 // ===== INITIALIZATION =====
 // The map is initialized via callback from Google Maps API.
