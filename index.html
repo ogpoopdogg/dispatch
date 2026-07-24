@@ -691,9 +691,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
 <script>
 // ===== FIREBASE =====
 firebase.initializeApp({
@@ -1033,7 +1031,7 @@ function openGoogleMaps(lat, lng) {
 
 // ===== PULSE ANIMATION =====
 let driverPulseCircles = {};
-let pulseAnimationId = null;
+// pulseAnimationId already declared at top
 
 function startPulseAnimation() {
     if (pulseAnimationId) cancelAnimationFrame(pulseAnimationId);
@@ -2039,10 +2037,9 @@ function saveSettings() {
 // (already in code)
 
 // ===== INITIALIZATION =====
-// Ensure map initializes after login
-document.addEventListener('DOMContentLoaded', function() {
-    // The map is initialized via callback in script tag.
-});
+// The map is initialized via callback from Google Maps API.
+// The callback is defined above (initMap).
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer></script>
 </body>
 </html>
