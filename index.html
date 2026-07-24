@@ -38,6 +38,7 @@
 
         .app-grid { display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; width: 100%; flex: 1; }
         .map-wrapper { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; position: relative; height: 380px; min-height: 280px; }
+        .map-wrapper.hidden { display: none; }
         #dispatch-map { width: 100%; height: 100%; }
         .driver-badge-container {
             display: flex;
@@ -46,14 +47,14 @@
             padding: 8px 0;
             width: 100%;
         }
-        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); padding: 10px 18px 10px 14px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
         .driver-badge:hover { background: rgba(30,30,50,0.95); transform: scale(1.02); }
-        .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; flex-shrink: 0; }
-        .driver-badge .status-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 4px; }
+        .driver-badge .dot { width: 12px; height: 12px; border-radius: 12px; display: inline-block; flex-shrink: 0; }
+        .driver-badge .status-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 20px; margin-left: 4px; }
         .driver-badge .status-online { background: #0a2a1a; color: #2ecc71; }
         .driver-badge .status-standby { background: #2a2a0a; color: #f1c40f; }
         .driver-badge .status-offline { background: #2a0a0a; color: #e74c3c; }
-        .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+        .driver-badge .last-update { font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 
         .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
@@ -69,15 +70,16 @@
         .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
         .stop-item:hover { border-color: #3a3a5a; }
         .stop-item.completed { background: #0f2a1a; border-left-color: #2ecc71; opacity: 0.9; order: 999; }
-        .stop-item .info { flex: 1; min-width: 0; }
-        .stop-item .info .name { font-weight: 600; font-size: 14px; }
+        .stop-item.assigned { background: rgba(0, 255, 0, 0.12); }
+        .stop-item .info { flex: 1; min-width: 0; cursor: pointer; }
+        .stop-item .info .name { font-weight: 600; font-size: 13px; }
         .stop-item .info .addr { font-size: 12px; color: var(--muted); }
         .stop-item .info .city { font-size: 11px; color: var(--muted); }
         .stop-item .assign-badge { background: #1a1a2e; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); white-space: nowrap; }
-        .stop-item .actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-        .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 8px; transition: 0.2s; }
+        .stop-item .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 6px 10px; border-radius: 12px; transition: 0.2s; }
         .stop-item .actions button:hover { background: #2a2a3e; color: white; }
-        .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 2px 10px; font-size: 11px; cursor: pointer; }
+        .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
         .stop-item .timestamp { font-size: 11px; color: #2ecc71; font-weight: 600; margin-left: 4px; }
 
         .driver-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
@@ -88,6 +90,7 @@
         .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
         .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .driver-modal .modal-stops .stop-item { background: #12121c; }
+        .driver-modal .modal-stops .stop-item .info { cursor: pointer; }
 
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 620px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
@@ -111,25 +114,20 @@
         .settings-card .debug-box .info { color: #f1c40f; }
         .settings-card .debug-box .device-id { color: var(--accent); font-weight: 700; background: #1a1a2e; padding: 2px 8px; border-radius: 4px; }
 
-        .gps-status-legend { display: flex; gap: 16px; padding: 8px 12px; background: var(--card2); border-radius: 30px; border: 1px solid var(--border); font-size: 12px; margin-bottom: 8px; flex-wrap: wrap; }
-        .gps-status-legend .legend-item { display: flex; align-items: center; gap: 6px; }
-        .gps-status-legend .legend-dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
-        .legend-dot.online { background: #2ecc71; }
-        .legend-dot.standby { background: #f1c40f; }
-        .legend-dot.offline { background: #e74c3c; }
+        /* Removed .gps-status-legend entirely */
 
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { 
             .map-wrapper { height: 260px; } 
             .stop-item { padding: 6px 8px; gap: 6px; flex-wrap: wrap; } 
-            .stop-item .info .name { font-size: 13px; } 
+            .stop-item .info .name { font-size: 12px; } 
             .stop-item .info .addr { font-size: 11px; } 
             .stop-item .assign-badge { font-size: 10px; padding: 2px 8px; } 
-            .stop-item .actions button { font-size: 14px; padding: 2px; } 
-            .stop-item .actions { gap: 2px; } 
-            .driver-badge-container { gap: 4px; } 
-            .driver-badge { font-size: 11px; padding: 4px 10px; } 
-            .gps-status-legend { font-size: 10px; gap: 10px; } 
+            .stop-item .actions button { font-size: 16px; padding: 4px 8px; } 
+            .stop-item .actions { gap: 4px; } 
+            .driver-badge-container { gap: 6px; } 
+            .driver-badge { font-size: 13px; padding: 8px 14px; } 
+            /* removed legend media */
         }
         .hidden { display: none !important; }
 
@@ -199,22 +197,16 @@
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
             <button onclick="openSettings()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">⚙️ Drivers</button>
-            <button onclick="openMapModal()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">🗺️ Map</button>
+            <button onclick="toggleMapVisibility()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">🗺️ Map</button>
             <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">📅 Next Day</button>
             <button onclick="logout()" style="background:#2a0a0a; border:1px solid #e74c3c; color:#e74c3c; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Logout</button>
         </div>
     </header>
 
-    <!-- Map Modal -->
-    <div id="map-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; padding:16px; backdrop-filter:blur(4px);">
-        <div style="background:var(--card); border-radius:20px; width:90%; max-width:1200px; height:90vh; overflow:hidden; position:relative; border:1px solid var(--border);">
-            <button onclick="closeMapModal()" style="position:absolute; top:12px; right:16px; z-index:10; background:#b71c1c; color:#fff; border:none; padding:8px 16px; border-radius:30px; font-weight:700; cursor:pointer;">✕ Close</button>
-            <div id="map-modal-container" style="width:100%; height:100%;"></div>
-        </div>
-    </div>
+    <!-- Map Modal removed - replaced by toggle -->
 
     <div class="app-grid">
-        <div class="map-wrapper">
+        <div class="map-wrapper" id="mainMapWrapper">
             <div id="dispatch-map"></div>
         </div>
         <div class="driver-badge-container" id="driverBadges"></div>
@@ -228,12 +220,7 @@
                 </div>
             </div>
 
-            <div class="gps-status-legend">
-                <span class="legend-item"><span class="legend-dot online"></span> Online</span>
-                <span class="legend-item"><span class="legend-dot standby"></span> Standby</span>
-                <span class="legend-item"><span class="legend-dot offline"></span> Offline</span>
-                <span style="color:var(--muted); margin-left:auto;" id="lastGlobalUpdate">Updating...</span>
-            </div>
+            <!-- Removed gps-status-legend -->
 
             <div class="add-stop-area">
                 <div class="input-with-suggestions">
@@ -544,6 +531,29 @@ function selectClient(name) {
     document.getElementById('nameSuggestions').style.display = 'none';
 }
 
+// ===== MAP TOGGLE =====
+function toggleMapVisibility() {
+    const wrapper = document.getElementById('mainMapWrapper');
+    wrapper.classList.toggle('hidden');
+    // Trigger resize after toggle to let map adjust
+    if (!wrapper.classList.contains('hidden') && map) {
+        setTimeout(() => {
+            google.maps.event.trigger(map, 'resize');
+        }, 100);
+    }
+}
+
+// ===== ZOOM TO STOP =====
+function zoomToStop(stopId) {
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const stop = allStops[stopId];
+    if (!stop || !stop.lat || !stop.lng) return;
+    if (map) {
+        map.panTo({ lat: stop.lat, lng: stop.lng });
+        map.setZoom(14);
+    }
+}
+
 // ===== INIT =====
 function initApp() {
     getDriversRef().on('value', snap => {
@@ -568,6 +578,13 @@ function initApp() {
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
         if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
+        // Restore map center and zoom if available
+        if (cfg.map_center_lat && cfg.map_center_lng && cfg.map_zoom) {
+            if (map) {
+                map.setCenter({ lat: cfg.map_center_lat, lng: cfg.map_center_lng });
+                map.setZoom(cfg.map_zoom);
+            }
+        }
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
@@ -732,6 +749,19 @@ function initMap() {
     try {
         new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
     } catch(e) {}
+
+    // Save map center and zoom on idle
+    google.maps.event.addListener(map, 'idle', function() {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        if (center && zoom) {
+            getMasterRef().update({
+                map_center_lat: center.lat(),
+                map_center_lng: center.lng(),
+                map_zoom: zoom
+            });
+        }
+    });
 }
 
 // ===== UPDATE MAP MARKERS (drivers + stops) =====
@@ -795,21 +825,11 @@ function updateMapMarkers() {
         stopMarkers.push(marker);
     });
 
-    // Fit map bounds to include all markers (drivers + stops)
-    fitMapBounds();
+    // Do NOT auto-fit bounds; let user control zoom
+    // fitMapBounds(); // removed
 }
 
-function fitMapBounds() {
-    const bounds = new google.maps.LatLngBounds();
-    let hasBounds = false;
-    Object.values(driverMarkers).forEach(m => { bounds.extend(m.getPosition()); hasBounds = true; });
-    stopMarkers.forEach(m => { bounds.extend(m.getPosition()); hasBounds = true; });
-    if (hasBounds) map.fitBounds(bounds);
-    else {
-        map.setCenter({ lat: 49.8425, lng: -99.9497 });
-        map.setZoom(11);
-    }
-}
+// Removed fitMapBounds function as no longer used
 
 // ===== DRIVER BADGES =====
 function renderDriverBadges() {
@@ -932,11 +952,14 @@ function renderDriverStops(driverId) {
     assigned.sort((a,b) => (a[1].order || 0) - (b[1].order || 0));
     assigned.forEach(([id, s]) => {
         const div = document.createElement('div');
-        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''}`;
+        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''} ${s.assignedDriver ? 'assigned' : ''}`;
         div.style.borderLeftColor = drivers[driverId]?.color || '#f7c948';
         const ts = s.status === 'completed' ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
         div.innerHTML = `
-            <div class="info"><div class="name">${s.name || 'No name'} ${ts}</div><div class="addr">${s.address || ''} ${s.city || ''}</div></div>
+            <div class="info" onclick="zoomToStop('${id}')">
+                <div class="name">${s.name || 'No name'} ${ts}</div>
+                <div class="addr">${s.address || ''} ${s.city || ''}</div>
+            </div>
             <div class="actions">
                 ${s.status === 'completed' ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
                 <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
@@ -962,12 +985,13 @@ function renderStopList() {
     let html = '';
     for (let [id, s] of entries) {
         const isCompleted = s.status === 'completed';
+        const isAssigned = !!s.assignedDriver;
         const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
         const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name : 'Unassigned';
         const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
         html += `
-            <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}" style="border-left-color:${color};">
-                <div class="info">
+            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''}" data-id="${id}" style="border-left-color:${color};">
+                <div class="info" onclick="zoomToStop('${id}')">
                     <div class="name">${s.name || 'No name'} ${ts}</div>
                     <div class="addr">${s.address || ''} ${s.city || ''}</div>
                 </div>
@@ -1169,60 +1193,7 @@ function saveSettings() {
     closeSettings();
 }
 
-// ===== MAP MODAL =====
-let mapModal, mapModalInitialized = false;
-function openMapModal() {
-    document.getElementById('map-modal').style.display = 'flex';
-    // Trigger resize after display
-    setTimeout(() => {
-        if (!mapModalInitialized) {
-            mapModal = new google.maps.Map(document.getElementById('map-modal-container'), {
-                center: { lat: 49.8425, lng: -99.9497 },
-                zoom: 11,
-                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}],
-                gestureHandling: 'greedy'
-            });
-            mapModalInitialized = true;
-        }
-        // Copy main map view
-        if (map) {
-            mapModal.setCenter(map.getCenter());
-            mapModal.setZoom(map.getZoom());
-        }
-        // Add markers for drivers
-        if (mapModal._markers) {
-            mapModal._markers.forEach(m => m.setMap(null));
-        }
-        mapModal._markers = [];
-        for (let [id, drv] of Object.entries(drivers)) {
-            if (!drv.lastLocation) continue;
-            const pos = drv.lastLocation;
-            const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-            const status = getGPSStatus(pos.updatedAt, devId);
-            let color = drv.color || '#f7c948';
-            if (status.status === 'standby') color = '#f1c40f';
-            else if (status.status === 'offline') color = '#95a5a6';
-            const marker = new google.maps.Marker({
-                position: { lat: pos.lat, lng: pos.lng },
-                map: mapModal,
-                label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
-                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
-            });
-            mapModal._markers.push(marker);
-        }
-        // Fit bounds to markers if any
-        if (mapModal._markers.length > 0) {
-            const bounds = new google.maps.LatLngBounds();
-            mapModal._markers.forEach(m => bounds.extend(m.getPosition()));
-            mapModal.fitBounds(bounds);
-        }
-        google.maps.event.trigger(mapModal, 'resize');
-    }, 100);
-}
-
-function closeMapModal() {
-    document.getElementById('map-modal').style.display = 'none';
-}
+// Removed openMapModal and closeMapModal functions as they are replaced
 </script>
 </body>
 </html>
