@@ -466,9 +466,7 @@ function initBusinessAutocomplete() {
         addressLookupMap = {};
         Object.keys(addressLookupData).forEach(key => {
             const item = addressLookupData[key];
-            if (item.name) {
-                addressLookupMap[item.name] = { address: item.address || '', city: item.city || '' };
-            }
+            addressLookupMap[key] = { address: item.address || '', city: item.city || '' };
         });
     });
 
@@ -493,11 +491,6 @@ function initBusinessAutocomplete() {
         ).join('');
         suggestionsBox.style.display = 'block';
     }
-
-    // Input event
-    input.addEventListener('input', function() {
-        showSuggestions(this.value);
-    });
 
     // Click on suggestion
     suggestionsBox.addEventListener('click', function(e) {
