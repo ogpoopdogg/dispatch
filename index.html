@@ -82,6 +82,45 @@
         }
         .stop-item {
             padding: 6px 8px !important;
+            position: relative;
+        }
+
+        /* Tooltip above stop */
+        .stop-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 12px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .stop-item:hover .stop-tooltip {
+            display: block;
+        }
+        body.light-mode .stop-tooltip {
+            background: #eee;
+            color: #000;
+        }
+
+        /* Assignment mode styles */
+        .stop-item.assigned-grey {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .stop-item.unassigned-glow {
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+            cursor: pointer;
+        }
+        .stop-item.unassigned-glow:hover {
+            transform: scale(1.02);
         }
 
         #login-overlay { position: fixed; inset: 0; background: #0b0b14; z-index: 99999; display: flex; align-items: center; justify-content: center; }
@@ -575,6 +614,64 @@
             border: 1px solid #000 !important;
             color: #000 !important;
         }
+
+        /* Search bar */
+        #searchStops {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: var(--card2);
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        #searchStops:focus {
+            border-color: var(--accent);
+        }
+        body.light-mode #searchStops {
+            background: #f9fafb;
+            color: #000;
+        }
+
+        /* Cancel assignment button */
+        #cancelAssignmentBtn {
+            display: none;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        #cancelAssignmentBtn:hover {
+            background: #c0392b;
+        }
+
+        .copy-btn {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: 6px;
+        }
+        .copy-btn:hover {
+            background: #2a2a3e;
+            border-color: var(--accent);
+        }
+        body.light-mode .copy-btn {
+            background: #f9fafb;
+            color: #000;
+            border-color: #ddd;
+        }
     </style>
 </head>
 <body>
@@ -598,6 +695,7 @@
             <img src="icon2.png" onclick="toggleTheme()" style="height:32px; width:auto; cursor:pointer;" alt="Logo" />
             <span style="font-size:16px; font-weight:700; color:var(--text);">E&C DISPATCH</span>
             <span class="badge">LIVE</span>
+            <button class="copy-btn" onclick="copyRemainingNames()" title="Copy remaining names to clipboard">📋 Copy</button>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
             <button class="gear-btn" onclick="openSettings()" title="Drivers">
@@ -629,8 +727,12 @@
                         <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
                         <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
                     </div>
+                    <button id="cancelAssignmentBtn" onclick="exitAssignmentMode()">✕ Cancel</button>
                 </div>
             </div>
+
+            <!-- Search bar -->
+            <input type="text" id="searchStops" placeholder="Search stops by name or address..." oninput="searchStops()">
 
             <div class="add-stop-area hidden">
                 <div class="input-with-suggestions">
@@ -822,6 +924,16 @@ let driverPulseCircles = {};
 // Modal pulse circles
 let modalPulseCircle = null;
 let modalPulseAnimationId = null;
+
+// Assignment mode state
+let assignmentModeActive = false;
+let selectedDriverId = null;
+let assignmentPulseCircle = null;
+let assignmentLabel = null; // InfoWindow or Marker
+let assignmentLabelDiv = null;
+
+// Search term
+let searchTerm = '';
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -1478,6 +1590,15 @@ function updateMapMarkers() {
             map: map,
             icon: icon
         });
+        // Add click listener for assignment mode
+        marker.addListener('click', function() {
+            if (assignmentModeActive && selectedDriverId === id) {
+                // If already in assignment mode for this driver, exit
+                exitAssignmentMode();
+            } else {
+                startAssignmentMode(id);
+            }
+        });
         driverMarkers[id] = marker;
 
         // Create pulsating circle for this driver
@@ -1765,14 +1886,31 @@ function renderStopList() {
     const container = document.getElementById('stopList');
     const empty = document.getElementById('emptyMsg');
     const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-    const entries = Object.entries(allStops);
+    let entries = Object.entries(allStops);
     if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
+
+    // Filter by search term
+    if (searchTerm.trim() !== '') {
+        const term = searchTerm.toLowerCase().trim();
+        entries = entries.filter(([id, s]) => {
+            const name = (s.name || '').toLowerCase();
+            const address = (s.address || '').toLowerCase();
+            const city = (s.city || '').toLowerCase();
+            return name.includes(term) || address.includes(term) || city.includes(term);
+        });
+        if (entries.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">No stops match your search.</div>';
+            return;
+        }
+    }
+
     entries.sort((a,b) => {
         if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
         if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
         return (a[1].order || 0) - (b[1].order || 0);
     });
+
     let html = '';
     for (let [id, s] of entries) {
         const isCompleted = s.status === 'completed';
@@ -1780,12 +1918,29 @@ function renderStopList() {
         const driverColor = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
         const bgColor = isAssigned && !isCompleted ? `${driverColor}33` : '';
         const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+
+        // Determine assignment mode classes
+        let extraClasses = '';
+        let clickHandler = `zoomToStop('${id}')`;
+        if (assignmentModeActive && selectedDriverId) {
+            if (isAssigned) {
+                // Assigned: grey out
+                extraClasses += ' assigned-grey';
+            } else {
+                // Unassigned: highlight and make clickable to assign
+                extraClasses += ' unassigned-glow';
+                clickHandler = `assignStopOnClick('${id}')`;
+            }
+        }
+
+        const tooltip = (s.address || '') + (s.city ? ', ' + s.city : '');
         html += `
-            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''}" data-id="${id}" style="border-left-color:${driverColor}; ${bgColor ? `background:${bgColor};` : ''}" title="${s.address || ''} ${s.city || ''}".trim()>
-                <div class="info" onclick="zoomToStop('${id}')">
+            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''} ${extraClasses}" data-id="${id}" style="border-left-color:${driverColor}; ${bgColor ? `background:${bgColor};` : ''}">
+                <div class="info" onclick="${clickHandler}">
                     <div class="name">${s.name || 'No name'} ${ts}</div>
                     <div class="addr">${s.address || ''} ${s.city || ''}</div>
                 </div>
+                <div class="stop-tooltip">${tooltip}</div>
                 <div class="actions">
                     <select class="assign-select" onchange="assignStop('${id}', this.value)">
                         <option value="">Unassign</option>
@@ -1872,6 +2027,21 @@ function assignStop(id, driverId) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
     ref.child(id).update({ assignedDriver: driverId || null });
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+    // If assignment mode is active, exit after assignment? User may want to assign multiple.
+    // We'll keep it active.
+}
+
+// Assign stop on click in assignment mode
+function assignStopOnClick(id) {
+    if (assignmentModeActive && selectedDriverId) {
+        assignStop(id, selectedDriverId);
+        // Optionally re-render to update UI
+        renderStopList();
+        // Exit assignment mode after assigning? We'll keep it active.
+        // But we might want to highlight that it's assigned.
+        // We can flash or show a message.
+        // For now, just re-render.
+    }
 }
 
 function moveToTomorrow(id) {
@@ -1990,6 +2160,118 @@ function saveSettings() {
     renderDriverBadges();
     renderStopList();
     closeSettings();
+}
+
+// ===== ASSIGNMENT MODE FUNCTIONS =====
+function startAssignmentMode(driverId) {
+    // Exit any previous assignment mode
+    exitAssignmentMode();
+
+    assignmentModeActive = true;
+    selectedDriverId = driverId;
+
+    // Show cancel button
+    document.getElementById('cancelAssignmentBtn').style.display = 'inline-block';
+
+    // Add pulsing circle and label on the driver marker
+    const drv = drivers[driverId];
+    if (drv && drv.lastLocation && map) {
+        const pos = drv.lastLocation;
+        const color = drv.color || '#f7c948';
+        // Remove any existing assignment overlay
+        if (assignmentPulseCircle) {
+            assignmentPulseCircle.setMap(null);
+            assignmentPulseCircle = null;
+        }
+        if (assignmentLabel) {
+            assignmentLabel.setMap(null);
+            assignmentLabel = null;
+        }
+
+        // Pulsing circle
+        assignmentPulseCircle = new google.maps.Circle({
+            center: { lat: pos.lat, lng: pos.lng },
+            radius: 15,
+            fillColor: color,
+            fillOpacity: 0.3,
+            strokeColor: color,
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            map: map
+        });
+        // Animate the circle
+        let startTime = performance.now();
+        function pulseAssignment() {
+            if (!assignmentPulseCircle || !assignmentModeActive) return;
+            const elapsed = (performance.now() - startTime) / 1000;
+            const baseRadius = 15;
+            const amplitude = 10;
+            const radius = baseRadius + amplitude * Math.sin(elapsed * 2.5);
+            assignmentPulseCircle.setRadius(radius);
+            requestAnimationFrame(pulseAssignment);
+        }
+        pulseAssignment();
+
+        // Label below marker
+        const labelContent = `Assigning to: ${drv.name || 'Driver'}`;
+        const infowindow = new google.maps.InfoWindow({
+            content: `<div style="color:#fff; background:rgba(0,0,0,0.7); padding:4px 10px; border-radius:12px; font-weight:600; font-size:13px;">${labelContent}</div>`,
+            position: { lat: pos.lat - 0.002, lng: pos.lng } // offset below marker
+        });
+        infowindow.open(map);
+        assignmentLabel = infowindow;
+    }
+
+    // Re-render stop list with highlighting
+    renderStopList();
+}
+
+function exitAssignmentMode() {
+    assignmentModeActive = false;
+    selectedDriverId = null;
+
+    // Hide cancel button
+    document.getElementById('cancelAssignmentBtn').style.display = 'none';
+
+    // Remove assignment overlays
+    if (assignmentPulseCircle) {
+        assignmentPulseCircle.setMap(null);
+        assignmentPulseCircle = null;
+    }
+    if (assignmentLabel) {
+        assignmentLabel.setMap(null);
+        assignmentLabel = null;
+    }
+
+    // Re-render stop list normally
+    renderStopList();
+}
+
+// ===== COPY REMAINING NAMES =====
+function copyRemainingNames() {
+    // Collect all stops from today and tomorrow that are not completed
+    const allStops = { ...stopsToday, ...stopsTomorrow };
+    const names = Object.values(allStops)
+        .filter(s => s.status !== 'completed')
+        .map(s => s.name || '')
+        .filter(name => name.trim() !== '');
+    if (names.length === 0) {
+        alert('No remaining stops to copy.');
+        return;
+    }
+    const text = names.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        alert(`Copied ${names.length} names to clipboard.`);
+    }).catch(err => {
+        alert('Failed to copy: ' + err);
+    });
+}
+
+// ===== SEARCH STOPS =====
+function searchStops() {
+    const input = document.getElementById('searchStops');
+    searchTerm = input.value.trim();
+    renderStopList();
 }
 
 </script>
