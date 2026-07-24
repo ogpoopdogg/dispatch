@@ -234,7 +234,7 @@
 
             <div class="add-stop-area">
                 <div class="input-with-suggestions">
-                    <input type="text" id="stopName" placeholder="Business name" autocomplete="off">
+                    <input type="text" id="stopName" placeholder="Contact/Business Name" autocomplete="off" oninput="handleNameInput(this.value)">
                     <div id="nameSuggestions" class="suggestions-box"></div>
                 </div>
                 <input type="text" id="stopAddress" placeholder="Address">
@@ -525,6 +525,27 @@ function initBusinessAutocomplete() {
             suggestionsBox.style.display = 'none';
         }
     });
+}
+
+// ===== AUTOCOMPLETE HELPERS FROM ROUTEPLANNER =====
+function handleNameInput(val) {
+    showSuggestionsRoute(val, 'nameSuggestions', name => `<div class="suggestion-item" onclick="selectClient('${name.replace(/'/g, "\\'")}')">${name}</div>`);
+}
+function showSuggestionsRoute(val, elementId, htmlCallback) {
+    const box = document.getElementById(elementId);
+    if (val.length < 1) { box.style.display = 'none'; return; }
+    const matches = Object.keys(addressLookupMap).filter(key => key.toLowerCase().startsWith(val.toLowerCase().trim()));
+    if (matches.length === 0) { box.style.display = 'none'; return; }
+    box.innerHTML = matches.map(htmlCallback).join('');
+    box.style.display = 'block';
+}
+function selectClient(name) {
+    const data = addressLookupMap[name];
+    if (!data) return;
+    document.getElementById('stopName').value = name;
+    document.getElementById('stopAddress').value = data.address || '';
+    document.getElementById('stopCity').value = data.city || '';
+    document.getElementById('nameSuggestions').style.display = 'none';
 }
 
 // ===== INIT =====
