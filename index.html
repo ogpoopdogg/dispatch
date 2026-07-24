@@ -323,28 +323,25 @@ function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_con
 
 // ===== GPS STATUS HELPER =====
 function getGPSStatus(lastUpdated, driverId) {
-    // If we have a cached status from /device, use it
+    // Priority 1: use connection_status from /device if available
     if (driverId && deviceStatuses[driverId]) {
         const st = deviceStatuses[driverId];
-        console.log(`📌 Status for device ${driverId}: connection_status=${st.connection_status}, last_update=${st.last_update_by_service}`);
+        console.log(`📌 Status for device ${driverId}: connection_status=${st.connection_status}`);
         if (st.connection_status === 1) {
             return { status: 'online', label: '● Online', class: 'status-online' };
-        } else if (st.connection_status === 2) {
-            // connection_status 2 might be standby (check docs)
-            return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
-        } else {
-            // For any other status (e.g., 0 or undefined), check recency
+        } else if (st.connection_status === 0) {
+            // If connection_status is 0, but we have a recent last_update, show standby
             const lastUpdate = st.last_update_by_service || st.last_dateunix || 0;
-            if (lastUpdate && (Date.now() - lastUpdate * 1000) < STANDBY_THRESHOLD) {
-                return { status: 'online', label: '● Online', class: 'status-online' };
-            } else if (lastUpdate && (Date.now() - lastUpdate * 1000) < OFFLINE_THRESHOLD) {
+            if (lastUpdate && (Date.now() - lastUpdate * 1000) < OFFLINE_THRESHOLD) {
                 return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
             } else {
                 return { status: 'offline', label: '○ Offline', class: 'status-offline' };
             }
+        } else {
+            // For other values (like 2), fallback to timestamp
         }
     }
-    // Fallback to timestamp-based calculation (if no cached status)
+    // Fallback to timestamp-based calculation
     if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
     const diff = Date.now() - lastUpdated;
     if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
@@ -525,25 +522,39 @@ async function fetchDeviceStatuses() {
         const response = await fetch(`${PAJ_BASE}/device`, {
             headers: { 'Authorization': `Bearer ${pajToken}` }
         });
-        if (!response.ok) return;
+        if (!response.ok) {
+            console.warn(`Failed to fetch device statuses: ${response.status}`);
+            return;
+        }
         const data = await response.json();
         let devices = data.success || data.data || data;
         if (!Array.isArray(devices)) return;
+        let updated = false;
         devices.forEach(d => {
             const devId = d.id || d.deviceId || d.imei;
             if (devId) {
                 const idNum = parseInt(devId, 10);
-                deviceStatuses[idNum] = {
+                const newStatus = {
                     connection_status: d.connection_status,
                     last_update_by_service: d.last_update_by_service,
                     last_dateunix: d.last_dateunix
                 };
-                console.log(`📡 Device ${idNum}: connection_status=${d.connection_status}, last_update_by_service=${d.last_update_by_service}`);
+                // Only update if changed to avoid unnecessary re-renders
+                if (JSON.stringify(deviceStatuses[idNum]) !== JSON.stringify(newStatus)) {
+                    deviceStatuses[idNum] = newStatus;
+                    updated = true;
+                }
                 if (d.last_dateunix) {
                     lastDateUnix[idNum] = d.last_dateunix;
                 }
             }
         });
+        if (updated) {
+            console.log('📡 Device statuses updated:', deviceStatuses);
+            // Force re-render of badges
+            renderDriverBadges();
+            updateAllMarkers();
+        }
     } catch(e) {
         console.warn('Failed to fetch device statuses:', e);
     }
@@ -552,7 +563,7 @@ async function fetchDeviceStatuses() {
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
     
-    // First, fetch device statuses from /device
+    // First, fetch device statuses from /device (this determines Online/Offline)
     await fetchDeviceStatuses();
     
     const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !== '');
