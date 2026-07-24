@@ -36,7 +36,6 @@
         #dispatch-map { width: 100%; height: 100%; }
         .driver-badge-container { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 10; pointer-events: none; max-width: calc(100% - 24px); }
         .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .driver-badge:hover { background: rgba(30,30,50,0.95); transform: scale(1.02); }
         .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; flex-shrink: 0; }
         .driver-badge .status-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 4px; }
         .driver-badge .status-online { background: #0a2a1a; color: #2ecc71; }
@@ -168,9 +167,9 @@
             </div>
 
             <div class="gps-status-legend">
-                <span class="legend-item"><span class="legend-dot online"></span> Online (&lt;15m)</span>
-                <span class="legend-item"><span class="legend-dot standby"></span> Standby (15-60m)</span>
-                <span class="legend-item"><span class="legend-dot offline"></span> Offline (&gt;60m)</span>
+                <span class="legend-item"><span class="legend-dot online"></span> Online</span>
+                <span class="legend-item"><span class="legend-dot standby"></span> Standby</span>
+                <span class="legend-item"><span class="legend-dot offline"></span> Offline</span>
                 <span style="color:var(--muted); margin-left:auto;" id="lastGlobalUpdate">Updating...</span>
             </div>
 
@@ -308,22 +307,25 @@ let gpsInterval = null;
 let pajToken = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
-const STANDBY_THRESHOLD = 15 * 60 * 1000;
+const STANDBY_THRESHOLD = 15 * 60 * 1000; // not used for status, kept for compatibility
 const OFFLINE_THRESHOLD = 60 * 60 * 1000;
 
 let addressLookupData = null;
 let addressLookupMap = {};
 
-// Store last known dateunix for each device ID (used for next poll)
-let lastDateUnix = {};
-
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
 
-function getGPSStatus(lastUpdated) {
-    if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
-    const diff = Date.now() - lastUpdated;
+// ===== GPS STATUS HELPER - now uses direct API status =====
+function getGPSStatus(driver) {
+    // If we have an explicit status from the API, use it
+    if (driver._apiStatus !== undefined) {
+        return driver._apiStatus;
+    }
+    // Fallback to timestamp-based calculation
+    if (!driver.lastLocation) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+    const diff = Date.now() - driver.lastLocation.updatedAt;
     if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
     if (diff < OFFLINE_THRESHOLD) return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
     return { status: 'offline', label: '○ Offline', class: 'status-offline' };
@@ -373,7 +375,6 @@ async function testPAJConnection() {
         debug.innerHTML = html;
         pajToken = token;
         getMasterRef().update({ paj_token: token });
-        // After login, fetch initial data
         await fetchAllDevicePositions();
     } catch(e) {
         debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`;
@@ -450,9 +451,7 @@ function initApp() {
         document.getElementById('pajEmail').value = cfg.paj_email || '';
         document.getElementById('pajPassword').value = cfg.paj_password || '';
         pajToken = cfg.paj_token || null;
-        if (cfg.paj_email && cfg.paj_password) {
-            authenticatePAJ();
-        }
+        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
     });
@@ -460,10 +459,10 @@ function initApp() {
     gpsInterval = setInterval(() => {
         if (pajToken) fetchAllDevicePositions();
         updateGlobalUpdateTime();
-    }, 15000);
+    }, 10000);
     setTimeout(() => {
         if (pajToken) fetchAllDevicePositions();
-    }, 3000);
+    }, 2000);
     initBusinessAutocomplete();
 }
 
@@ -495,7 +494,7 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== FETCH POSITIONS - FIXED TO ALWAYS UPDATE WITH RECENT DATA =====
+// ===== FETCH POSITIONS - USING getAllDeviceStatus FOR STATUS =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
@@ -507,24 +506,13 @@ async function fetchAllDevicePositions() {
         return;
     }
     
-    const nowSec = Math.floor(Date.now() / 1000);
-    // Use dateunix = now - 3600 seconds (1 hour ago) – this worked reliably.
-    // For each device, use stored dateunix if available and not too old, else fallback to now-3600.
-    const deviceIDs = deviceEntries.map(([did, drv]) => {
-        const devId = parseInt(String(drv.deviceId).trim(), 10);
-        // If we have a stored timestamp and it's within the last 2 hours, use it; else use now-3600
-        let dateunix = lastDateUnix[devId];
-        if (!dateunix || (nowSec - dateunix) > 7200) {
-            dateunix = nowSec - 3600; // 1 hour ago
-        }
-        return { deviceId: devId, dateunix };
-    });
-    
-    const payload = { deviceIDs, fromLastPoint: true };
-    console.log('📡 Sending payload:', JSON.stringify(payload));
+    // Build payload for getAllDeviceStatus
+    const deviceIds = deviceEntries.map(([did, drv]) => parseInt(String(drv.deviceId).trim(), 10));
+    const payload = { device_ids: deviceIds };
+    console.log('📡 Sending getAllDeviceStatus payload:', payload);
     
     try {
-        const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
+        const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${pajToken}`,
@@ -548,52 +536,72 @@ async function fetchAllDevicePositions() {
             return;
         }
         const data = await response.json();
-        console.log('📨 API response:', data);
+        console.log('📨 getAllDeviceStatus response:', data);
         if (!data.success || typeof data.success !== 'object') {
             console.warn('⚠️ No success object in response.');
             return;
         }
+        
         let updated = false;
         const now = Date.now();
-        for (const [deviceIdStr, points] of Object.entries(data.success)) {
-            if (!Array.isArray(points) || points.length === 0) continue;
-            const latest = points[0];
-            if (!latest || typeof latest !== 'object') continue;
-            const lat = latest.lat;
-            const lng = latest.lng;
-            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
-            const tsSec = latest.dateunix;
-            let pajTimestamp = now;
-            if (tsSec && !isNaN(tsSec)) {
-                pajTimestamp = tsSec * 1000;
-                // Update stored dateunix for this device
-                lastDateUnix[parseInt(deviceIdStr, 10)] = tsSec;
-            }
+        for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
             const devId = parseInt(deviceIdStr, 10);
-            console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
+            if (!devId) continue;
+            
+            // Extract status information
+            const statusObj = deviceData.status || {};
+            const isOnline = statusObj.isOnline === true || statusObj.connection_status === 1;
+            const lastOnline = statusObj.lastOnlineStatus || 0;
+            const lastOnlineTime = lastOnline ? lastOnline * 1000 : 0;
+            
+            // Determine status label
+            let statusLabel = 'Offline';
+            let statusClass = 'status-offline';
+            if (isOnline) {
+                statusLabel = 'Online';
+                statusClass = 'status-online';
+            } else if (lastOnlineTime && (now - lastOnlineTime) < OFFLINE_THRESHOLD) {
+                statusLabel = 'Standby';
+                statusClass = 'status-standby';
+            }
+            
+            // Also get lastPoint if available
+            const lastPoint = deviceData.lastPoint || null;
+            let lat = null, lng = null, pajTimestamp = now;
+            if (lastPoint && lastPoint.lat !== undefined && lastPoint.lng !== undefined) {
+                lat = lastPoint.lat;
+                lng = lastPoint.lng;
+                if (lastPoint.dateunix) {
+                    pajTimestamp = lastPoint.dateunix * 1000;
+                }
+            }
+            
+            console.log(`📍 Device ${devId}: status=${statusLabel}, lat=${lat}, lng=${lng}`);
+            
             let matched = false;
             for (let [did, drv] of Object.entries(drivers)) {
                 const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
                 if (drvDeviceId && drvDeviceId === String(devId)) {
                     matched = true;
-                    const current = drv.lastLocation;
-                    const currentTs = current ? current.updatedAt : 0;
-                    // 🔥 FIX: Always update if the incoming timestamp is within 15 minutes of now
-                    // This ensures devices show as Online when they have recent data.
-                    const isRecent = (now - pajTimestamp) < STANDBY_THRESHOLD;
-                    const isNewer = pajTimestamp > currentTs;
-                    // Update if: incoming is newer, OR incoming is recent and current is older than 15 minutes
-                    const shouldUpdate = isNewer || (isRecent && (now - currentTs) > STANDBY_THRESHOLD);
-                    
-                    if (shouldUpdate) {
-                        drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                        getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                        updated = true;
-                        const status = getGPSStatus(pajTimestamp);
-                        console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
-                    } else {
-                        console.log(`⏩ Skipped ${drv.name} – current: ${currentTs}, incoming: ${pajTimestamp}, recent: ${isRecent}`);
+                    // Update location if we have coordinates and they're newer
+                    if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+                        const current = drv.lastLocation;
+                        if (!current || (current.updatedAt || 0) < pajTimestamp) {
+                            drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                        }
                     }
+                    // Store API status directly on driver
+                    drv._apiStatus = { status: statusLabel.toLowerCase(), label: statusLabel, class: statusClass };
+                    // Also store last online time for reference
+                    drv._lastOnlineTime = lastOnlineTime;
+                    // Update Firebase with status and location
+                    const updateData = {
+                        lastLocation: drv.lastLocation || null,
+                        apiStatus: drv._apiStatus,
+                        lastOnlineTime: lastOnlineTime
+                    };
+                    getDriversRef().child(did).update(updateData);
+                    updated = true;
                     break;
                 }
             }
@@ -632,7 +640,7 @@ function updateAllMarkers() {
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
-        const status = getGPSStatus(pos.updatedAt);
+        const status = drv._apiStatus || getGPSStatus(drv);
         let color = drv.color || '#f7c948';
         if (status.status === 'standby') color = '#f1c40f';
         else if (status.status === 'offline') color = '#95a5a6';
@@ -664,7 +672,7 @@ function renderDriverBadges() {
         const badge = document.createElement('div');
         badge.className = 'driver-badge';
         badge.style.borderLeftColor = drv.color || '#f7c948';
-        const status = getGPSStatus(drv.lastLocation?.updatedAt);
+        const status = drv._apiStatus || getGPSStatus(drv);
         let lastUpdateText = '—';
         if (drv.lastLocation?.updatedAt) {
             const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
@@ -714,7 +722,7 @@ function openDriverModal(driverId) {
         if (container._markers) container._markers.forEach(m => m.setMap(null));
         container._markers = [];
         if (drv?.lastLocation) {
-            const status = getGPSStatus(drv.lastLocation.updatedAt);
+            const status = drv._apiStatus || getGPSStatus(drv);
             let color = drv.color || '#f7c948';
             if (status.status === 'standby') color = '#f1c40f';
             else if (status.status === 'offline') color = '#95a5a6';
@@ -747,7 +755,7 @@ function openDriverModal(driverId) {
             }
         });
         renderDriverStops(driverId);
-        const status = getGPSStatus(drv?.lastLocation?.updatedAt);
+        const status = drv._apiStatus || getGPSStatus(drv);
         const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
         document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
         document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
