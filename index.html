@@ -65,14 +65,14 @@
         }
         .stop-item .info .name {
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             flex: 0 1 auto;
         }
         .stop-item .info .addr {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--muted);
             white-space: nowrap;
             overflow: hidden;
@@ -81,7 +81,7 @@
             text-align: right;
         }
         .stop-item {
-            padding: 6px 10px !important;
+            padding: 6px 8px !important;
         }
 
         #login-overlay { position: fixed; inset: 0; background: #0b0b14; z-index: 99999; display: flex; align-items: center; justify-content: center; }
@@ -132,13 +132,13 @@
         .add-stop-area input:focus { border-color: var(--accent); }
         .add-stop-area .btn-add { background: var(--accent); color: #0b0b14; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; }
         .add-stop-area select { flex: 0 0 auto; background:#0b0b14; border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:30px; font-size:14px; outline:none; min-width:100px; }
-        .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
-        .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
+        .stop-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+        .stop-item { background: var(--card2); border-radius: 14px; padding: 6px 8px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 6px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; flex: 0 0 calc(50% - 6px); max-width: calc(50% - 6px); box-sizing: border-box; }
         .stop-item:hover { border-color: #3a3a5a; }
         .stop-item.completed { background: #4a4a5a !important; opacity: 0.85; order: 999; }
         .stop-item .info { flex: 1; min-width: 0; cursor: pointer; }
-        .stop-item .info .name { font-weight: 600; font-size: 13px; }
-        .stop-item .info .addr { font-size: 12px; color: var(--muted); }
+        .stop-item .info .name { font-weight: 600; font-size: 12px; }
+        .stop-item .info .addr { font-size: 11px; color: var(--muted); }
         .stop-item .info .city { font-size: 11px; color: var(--muted); }
         .stop-item .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 6px 10px; border-radius: 12px; transition: 0.2s; }
@@ -152,8 +152,8 @@
         .driver-modal .modal-header h2 { display: flex; align-items: center; gap: 10px; }
         .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; position: relative; }
         .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
-        .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .driver-modal .modal-stops .stop-item { background: #12121c; }
+        .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+        .driver-modal .modal-stops .stop-item { background: #12121c; flex: 0 0 calc(50% - 6px); max-width: calc(50% - 6px); padding: 6px 8px; box-sizing: border-box; }
         .driver-modal .modal-stops .stop-item .info { cursor: pointer; }
 
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
@@ -183,11 +183,11 @@
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { 
             .map-wrapper { height: 260px; } 
-            .stop-item { padding: 6px 8px; gap: 6px; flex-wrap: wrap; } 
-            .stop-item .info .name { font-size: 12px; } 
-            .stop-item .info .addr { font-size: 11px; } 
+            .stop-item { padding: 6px 8px; gap: 4px; flex-wrap: wrap; } 
+            .stop-item .info .name { font-size: 11px; } 
+            .stop-item .info .addr { font-size: 10px; } 
             .stop-item .assign-badge { font-size: 10px; padding: 2px 8px; } 
-            .stop-item .actions button { font-size: 16px; padding: 4px 8px; } 
+            .stop-item .actions button { font-size: 14px; padding: 4px 6px; } 
             .stop-item .actions { gap: 4px; } 
             .driver-badge-container { gap: 6px; } 
             .driver-badge { font-size: 13px; padding: 8px 14px; } 
@@ -370,7 +370,6 @@
                 <svg viewBox="0 0 24 24" style="width:16px; height:16px; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:2;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 Map
             </button>
-            <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Next Day</button>
             <button onclick="toggleDispatchMode()" id="dispatchBtn" class="dispatch-btn">Dispatch</button>
         </div>
     </header>
@@ -563,6 +562,7 @@ let activeModalDriverId = null;
 let sortableInstance = null;
 let gpsInterval = null;
 let pajToken = null;
+let pulseAnimationId = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
 // Fallback thresholds (only used if connection_status is unavailable)
@@ -580,7 +580,6 @@ let dispatchActive = false;
 
 // Pulse animation for driver markers
 let driverPulseCircles = {};
-let pulseInterval = null;
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -814,7 +813,7 @@ function scrollToStopInList(stopId, containerId) {
 // ===== PIN ICON HELPER =====
 function getPinIcon(color, scale) {
     scale = scale || 1;
-    const pinPath = 'M 0,0 C -15,-20 -25,-30 -25,-45 C -25,-60 0,-75 0,-75 C 0,-75 25,-60 25,-45 C 25,-30 15,-20 0,0 Z';
+    const pinPath = 'M 0,0 C -14,-20 -20,-32 -20,-44 C -20,-60 0,-74 0,-74 C 0,-74 20,-60 20,-44 C 20,-32 14,-20 0,0 Z';
     return {
         path: pinPath,
         fillColor: color,
@@ -829,20 +828,20 @@ function getPinIcon(color, scale) {
 
 // ===== PULSE ANIMATION =====
 function startPulseAnimation() {
-    if (pulseInterval) clearInterval(pulseInterval);
-    pulseInterval = setInterval(() => {
-        const time = Date.now() / 1000;
+    if (pulseAnimationId) cancelAnimationFrame(pulseAnimationId);
+    let startTime = performance.now();
+    function animate(time) {
+        const elapsed = (time - startTime) / 1000;
         const baseRadius = 15;
         const amplitude = 8;
-        const radius = baseRadius + amplitude * Math.sin(time * 2);
+        const radius = baseRadius + amplitude * Math.sin(elapsed * 2.5);
         for (let id in driverPulseCircles) {
             const circle = driverPulseCircles[id];
             if (circle) circle.setRadius(radius);
         }
-        // Pulse the teardrop pin scale
-        const scaleBase = 0.8;
-        const scaleAmp = 0.15;
-        const scale = scaleBase + scaleAmp * Math.sin(time * 2);
+        const scaleBase = 0.7;
+        const scaleAmp = 0.12;
+        const scale = scaleBase + scaleAmp * Math.sin(elapsed * 2.5);
         for (let id in driverMarkers) {
             const marker = driverMarkers[id];
             if (marker) {
@@ -853,7 +852,9 @@ function startPulseAnimation() {
                 }
             }
         }
-    }, 200);
+        pulseAnimationId = requestAnimationFrame(animate);
+    }
+    pulseAnimationId = requestAnimationFrame(animate);
 }
 
 // ===== INIT =====
@@ -1193,7 +1194,7 @@ function updateMapMarkers() {
         let color = drv.color || '#f7c948';
         if (status.status === 'standby') color = '#f1c40f';
         else if (status.status === 'offline') color = '#95a5a6';
-        const icon = getPinIcon(color, 0.8);
+        const icon = getPinIcon(color, 0.7);
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
@@ -1212,10 +1213,10 @@ function updateMapMarkers() {
             center: { lat: pos.lat, lng: pos.lng },
             radius: 15,
             fillColor: color,
-            fillOpacity: 0.3,
+            fillOpacity: 0.2,
             strokeColor: color,
-            strokeOpacity: 0.8,
-            strokeWeight: 3,
+            strokeOpacity: 0.6,
+            strokeWeight: 2,
             map: map
         });
         driverPulseCircles[id] = circle;
@@ -1225,7 +1226,7 @@ function updateMapMarkers() {
     if (Object.keys(driverPulseCircles).length > 0) {
         startPulseAnimation();
     } else {
-        if (pulseInterval) clearInterval(pulseInterval);
+        if (pulseAnimationId) cancelAnimationFrame(pulseAnimationId);
     }
 
     // ---------- Stop markers for current day ----------
@@ -1349,7 +1350,7 @@ function openDriverModal(driverId) {
             let color = drv.color || '#f7c948';
             if (status.status === 'standby') color = '#f1c40f';
             else if (status.status === 'offline') color = '#95a5a6';
-            const icon = getPinIcon(color, 0.8);
+            const icon = getPinIcon(color, 0.7);
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
                 map: mmap,
