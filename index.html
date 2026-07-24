@@ -3,1592 +3,1055 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E&C DISPATCH DASHBOARD</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="gold">
-    <link href="//fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Dispatch · PAJ GPS</title>
+    <meta name="theme-color" content="#1a1a2e">
+    <link href="//fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ===== BASE ===== */
-        :root {
-            --accent: #facc15;
-            --bg: #111827;
-            --card: #1f2937;
-            --text: #f9fafb;
-            --card-text: #e5e7eb;
-            --active-green: #22c55e;
-            --header-bg: #030712;
-            --input-bg: #374151;
-            --border: #4b5563;
-            --modal-bg: #111827;
-            --shadow-soft: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
-            --muted: #9aa0b0;
-        }
-        body.light-mode {
-            --bg: #f3f4f6;
-            --card: #ffffff;
-            --text: #111827;
-            --card-text: #374151;
-            --header-bg: #ffffff;
-            --input-bg: #f9fafb;
-            --border: #e5e7eb;
-            --modal-bg: #ffffff;
-            --accent: #2563eb;
-            --active-green: #16a34a;
-        }
-        body.light-mode * { color: #000 !important; }
-        body.light-mode button { background: #fff !important; color: #000 !important; border: 1px solid #ccc !important; }
-        body.light-mode .primary { background: #fff !important; border: 2px solid #00b32d !important; }
-        body.light-mode .map-btn svg { stroke: #000 !important; }
-        body.light-mode #map-btn { background: #fff !important; border: 1px solid #333 !important; font-size: 12px !important; color: #000 !important; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        body.light-mode #map-btn::after { content: "MAP"; }
-        body.light-mode .driver-pill .status-online { background: #d4edda !important; color: #155724 !important; }
-        body.light-mode .driver-pill .status-standby { background: #fff3cd !important; color: #856404 !important; }
-        body.light-mode .driver-pill .status-offline { background: #f8d7da !important; color: #721c24 !important; }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background: #0b0b14; color: #eaeef2; padding: 0; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        :root { --accent: #f7c948; --card: #16161f; --card2: #1e1e2a; --border: #2a2a3a; --text: #eaeef2; --muted: #9aa0b0; }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-track { background: #0b0b14; }
         ::-webkit-scrollbar-thumb { background: #3a3a4a; border-radius: 6px; }
 
-        /* ===== HEADER ===== */
-        header { padding: 12px 20px; background: var(--header-bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-soft); flex-wrap: wrap; gap: 8px; }
-        .header-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .header-logo { height: 28px; width: auto; cursor: pointer; filter: drop-shadow(0 0 3px var(--accent)); }
-        .shiny-text { background: linear-gradient(to right, var(--accent) 20%, #ccc 50%, var(--accent) 80%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: text-shine 3s linear infinite; font-weight: 800; font-size: 16px; }
-        @keyframes text-shine { to { background-position: 200% center; } }
-        .header-actions { display: flex; gap: 8px; align-items: center; }
-        .header-actions .user-email { font-size: 13px; color: var(--muted); margin-right: 4px; }
-        .header-actions button { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        #login-overlay { position: fixed; inset: 0; background: #0b0b14; z-index: 99999; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 100%; max-width: 360px; background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
+        .login-box h2 { color: var(--accent); margin-bottom: 20px; }
+        .login-box input { width: 100%; padding: 14px; margin: 8px 0; background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 12px; font-size: 16px; outline: none; }
+        .login-box input:focus { border-color: var(--accent); }
+        .login-box button { width: 100%; padding: 14px; margin-top: 16px; background: var(--accent); border: none; color: #0b0b14; font-weight: 700; border-radius: 12px; cursor: pointer; font-size: 16px; }
+        #loginError { color: #e74c3c; margin-top: 12px; font-size: 14px; }
+
+        header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+        .logo svg { height: 32px; }
+        .badge { background: var(--accent); color: #0b0b14; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .header-actions button { background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .header-actions button:hover { background: #2a2a3e; border-color: var(--accent); }
-        .header-actions .logout-btn { background: #2a0a0a; border-color: #e74c3c; color: #e74c3c; }
-        .header-actions .logout-btn:hover { background: #3a0a0a; }
+        .user-email { font-size: 13px; color: var(--muted); }
 
-        /* ===== MAP BUTTON (enlarged) ===== */
-        .map-btn {
-            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 4px, transparent 4px, transparent 8px), #2c3e50;
-            color: white;
-            border: 1px solid #fff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: box-shadow 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0;
-            line-height: 1;
-            min-width: 44px;
-            min-height: 44px;
-        }
-        .map-btn-glow { box-shadow: 0 0 20px var(--accent); }
-        .map-btn svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 2; }
-
-        /* ===== MAIN LAYOUT ===== */
         .app-grid { display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; width: 100%; flex: 1; }
+        .map-wrapper { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; position: relative; height: 380px; min-height: 280px; }
+        #dispatch-map { width: 100%; height: 100%; }
+        .driver-badge-container { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; z-index: 10; pointer-events: none; max-width: calc(100% - 24px); }
+        .driver-badge { pointer-events: auto; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); padding: 6px 14px 6px 10px; border-radius: 40px; border-left: 4px solid; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .driver-badge:hover { background: rgba(30,30,50,0.95); transform: scale(1.02); }
+        .driver-badge .dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; flex-shrink: 0; }
+        .driver-badge .status-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 4px; }
+        .driver-badge .status-online { background: #0a2a1a; color: #2ecc71; }
+        .driver-badge .status-standby { background: #2a2a0a; color: #f1c40f; }
+        .driver-badge .status-offline { background: #2a0a0a; color: #e74c3c; }
+        .driver-badge .last-update { font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 
-        /* ===== INPUT PANEL ===== */
-        .input-panel { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
-        .flex-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .flex-row .input-wrap { flex: 1; position: relative; min-width: 120px; }
-        .flex-row .input-wrap input { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; }
-        .flex-row .input-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(250,204,21,0.2); }
-        .flex-row .input-wrap .suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: var(--card); border: 1px solid var(--border); z-index: 5000; max-height: 200px; overflow-y: auto; display: none; }
-        .flex-row .input-wrap .suggestion-item { padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; color: var(--text); }
-        .flex-row .input-wrap .suggestion-item:hover { background: var(--accent); color: #000; }
-        .reset-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 9px; font-weight: 700; cursor: pointer; color: #666; text-transform: uppercase; z-index: 10; background: transparent; border: none; }
-        .btn-add { background: var(--active-green); color: #000; border: none; padding: 14px 24px; font-weight: 700; border-radius: 8px; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; font-size: 14px; }
-        .btn-add:hover { opacity: 0.9; }
-
-        /* ===== DAY TOGGLE ===== */
-        .day-toggle-wrap { display: flex; align-items: center; gap: 12px; margin: 12px 0 6px; flex-wrap: wrap; }
-        .day-toggle { display: flex; gap: 4px; background: var(--card); border-radius: 40px; padding: 4px; border: 1px solid var(--border); }
-        .day-toggle button { background: transparent; border: none; padding: 6px 20px; border-radius: 30px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: 0.2s; }
+        .manifest-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 16px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .panel-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .day-toggle { display: flex; gap: 6px; background: var(--card2); border-radius: 40px; padding: 4px; }
+        .day-toggle button { background: transparent; border: none; padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: 0.2s; }
         .day-toggle button.active { background: var(--accent); color: #0b0b14; }
-        .day-label { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 4px; }
-
-        /* ===== STOP LIST ===== */
-        .stop-list-container { background: var(--card); border-radius: 12px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
-        .stop-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-        .stop-list-header h3 { color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 18px; }
-        .stop-counter { border: 2px solid var(--accent); color: var(--accent); font-weight: 700; padding: 0 10px; border-radius: 12px; font-size: 14px; display: none; }
+        .add-stop-area { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; background: var(--card2); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
+        .add-stop-area input { flex: 1 1 160px; background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 30px; font-size: 14px; min-width: 120px; outline: none; }
+        .add-stop-area input:focus { border-color: var(--accent); }
+        .add-stop-area .btn-add { background: var(--accent); color: #0b0b14; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; }
         .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
-        .stop-item { background: var(--input-bg); border-radius: 10px; padding: 10px 14px; border-left: 5px solid var(--accent); display: flex; align-items: center; gap: 10px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; user-select: none; -webkit-user-select: none; }
+        .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
         .stop-item:hover { border-color: #3a3a5a; }
-        .stop-item.completed { background: #0f2a1a; border-left-color: #2ecc71; opacity: 0.85; order: 999; }
-        .stop-item .num { background: var(--accent); color: #000; font-weight: 900; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; font-size: 13px; }
+        .stop-item.completed { background: #0f2a1a; border-left-color: #2ecc71; opacity: 0.9; order: 999; }
         .stop-item .info { flex: 1; min-width: 0; }
         .stop-item .info .name { font-weight: 600; font-size: 14px; }
-        .stop-item .info .addr { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .stop-item .assign-badge { background: #1a1a2e; padding: 2px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); white-space: nowrap; flex-shrink: 0; }
-        .stop-item .actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
-        .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 2px 6px; border-radius: 6px; transition: 0.2s; }
+        .stop-item .info .addr { font-size: 12px; color: var(--muted); }
+        .stop-item .info .city { font-size: 11px; color: var(--muted); }
+        .stop-item .assign-badge { background: #1a1a2e; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); white-space: nowrap; }
+        .stop-item .actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+        .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 8px; transition: 0.2s; }
         .stop-item .actions button:hover { background: #2a2a3e; color: white; }
-        .stop-item .actions .complete-btn { color: #2ecc71; }
-        .stop-item .actions .reopen-btn { color: #f1c40f; }
-        .stop-item .actions .move-btn { color: #3498db; }
-        .stop-item .actions .delete-btn { color: #e74c3c; }
+        .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 2px 10px; font-size: 11px; cursor: pointer; }
         .stop-item .timestamp { font-size: 11px; color: #2ecc71; font-weight: 600; margin-left: 4px; }
-        .empty-state { text-align: center; color: var(--muted); padding: 30px 10px; }
 
-        /* ===== DRIVER PILLS (replaces saved routes) ===== */
-        #driver-pills-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; min-height: 28px; }
-        .driver-pill { background: var(--card); border: 1px solid var(--border); border-radius: 40px; padding: 4px 14px 4px 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .driver-pill:hover { border-color: var(--accent); transform: scale(1.02); }
-        .driver-pill .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
-        .driver-pill .status-indicator { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 20px; }
-        .driver-pill .status-online { background: #0a2a1a; color: #2ecc71; }
-        .driver-pill .status-standby { background: #2a2a0a; color: #f1c40f; }
-        .driver-pill .status-offline { background: #2a0a0a; color: #e74c3c; }
-        .driver-pill .last-update { font-size: 10px; font-weight: 400; color: var(--muted); }
-        .no-drivers-msg { color: var(--muted); font-size: 13px; padding: 6px 0; }
+        .driver-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
+        .driver-modal .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .driver-modal .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .driver-modal .modal-header h2 { display: flex; align-items: center; gap: 10px; }
+        .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; }
+        .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
+        .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .driver-modal .modal-stops .stop-item { background: #12121c; }
 
-        /* ===== ASSIGNMENT POPUP ===== */
-        #assign-popup { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 8000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
-        #assign-popup .popup-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 480px; width: 100%; padding: 28px 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        #assign-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        #assign-popup .popup-header h2 { font-size: 22px; font-weight: 700; color: var(--accent); }
-        #assign-popup .popup-header .close-popup { background: transparent; border: none; color: var(--muted); font-size: 28px; cursor: pointer; line-height: 1; }
-        #assign-popup .driver-grid { display: flex; flex-direction: column; gap: 10px; }
-        #assign-popup .driver-btn { padding: 16px 20px; border-radius: 16px; border: 2px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; transition: 0.2s; text-align: left; display: flex; align-items: center; gap: 14px; }
-        #assign-popup .driver-btn:hover { border-color: var(--accent); background: var(--card); }
-        #assign-popup .driver-btn .dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
-        #assign-popup .driver-btn .check { margin-left: auto; color: #2ecc71; font-size: 26px; }
-        #assign-popup .driver-btn.active { border-color: #2ecc71; box-shadow: 0 0 20px rgba(46,204,113,0.3); }
-        #assign-popup .no-drivers-msg-popup { color: var(--muted); padding: 20px 0; text-align: center; font-size: 16px; }
-
-        /* ===== MAP MODAL ===== */
-        #map-modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: #000; }
-        #map { width: 100%; height: 100%; }
-        .close-map { position: fixed; top: 20px; right: 20px; z-index: 3005; background: #b71c1c; color: #fff; border: none; width: 140px; height: 44px; font-weight: 700; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-        #zoom-out-btn { position: fixed; top: 74px; right: 20px; z-index: 3005; background: #448800; color: #fff; border: none; width: 140px; height: 44px; font-weight: 700; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-
-        /* ===== SETTINGS MODAL ===== */
         .settings-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .settings-modal .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 620px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
-        .settings-card h2 { margin-bottom: 20px; color: var(--accent); }
+        .settings-card h2 { margin-bottom: 20px; }
         .settings-card .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
         .settings-card .field label { font-weight: 600; font-size: 14px; }
-        .settings-card .field input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 12px; outline: none; width: 100%; }
+        .settings-card .field input { background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 12px; outline: none; }
         .settings-card .field input:focus { border-color: var(--accent); }
-        .settings-card .driver-row { display: flex; gap: 8px; align-items: center; background: var(--input-bg); padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; flex-wrap: wrap; }
-        .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; outline: none; min-width: 60px; }
-        .settings-card .driver-row input.color-pick { width: 44px; padding: 0; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; flex: 0 0 auto; }
-        .settings-card .driver-row .remove-driver { background: transparent; border: none; color: #e74c3c; font-weight: 700; cursor: pointer; font-size: 20px; padding: 0 6px; }
-        .settings-card .add-driver-btn { background: var(--card); border: 1px dashed var(--border); color: var(--text); padding: 10px; border-radius: 20px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: 600; }
-        .settings-card .add-driver-btn:hover { border-color: var(--accent); }
+        .settings-card .driver-row { display: flex; gap: 8px; align-items: center; background: var(--card2); padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; }
+        .settings-card .driver-row input { flex: 1; background: transparent; border: none; color: var(--text); padding: 6px 4px; outline: none; }
+        .settings-card .driver-row input.color-pick { width: 40px; padding: 0; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: transparent; cursor: pointer; }
+        .settings-card .driver-row .remove-driver { background: transparent; border: none; color: #e74c3c; font-weight: 700; cursor: pointer; font-size: 18px; }
         .settings-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; flex-wrap: wrap; }
         .settings-actions button { padding: 10px 24px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
         .settings-actions .save-btn { background: var(--accent); color: #0b0b14; }
+        .settings-actions .test-btn { background: #1a3a2a; color: #2ecc71; border: 1px solid #2ecc71; }
         .settings-actions .close-btn { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .settings-card .debug-box { background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 300px; overflow-y: auto; color: var(--muted); line-height: 1.8; }
+        .settings-card .debug-box { background: #0b0b14; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; font-family: monospace; max-height: 400px; overflow-y: auto; color: var(--muted); line-height: 1.8; }
         .settings-card .debug-box .success { color: #2ecc71; }
         .settings-card .debug-box .error { color: #e74c3c; }
         .settings-card .debug-box .info { color: #f1c40f; }
         .settings-card .debug-box .device-id { color: var(--accent); font-weight: 700; background: #1a1a2e; padding: 2px 8px; border-radius: 4px; }
 
-        /* ===== DRIVER MODAL ===== */
-        .driver-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 9999;
-        }
-        .driver-modal #driver-map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-        }
-        .driver-modal .close-driver-modal {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-            background: #b71c1c;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 20px;
-        }
-        .driver-modal .driver-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            max-height: 45vh;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(4px);
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            padding: 16px 20px;
-            overflow-y: auto;
-            z-index: 2;
-        }
-        .driver-modal .overlay-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #444;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .driver-modal .overlay-header h2 {
-            color: var(--accent);
-            font-size: 20px;
-            margin: 0;
-        }
-        .driver-modal .overlay-stops {
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: calc(45vh - 80px);
-            overflow-y: auto;
-        }
+        .gps-status-legend { display: flex; gap: 16px; padding: 8px 12px; background: var(--card2); border-radius: 30px; border: 1px solid var(--border); font-size: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+        .gps-status-legend .legend-item { display: flex; align-items: center; gap: 6px; }
+        .gps-status-legend .legend-dot { width: 10px; height: 10px; border-radius: 10px; display: inline-block; }
+        .legend-dot.online { background: #2ecc71; }
+        .legend-dot.standby { background: #f1c40f; }
+        .legend-dot.offline { background: #e74c3c; }
 
-        /* ===== COPY PENDING BUTTON (floating) ===== */
-        #copy-pending-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1001; background: var(--card); border: 2px solid var(--accent); color: var(--accent); padding: 12px 18px; border-radius: 50px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        #copy-pending-btn:hover { background: var(--accent); color: #000; transform: scale(1.04); }
-        #copy-pending-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
-
-        /* ===== TOAST ===== */
-        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 12px 28px; border-radius: 40px; border: 1px solid var(--accent); box-shadow: 0 8px 30px rgba(0,0,0,0.5); font-weight: 600; font-size: 15px; z-index: 99999; display: none; opacity: 0; transition: opacity 0.3s; }
-        #toast.show { opacity: 1; }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            header { padding: 8px 12px; }
-            .header-logo { height: 22px; }
-            .shiny-text { font-size: 14px; }
-            .header-actions .user-email { font-size: 11px; }
-            .header-actions button { padding: 6px 12px; font-size: 12px; }
-            .input-panel { padding: 14px; }
-            .flex-row .input-wrap { min-width: 80px; }
-            .stop-item { padding: 8px 10px; flex-wrap: wrap; gap: 6px; }
-            .stop-item .num { width: 24px; height: 24px; font-size: 11px; }
-            .stop-item .info .name { font-size: 13px; }
-            .stop-item .info .addr { font-size: 11px; }
-            .stop-item .assign-badge { font-size: 10px; padding: 2px 8px; }
-            .stop-item .actions button { font-size: 16px; padding: 2px 4px; }
-            #assign-popup .driver-btn { font-size: 18px; padding: 14px 16px; }
-            .driver-modal .modal-card { padding: 14px; }
-            .driver-modal .modal-map { height: 160px; }
-            #copy-pending-btn { padding: 10px 14px; font-size: 12px; bottom: 16px; right: 16px; }
-            #copy-pending-btn svg { width: 18px; height: 18px; }
-            .close-map, #zoom-out-btn { width: 100px; height: 38px; font-size: 13px; right: 12px; }
-            #zoom-out-btn { top: 66px; }
+        @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
+        @media (max-width: 600px) { 
+            .map-wrapper { height: 260px; } 
+            .stop-item { padding: 6px 8px; gap: 6px; flex-wrap: wrap; } 
+            .stop-item .info .name { font-size: 13px; } 
+            .stop-item .info .addr { font-size: 11px; } 
+            .stop-item .assign-badge { font-size: 10px; padding: 2px 8px; } 
+            .stop-item .actions button { font-size: 14px; padding: 2px; } 
+            .stop-item .actions { gap: 2px; } 
+            .driver-badge-container { gap: 4px; } 
+            .driver-badge { font-size: 11px; padding: 4px 10px; } 
+            .gps-status-legend { font-size: 10px; gap: 10px; } 
         }
-        @media (min-width: 900px) {
-            .app-grid { flex-direction: row; flex-wrap: wrap; }
-            .input-panel { flex: 1 1 35%; }
-            .stop-list-container { flex: 2 1 60%; }
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- ===== LOGIN OVERLAY ===== -->
-    <div id="login-overlay">
-        <div class="login-box" style="width:100%; max-width:360px; background:var(--card); padding:40px; border-radius:20px; border:1px solid var(--border); text-align:center;">
-            <h2 style="color:var(--accent); margin-bottom:20px;">🚚 DISPATCH LOGIN</h2>
-            <input type="email" id="login-user" style="width:100%; padding:14px; margin:8px 0; background:var(--input-bg); border:1px solid var(--border); color:var(--text); border-radius:12px; font-size:16px; outline:none;" placeholder="Email (@ec.com)" autofocus>
-            <input type="password" id="login-pin" style="width:100%; padding:14px; margin:8px 0; background:var(--input-bg); border:1px solid var(--border); color:var(--text); border-radius:12px; font-size:16px; outline:none;" placeholder="Password">
-            <button onclick="attemptLogin()" style="width:100%; padding:14px; margin-top:16px; background:var(--accent); border:none; color:#0b0b14; font-weight:700; border-radius:12px; cursor:pointer; font-size:16px;">Sign In</button>
-            <div id="loginError" style="color:#e74c3c; margin-top:12px; font-size:14px;"></div>
+<!-- Login Overlay -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🚚 DISPATCH LOGIN</h2>
+        <input type="email" id="loginEmail" placeholder="Email (@ec.com)" autofocus>
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Sign In</button>
+        <div id="loginError"></div>
+    </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none;">
+    <!-- Header -->
+    <header>
+        <div style="display: flex; align-items: center; gap: 10px; flex-shrink:0;">
+            <svg viewBox="0 0 100 100" style="height:32px; width:auto;"><circle cx="50" cy="50" r="45" fill="#f7c948"/><path d="M30 30 L70 30 L70 70 L30 70 Z" fill="#1a1a2e"/><circle cx="50" cy="50" r="15" fill="#f7c948"/></svg>
+            <span style="font-size:16px; font-weight:700; color:var(--text);">E&C DISPATCH</span>
+            <span class="badge">LIVE</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <button onclick="openSettings()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">⚙️ Drivers</button>
+            <button onclick="openMapModal()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">🗺️ Map</button>
+            <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">📅 Next Day</button>
+            <button onclick="logout()" style="background:#2a0a0a; border:1px solid #e74c3c; color:#e74c3c; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Logout</button>
+        </div>
+    </header>
+
+    <!-- Map Modal -->
+    <div id="map-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; padding:16px; backdrop-filter:blur(4px);">
+        <div style="background:var(--card); border-radius:20px; width:90%; max-width:1200px; height:90vh; overflow:hidden; position:relative; border:1px solid var(--border);">
+            <button onclick="closeMapModal()" style="position:absolute; top:12px; right:16px; z-index:10; background:#b71c1c; color:#fff; border:none; padding:8px 16px; border-radius:30px; font-weight:700; cursor:pointer;">✕ Close</button>
+            <div id="map-modal-container" style="width:100%; height:100%;"></div>
         </div>
     </div>
 
-    <!-- ===== MAIN APP ===== -->
-    <div id="app" style="display:none;">
+    <div class="app-grid">
+        <div class="map-wrapper">
+            <div id="dispatch-map"></div>
+            <div class="driver-badge-container" id="driverBadges"></div>
+        </div>
 
-        <!-- HEADER -->
-        <header>
-            <div class="header-left">
-                <img src="icon2.png" class="header-logo" alt="Logo" onclick="toggleTheme()">
-                <span class="shiny-text">E&C DISPATCH</span>
-            </div>
-            <div class="header-actions">
-                <span class="user-email" id="userEmail"></span>
-                <button onclick="openSettings()">⚙️ Settings</button>
-                <button class="map-btn" onclick="openMap()" aria-label="Map" id="map-btn" style="background: url('//mt.google.com/vt/lyrs=m&x=235&y=348&z=10') center/cover; border: 1px solid #fff; min-width:44px; min-height:44px; border-radius:6px; font-size:0;"></button>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
-        </header>
-
-        <div class="app-grid">
-
-            <!-- INPUT PANEL -->
-            <div class="input-panel">
-                <div class="flex-row">
-                    <div class="input-wrap">
-                        <input type="text" id="f-name" placeholder="Contact/Business Name" autocomplete="off" oninput="handleNameInput(this.value)" onblur="setTimeout(()=>document.getElementById('suggestions').style.display='none', 200)">
-                        <div id="suggestions" class="suggestions-box"></div>
-                        <button class="reset-btn" onclick="resetFormFields()">RESET</button>
-                    </div>
+        <div class="manifest-panel">
+            <div class="panel-header">
+                <h2>📋 Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
+                <div class="day-toggle">
+                    <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
+                    <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
                 </div>
-                <div class="flex-row">
-                    <div class="input-wrap">
-                        <input type="text" id="f-address" placeholder="Address">
-                    </div>
-                    <div class="input-wrap">
-                        <input type="text" id="f-city" placeholder="City" oninput="handleCityInput(this.value)">
-                        <div id="city-suggestions" class="suggestions-box"></div>
-                    </div>
-                </div>
-                <button class="btn-add" onclick="addStop()">ADD TO ROUTE</button>
-
-                <!-- DAY TOGGLE -->
-                <div class="day-toggle-wrap">
-                    <div class="day-toggle">
-                        <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
-                        <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
-                    </div>
-                    <span class="day-label" id="dayLabel">Today</span>
-                </div>
-
-                <!-- DRIVER PILLS (replaces saved routes) -->
-                <div id="driver-pills-container"></div>
             </div>
 
-            <!-- STOP LIST -->
-            <div class="stop-list-container">
-                <div class="stop-list-header">
-                    <h3>📋 Stops <span class="stop-counter" id="stop-counter">0</span></h3>
-                    <span style="font-size:12px; color:var(--muted);" id="lastUpdateTime">Updating...</span>
-                </div>
-                <div class="stop-list" id="stopList"></div>
-                <div class="empty-state" id="emptyMsg">No stops — add one above.</div>
+            <div class="gps-status-legend">
+                <span class="legend-item"><span class="legend-dot online"></span> Online</span>
+                <span class="legend-item"><span class="legend-dot standby"></span> Standby</span>
+                <span class="legend-item"><span class="legend-dot offline"></span> Offline</span>
+                <span style="color:var(--muted); margin-left:auto;" id="lastGlobalUpdate">Updating...</span>
             </div>
 
+            <div class="add-stop-area">
+                <input type="text" id="stopName" placeholder="Business name" list="businessSuggestions">
+                <input type="text" id="stopAddress" placeholder="Address">
+                <input type="text" id="stopCity" placeholder="City">
+                <datalist id="businessSuggestions"></datalist>
+                <button class="btn-add" onclick="addStop()">+ Add</button>
+            </div>
+
+            <div class="stop-list" id="stopList"></div>
+            <div id="emptyMsg" style="text-align:center; color:var(--muted); padding:20px;">No stops — add one above.</div>
         </div>
     </div>
+</div>
 
-    <!-- ===== ASSIGNMENT POPUP ===== -->
-    <div id="assign-popup">
-        <div class="popup-card">
-            <div class="popup-header">
-                <h2 id="assign-popup-title">Assign Driver</h2>
-                <button class="close-popup" onclick="closeAssignPopup()">✕</button>
-            </div>
-            <div class="driver-grid" id="assign-driver-grid">
-                <div class="no-drivers-msg-popup">No drivers configured. Add one in Settings.</div>
+<!-- Driver Modal -->
+<div class="driver-modal" id="driverModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 id="driverModalTitle">👤 Driver</h2>
+            <button onclick="closeDriverModal()" style="background:transparent; border:none; color:white; font-size:28px; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-map"><div id="driver-map"></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
+            <span id="driverLastUpdate" style="font-size:13px; color:var(--muted);">Last update: —</span>
+            <span id="driverStopCount" style="font-weight:600;">0 stops</span>
+        </div>
+        <div class="modal-stops" id="driverModalStops"></div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="settings-modal" id="settingsModal">
+    <div class="settings-card">
+        <h2>⚙️ Drivers &amp; PAJ GPS</h2>
+        
+        <div class="field">
+            <label>PAJ GPS Email (your login at connect.paj-gps.de)</label>
+            <input type="email" id="pajEmail" placeholder="your-email@example.com">
+        </div>
+        <div class="field">
+            <label>PAJ GPS Password</label>
+            <input type="password" id="pajPassword" placeholder="Your PAJ GPS password">
+        </div>
+        
+        <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
+        
+        <div id="driverSettingsList"></div>
+        <button onclick="addDriverRow()" style="background:var(--card2); border:1px dashed var(--border); color:var(--text); padding:10px; border-radius:20px; width:100%; margin-top:8px; cursor:pointer;">+ Add Driver</button>
+        
+        <!-- Test Connection Button -->
+        <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
+            <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
+            <button onclick="testPAJConnection()" style="background:#1a3a2a; border:2px solid #2ecc71; color:#2ecc71; padding:10px 20px; border-radius:30px; cursor:pointer; font-weight:700; font-size:14px; width:100%;">
+                🔍 Test Connection & List Devices
+            </button>
+            <div class="debug-box" id="debugOutput">
+                <span class="info">💡 Click the green button above to find your Device IDs.</span>
             </div>
         </div>
-    </div>
 
-    <!-- ===== MAP MODAL ===== -->
-    <div id="map-modal">
-        <button class="close-map" onclick="closeMap()">CLOSE MAP</button>
-        <button id="zoom-out-btn" onclick="zoomToAll()">ZOOM OUT</button>
-        <div id="map"></div>
-    </div>
-
-    <!-- ===== DRIVER MODAL ===== -->
-    <div class="driver-modal" id="driverModal">
-        <div id="driver-map"></div>
-        <button class="close-driver-modal" onclick="closeDriverModal()">✕</button>
-        <div class="driver-overlay">
-            <div class="overlay-header">
-                <h2 id="driverModalTitle">👤 Driver</h2>
-                <span id="driverLastUpdate" style="font-size:13px; color:var(--muted);">Last update: —</span>
-                <span id="driverStopCount" style="font-weight:600;">0 stops</span>
-            </div>
-            <div class="overlay-stops" id="driverModalStops"></div>
+        <div class="settings-actions">
+            <button class="save-btn" onclick="saveSettings()">💾 Save</button>
+            <button class="close-btn" onclick="closeSettings()">✕ Close</button>
         </div>
     </div>
+</div>
 
-    <!-- ===== SETTINGS MODAL ===== -->
-    <div class="settings-modal" id="settingsModal">
-        <div class="settings-card">
-            <h2>⚙️ Drivers &amp; PAJ GPS</h2>
-            <div class="field">
-                <label>PAJ GPS Email (login at connect.paj-gps.de)</label>
-                <input type="email" id="pajEmail" placeholder="your-email@example.com">
-            </div>
-            <div class="field">
-                <label>PAJ GPS Password</label>
-                <input type="password" id="pajPassword" placeholder="Your PAJ GPS password">
-            </div>
-            <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
-            <div id="driverSettingsList"></div>
-            <button class="add-driver-btn" onclick="addDriverRow()">+ Add Driver</button>
+<!-- Firebase + Google Maps -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-            <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
-                <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
-                <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click below to see all your PAJ GPS devices and their IDs.</p>
-                <button onclick="testPAJConnection()" style="background:#1a3a2a; border:2px solid #2ecc71; color:#2ecc71; padding:10px 20px; border-radius:30px; cursor:pointer; font-weight:700; font-size:14px; width:100%;">🔍 Test Connection &amp; List Devices</button>
-                <div class="debug-box" id="debugOutput"><span class="info">💡 Click the green button above to find your Device IDs.</span></div>
-            </div>
+<script>
+// ===== FIREBASE =====
+firebase.initializeApp({
+    apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
+    authDomain: "eandccourier-36fcc.firebaseapp.com",
+    databaseURL: "https://eandccourier-36fcc-default-rtdb.firebaseio.com",
+    projectId: "eandccourier-36fcc",
+});
+const auth = firebase.auth();
+const db = firebase.database();
 
-            <div class="settings-actions">
-                <button class="save-btn" onclick="saveSettings()">💾 Save</button>
-                <button class="close-btn" onclick="closeSettings()">✕ Close</button>
-            </div>
-        </div>
-    </div>
+// ===== AUTH =====
+function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = '';
+    if (!email || !password) { errorEl.textContent = 'Please enter email and password.'; return; }
+    auth.signInWithEmailAndPassword(email, password).catch(err => {
+        errorEl.textContent = 'Login failed: ' + err.message;
+    });
+}
 
-    <!-- ===== COPY PENDING BUTTON (floating) ===== -->
-    <button id="copy-pending-btn" onclick="copyPendingStops()">
-        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copy Pending
-    </button>
+function logout() {
+    auth.signOut();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-overlay').style.display = 'flex';
+}
 
-    <!-- ===== TOAST ===== -->
-    <div id="toast"></div>
-
-    <!-- ===== SCRIPTS ===== -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
-    <script>
-        // ============================================================
-        // FIREBASE
-        // ============================================================
-        firebase.initializeApp({
-            apiKey: "AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg",
-            authDomain: "eandccourier-36fcc.firebaseapp.com",
-            databaseURL: "https://eandccourier-36fcc-default-rtdb.firebaseio.com",
-            projectId: "eandccourier-36fcc",
-            messagingSenderId: "1067680083511",
-            appId: "1:1067680083511:android:22d1eb3757302492bd19b2"
-        });
-        const auth = firebase.auth();
-        const db = firebase.database();
-
-        // ============================================================
-        // GLOBALS
-        // ============================================================
-        let currentUser = null;
-        let drivers = {};
-        let stopsToday = {};
-        let stopsTomorrow = {};
-        let currentDay = 'today';
-        let map, mapMarkers = {};
-        let activePolyline = null;
-        let gpsInterval = null;
-        let pajToken = null;
-        let deviceStatuses = {};
-        let addressLookupData = null;
-        let addressLookupMap = {};
-        let sortableInstance = null;
-        let assignPopupTargetId = null;
-
-        // Map state
-        let mapInitialized = false;
-        let mainMap = null;
-        let isTracking = false;
-        let userMarker = null;
-        let userCircle = null;
-        let locationWatchId = null;
-
-        // Driver modal state
-        let activeModalDriverId = null;
-
-        // PAJ thresholds (fallback)
-        const STANDBY_THRESHOLD = 15 * 60 * 1000;
-        const OFFLINE_THRESHOLD = 60 * 60 * 1000;
-        const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
-
-        let authRetryInProgress = false;
-        let lastDateUnix = {};
-
-        // ============================================================
-        // AUTH (from dispatch.html)
-        // ============================================================
-        function attemptLogin() {
-            const email = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pin').value.trim();
-            const errEl = document.getElementById('loginError');
-            errEl.textContent = '';
-            if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; return; }
-            auth.signInWithEmailAndPassword(email, pass).catch(err => {
-                errEl.textContent = 'Login failed: ' + err.message;
-            });
-        }
-
-        function logout() {
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const email = user.email;
+        if (!email.endsWith('@ec.com')) {
+            alert('Access denied. Only @ec.com emails allowed.');
             auth.signOut();
-            document.getElementById('app').style.display = 'none';
-            document.getElementById('login-overlay').style.display = 'flex';
-            if (gpsInterval) { clearInterval(gpsInterval); gpsInterval = null; }
+            return;
         }
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        initApp();
+    } else {
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+    }
+});
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                const email = user.email;
-                if (!email.endsWith('@ec.com')) {
-                    alert('Access denied. Only @ec.com emails allowed.');
-                    auth.signOut();
-                    return;
-                }
-                document.getElementById('userEmail').textContent = email;
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('app').style.display = 'flex';
-                initApp();
-            } else {
-                document.getElementById('login-overlay').style.display = 'flex';
-                document.getElementById('app').style.display = 'none';
-            }
+// ===== STATE =====
+let drivers = {};
+let stopsToday = {};
+let stopsTomorrow = {};
+let currentDay = 'today';
+let map, mapMarkers = {};
+let activeModalDriverId = null;
+let sortableInstance = null;
+let gpsInterval = null;
+let pajToken = null;
+const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
+
+// Fallback thresholds (only used if connection_status is unavailable)
+const STANDBY_THRESHOLD = 15 * 60 * 1000;
+const OFFLINE_THRESHOLD = 60 * 60 * 1000;
+
+let addressLookupData = null;
+let addressLookupMap = {};
+
+// Store connection_status per device (from /getAllDeviceStatus)
+let deviceStatuses = {};
+
+function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
+function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
+function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
+
+// ===== GPS STATUS HELPER =====
+function getGPSStatus(lastUpdated, driverId) {
+    // 1. Use connection_status from getAllDeviceStatus (priority)
+    if (driverId && deviceStatuses[driverId] !== undefined) {
+        const connStatus = deviceStatuses[driverId];
+        // connection_status: 1 = online, 0 = offline, 2 = standby (according to app)
+        if (connStatus === 1) {
+            return { status: 'online', label: '● Online', class: 'status-online' };
+        } else if (connStatus === 2) {
+            return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+        } else {
+            // 0 or other: offline
+            return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+        }
+    }
+    // 2. Fallback: use lastUpdated timestamp
+    if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+    const diff = Date.now() - lastUpdated;
+    if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
+    if (diff < OFFLINE_THRESHOLD) return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+    return { status: 'offline', label: '○ Offline', class: 'status-offline' };
+}
+
+// ===== TEST PAJ CONNECTION =====
+async function testPAJConnection() {
+    const debug = document.getElementById('debugOutput');
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    
+    debug.innerHTML = '<span class="info">⏳ Testing connection...</span>';
+    if (!email || !pass) {
+        debug.innerHTML = '<span class="error">❌ Please enter your PAJ GPS email and password first.</span>';
+        return;
+    }
+    try {
+        const loginRes = await fetch(`${PAJ_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
         });
-
-        // ============================================================
-        // THEME TOGGLE
-        // ============================================================
-        if (localStorage.getItem('ec_theme') === 'light') document.body.classList.add('light-mode');
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            localStorage.setItem('ec_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-            if (map) map.setOptions({ styles: document.body.classList.contains('light-mode') ? [] : mapStyles });
+        const loginData = await loginRes.json();
+        let token = loginData.success?.token || loginData.token;
+        if (!token) {
+            debug.innerHTML += `<span class="error">❌ Login failed.</span>`;
+            return;
         }
-        const mapStyles = [{ "featureType": "all", "elementType": "all", "stylers": [{ "invert_lightness": !0 }, { "saturation": 10 },
-            { "lightness": 30 }, { "gamma": 0.5 }, { "hue": "#435158" }]
-        }];
+        debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
+        const deviceRes = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const devicesData = await deviceRes.json();
+        let devices = devicesData.success || devicesData.data || devicesData;
+        if (!Array.isArray(devices)) {
+            debug.innerHTML += `<span class="error">❌ No devices found.</span>`;
+            return;
+        }
+        let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
+        devices.forEach((d, i) => {
+            const devId = d.id || d.deviceId || d.imei || 'Unknown';
+            const name = d.name || d.deviceName || `Device ${i+1}`;
+            html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
+            html += `   📱 Device ID: <span class="device-id">${devId}</span><br>`;
+        });
+        html += `<span class="info">💡 Copy the Device ID and paste into each driver's settings.</span>`;
+        debug.innerHTML = html;
+        pajToken = token;
+        getMasterRef().update({ paj_token: token });
+        await fetchAllDevicePositions();
+    } catch(e) {
+        debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`;
+    }
+}
 
-        // ============================================================
-        // REF HELPERS
-        // ============================================================
-        function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
-
-        function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
-
-        function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
-
-        // ============================================================
-        // GPS STATUS (from dispatch.html)
-        // ============================================================
-        function getGPSStatus(lastUpdated, driverId) {
-            if (driverId && deviceStatuses[driverId] !== undefined) {
-                const connStatus = deviceStatuses[driverId];
-                if (connStatus === 1) return { status: 'online', label: '● Online', cls: 'status-online' };
-                if (connStatus === 2) return { status: 'standby', label: '◐ Standby', cls: 'status-standby' };
-                return { status: 'offline', label: '○ Offline', cls: 'status-offline' };
+// ===== BUSINESS NAME AUTOCOMPLETE =====
+function initBusinessAutocomplete() {
+    const input = document.getElementById('stopName');
+    const datalist = document.getElementById('businessSuggestions');
+    function loadAddressLookup() {
+        if (addressLookupData !== null) return;
+        db.ref('address_lookup').once('value').then(snap => {
+            const data = snap.val();
+            if (data) {
+                addressLookupData = data;
+                addressLookupMap = {};
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    if (item.name) addressLookupMap[item.name] = { address: item.address || '', city: item.city || '' };
+                });
+                updateSuggestions('');
             }
-            if (!lastUpdated) return { status: 'offline', label: '○ Offline', cls: 'status-offline' };
-            const diff = Date.now() - lastUpdated;
-            if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', cls: 'status-online' };
-            if (diff < OFFLINE_THRESHOLD) return { status: 'standby', label: '◐ Standby', cls: 'status-standby' };
-            return { status: 'offline', label: '○ Offline', cls: 'status-offline' };
+        }).catch(() => {});
+    }
+    function updateSuggestions(query) {
+        const q = query.toLowerCase().trim();
+        const options = Object.keys(addressLookupMap).filter(name => name.toLowerCase().includes(q));
+        datalist.innerHTML = '';
+        options.slice(0, 20).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            datalist.appendChild(opt);
+        });
+    }
+    loadAddressLookup();
+    input.addEventListener('focus', function() {
+        loadAddressLookup();
+        updateSuggestions(this.value);
+    });
+    input.addEventListener('input', function() {
+        if (addressLookupData === null) return;
+        updateSuggestions(this.value);
+    });
+    input.addEventListener('change', function() {
+        const val = this.value;
+        if (addressLookupMap[val]) {
+            document.getElementById('stopAddress').value = addressLookupMap[val].address;
+            document.getElementById('stopCity').value = addressLookupMap[val].city;
         }
+    });
+}
 
-        // ============================================================
-        // PAJ GPS (from dispatch.html)
-        // ============================================================
-        async function authenticatePAJ() {
-            const email = document.getElementById('pajEmail').value.trim();
-            const pass = document.getElementById('pajPassword').value.trim();
-            if (!email || !pass) return;
-            try {
-                const response = await fetch(`${PAJ_BASE}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: pass })
-                });
-                const data = await response.json();
-                let token = data.success?.token || data.token;
-                if (token) {
-                    pajToken = token;
-                    getMasterRef().update({ paj_token: token });
-                    await fetchAllDevicePositions();
-                }
-            } catch (e) { console.warn('PAJ auth error:', e); }
+// ===== INIT =====
+function initApp() {
+    getDriversRef().on('value', snap => {
+        drivers = snap.val() || {};
+        renderDriverBadges();
+        updateAllMarkers();
+        renderSettingsList();
+        renderStopList();
+        updateGlobalUpdateTime();
+    });
+    db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
+        stopsToday = snap.val() || {};
+        if (currentDay === 'today') renderStopList();
+    });
+    db.ref('developer/dispatch_dashboard/stops_tomorrow').on('value', snap => {
+        stopsTomorrow = snap.val() || {};
+        if (currentDay === 'tomorrow') renderStopList();
+    });
+    getMasterRef().once('value').then(snap => {
+        const cfg = snap.val() || {};
+        document.getElementById('pajEmail').value = cfg.paj_email || '';
+        document.getElementById('pajPassword').value = cfg.paj_password || '';
+        pajToken = cfg.paj_token || null;
+        if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
+    }).catch(() => {
+        getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
+    });
+    if (gpsInterval) clearInterval(gpsInterval);
+    gpsInterval = setInterval(() => {
+        if (pajToken) fetchAllDevicePositions();
+        updateGlobalUpdateTime();
+    }, 15000);
+    setTimeout(() => {
+        if (pajToken) fetchAllDevicePositions();
+    }, 3000);
+    initBusinessAutocomplete();
+}
+
+function updateGlobalUpdateTime() {
+    const el = document.getElementById('lastGlobalUpdate');
+    if (el) {
+        el.textContent = '⏱ ' + new Date().toLocaleTimeString();
+    }
+}
+
+// ===== PAJ GPS =====
+async function authenticatePAJ() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    if (!email || !pass) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass })
+        });
+        const data = await response.json();
+        let token = data.success?.token || data.token;
+        if (token) {
+            pajToken = token;
+            getMasterRef().update({ paj_token: token });
+            await fetchAllDevicePositions();
         }
+    } catch(e) { console.warn('PAJ auth error:', e); }
+}
 
-        async function fetchAllDevicePositions() {
-            if (!pajToken) return;
-            const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !==
-            '');
-            if (deviceEntries.length === 0) return;
-            const deviceIds = deviceEntries.map(([did, drv]) => parseInt(String(drv.deviceId).trim(), 10));
-            const payload = { devicesId: deviceIds };
-            try {
-                const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${pajToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (response.status === 401 || response.status === 403) {
-                    console.warn('🔑 Token expired, re-authenticating...');
-                    if (!authRetryInProgress) {
-                        authRetryInProgress = true;
-                        await authenticatePAJ();
-                        authRetryInProgress = false;
-                        await fetchAllDevicePositions();
-                        return;
-                    }
-                    return;
-                }
-                if (!response.ok) return;
-                const data = await response.json();
-                if (!data.success || typeof data.success !== 'object') return;
-                let updated = false;
-                const now = Date.now();
-                for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
-                    const devId = parseInt(deviceIdStr, 10);
-                    if (!devId) continue;
-                    const deviceStatus = deviceData.deviceStatus || {};
-                    const connectionStatus = deviceStatus.connection_status;
-                    if (connectionStatus !== undefined) {
-                        deviceStatuses[devId] = connectionStatus;
-                    }
-                    const lastPoint = deviceData.lastPoint || null;
-                    if (lastPoint && lastPoint.lat !== undefined && lastPoint.lng !== undefined) {
-                        const lat = lastPoint.lat;
-                        const lng = lastPoint.lng;
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const tsSec = lastPoint.dateunix;
-                            let pajTimestamp = now;
-                            if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
-                            if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
-                            let matched = false;
-                            for (let [did, drv] of Object.entries(drivers)) {
-                                const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
-                                if (drvDeviceId && drvDeviceId === String(devId)) {
-                                    matched = true;
-                                    drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                                    getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                                    updated = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (updated) {
-                    renderDriverPills();
-                    updateMapMarkers();
-                }
-            } catch (e) { console.warn('❌ Fetch error:', e); }
-        }
+// ===== FETCH POSITIONS AND STATUSES =====
+let authRetryInProgress = false;
+let lastDateUnix = {};
 
-        async function testPAJConnection() {
-            const debug = document.getElementById('debugOutput');
-            const email = document.getElementById('pajEmail').value.trim();
-            const pass = document.getElementById('pajPassword').value.trim();
-            debug.innerHTML = '<span class="info">⏳ Testing connection...</span>';
-            if (!email || !pass) {
-                debug.innerHTML = '<span class="error">❌ Please enter your PAJ GPS email and password first.</span>';
+async function fetchAllDevicePositions() {
+    if (!pajToken) return;
+    
+    const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !== '');
+    if (deviceEntries.length === 0) {
+        console.log('📡 No driver device IDs configured.');
+        return;
+    }
+    
+    // Build device IDs array
+    const deviceIds = deviceEntries.map(([did, drv]) => parseInt(String(drv.deviceId).trim(), 10));
+    
+    // The correct payload is { devicesId: [1011367066, ...] }
+    const payload = { devicesId: deviceIds };
+    console.log('📡 Sending payload to getAllDeviceStatus:', JSON.stringify(payload));
+    
+    try {
+        const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pajToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.status === 401 || response.status === 403) {
+            console.warn('🔑 Token expired, re-authenticating...');
+            if (!authRetryInProgress) {
+                authRetryInProgress = true;
+                await authenticatePAJ();
+                authRetryInProgress = false;
+                await fetchAllDevicePositions();
                 return;
             }
-            try {
-                const loginRes = await fetch(`${PAJ_BASE}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: pass })
-                });
-                const loginData = await loginRes.json();
-                let token = loginData.success?.token || loginData.token;
-                if (!token) { debug.innerHTML += `<span class="error">❌ Login failed.</span>`; return; }
-                debug.innerHTML += `<span class="success">✅ Login successful!</span><br><br>`;
-                const deviceRes = await fetch(`${PAJ_BASE}/device`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const devicesData = await deviceRes.json();
-                let devices = devicesData.success || devicesData.data || devicesData;
-                if (!Array.isArray(devices)) { debug.innerHTML += `<span class="error">❌ No devices found.</span>`; return; }
-                let html = `<span class="success">✅ Found ${devices.length} device(s):</span><br><br>`;
-                devices.forEach((d, i) => {
-                    const devId = d.id || d.deviceId || d.imei || 'Unknown';
-                    const name = d.name || d.deviceName || `Device ${i+1}`;
-                    html += `<span class="info">${i+1}. </span><strong>${name}</strong><br>`;
-                    html += `   📱 Device ID: <span class="device-id">${devId}</span><br>`;
-                });
-                html += `<span class="info">💡 Copy the Device ID and paste into each driver's settings.</span>`;
-                debug.innerHTML = html;
-                pajToken = token;
-                getMasterRef().update({ paj_token: token });
-                await fetchAllDevicePositions();
-            } catch (e) { debug.innerHTML += `<span class="error">❌ Error: ${e.message}</span>`; }
+            return;
         }
-
-        // ============================================================
-        // ADDRESS LOOKUP & AUTOCOMPLETE
-        // ============================================================
-        function initBusinessAutocomplete() {
-            const input = document.getElementById('f-name');
-            const datalist = document.getElementById('suggestions');
-
-            function loadAddressLookup() {
-                if (addressLookupData !== null) return;
-                db.ref('address_lookup').once('value').then(snap => {
-                    const data = snap.val();
-                    if (data) {
-                        addressLookupData = data;
-                        addressLookupMap = {};
-                        Object.keys(data).forEach(key => {
-                            const item = data[key];
-                            if (item.name) addressLookupMap[item.name] = { address: item.address || '',
-                                city: item.city || '' };
-                        });
-                        updateSuggestions('');
-                    }
-                }).catch(() => {});
+        if (!response.ok) {
+            console.warn('❌ getAllDeviceStatus returned status', response.status);
+            return;
+        }
+        const data = await response.json();
+        console.log('📨 getAllDeviceStatus response:', data);
+        if (!data.success || typeof data.success !== 'object') {
+            console.warn('⚠️ No success object in response.');
+            return;
+        }
+        
+        let updated = false;
+        const now = Date.now();
+        for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
+            const devId = parseInt(deviceIdStr, 10);
+            if (!devId) continue;
+            
+            // Extract status
+            const deviceStatus = deviceData.deviceStatus || {};
+            const connectionStatus = deviceStatus.connection_status;
+            if (connectionStatus !== undefined) {
+                deviceStatuses[devId] = connectionStatus;
+                console.log(`📡 Device ${devId}: connection_status=${connectionStatus}`);
+            } else {
+                console.warn(`⚠️ No connection_status for device ${devId}`);
             }
-
-            function updateSuggestions(query) {
-                const q = query.toLowerCase().trim();
-                const options = Object.keys(addressLookupMap).filter(name => name.toLowerCase().includes(q));
-                datalist.innerHTML = '';
-                options.slice(0, 20).forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    datalist.appendChild(opt);
-                });
-                // Also show as suggestions box
-                const box = document.getElementById('suggestions');
-                if (q.length < 1 || options.length === 0) { box.style.display = 'none'; return; }
-                box.innerHTML = options.slice(0, 15).map(name =>
-                    `<div class="suggestion-item" onclick="selectClient('${name.replace(/'/g,"\\'")}')">${name}</div>`
-                ).join('');
-                box.style.display = 'block';
-            }
-            loadAddressLookup();
-            input.addEventListener('focus', function() { loadAddressLookup();
-                updateSuggestions(this.value); });
-            input.addEventListener('input', function() { if (addressLookupData === null) return;
-                updateSuggestions(this.value); });
-            input.addEventListener('change', function() {
-                const val = this.value;
-                if (addressLookupMap[val]) {
-                    document.getElementById('f-address').value = addressLookupMap[val].address;
-                    document.getElementById('f-city').value = addressLookupMap[val].city;
-                }
-            });
-        }
-
-        function handleNameInput(val) {
-            const box = document.getElementById('suggestions');
-            if (val.length < 1) { box.style.display = 'none'; return; }
-            const matches = Object.keys(addressLookupMap).filter(k => k.toLowerCase().startsWith(val.toLowerCase().trim()));
-            if (matches.length === 0) { box.style.display = 'none'; return; }
-            box.innerHTML = matches.slice(0, 15).map(name =>
-                `<div class="suggestion-item" onclick="selectClient('${name.replace(/'/g,"\\'")}')">${name}</div>`
-            ).join('');
-            box.style.display = 'block';
-        }
-
-        function handleCityInput(val) {
-            const box = document.getElementById('city-suggestions');
-            if (val.length < 1) { box.style.display = 'none'; return; }
-            const matches = Object.keys(addressLookupData || {}).filter(k => {
-                const data = addressLookupData[k];
-                return data && data.city && data.city.toLowerCase().startsWith(val.toLowerCase().trim());
-            });
-            if (matches.length === 0) { box.style.display = 'none'; return; }
-            const unique = [...new Set(matches.map(k => addressLookupData[k].city))];
-            box.innerHTML = unique.slice(0, 15).map(city =>
-                `<div class="suggestion-item" onclick="selectCity('${city.replace(/'/g,"\\'")}')">${city}</div>`
-            ).join('');
-            box.style.display = 'block';
-        }
-
-        function selectClient(name) {
-            const data = addressLookupMap[name];
-            if (!data) return;
-            document.getElementById('f-name').value = name;
-            document.getElementById('f-address').value = data.address || '';
-            document.getElementById('f-city').value = data.city || '';
-            document.getElementById('suggestions').style.display = 'none';
-        }
-
-        function selectCity(city) {
-            document.getElementById('f-city').value = city;
-            document.getElementById('city-suggestions').style.display = 'none';
-        }
-
-        function resetFormFields() {
-            document.getElementById('f-name').value = '';
-            document.getElementById('f-address').value = '';
-            document.getElementById('f-city').value = '';
-            document.getElementById('suggestions').style.display = 'none';
-            document.getElementById('city-suggestions').style.display = 'none';
-        }
-
-        // Google Places Autocomplete
-        function initPlaces() {
-            const addressInput = document.getElementById('f-address');
-            if (!addressInput || !google.maps || !google.maps.places) return;
-            try {
-                const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                    componentRestrictions: { country: 'ca' },
-                    bounds: new google.maps.Circle({ center: new google.maps.LatLng(49.8425, -99.9497), radius: 50000 })
-                        .getBounds(),
-                    strictBounds: false
-                });
-                autocomplete.addListener('place_changed', () => {
-                    const place = autocomplete.getPlace();
-                    if (!place.address_components) return;
-                    for (let comp of place.address_components) {
-                        if (comp.types.includes('locality')) {
-                            document.getElementById('f-city').value = comp.long_name;
+            
+            // Extract lastPoint (position)
+            const lastPoint = deviceData.lastPoint || null;
+            if (lastPoint && lastPoint.lat !== undefined && lastPoint.lng !== undefined) {
+                const lat = lastPoint.lat;
+                const lng = lastPoint.lng;
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const tsSec = lastPoint.dateunix;
+                    let pajTimestamp = now;
+                    if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
+                    if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
+                    console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
+                    // Update driver location
+                    let matched = false;
+                    for (let [did, drv] of Object.entries(drivers)) {
+                        const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
+                        if (drvDeviceId && drvDeviceId === String(devId)) {
+                            matched = true;
+                            drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                            getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                            updated = true;
                             break;
                         }
                     }
-                });
-            } catch (e) { console.warn('Places init error:', e); }
-        }
-
-        // ============================================================
-        // GEOCODE
-        // ============================================================
-        function geocodeAddress(address, city) {
-            return new Promise((resolve, reject) => {
-                const full = `${address}, ${city}, MB, Canada`;
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ address: full, region: 'ca' }, (results, status) => {
-                    if (status === 'OK' && results.length > 0) {
-                        const loc = results[0].geometry.location;
-                        resolve({ lat: loc.lat(), lng: loc.lng() });
-                    } else {
-                        reject(new Error('Geocoding failed: ' + status));
-                    }
-                });
-            });
-        }
-
-        // ============================================================
-        // STOPS: ADD
-        // ============================================================
-        async function addStop() {
-            const name = document.getElementById('f-name').value.trim();
-            const address = document.getElementById('f-address').value.trim();
-            const city = document.getElementById('f-city').value.trim();
-            if (!name || !address || !city) {
-                alert('Please fill in all fields.');
-                return;
-            }
-            try {
-                const coords = await geocodeAddress(address, city);
-                const ref = getStopsRef();
-                const newStop = {
-                    name,
-                    pickup_location: address,
-                    city,
-                    lat: coords.lat,
-                    lng: coords.lng,
-                    status: 'pending',
-                    assignedDriver: null,
-                    order: Date.now(),
-                    completedAt: null
-                };
-                const pushRef = ref.push();
-                await pushRef.set(newStop);
-                // Update address_lookup
-                const sanitizedKey = name.replace(/[.#$\[\]\/]/g, "").trim();
-                await db.ref("address_lookup").child(sanitizedKey).update({
-                    address: address,
-                    city: city,
-                    last_edit_by: currentUser || 'dispatch'
-                });
-                resetFormFields();
-            } catch (e) {
-                alert('Error adding stop: ' + e.message);
-            }
-        }
-
-        // ============================================================
-        // STOPS: LIST RENDER
-        // ============================================================
-        function renderStopList() {
-            const container = document.getElementById('stopList');
-            const empty = document.getElementById('emptyMsg');
-            const counter = document.getElementById('stop-counter');
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const entries = Object.entries(allStops);
-            if (entries.length === 0) {
-                container.innerHTML = '';
-                empty.style.display = 'block';
-                counter.style.display = 'none';
-                return;
-            }
-            empty.style.display = 'none';
-            counter.textContent = entries.length;
-            counter.style.display = 'inline-block';
-
-            entries.sort((a, b) => {
-                if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
-                if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
-                return (a[1].order || 0) - (b[1].order || 0);
-            });
-
-            let html = '';
-            let idx = 0;
-            for (let [id, s] of entries) {
-                idx++;
-                const isCompleted = s.status === 'completed';
-                const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` :
-                    '';
-                const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name :
-                'Unassigned';
-                const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#facc15';
-                const actionBtn = isCompleted ?
-                    `<button class="reopen-btn" onclick="event.stopPropagation(); toggleStopStatus('${id}')" title="Re-open">↩️</button>` :
-                    `<button class="complete-btn" onclick="event.stopPropagation(); toggleStopStatus('${id}')" title="Complete">✅</button>`;
-                html += `
-                    <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}" style="border-left-color:${color}; cursor:pointer;">
-                        <span class="num">${idx}</span>
-                        <div class="info">
-                            <div class="name">${s.name || 'No name'} ${ts}</div>
-                            <div class="addr">${s.pickup_location || ''} ${s.city || ''}</div>
-                        </div>
-                        <span class="assign-badge" style="border-color:${color};">${driverName}</span>
-                        <div class="actions" onclick="event.stopPropagation();">
-                            ${actionBtn}
-                            <button class="move-btn" onclick="moveStopToOtherDay('${id}')" title="→ other day">➡️</button>
-                            <button class="delete-btn" onclick="deleteStop('${id}')" title="Delete">✕</button>
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-
-            // Click on row → assignment popup
-            container.querySelectorAll('.stop-item').forEach(el => {
-                el.addEventListener('click', function(e) {
-                    // Ignore if click on actions
-                    if (e.target.closest('.actions')) return;
-                    const id = this.dataset.id;
-                    if (id) openAssignPopup(id);
-                });
-            });
-
-            // Sortable
-            if (sortableInstance) sortableInstance.destroy();
-            try {
-                sortableInstance = new Sortable(container, {
-                    animation: 150,
-                    delay: 400,
-                    delayOnTouchOnly: true,
-                    draggable: '.stop-item',
-                    ghostClass: 'sortable-ghost',
-                    onEnd: function(evt) {
-                        const items = container.querySelectorAll('.stop-item');
-                        const newOrder = Array.from(items).map(el => el.dataset.id);
-                        const updates = {};
-                        newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
-                        getStopsRef().update(updates);
-                    }
-                });
-            } catch (e) {}
-
-            // Update map markers
-            updateMapMarkers();
-        }
-
-        // ============================================================
-        // STOPS: ACTIONS
-        // ============================================================
-        function toggleStopStatus(id) {
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const s = allStops[id];
-            if (!s) return;
-            const newStatus = s.status === 'pending' ? 'completed' : 'pending';
-            const updates = { status: newStatus };
-            if (newStatus === 'completed') updates.completedAt = Date.now();
-            else updates.completedAt = null;
-            getStopsRef().child(id).update(updates);
-            // Also refresh driver modal if open
-            if (activeModalDriverId) renderDriverStops(activeModalDriverId);
-        }
-
-        function deleteStop(id) {
-            if (!confirm('Delete this stop?')) return;
-            getStopsRef().child(id).remove();
-        }
-
-        function moveStopToOtherDay(id) {
-            const currentRef = getStopsRef();
-            const targetDay = currentDay === 'today' ? 'tomorrow' : 'today';
-            const targetRef = db.ref(`developer/dispatch_dashboard/stops_${targetDay}`);
-            currentRef.child(id).once('value').then(snap => {
-                const val = snap.val();
-                if (!val) return;
-                targetRef.push(val).then(() => {
-                    currentRef.child(id).remove();
-                });
-            });
-        }
-
-        // ============================================================
-        // ASSIGNMENT POPUP
-        // ============================================================
-        function openAssignPopup(stopId) {
-            assignPopupTargetId = stopId;
-            const popup = document.getElementById('assign-popup');
-            const grid = document.getElementById('assign-driver-grid');
-            const title = document.getElementById('assign-popup-title');
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const stop = allStops[stopId];
-            title.textContent = `Assign Driver — ${stop?.name || 'Stop'}`;
-
-            const driverEntries = Object.entries(drivers);
-            if (driverEntries.length === 0) {
-                grid.innerHTML = '<div class="no-drivers-msg-popup">No drivers configured. Add one in Settings.</div>';
-                popup.style.display = 'flex';
-                return;
-            }
-            let html = '';
-            const currentAssigned = stop?.assignedDriver || null;
-            for (let [did, drv] of driverEntries) {
-                const isActive = did === currentAssigned;
-                const color = drv.color || '#facc15';
-                html += `
-                    <button class="driver-btn ${isActive ? 'active' : ''}" data-driver="${did}" onclick="assignDriver('${stopId}','${did}')">
-                        <span class="dot" style="background:${color};"></span>
-                        ${drv.name || 'Driver'}
-                        ${isActive ? '<span class="check">✅</span>' : ''}
-                    </button>
-                `;
-            }
-            grid.innerHTML = html;
-            popup.style.display = 'flex';
-        }
-
-        function closeAssignPopup() {
-            document.getElementById('assign-popup').style.display = 'none';
-            assignPopupTargetId = null;
-        }
-
-        function assignDriver(stopId, driverId) {
-            const ref = getStopsRef();
-            ref.child(stopId).update({ assignedDriver: driverId || null });
-            closeAssignPopup();
-            // Refresh driver modal if open
-            if (activeModalDriverId) renderDriverStops(activeModalDriverId);
-        }
-
-        // ============================================================
-        // DRIVER PILLS (replaces saved routes)
-        // ============================================================
-        function renderDriverPills() {
-            const container = document.getElementById('driver-pills-container');
-            const entries = Object.entries(drivers);
-            if (entries.length === 0) {
-                container.innerHTML = '<span class="no-drivers-msg">No drivers — add in Settings ⚙️</span>';
-                return;
-            }
-            let html = '';
-            for (let [id, drv] of entries) {
-                const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-                const status = getGPSStatus(drv.lastLocation?.updatedAt, devId);
-                let lastText = '—';
-                if (drv.lastLocation?.updatedAt) {
-                    const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
-                    lastText = `${mins}m ago`;
+                    if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
                 }
-                const color = drv.color || '#facc15';
-                html += `
-                    <div class="driver-pill" onclick="openDriverModal('${id}')">
-                        <span class="dot" style="background:${color};"></span>
-                        ${drv.name || 'Driver'}
-                        <span class="status-indicator ${status.cls}">${status.label}</span>
-                        <span class="last-update">${lastText}</span>
-                    </div>
-                `;
+            } else {
+                console.log(`ℹ️ No position for device ${devId}`);
             }
-            container.innerHTML = html;
         }
+        
+        if (updated) {
+            updateAllMarkers();
+            renderDriverBadges();
+        } else {
+            console.log('ℹ️ No driver updates from this response.');
+        }
+    } catch(e) {
+        console.warn('❌ Fetch error:', e);
+    }
+}
 
-        // ============================================================
-        // DRIVER MODAL (from dispatch.html)
-        // ============================================================
-        function openDriverModal(driverId) {
-            document.getElementById('driverModal').style.display = 'block';
-            activeModalDriverId = driverId;
-            const drv = drivers[driverId];
-            document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
+// ===== MAP =====
+let mapInitialized = false;
+function initMap() {
+    if (mapInitialized) return;
+    map = new google.maps.Map(document.getElementById('dispatch-map'), {
+        center: { lat: 49.8425, lng: -99.9497 }, zoom: 11,
+        styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
+    });
+    mapInitialized = true;
+    updateAllMarkers();
+    try {
+        new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
+    } catch(e) {}
+}
 
-            // Ensure the map container is visible and sized
-            const container = document.getElementById('driver-map');
-            // Initialize map if not exists
-            if (!container._map) {
-                container._map = new google.maps.Map(container, {
-                    center: drv?.lastLocation ? { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng } : { lat: 49.8425,
-                        lng: -99.9497 },
-                    zoom: 13,
-                    styles: mapStyles,
-                    gestureHandling: 'greedy'
-                });
+function updateAllMarkers() {
+    if (!map) return;
+    Object.values(mapMarkers).forEach(m => m.setMap(null));
+    mapMarkers = {};
+    for (let [id, drv] of Object.entries(drivers)) {
+        if (!drv.lastLocation) continue;
+        const pos = drv.lastLocation;
+        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+        const status = getGPSStatus(pos.updatedAt, devId);
+        let color = drv.color || '#f7c948';
+        if (status.status === 'standby') color = '#f1c40f';
+        else if (status.status === 'offline') color = '#95a5a6';
+        const marker = new google.maps.Marker({
+            position: { lat: pos.lat, lng: pos.lng },
+            map: map,
+            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+        });
+        mapMarkers[id] = marker;
+    }
+    if (Object.keys(mapMarkers).length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        Object.values(mapMarkers).forEach(m => bounds.extend(m.getPosition()));
+        map.fitBounds(bounds);
+    }
+}
+
+// ===== DRIVER BADGES =====
+function renderDriverBadges() {
+    const container = document.getElementById('driverBadges');
+    container.innerHTML = '';
+    const entries = Object.entries(drivers);
+    if (entries.length === 0) {
+        container.innerHTML = '<span style="color:var(--muted); font-size:13px; background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:20px;">No drivers — add in Settings</span>';
+        return;
+    }
+    for (let [id, drv] of entries) {
+        const badge = document.createElement('div');
+        badge.className = 'driver-badge';
+        badge.style.borderLeftColor = drv.color || '#f7c948';
+        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+        const status = getGPSStatus(drv.lastLocation?.updatedAt, devId);
+        let lastUpdateText = '—';
+        if (drv.lastLocation?.updatedAt) {
+            const mins = ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0);
+            lastUpdateText = `${mins}m`;
+        }
+        badge.innerHTML = `
+            <span class="dot" style="background:${drv.color || '#f7c948'}"></span>
+            ${drv.name || 'Driver'} 
+            <span class="status-indicator ${status.class}">${status.label}</span>
+            <span class="last-update">${lastUpdateText}</span>
+        `;
+        badge.onclick = () => { zoomToDriver(id); };
+        container.appendChild(badge);
+    }
+}
+
+function zoomToDriver(driverId) {
+    const drv = drivers[driverId];
+    if (!drv || !drv.lastLocation) return;
+    if (map) {
+        map.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+        map.setZoom(14);
+    }
+    openDriverModal(driverId);
+}
+
+// ===== DRIVER MODAL =====
+function openDriverModal(driverId) {
+    document.getElementById('driverModal').style.display = 'flex';
+    activeModalDriverId = driverId;
+    const drv = drivers[driverId];
+    document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
+    setTimeout(() => {
+        const container = document.getElementById('driver-map');
+        if (!container._map) {
+            container._map = new google.maps.Map(container, {
+                center: drv?.lastLocation ? { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng } : { lat: 49.8425, lng: -99.9497 },
+                zoom: 13,
+                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
+            });
+        }
+        const mmap = container._map;
+        if (drv?.lastLocation) {
+            mmap.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+            mmap.setZoom(14);
+        }
+        if (container._markers) container._markers.forEach(m => m.setMap(null));
+        container._markers = [];
+        if (drv?.lastLocation) {
+            const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+            const status = getGPSStatus(drv.lastLocation.updatedAt, devId);
+            let color = drv.color || '#f7c948';
+            if (status.status === 'standby') color = '#f1c40f';
+            else if (status.status === 'offline') color = '#95a5a6';
+            const mk = new google.maps.Marker({
+                position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
+                map: mmap,
+                label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+            });
+            container._markers.push(mk);
+        }
+        const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+        const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed');
+        if (container._polyline) container._polyline.setMap(null);
+        if (assigned.length > 1) {
+            const path = assigned.map(([id, s]) => ({ lat: s.lat || 0, lng: s.lng || 0 })).filter(p => p.lat && p.lng);
+            if (path.length > 1) {
+                container._polyline = new google.maps.Polyline({ path, map: mmap, strokeColor: drv.color || '#f7c948', strokeWeight: 4 });
             }
-            const mmap = container._map;
-            // Trigger resize after a short delay to ensure container has dimensions
-            setTimeout(() => {
-                google.maps.event.trigger(mmap, 'resize');
-                if (drv?.lastLocation) {
-                    mmap.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
-                    mmap.setZoom(14);
-                }
-            }, 100);
-
-            // Clear previous markers
-            if (container._markers) container._markers.forEach(m => m.setMap(null));
-            container._markers = [];
-
-            // Add driver marker
-            if (drv?.lastLocation) {
-                const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-                const status = getGPSStatus(drv.lastLocation.updatedAt, devId);
-                let color = drv.color || '#facc15';
-                if (status.status === 'standby') color = '#f1c40f';
-                else if (status.status === 'offline') color = '#95a5a6';
+        }
+        assigned.forEach(([id, s]) => {
+            if (s.lat && s.lng) {
                 const mk = new google.maps.Marker({
-                    position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
+                    position: { lat: s.lat, lng: s.lng },
                     map: mmap,
-                    label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
-                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color,
-                        fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff',
-                        strokeWeight: 2 }
+                    label: { text: s.name || 'Stop', color: '#fff', fontSize: '11px' },
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#2ecc71', fillOpacity: 0.8, strokeColor: '#fff', strokeWeight: 1 }
                 });
                 container._markers.push(mk);
             }
+        });
+        renderDriverStops(driverId);
+        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+        const status = getGPSStatus(drv?.lastLocation?.updatedAt, devId);
+        const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt)/60000).toFixed(0) : '—';
+        document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
+        document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
+    }, 200);
+}
 
-            // Render stops
-            renderDriverStops(driverId);
+function closeDriverModal() {
+    document.getElementById('driverModal').style.display = 'none';
+    activeModalDriverId = null;
+}
 
-            // Update last update info
-            const devId = drv?.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-            const status = getGPSStatus(drv?.lastLocation?.updatedAt, devId);
-            const lastUp = drv?.lastLocation ? ((Date.now() - drv.lastLocation.updatedAt) / 60000).toFixed(0) : '—';
-            document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
-        }
+function renderDriverStops(driverId) {
+    const container = document.getElementById('driverModalStops');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId);
+    container.innerHTML = '';
+    if (assigned.length === 0) { container.innerHTML = '<div style="color:var(--muted);padding:12px;">No assigned stops</div>'; return; }
+    assigned.sort((a,b) => (a[1].order || 0) - (b[1].order || 0));
+    assigned.forEach(([id, s]) => {
+        const div = document.createElement('div');
+        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''}`;
+        div.style.borderLeftColor = drivers[driverId]?.color || '#f7c948';
+        const ts = s.status === 'completed' ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        div.innerHTML = `
+            <div class="info"><div class="name">${s.name || 'No name'} ${ts}</div><div class="addr">${s.address || ''} ${s.city || ''}</div></div>
+            <div class="actions">
+                ${s.status === 'completed' ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
-        function closeDriverModal() {
-            document.getElementById('driverModal').style.display = 'none';
-            activeModalDriverId = null;
-        }
-
-        function renderDriverStops(driverId) {
-            const container = document.getElementById('driverModalStops');
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId);
-            container.innerHTML = '';
-            if (assigned.length === 0) {
-                container.innerHTML = '<div class="empty-stops">No assigned stops for this driver.</div>';
-                document.getElementById('driverStopCount').textContent = '0 stops';
-                return;
+// ===== STOP LIST =====
+function renderStopList() {
+    const container = document.getElementById('stopList');
+    const empty = document.getElementById('emptyMsg');
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const entries = Object.entries(allStops);
+    if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    entries.sort((a,b) => {
+        if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
+        if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
+        return (a[1].order || 0) - (b[1].order || 0);
+    });
+    let html = '';
+    for (let [id, s] of entries) {
+        const isCompleted = s.status === 'completed';
+        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name : 'Unassigned';
+        const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
+        html += `
+            <div class="stop-item ${isCompleted ? 'completed' : ''}" data-id="${id}" style="border-left-color:${color};">
+                <div class="info">
+                    <div class="name">${s.name || 'No name'} ${ts}</div>
+                    <div class="addr">${s.address || ''} ${s.city || ''}</div>
+                </div>
+                <div class="assign-badge" style="border-color:${color};">${driverName}</div>
+                <div class="actions">
+                    <select class="assign-select" onchange="assignStop('${id}', this.value)">
+                        <option value="">Unassign</option>
+                        ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
+                    </select>
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
+                    <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+                    <button onclick="deleteStop('${id}')" style="color:#e74c3c;">✕</button>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+    if (sortableInstance) sortableInstance.destroy();
+    try {
+        sortableInstance = new Sortable(container, {
+            animation: 150, delay: 400, delayOnTouchOnly: true,
+            onEnd: function(evt) {
+                const items = container.querySelectorAll('.stop-item');
+                const newOrder = Array.from(items).map(el => el.dataset.id);
+                const updates = {};
+                newOrder.forEach((id, idx) => { updates[`${id}/order`] = idx; });
+                const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+                ref.update(updates);
             }
-            document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
-            assigned.sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-            const color = drivers[driverId]?.color || '#facc15';
-            for (let [id, s] of assigned) {
-                const div = document.createElement('div');
-                div.className = 'stop-item';
-                div.style.borderLeftColor = color;
-                const isCompleted = s.status === 'completed';
-                div.innerHTML = `
-                    <div class="info">
-                        <div class="name">${s.name || 'No name'} ${isCompleted ? '✅' : ''}</div>
-                        <div class="addr">${s.pickup_location || ''} ${s.city || ''}</div>
-                    </div>
-                    <div class="actions">
-                        <button class="assign-btn" onclick="openAssignPopupFromModal('${id}')">Assign</button>
-                        <button class="unassign-btn" onclick="unassignDriver('${id}')">Unassign</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            }
-        }
+        });
+    } catch(e) {}
+}
 
-        function openAssignPopupFromModal(stopId) {
-            closeDriverModal();
-            setTimeout(() => openAssignPopup(stopId), 100);
-        }
+// ===== STOP ACTIONS =====
+function addStop() {
+    const name = document.getElementById('stopName').value.trim();
+    const address = document.getElementById('stopAddress').value.trim();
+    const city = document.getElementById('stopCity').value.trim();
+    if (!name || !address || !city) { alert('Fill all fields'); return; }
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() });
+    document.getElementById('stopName').value = '';
+    document.getElementById('stopAddress').value = '';
+    document.getElementById('stopCity').value = '';
+}
 
-        function unassignDriver(stopId) {
-            getStopsRef().child(stopId).update({ assignedDriver: null });
-            if (activeModalDriverId) renderDriverStops(activeModalDriverId);
-        }
+function completeStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'completed', completedAt: Date.now() });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
 
-        // ============================================================
-        // MAP (stops + drivers, no polylines)
-        // ============================================================
-        function initMap() {
-            if (mapInitialized) return;
-            map = new google.maps.Map(document.getElementById('map'), {
+function reopenStop(id) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ status: 'pending', completedAt: null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function assignStop(id, driverId) {
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).update({ assignedDriver: driverId || null });
+    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+}
+
+function moveToTomorrow(id) {
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.child(id).once('value').then(snap => {
+        const val = snap.val();
+        if (!val) return;
+        refTomorrow.push(val).then(() => {
+            refToday.child(id).remove();
+        });
+    });
+}
+
+function deleteStop(id) {
+    if (!confirm('Delete stop?')) return;
+    const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    ref.child(id).remove();
+}
+
+function switchDay(day) {
+    currentDay = day;
+    document.querySelectorAll('.day-toggle button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+    document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
+    renderStopList();
+    closeDriverModal();
+}
+
+function nextDayPrompt() {
+    if (confirm('Move all pending stops to tomorrow? Completed stops will be cleared.')) {
+        const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+        const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+        refToday.once('value').then(snap => {
+            const data = snap.val() || {};
+            const pending = Object.entries(data).filter(([id, s]) => s.status !== 'completed');
+            const updates = {};
+            pending.forEach(([id, s]) => { updates[id] = s; });
+            refTomorrow.update(updates).then(() => {
+                const removes = {};
+                Object.keys(data).forEach(id => { removes[id] = null; });
+                refToday.update(removes);
+                switchDay('tomorrow');
+            });
+        });
+    }
+}
+
+// ===== SETTINGS =====
+function openSettings() {
+    document.getElementById('settingsModal').style.display = 'flex';
+    renderSettingsList();
+}
+function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+function renderSettingsList() {
+    const container = document.getElementById('driverSettingsList');
+    container.innerHTML = '';
+    for (let [id, drv] of Object.entries(drivers)) {
+        const row = document.createElement('div');
+        row.className = 'driver-row';
+        row.innerHTML = `
+            <input type="text" value="${drv.name || ''}" placeholder="Name" data-id="${id}" class="drv-name">
+            <input type="color" value="${drv.color || '#f7c948'}" data-id="${id}" class="drv-color color-pick">
+            <input type="text" value="${drv.deviceId || ''}" placeholder="Device ID" data-id="${id}" class="drv-device">
+            <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
+        `;
+        container.appendChild(row);
+    }
+}
+
+function addDriverRow() {
+    const ref = getDriversRef();
+    ref.push({ name: 'Driver', color: '#f7c948', deviceId: '', lastLocation: null });
+}
+
+function removeDriver(id) {
+    if (!confirm('Remove this driver? All assigned stops will be unassigned.')) return;
+    const ref = getDriversRef();
+    ref.child(id).remove();
+    const refToday = db.ref('developer/dispatch_dashboard/stops_today');
+    const refTomorrow = db.ref('developer/dispatch_dashboard/stops_tomorrow');
+    refToday.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refToday.update(updates);
+    });
+    refTomorrow.once('value').then(snap => {
+        const data = snap.val() || {};
+        const updates = {};
+        Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[`${id}/assignedDriver`] = null; });
+        refTomorrow.update(updates);
+    });
+}
+
+function saveSettings() {
+    const email = document.getElementById('pajEmail').value.trim();
+    const pass = document.getElementById('pajPassword').value.trim();
+    getMasterRef().update({ paj_email: email, paj_password: pass });
+    const rows = document.querySelectorAll('#driverSettingsList .driver-row');
+    rows.forEach(row => {
+        const id = row.querySelector('.drv-name').dataset.id;
+        const name = row.querySelector('.drv-name').value;
+        const color = row.querySelector('.drv-color').value;
+        const deviceId = row.querySelector('.drv-device').value;
+        if (id) {
+            getDriversRef().child(id).update({ name, color, deviceId });
+        }
+    });
+    if (email && pass) authenticatePAJ();
+    renderDriverBadges();
+    renderStopList();
+    closeSettings();
+}
+
+// ===== MAP MODAL =====
+let mapModal, mapModalInitialized = false;
+function openMapModal() {
+    document.getElementById('map-modal').style.display = 'flex';
+    // Trigger resize after display
+    setTimeout(() => {
+        if (!mapModalInitialized) {
+            mapModal = new google.maps.Map(document.getElementById('map-modal-container'), {
                 center: { lat: 49.8425, lng: -99.9497 },
-                zoom: 12,
-                gestureHandling: 'greedy',
-                styles: document.body.classList.contains('light-mode') ? [] : mapStyles
+                zoom: 11,
+                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}]
             });
-            mainMap = map;
-            mapInitialized = true;
-
-            // Bullseye button
-            const bullseyeDiv = document.createElement('div');
-            bullseyeDiv.innerHTML =
-                `<button class="bullseye-btn" id="bullseye-btn" style="background:#fff;border:2px solid #333;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;outline:none;margin:0 0 8px 0;">🎯</button>`;
-            const bullseyeBtn = bullseyeDiv.querySelector('#bullseye-btn');
-            map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(bullseyeDiv);
-            bullseyeBtn.addEventListener('click', function() {
-                if (isTracking) { stopTracking(); } else { startTracking(); }
+            mapModalInitialized = true;
+        }
+        // Copy main map view
+        if (map) {
+            mapModal.setCenter(map.getCenter());
+            mapModal.setZoom(map.getZoom());
+        }
+        // Add markers for drivers
+        if (mapModal._markers) {
+            mapModal._markers.forEach(m => m.setMap(null));
+        }
+        mapModal._markers = [];
+        for (let [id, drv] of Object.entries(drivers)) {
+            if (!drv.lastLocation) continue;
+            const pos = drv.lastLocation;
+            const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+            const status = getGPSStatus(pos.updatedAt, devId);
+            let color = drv.color || '#f7c948';
+            if (status.status === 'standby') color = '#f1c40f';
+            else if (status.status === 'offline') color = '#95a5a6';
+            const marker = new google.maps.Marker({
+                position: { lat: pos.lat, lng: pos.lng },
+                map: mapModal,
+                label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
             });
-
-            updateMapMarkers();
-            initPlaces();
+            mapModal._markers.push(marker);
         }
-
-        function updateMapMarkers() {
-            if (!map) return;
-            Object.values(mapMarkers).forEach(m => m.setMap(null));
-            mapMarkers = {};
-
-            // --- Stop markers ---
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const entries = Object.entries(allStops).filter(([id, s]) => s.lat && s.lng);
-            entries.sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-            let idx = 0;
-            for (let [id, s] of entries) {
-                idx++;
-                const assignedColor = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : null;
-                const labelColor = assignedColor || '#ff9800';
-                const marker = new google.maps.Marker({
-                    position: { lat: s.lat, lng: s.lng },
-                    map: map,
-                    label: {
-                        text: `${idx}. ${s.name || ''}`,
-                        color: labelColor,
-                        fontWeight: 'bold',
-                        fontSize: '12px',
-                        className: 'driver-map-label'
-                    },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 14,
-                        fillColor: '#ff9800',
-                        fillOpacity: 1,
-                        strokeColor: 'white',
-                        strokeWeight: 2
-                    }
-                });
-                mapMarkers[`stop_${id}`] = marker;
-            }
-
-            // --- Driver markers ---
-            for (let [id, drv] of Object.entries(drivers)) {
-                if (!drv.lastLocation) continue;
-                const pos = drv.lastLocation;
-                const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-                const status = getGPSStatus(pos.updatedAt, devId);
-                let color = drv.color || '#facc15';
-                if (status.status === 'standby') color = '#f1c40f';
-                else if (status.status === 'offline') color = '#95a5a6';
-                const marker = new google.maps.Marker({
-                    position: { lat: pos.lat, lng: pos.lng },
-                    map: map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 14,
-                        fillColor: color,
-                        fillOpacity: status.status === 'offline' ? 0.5 : 1,
-                        strokeColor: '#fff',
-                        strokeWeight: 2
-                    }
-                });
-                mapMarkers[`driver_${id}`] = marker;
-            }
-
-            // Fit bounds
-            const allPositions = [];
-            Object.values(mapMarkers).forEach(m => {
-                const p = m.getPosition();
-                if (p) allPositions.push(p);
-            });
-            if (allPositions.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                allPositions.forEach(p => bounds.extend(p));
-                map.fitBounds(bounds);
-            }
+        // Fit bounds to markers if any
+        if (mapModal._markers.length > 0) {
+            const bounds = new google.maps.LatLngBounds();
+            mapModal._markers.forEach(m => bounds.extend(m.getPosition()));
+            mapModal.fitBounds(bounds);
         }
+        google.maps.event.trigger(mapModal, 'resize');
+    }, 100);
+}
 
-        function openMap() {
-            document.getElementById('map-modal').style.display = 'block';
-            setTimeout(() => {
-                google.maps.event.trigger(map, 'resize');
-                updateMapMarkers();
-            }, 100);
-        }
-
-        function closeMap() {
-            document.getElementById('map-modal').style.display = 'none';
-        }
-
-        function zoomToAll() {
-            const allPositions = [];
-            Object.values(mapMarkers).forEach(m => {
-                const p = m.getPosition();
-                if (p) allPositions.push(p);
-            });
-            if (allPositions.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                allPositions.forEach(p => bounds.extend(p));
-                map.fitBounds(bounds);
-            } else {
-                map.setCenter({ lat: 49.8425, lng: -99.9497 });
-                map.setZoom(12);
-            }
-        }
-
-        // ============================================================
-        // LOCATION TRACKING (from routeplanner.html)
-        // ============================================================
-        function startTracking() {
-            if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
-            const btn = document.getElementById('bullseye-btn');
-            if (btn) btn.classList.add('active');
-            isTracking = true;
-            locationWatchId = navigator.geolocation.watchPosition(
-                function(pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    const loc = new google.maps.LatLng(lat, lng);
-                    if (userMarker) userMarker.setMap(null);
-                    if (userCircle) userCircle.setMap(null);
-                    userCircle = new google.maps.Circle({
-                        map: map,
-                        center: loc,
-                        radius: 20,
-                        fillColor: '#ff6600',
-                        fillOpacity: 0.5,
-                        strokeColor: '#ff6600',
-                        strokeWeight: 2,
-                        strokeOpacity: 0.8
-                    });
-                    let pulseInterval = setInterval(function() {
-                        if (!userCircle) { clearInterval(pulseInterval); return; }
-                        let rad = userCircle.getRadius();
-                        let newRad = rad + 5;
-                        if (newRad > 40) newRad = 20;
-                        userCircle.setRadius(newRad);
-                        let op = userCircle.getFillOpacity();
-                        userCircle.setFillOpacity(op === 0.5 ? 0.8 : 0.5);
-                    }, 500);
-                    userCircle._pulseInterval = pulseInterval;
-                    userMarker = new google.maps.Marker({
-                        position: loc,
-                        map: map,
-                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#ff6600',
-                            fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 }
-                    });
-                    map.panTo(loc);
-                    map.setZoom(15);
-                },
-                function(err) { console.error(err);
-                    alert("Location error: " + err.message);
-                    stopTracking(); }, { enableHighAccuracy: true, maximumAge: 10000 }
-            );
-        }
-
-        function stopTracking() {
-            if (locationWatchId) { navigator.geolocation.clearWatch(locationWatchId);
-                locationWatchId = null; }
-            if (userMarker) { userMarker.setMap(null);
-                userMarker = null; }
-            if (userCircle) { if (userCircle._pulseInterval) clearInterval(userCircle._pulseInterval);
-                userCircle.setMap(null);
-                userCircle = null; }
-            isTracking = false;
-            const btn = document.getElementById('bullseye-btn');
-            if (btn) btn.classList.remove('active');
-            zoomToAll();
-        }
-
-        // ============================================================
-        // DAY MANAGEMENT
-        // ============================================================
-        function switchDay(day) {
-            currentDay = day;
-            document.querySelectorAll('.day-toggle button').forEach(b => b.classList.toggle('active', b.dataset.day === day));
-            document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
-            renderStopList();
-            // Update driver modal if open
-            if (activeModalDriverId) renderDriverStops(activeModalDriverId);
-        }
-
-        // ============================================================
-        // COPY PENDING STOPS
-        // ============================================================
-        function copyPendingStops() {
-            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-            const pending = Object.values(allStops).filter(s => s.status === 'pending');
-            if (pending.length === 0) {
-                showToast('No pending stops to copy.');
-                return;
-            }
-            const names = pending.map(s => s.name || 'Unnamed').filter(n => n.trim());
-            const text = names.join('\n');
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(`📋 Copied ${names.length} pending stop${names.length>1?'s':''} to clipboard.`);
-            }).catch(() => {
-                // Fallback
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                ta.remove();
-                showToast(`📋 Copied ${names.length} pending stop${names.length>1?'s':''} to clipboard.`);
-            });
-        }
-
-        function showToast(msg) {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.style.display = 'block';
-            el.classList.add('show');
-            clearTimeout(el._timer);
-            el._timer = setTimeout(() => { el.classList.remove('show');
-                setTimeout(() => el.style.display = 'none', 300); }, 2500);
-        }
-
-        // ============================================================
-        // SETTINGS (from dispatch.html)
-        // ============================================================
-        function openSettings() {
-            document.getElementById('settingsModal').style.display = 'flex';
-            renderSettingsList();
-        }
-
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-
-        function renderSettingsList() {
-            const container = document.getElementById('driverSettingsList');
-            container.innerHTML = '';
-            for (let [id, drv] of Object.entries(drivers)) {
-                const row = document.createElement('div');
-                row.className = 'driver-row';
-                row.innerHTML = `
-                    <input type="text" value="${drv.name || ''}" placeholder="Name" data-id="${id}" class="drv-name">
-                    <input type="color" value="${drv.color || '#facc15'}" data-id="${id}" class="drv-color color-pick">
-                    <input type="text" value="${drv.deviceId || ''}" placeholder="Device ID" data-id="${id}" class="drv-device">
-                    <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
-                `;
-                container.appendChild(row);
-            }
-        }
-
-        function addDriverRow() {
-            getDriversRef().push({ name: 'Driver', color: '#facc15', deviceId: '', lastLocation: null });
-        }
-
-        function removeDriver(id) {
-            if (!confirm('Remove this driver? Assigned stops will be unassigned.')) return;
-            getDriversRef().child(id).remove();
-            // Unassign from stops
-            const refs = [
-                db.ref('developer/dispatch_dashboard/stops_today'),
-                db.ref('developer/dispatch_dashboard/stops_tomorrow')
-            ];
-            refs.forEach(ref => {
-                ref.once('value').then(snap => {
-                    const data = snap.val() || {};
-                    const updates = {};
-                    Object.entries(data).filter(([id, s]) => s.assignedDriver === id).forEach(([id]) => { updates[
-                            `${id}/assignedDriver`] = null; });
-                    ref.update(updates);
-                });
-            });
-        }
-
-        function saveSettings() {
-            const email = document.getElementById('pajEmail').value.trim();
-            const pass = document.getElementById('pajPassword').value.trim();
-            getMasterRef().update({ paj_email: email, paj_password: pass });
-            const rows = document.querySelectorAll('#driverSettingsList .driver-row');
-            rows.forEach(row => {
-                const id = row.querySelector('.drv-name').dataset.id;
-                const name = row.querySelector('.drv-name').value;
-                const color = row.querySelector('.drv-color').value;
-                const deviceId = row.querySelector('.drv-device').value;
-                if (id) {
-                    getDriversRef().child(id).update({ name, color, deviceId });
-                }
-            });
-            if (email && pass) authenticatePAJ();
-            renderDriverPills();
-            renderStopList();
-            closeSettings();
-        }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-        function initApp() {
-            // Load master config
-            getMasterRef().once('value').then(snap => {
-                const cfg = snap.val() || {};
-                document.getElementById('pajEmail').value = cfg.paj_email || '';
-                document.getElementById('pajPassword').value = cfg.paj_password || '';
-                pajToken = cfg.paj_token || null;
-                if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
-            }).catch(() => { getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' }); });
-
-            // Listen drivers
-            getDriversRef().on('value', snap => {
-                drivers = snap.val() || {};
-                renderDriverPills();
-                renderStopList();
-                updateMapMarkers();
-                renderSettingsList();
-            });
-
-            // Listen stops today
-            db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
-                stopsToday = snap.val() || {};
-                if (currentDay === 'today') { renderStopList();
-                    updateMapMarkers(); }
-            });
-
-            // Listen stops tomorrow
-            db.ref('developer/dispatch_dashboard/stops_tomorrow').on('value', snap => {
-                stopsTomorrow = snap.val() || {};
-                if (currentDay === 'tomorrow') { renderStopList();
-                    updateMapMarkers(); }
-            });
-
-            // GPS polling
-            if (gpsInterval) clearInterval(gpsInterval);
-            gpsInterval = setInterval(() => {
-                if (pajToken) fetchAllDevicePositions();
-                document.getElementById('lastUpdateTime').textContent = '⏱ ' + new Date().toLocaleTimeString();
-            }, 15000);
-            setTimeout(() => { if (pajToken) fetchAllDevicePositions(); }, 3000);
-
-            initBusinessAutocomplete();
-            document.getElementById('lastUpdateTime').textContent = '⏱ ' + new Date().toLocaleTimeString();
-        }
-
-        // ============================================================
-        // PWA INSTALL
-        // ============================================================
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById('install-btn');
-            if (btn) btn.style.display = 'block';
-        });
-        document.getElementById('install-btn')?.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') deferredPrompt = null;
-                document.getElementById('install-btn').style.display = 'none';
-            }
-        });
-
-        console.log('🚚 Dispatch Dashboard loaded.');
-    </script>
+function closeMapModal() {
+    document.getElementById('map-modal').style.display = 'none';
+}
+</script>
 </body>
 </html>
