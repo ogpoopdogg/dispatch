@@ -140,7 +140,7 @@
         .stop-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
         .stop-item { background: var(--card2); border-radius: 14px; padding: 6px 8px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 6px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; flex: 0 0 calc(50% - 6px); max-width: calc(50% - 6px); box-sizing: border-box; }
         .stop-item:hover { border-color: #3a3a5a; }
-        .stop-item.completed { background: #4a4a5a !important; opacity: 0.85; order: 999; }
+        .stop-item.completed { background: #2a2a3a !important; opacity: 0.4; order: 999; }
         .stop-item .info { flex: 1; min-width: 0; cursor: pointer; }
         .stop-item .info .name { font-weight: 600; font-size: 12px; }
         .stop-item .info .addr { font-size: 11px; color: var(--muted); }
@@ -703,6 +703,54 @@
         body.light-mode .manifest-search input { background: #fff !important; border: 1px solid #000 !important; color: #000 !important; }
         body.light-mode .copy-btn-header { background: #fff !important; border: 1px solid #000 !important; color: #000 !important; }
         body.light-mode .copy-btn-header.copied { border-color: #2ecc71; background: #d4edda !important; color: #155724 !important; }
+
+        /* Map driver control */
+        .map-driver-control {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 10px;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            backdrop-filter: blur(4px);
+            min-width: 120px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .map-driver-control .driver-entry {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+        .map-driver-control .driver-entry:last-child { border-bottom: none; }
+        .map-driver-control .driver-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .map-driver-control .driver-name {
+            font-weight: 500;
+            flex: 1;
+        }
+        .map-driver-control .driver-status {
+            font-size: 11px;
+            margin-left: auto;
+        }
+        body.light-mode .map-driver-control {
+            background: #fff;
+            border-color: #ddd;
+            color: #000;
+        }
+        body.light-mode .map-driver-control .driver-entry {
+            border-bottom-color: #ddd;
+        }
     </style>
 </head>
 <body>
@@ -964,6 +1012,11 @@ let assignmentModeActive = false;
 
 // Search state
 let searchQuery = '';
+
+// Highlight state for stop clicks on map
+let highlightedStopId = null;
+let highlightClearTimeout = null;
+let highlightDocClickListener = null;
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -1277,6 +1330,95 @@ function reverseGeocode(lat, lng) {
     });
 }
 
+// ===== MAP DRIVER CONTROL (top-left) =====
+function updateMapDriverControl() {
+    const container = document.getElementById('mapDriverControl');
+    if (!container) return;
+    const entries = Object.entries(drivers);
+    if (entries.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted);">No drivers</div>';
+        return;
+    }
+    let html = '';
+    for (let [id, drv] of entries) {
+        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+        const status = getGPSStatus(drv.lastLocation?.updatedAt, devId);
+        const color = drv.color || '#f7c948';
+        let statusColor = '#e74c3c';
+        if (status.class === 'status-online') statusColor = '#2ecc71';
+        else if (status.class === 'status-standby') statusColor = '#f1c40f';
+        html += `<div class="driver-entry" onclick="centerOnDriver('${id}')">
+            <span class="driver-dot" style="background:${color};"></span>
+            <span class="driver-name">${drv.name || 'Driver'}</span>
+            <span class="driver-status" style="color:${statusColor};">${status.label}</span>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
+function centerOnDriver(driverId) {
+    const drv = drivers[driverId];
+    if (!drv || !drv.lastLocation) return;
+    if (map) {
+        map.panTo({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+        map.setZoom(13);
+    }
+}
+
+// ===== HIGHLIGHT STOP IN MANIFEST =====
+function clearStopHighlight() {
+    if (highlightedStopId) {
+        const item = document.querySelector(`.stop-item[data-id="${highlightedStopId}"]`);
+        if (item) item.classList.remove('map-highlight', 'pulse');
+        highlightedStopId = null;
+    }
+    if (highlightClearTimeout) {
+        clearTimeout(highlightClearTimeout);
+        highlightClearTimeout = null;
+    }
+    if (highlightDocClickListener) {
+        document.removeEventListener('click', highlightDocClickListener);
+        highlightDocClickListener = null;
+    }
+}
+
+function highlightStopInManifest(stopId) {
+    clearStopHighlight();
+    const item = document.querySelector(`.stop-item[data-id="${stopId}"]`);
+    if (!item) return;
+    item.classList.add('map-highlight', 'pulse');
+    highlightedStopId = stopId;
+    // scroll to item
+    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Auto-remove after 5 seconds
+    highlightClearTimeout = setTimeout(() => {
+        clearStopHighlight();
+    }, 5000);
+    // Remove highlight on any click outside the item
+    const listener = function(e) {
+        if (!item.contains(e.target)) {
+            clearStopHighlight();
+        }
+    };
+    highlightDocClickListener = listener;
+    document.addEventListener('click', listener);
+}
+
+function handleMainMapStopClick(stopId) {
+    // Hide map if visible
+    const wrapper = document.getElementById('mainMapWrapper');
+    if (!wrapper.classList.contains('hidden')) {
+        wrapper.classList.add('hidden');
+        document.getElementById('mapToggleBtn').classList.remove('map-open');
+        document.getElementById('manifestMapBtn').classList.remove('map-open');
+        localStorage.setItem('ec_map_visible', 'false');
+    }
+    // Scroll to manifest panel
+    document.getElementById('manifestPanel').scrollIntoView({ behavior: 'smooth' });
+    // Highlight stop
+    highlightStopInManifest(stopId);
+}
+
 // ===== INIT =====
 function initApp() {
     getDriversRef().on('value', snap => {
@@ -1287,6 +1429,7 @@ function initApp() {
         renderStopList();
         updateGlobalUpdateTime();
         updateStopDriverSelect();
+        updateMapDriverControl();
     });
     db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
         stopsToday = snap.val() || {};
@@ -1498,6 +1641,7 @@ async function fetchAllDevicePositions() {
         if (updated) {
             updateMapMarkers();
             renderDriverBadges();
+            updateMapDriverControl();
         } else {
             console.log('ℹ️ No driver updates from this response.');
         }
@@ -1518,6 +1662,14 @@ function initMap() {
         mapTypeControl: false
     });
     mapInitialized = true;
+    
+    // Add driver control to top-left
+    const driverControlDiv = document.createElement('div');
+    driverControlDiv.id = 'mapDriverControl';
+    driverControlDiv.className = 'map-driver-control';
+    map.controls[google.maps.ControlPosition.TOP_LEFT].push(driverControlDiv);
+    updateMapDriverControl();
+
     updateMapMarkers();
     try {
         new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
@@ -1677,6 +1829,12 @@ function updateMapMarkers() {
                 strokeWeight: 2
             }
         });
+        // Store stop id
+        marker.set('stopId', id);
+        // Click listener to highlight in manifest and close map
+        marker.addListener('click', function() {
+            handleMainMapStopClick(id);
+        });
         // Double-click to open Google Maps
         marker.addListener('dblclick', function() {
             openGoogleMaps(pos.lat, pos.lng);
@@ -1787,6 +1945,7 @@ function renderDriverBadges() {
         badge.onclick = () => { zoomToDriver(id); };
         container.appendChild(badge);
     }
+    updateMapDriverControl();
 }
 
 function zoomToDriver(driverId) {
@@ -1973,7 +2132,7 @@ function renderDriverStops(driverId) {
                 <div class="addr">${s.address || ''} ${s.city || ''}</div>
             </div>
             <div class="actions">
-                ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete">👍</button>`}
+                ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">↺</button>` : `<button onclick="completeStop('${id}')" title="Complete">👍</button>`}
                 <button onclick="moveToTomorrow('${id}')" title="Move">➡️</button>
             </div>
         `;
@@ -2056,8 +2215,14 @@ function renderStopList() {
         // Build the address tooltip above the stop
         const tooltipHtml = `<div class="stop-tooltip"><span class="tooltip-addr">${fullAddr}</span></div>`;
         
+        // Background color for assigned stops (translucent)
+        let bgColor = '';
+        if (isAssigned && !isCompleted) {
+            bgColor = driverColor + '33';
+        }
+        
         html += `
-            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''} ${extraClasses}" data-id="${id}" style="border-left-color:${driverColor}; position:relative;" title="${fullAddr}">
+            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''} ${extraClasses}" data-id="${id}" style="border-left-color:${driverColor}; position:relative; ${bgColor ? 'background:'+bgColor+';' : ''}" title="${fullAddr}">
                 ${tooltipHtml}
                 <div class="info" onclick="${infoOnClick}" style="cursor:${infoCursor};">
                     <div class="name">${s.name || 'No name'} ${ts}</div>
@@ -2068,7 +2233,7 @@ function renderStopList() {
                         <option value="">Unassign</option>
                         ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
                     </select>
-                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open" style="pointer-events:auto;">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete" style="pointer-events:auto;">👍</button>`}
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open" style="pointer-events:auto;">↺</button>` : `<button onclick="completeStop('${id}')" title="Complete" style="pointer-events:auto;">👍</button>`}
                     <button onclick="moveToTomorrow('${id}')" title="Move" style="pointer-events:auto;">➡️</button>
                     <button onclick="deleteStop('${id}')" style="color:#e74c3c; pointer-events:auto;">✕</button>
                 </div>
