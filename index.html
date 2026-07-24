@@ -217,6 +217,22 @@
                 align-items: center; 
             }
             .stop-item .info .addr { display: none; }
+            /* Mobile driver settings rows */
+            .settings-card .driver-row {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .settings-card .driver-row input[type="text"] {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            .settings-card .driver-row input[type="color"] {
+                width: 50px;
+                height: 40px;
+            }
+            .settings-card .driver-row .remove-driver {
+                flex: 0 0 auto;
+            }
         }
         .hidden { display: none !important; }
 
