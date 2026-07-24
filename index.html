@@ -170,6 +170,9 @@
         .add-stop-area .input-with-suggestions input {
             width: 100%;
         }
+
+        /* Label styling for stop markers */
+        .driver-map-label { color: #00b32d !important; font-weight: 700; text-shadow: 0 0 2px #000; }
     </style>
 </head>
 <body>
@@ -360,7 +363,7 @@ let drivers = {};
 let stopsToday = {};
 let stopsTomorrow = {};
 let currentDay = 'today';
-let map, mapMarkers = {};
+let map, driverMarkers = {}, stopMarkers = [];
 let activeModalDriverId = null;
 let sortableInstance = null;
 let gpsInterval = null;
@@ -546,7 +549,7 @@ function initApp() {
     getDriversRef().on('value', snap => {
         drivers = snap.val() || {};
         renderDriverBadges();
-        updateAllMarkers();
+        updateMapMarkers();
         renderSettingsList();
         renderStopList();
         updateGlobalUpdateTime();
@@ -705,7 +708,7 @@ async function fetchAllDevicePositions() {
         }
         
         if (updated) {
-            updateAllMarkers();
+            updateMapMarkers();
             renderDriverBadges();
         } else {
             console.log('ℹ️ No driver updates from this response.');
@@ -725,16 +728,23 @@ function initMap() {
         gestureHandling: 'greedy'
     });
     mapInitialized = true;
-    updateAllMarkers();
+    updateMapMarkers();
     try {
         new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
     } catch(e) {}
 }
 
-function updateAllMarkers() {
+// ===== UPDATE MAP MARKERS (drivers + stops) =====
+function updateMapMarkers() {
     if (!map) return;
-    Object.values(mapMarkers).forEach(m => m.setMap(null));
-    mapMarkers = {};
+
+    // Clear existing markers (drivers + stops)
+    Object.values(driverMarkers).forEach(m => m.setMap(null));
+    stopMarkers.forEach(m => m.setMap(null));
+    driverMarkers = {};
+    stopMarkers = [];
+
+    // ---------- Driver markers (unchanged) ----------
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
@@ -747,14 +757,57 @@ function updateAllMarkers() {
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
             label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color,
+                    fillOpacity: status.status === 'offline' ? 0.5 : 1,
+                    strokeColor: '#fff', strokeWeight: 2 }
         });
-        mapMarkers[id] = marker;
+        driverMarkers[id] = marker;
     }
-    if (Object.keys(mapMarkers).length > 0) {
-        const bounds = new google.maps.LatLngBounds();
-        Object.values(mapMarkers).forEach(m => bounds.extend(m.getPosition()));
-        map.fitBounds(bounds);
+
+    // ---------- Stop markers for current day ----------
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const entries = Object.entries(allStops)
+        .filter(([id, s]) => s.lat && s.lng)   // only stops with coordinates
+        .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+
+    entries.forEach(([id, s], index) => {
+        const pos = { lat: s.lat, lng: s.lng };
+        const labelText = `${index+1}. ${s.name || 'Stop'}`;
+        const marker = new google.maps.Marker({
+            position: pos,
+            map: map,
+            label: {
+                text: labelText,
+                color: '#00b32d',
+                fontWeight: 'bold',
+                fontSize: '11px',
+                className: 'driver-map-label'   // optional CSS class
+            },
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: '#ff9800',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2
+            }
+        });
+        stopMarkers.push(marker);
+    });
+
+    // Fit map bounds to include all markers (drivers + stops)
+    fitMapBounds();
+}
+
+function fitMapBounds() {
+    const bounds = new google.maps.LatLngBounds();
+    let hasBounds = false;
+    Object.values(driverMarkers).forEach(m => { bounds.extend(m.getPosition()); hasBounds = true; });
+    stopMarkers.forEach(m => { bounds.extend(m.getPosition()); hasBounds = true; });
+    if (hasBounds) map.fitBounds(bounds);
+    else {
+        map.setCenter({ lat: 49.8425, lng: -99.9497 });
+        map.setZoom(11);
     }
 }
 
@@ -962,11 +1015,14 @@ function addStop() {
         if (status === 'OK' && results && results.length > 0) {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
-            ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now(), lat, lng });
-            // Clear fields after successful geocode and push
-            document.getElementById('stopName').value = '';
-            document.getElementById('stopAddress').value = '';
-            document.getElementById('stopCity').value = '';
+            ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now(), lat, lng })
+              .then(() => {
+                updateMapMarkers();
+                // Clear fields after successful push
+                document.getElementById('stopName').value = '';
+                document.getElementById('stopAddress').value = '';
+                document.getElementById('stopCity').value = '';
+              });
         } else {
             alert('Could not geocode address: ' + status);
         }
@@ -975,14 +1031,18 @@ function addStop() {
 
 function completeStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).update({ status: 'completed', completedAt: Date.now() });
-    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+    ref.child(id).update({ status: 'completed', completedAt: Date.now() }).then(() => {
+        if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+        updateMapMarkers();
+    });
 }
 
 function reopenStop(id) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).update({ status: 'pending', completedAt: null });
-    if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+    ref.child(id).update({ status: 'pending', completedAt: null }).then(() => {
+        if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+        updateMapMarkers();
+    });
 }
 
 function assignStop(id, driverId) {
@@ -998,7 +1058,9 @@ function moveToTomorrow(id) {
         const val = snap.val();
         if (!val) return;
         refTomorrow.push(val).then(() => {
-            refToday.child(id).remove();
+            refToday.child(id).remove().then(() => {
+                updateMapMarkers();
+            });
         });
     });
 }
@@ -1006,7 +1068,9 @@ function moveToTomorrow(id) {
 function deleteStop(id) {
     if (!confirm('Delete stop?')) return;
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.child(id).remove();
+    ref.child(id).remove().then(() => {
+        updateMapMarkers();
+    });
 }
 
 function switchDay(day) {
@@ -1015,6 +1079,7 @@ function switchDay(day) {
     document.getElementById('dayLabel').textContent = day === 'today' ? 'Today' : 'Tomorrow';
     renderStopList();
     closeDriverModal();
+    updateMapMarkers();
 }
 
 function nextDayPrompt() {
