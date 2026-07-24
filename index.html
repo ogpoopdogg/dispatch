@@ -19,6 +19,70 @@
         ::-webkit-scrollbar-track { background: #0b0b14; }
         ::-webkit-scrollbar-thumb { background: #3a3a4a; border-radius: 6px; }
 
+        /* Light mode */
+        body.light-mode {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #2563eb;
+            --card2: #f9fafb;
+        }
+        body.light-mode * { color: #000 !important; }
+        body.light-mode .driver-badge { background: rgba(255,255,255,0.9); border: 1px solid #ccc; }
+        body.light-mode .stop-item { background: #fff; border-color: #ddd; }
+        body.light-mode .add-stop-area { background: #f9fafb; border-color: #ddd; }
+        body.light-mode .manifest-panel { background: #fff; border-color: #ddd; }
+        body.light-mode .map-wrapper { background: #fff; border-color: #ddd; }
+        body.light-mode header { background: #fff; border-color: #ddd; }
+        body.light-mode .settings-card { background: #fff; border-color: #ddd; }
+        body.light-mode .login-box { background: #fff; border-color: #ddd; }
+        body.light-mode .login-box input { background: #f9fafb; color: #000; }
+        body.light-mode .login-box button { background: #2563eb; color: #fff; }
+        body.light-mode .badge { background: #2563eb; color: #fff; }
+        body.light-mode .day-toggle button.active { background: #2563eb; color: #fff; }
+        body.light-mode .day-toggle button { color: #333; }
+        body.light-mode .header-actions button { background: #f9fafb; color: #000; border-color: #ddd; }
+        body.light-mode .settings-actions .save-btn { background: #2563eb; color: #fff; }
+        body.light-mode .settings-actions .close-btn { background: #f9fafb; color: #000; border: 1px solid #ddd; }
+        body.light-mode .debug-box { background: #f9fafb; color: #000; border-color: #ddd; }
+        body.light-mode .suggestions-box { background: #fff; border-color: #ddd; }
+        body.light-mode .suggestion-item { color: #000; border-color: #ddd; }
+        body.light-mode .suggestion-item:hover { background: var(--accent); color: #fff; }
+
+        /* Stop item layout */
+        .stop-item .info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        .stop-item .info .name {
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 0 1 auto;
+        }
+        .stop-item .info .addr {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            text-align: right;
+        }
+        .stop-item {
+            padding: 6px 10px !important;
+        }
+
         #login-overlay { position: fixed; inset: 0; background: #0b0b14; z-index: 99999; display: flex; align-items: center; justify-content: center; }
         .login-box { width: 100%; max-width: 360px; background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
         .login-box h2 { color: var(--accent); margin-bottom: 20px; }
@@ -28,7 +92,7 @@
         #loginError { color: #e74c3c; margin-top: 12px; font-size: 14px; }
 
         header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-        .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; cursor: pointer; }
         .logo svg { height: 32px; }
         .badge { background: var(--accent); color: #0b0b14; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
         .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -86,7 +150,7 @@
         .driver-modal .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
         .driver-modal .modal-header { display: flex; justify-content: space-between; align-items: center; }
         .driver-modal .modal-header h2 { display: flex; align-items: center; gap: 10px; }
-        .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; }
+        .driver-modal .modal-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #0b0b14; position: relative; }
         .driver-modal .modal-map #driver-map { width: 100%; height: 100%; }
         .driver-modal .modal-stops { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .driver-modal .modal-stops .stop-item { background: #12121c; }
@@ -114,8 +178,6 @@
         .settings-card .debug-box .info { color: #f1c40f; }
         .settings-card .debug-box .device-id { color: var(--accent); font-weight: 700; background: #1a1a2e; padding: 2px 8px; border-radius: 4px; }
 
-        /* Removed .gps-status-legend entirely */
-
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { 
             .map-wrapper { height: 260px; } 
@@ -127,11 +189,9 @@
             .stop-item .actions { gap: 4px; } 
             .driver-badge-container { gap: 6px; } 
             .driver-badge { font-size: 13px; padding: 8px 14px; } 
-            /* removed legend media */
         }
         .hidden { display: none !important; }
 
-        /* Custom suggestions for business name */
         .suggestions-box {
             position: absolute;
             top: 100%;
@@ -169,8 +229,41 @@
             width: 100%;
         }
 
-        /* Label styling for stop markers */
         .driver-map-label { color: #00b32d !important; font-weight: 700; text-shadow: 0 0 2px #000; }
+
+        /* Custom map controls */
+        .map-fit-btn {
+            background: #fff;
+            border: 2px solid #333;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+            outline: none;
+            margin: 0 0 8px 0;
+            color: #333;
+            background: white;
+        }
+        .map-fit-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: #333;
+            fill: none;
+            stroke-width: 2;
+        }
+        body.light-mode .map-fit-btn {
+            background: #fff;
+            border-color: #666;
+        }
+        body.light-mode .map-fit-btn svg {
+            stroke: #000;
+        }
     </style>
 </head>
 <body>
@@ -191,7 +284,7 @@
     <!-- Header -->
     <header>
         <div style="display: flex; align-items: center; gap: 10px; flex-shrink:0;">
-            <svg viewBox="0 0 100 100" style="height:32px; width:auto;"><circle cx="50" cy="50" r="45" fill="#f7c948"/><path d="M30 30 L70 30 L70 70 L30 70 Z" fill="#1a1a2e"/><circle cx="50" cy="50" r="15" fill="#f7c948"/></svg>
+            <svg onclick="toggleTheme()" viewBox="0 0 100 100" style="height:32px; width:auto; cursor:pointer;"><circle cx="50" cy="50" r="45" fill="#f7c948"/><path d="M30 30 L70 30 L70 70 L30 70 Z" fill="#1a1a2e"/><circle cx="50" cy="50" r="15" fill="#f7c948"/></svg>
             <span style="font-size:16px; font-weight:700; color:var(--text);">E&C DISPATCH</span>
             <span class="badge">LIVE</span>
         </div>
@@ -202,8 +295,6 @@
             <button onclick="logout()" style="background:#2a0a0a; border:1px solid #e74c3c; color:#e74c3c; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Logout</button>
         </div>
     </header>
-
-    <!-- Map Modal removed - replaced by toggle -->
 
     <div class="app-grid">
         <div class="map-wrapper" id="mainMapWrapper">
@@ -219,8 +310,6 @@
                     <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
                 </div>
             </div>
-
-            <!-- Removed gps-status-legend -->
 
             <div class="add-stop-area">
                 <div class="input-with-suggestions">
@@ -309,6 +398,34 @@ firebase.initializeApp({
 });
 const auth = firebase.auth();
 const db = firebase.database();
+
+// ===== MAP STYLES =====
+const mapStyles = [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}];
+
+// ===== THEME =====
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('ec_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    updateMapStyles();
+}
+
+function updateMapStyles() {
+    const isLight = document.body.classList.contains('light-mode');
+    const style = isLight ? [] : mapStyles;
+    if (map) {
+        map.setOptions({ styles: style });
+    }
+    // Update driver modal map if exists
+    const container = document.getElementById('driver-map');
+    if (container && container._map) {
+        container._map.setOptions({ styles: style });
+    }
+}
+
+// Load theme from localStorage
+if (localStorage.getItem('ec_theme') === 'light') {
+    document.body.classList.add('light-mode');
+}
 
 // ===== AUTH =====
 function login() {
@@ -554,6 +671,25 @@ function zoomToStop(stopId) {
     }
 }
 
+// ===== SCROLL TO STOP IN LIST =====
+function scrollToStopInList(stopId, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const items = container.querySelectorAll('.stop-item');
+    for (let item of items) {
+        if (item.dataset.id === stopId) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight briefly
+            item.style.transition = 'background 0.3s';
+            item.style.background = 'rgba(247, 201, 72, 0.3)';
+            setTimeout(() => {
+                item.style.background = '';
+            }, 1000);
+            break;
+        }
+    }
+}
+
 // ===== INIT =====
 function initApp() {
     getDriversRef().on('value', snap => {
@@ -739,16 +875,38 @@ async function fetchAllDevicePositions() {
 let mapInitialized = false;
 function initMap() {
     if (mapInitialized) return;
+    const isLight = document.body.classList.contains('light-mode');
     map = new google.maps.Map(document.getElementById('dispatch-map'), {
         center: { lat: 49.8425, lng: -99.9497 }, zoom: 11,
-        styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}],
-        gestureHandling: 'greedy'
+        styles: isLight ? [] : mapStyles,
+        gestureHandling: 'greedy',
+        mapTypeControl: false
     });
     mapInitialized = true;
     updateMapMarkers();
     try {
         new google.maps.places.Autocomplete(document.getElementById('stopAddress'), { componentRestrictions: { country: 'ca' } });
     } catch(e) {}
+
+    // Toggle scroll zoom on map click
+    map.addListener('click', function() {
+        const current = map.get('scrollwheel');
+        map.setOptions({ scrollwheel: !current });
+    });
+
+    // Add fit button to main map
+    const fitControlDiv = document.createElement('div');
+    fitControlDiv.innerHTML = `
+        <button class="map-fit-btn" aria-label="Fit all stops">
+            <svg viewBox="0 0 24 24"><path d="M3 3v6h2V5h4V3H3zm16 0v6h2V3h-6v2h4zM3 21v-6h2v4h4v2H3zm16 0v-6h2v6h-6v-2h4z"/><rect x="5" y="5" width="14" height="14" rx="1" stroke="currentColor" fill="none"/></svg>
+        </button>
+    `;
+    const fitButton = fitControlDiv.querySelector('.map-fit-btn');
+    fitButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fitMainMapToStops();
+    });
+    map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(fitControlDiv);
 
     // Save map center and zoom on idle
     google.maps.event.addListener(map, 'idle', function() {
@@ -764,6 +922,16 @@ function initMap() {
     });
 }
 
+// ===== FIT MAP TO STOPS =====
+function fitMainMapToStops() {
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const entries = Object.values(allStops).filter(s => s.lat && s.lng);
+    if (entries.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    entries.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
+    map.fitBounds(bounds);
+}
+
 // ===== UPDATE MAP MARKERS (drivers + stops) =====
 function updateMapMarkers() {
     if (!map) return;
@@ -774,7 +942,7 @@ function updateMapMarkers() {
     driverMarkers = {};
     stopMarkers = [];
 
-    // ---------- Driver markers (unchanged) ----------
+    // ---------- Driver markers ----------
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
@@ -797,7 +965,7 @@ function updateMapMarkers() {
     // ---------- Stop markers for current day ----------
     const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
     const entries = Object.entries(allStops)
-        .filter(([id, s]) => s.lat && s.lng)   // only stops with coordinates
+        .filter(([id, s]) => s.lat && s.lng)
         .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
 
     entries.forEach(([id, s], index) => {
@@ -811,7 +979,7 @@ function updateMapMarkers() {
                 color: '#00b32d',
                 fontWeight: 'bold',
                 fontSize: '11px',
-                className: 'driver-map-label'   // optional CSS class
+                className: 'driver-map-label'
             },
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
@@ -822,14 +990,13 @@ function updateMapMarkers() {
                 strokeWeight: 2
             }
         });
+        // Click listener to scroll to stop in main list
+        marker.addListener('click', function() {
+            scrollToStopInList(id, 'stopList');
+        });
         stopMarkers.push(marker);
     });
-
-    // Do NOT auto-fit bounds; let user control zoom
-    // fitMapBounds(); // removed
 }
-
-// Removed fitMapBounds function as no longer used
 
 // ===== DRIVER BADGES =====
 function renderDriverBadges() {
@@ -880,13 +1047,28 @@ function openDriverModal(driverId) {
     document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
     setTimeout(() => {
         const container = document.getElementById('driver-map');
+        const isLight = document.body.classList.contains('light-mode');
         if (!container._map) {
             container._map = new google.maps.Map(container, {
                 center: drv?.lastLocation ? { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng } : { lat: 49.8425, lng: -99.9497 },
                 zoom: 13,
-                styles: [{"featureType":"all","elementType":"all","stylers":[{"invert_lightness":true},{"saturation":10},{"lightness":30},{"gamma":0.5},{"hue":"#435158"}]}],
-                gestureHandling: 'greedy'
+                styles: isLight ? [] : mapStyles,
+                gestureHandling: 'greedy',
+                mapTypeControl: false
             });
+            // Add fit button to driver map
+            const fitControlDiv = document.createElement('div');
+            fitControlDiv.innerHTML = `
+                <button class="map-fit-btn" aria-label="Fit all stops">
+                    <svg viewBox="0 0 24 24"><path d="M3 3v6h2V5h4V3H3zm16 0v6h2V3h-6v2h4zM3 21v-6h2v4h4v2H3zm16 0v-6h2v6h-6v-2h4z"/><rect x="5" y="5" width="14" height="14" rx="1" stroke="currentColor" fill="none"/></svg>
+                </button>
+            `;
+            const fitButton = fitControlDiv.querySelector('.map-fit-btn');
+            fitButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fitDriverMapToStops(container._map, driverId);
+            });
+            container._map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(fitControlDiv);
         }
         const mmap = container._map;
         if (drv?.lastLocation) {
@@ -926,6 +1108,10 @@ function openDriverModal(driverId) {
                     label: { text: s.name || 'Stop', color: '#fff', fontSize: '11px' },
                     icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#2ecc71', fillOpacity: 0.8, strokeColor: '#fff', strokeWeight: 1 }
                 });
+                // Click listener to scroll to stop in driver modal list
+                mk.addListener('click', function() {
+                    scrollToStopInList(id, 'driverModalStops');
+                });
                 container._markers.push(mk);
             }
         });
@@ -936,6 +1122,20 @@ function openDriverModal(driverId) {
         document.getElementById('driverLastUpdate').textContent = `Status: ${status.label} · Last update: ${lastUp}m ago`;
         document.getElementById('driverStopCount').textContent = `${assigned.length} stops`;
     }, 200);
+}
+
+function fitDriverMapToStops(mapInstance, driverId) {
+    const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.lat && s.lng);
+    if (assigned.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    assigned.forEach(([id, s]) => bounds.extend({ lat: s.lat, lng: s.lng }));
+    // Also include driver location if available
+    const drv = drivers[driverId];
+    if (drv && drv.lastLocation) {
+        bounds.extend({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+    }
+    mapInstance.fitBounds(bounds);
 }
 
 function closeDriverModal() {
@@ -1040,7 +1240,15 @@ function addStop() {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
             ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now(), lat, lng })
-              .then(() => {
+              .then((newRef) => {
+                // Update address_lookup for autocomplete
+                const sanitizedKey = name.replace(/[.#$\[\]\/]/g, "").trim();
+                const updateObj = {
+                    address: address,
+                    city: city,
+                    last_edit_by: auth.currentUser ? auth.currentUser.email : 'unknown'
+                };
+                db.ref("address_lookup").child(sanitizedKey).update(updateObj);
                 updateMapMarkers();
                 // Clear fields after successful push
                 document.getElementById('stopName').value = '';
@@ -1193,7 +1401,6 @@ function saveSettings() {
     closeSettings();
 }
 
-// Removed openMapModal and closeMapModal functions as they are replaced
 </script>
 </body>
 </html>
