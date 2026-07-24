@@ -50,6 +50,7 @@
         body.light-mode .suggestions-box { background: #fff; border-color: #ddd; }
         body.light-mode .suggestion-item { color: #000; border-color: #ddd; }
         body.light-mode .suggestion-item:hover { background: var(--accent); color: #fff; }
+        body.light-mode #stopDriver { background: #f9fafb; color: #000; border-color: #ddd; }
 
         /* Stop item layout */
         .stop-item .info {
@@ -91,7 +92,7 @@
         .login-box button { width: 100%; padding: 14px; margin-top: 16px; background: var(--accent); border: none; color: #0b0b14; font-weight: 700; border-radius: 12px; cursor: pointer; font-size: 16px; }
         #loginError { color: #e74c3c; margin-top: 12px; font-size: 14px; }
 
-        header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        header { background: #0f0f18; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; position: relative; z-index: 10000; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; cursor: pointer; }
         .logo svg { height: 32px; }
         .badge { background: var(--accent); color: #0b0b14; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
@@ -130,6 +131,7 @@
         .add-stop-area input { flex: 1 1 160px; background: #0b0b14; border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 30px; font-size: 14px; min-width: 120px; outline: none; }
         .add-stop-area input:focus { border-color: var(--accent); }
         .add-stop-area .btn-add { background: var(--accent); color: #0b0b14; border: none; padding: 10px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; }
+        .add-stop-area select { flex: 0 0 auto; background:#0b0b14; border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:30px; font-size:14px; outline:none; min-width:100px; }
         .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
         .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
         .stop-item:hover { border-color: #3a3a5a; }
@@ -175,6 +177,8 @@
         .settings-card .debug-box .error { color: #e74c3c; }
         .settings-card .debug-box .info { color: #f1c40f; }
         .settings-card .debug-box .device-id { color: var(--accent); font-weight: 700; background: #1a1a2e; padding: 2px 8px; border-radius: 4px; }
+
+        #app.dispatch-active .map-wrapper { position: relative; z-index: 9999; }
 
         @media (min-width: 900px) { .app-grid { flex-direction: row; flex-wrap: wrap; } .map-wrapper { flex: 2 1 55%; height: 480px; } .manifest-panel { flex: 1 1 40%; } }
         @media (max-width: 600px) { 
@@ -356,7 +360,7 @@
     <!-- Header -->
     <header>
         <div style="display: flex; align-items: center; gap: 10px; flex-shrink:0;">
-            <svg onclick="toggleTheme()" viewBox="0 0 100 100" style="height:32px; width:auto; cursor:pointer;"><circle cx="50" cy="50" r="45" fill="#f7c948"/><path d="M30 30 L70 30 L70 70 L30 70 Z" fill="#1a1a2e"/><circle cx="50" cy="50" r="15" fill="#f7c948"/></svg>
+            <img src="icon2.png" onclick="toggleTheme()" style="height:32px; width:auto; cursor:pointer;" alt="Logo" />
             <span style="font-size:16px; font-weight:700; color:var(--text);">E&C DISPATCH</span>
             <span class="badge">LIVE</span>
         </div>
@@ -399,6 +403,9 @@
                 </div>
                 <input type="text" id="stopAddress" placeholder="Address">
                 <input type="text" id="stopCity" placeholder="City">
+                <select id="stopDriver" style="flex:0 0 auto; background:#0b0b14; border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:30px; font-size:14px; outline:none; min-width:100px;">
+                    <option value="">Unassigned</option>
+                </select>
                 <button class="btn-add" onclick="addStop()">+ Add</button>
             </div>
 
@@ -571,6 +578,10 @@ let deviceStatuses = {};
 // Dispatch mode state
 let dispatchActive = false;
 
+// Pulse animation for driver markers
+let driverPulseCircles = {};
+let pulseInterval = null;
+
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
@@ -735,6 +746,16 @@ function selectClient(name) {
     document.getElementById('nameSuggestions').style.display = 'none';
 }
 
+// ===== UPDATE DRIVER SELECT =====
+function updateStopDriverSelect() {
+    const select = document.getElementById('stopDriver');
+    if (!select) return;
+    select.innerHTML = '<option value="">Unassigned</option>';
+    for (let [id, drv] of Object.entries(drivers)) {
+        select.innerHTML += `<option value="${id}">${drv.name || 'Driver'}</option>`;
+    }
+}
+
 // ===== MAP TOGGLE =====
 function toggleMapVisibility() {
     const wrapper = document.getElementById('mainMapWrapper');
@@ -806,6 +827,21 @@ function getPinIcon(color, scale) {
     };
 }
 
+// ===== PULSE ANIMATION =====
+function startPulseAnimation() {
+    if (pulseInterval) clearInterval(pulseInterval);
+    pulseInterval = setInterval(() => {
+        const time = Date.now() / 1000;
+        const baseRadius = 15;
+        const amplitude = 8;
+        const radius = baseRadius + amplitude * Math.sin(time * 2);
+        for (let id in driverPulseCircles) {
+            const circle = driverPulseCircles[id];
+            if (circle) circle.setRadius(radius);
+        }
+    }, 200);
+}
+
 // ===== INIT =====
 function initApp() {
     getDriversRef().on('value', snap => {
@@ -815,6 +851,7 @@ function initApp() {
         renderSettingsList();
         renderStopList();
         updateGlobalUpdateTime();
+        updateStopDriverSelect();
     });
     db.ref('developer/dispatch_dashboard/stops_today').on('value', snap => {
         stopsToday = snap.val() || {};
@@ -884,6 +921,7 @@ function toggleDispatchMode() {
 function enterDispatchMode() {
     dispatchActive = true;
     document.getElementById('dispatchBtn').classList.add('dispatch-active');
+    document.getElementById('app').classList.add('dispatch-active');
     // Show overlay
     document.getElementById('dispatchOverlay').style.display = 'block';
     // Add class to manifest panel
@@ -895,6 +933,7 @@ function enterDispatchMode() {
 function exitDispatchMode() {
     dispatchActive = false;
     document.getElementById('dispatchBtn').classList.remove('dispatch-active');
+    document.getElementById('app').classList.remove('dispatch-active');
     document.getElementById('dispatchOverlay').style.display = 'none';
     document.querySelector('.manifest-panel').classList.remove('dispatch-mode');
 }
@@ -1125,6 +1164,12 @@ function updateMapMarkers() {
     driverMarkers = {};
     stopMarkers = [];
 
+    // Clear existing pulse circles
+    for (let id in driverPulseCircles) {
+        driverPulseCircles[id].setMap(null);
+    }
+    driverPulseCircles = {};
+
     // ---------- Driver markers ----------
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
@@ -1147,6 +1192,26 @@ function updateMapMarkers() {
             }
         });
         driverMarkers[id] = marker;
+
+        // Create pulsating circle for this driver
+        const circle = new google.maps.Circle({
+            center: { lat: pos.lat, lng: pos.lng },
+            radius: 15,
+            fillColor: color,
+            fillOpacity: 0.3,
+            strokeColor: color,
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            map: map
+        });
+        driverPulseCircles[id] = circle;
+    }
+
+    // Start pulse animation if there are any circles
+    if (Object.keys(driverPulseCircles).length > 0) {
+        startPulseAnimation();
+    } else {
+        if (pulseInterval) clearInterval(pulseInterval);
     }
 
     // ---------- Stop markers for current day ----------
@@ -1434,6 +1499,7 @@ function addStop() {
     const name = document.getElementById('stopName').value.trim();
     const address = document.getElementById('stopAddress').value.trim();
     const city = document.getElementById('stopCity').value.trim();
+    const assignedDriver = document.getElementById('stopDriver').value || null;
     if (!name || !address || !city) { alert('Fill all fields'); return; }
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
     // Geocode the address to get lat/lng
@@ -1443,7 +1509,7 @@ function addStop() {
         if (status === 'OK' && results && results.length > 0) {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
-            ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now(), lat, lng })
+            ref.push({ name, address, city, assignedDriver, status: 'pending', completedAt: null, order: Date.now(), lat, lng })
               .then((newRef) => {
                 // Update address_lookup for autocomplete
                 const sanitizedKey = name.replace(/[.#$\[\]\/]/g, "").trim();
