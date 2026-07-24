@@ -955,10 +955,22 @@ function addStop() {
     const city = document.getElementById('stopCity').value.trim();
     if (!name || !address || !city) { alert('Fill all fields'); return; }
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
-    ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now() });
-    document.getElementById('stopName').value = '';
-    document.getElementById('stopAddress').value = '';
-    document.getElementById('stopCity').value = '';
+    // Geocode the address to get lat/lng
+    const geocoder = new google.maps.Geocoder();
+    const fullAddress = address + ', ' + city + ', Canada';
+    geocoder.geocode({ address: fullAddress }, function(results, status) {
+        if (status === 'OK' && results && results.length > 0) {
+            const lat = results[0].geometry.location.lat();
+            const lng = results[0].geometry.location.lng();
+            ref.push({ name, address, city, assignedDriver: null, status: 'pending', completedAt: null, order: Date.now(), lat, lng });
+            // Clear fields after successful geocode and push
+            document.getElementById('stopName').value = '';
+            document.getElementById('stopAddress').value = '';
+            document.getElementById('stopCity').value = '';
+        } else {
+            alert('Could not geocode address: ' + status);
+        }
+    });
 }
 
 function completeStop(id) {
