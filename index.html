@@ -495,7 +495,7 @@ async function authenticatePAJ() {
     } catch(e) { console.warn('PAJ auth error:', e); }
 }
 
-// ===== FETCH POSITIONS - SIMPLIFIED SINGLE STRATEGY =====
+// ===== FETCH POSITIONS - FIXED TO ALWAYS UPDATE WITH RECENT DATA =====
 let authRetryInProgress = false;
 
 async function fetchAllDevicePositions() {
@@ -577,14 +577,22 @@ async function fetchAllDevicePositions() {
                 if (drvDeviceId && drvDeviceId === String(devId)) {
                     matched = true;
                     const current = drv.lastLocation;
-                    if (!current || (current.updatedAt || 0) < pajTimestamp) {
+                    const currentTs = current ? current.updatedAt : 0;
+                    // 🔥 FIX: Always update if the incoming timestamp is within 15 minutes of now
+                    // This ensures devices show as Online when they have recent data.
+                    const isRecent = (now - pajTimestamp) < STANDBY_THRESHOLD;
+                    const isNewer = pajTimestamp > currentTs;
+                    // Update if: incoming is newer, OR incoming is recent and current is older than 15 minutes
+                    const shouldUpdate = isNewer || (isRecent && (now - currentTs) > STANDBY_THRESHOLD);
+                    
+                    if (shouldUpdate) {
                         drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
                         getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
                         updated = true;
                         const status = getGPSStatus(pajTimestamp);
                         console.log(`✅ Updated ${drv.name} → ${lat},${lng} (${status.label})`);
                     } else {
-                        console.log(`⏩ Skipped ${drv.name} – older than current data.`);
+                        console.log(`⏩ Skipped ${drv.name} – current: ${currentTs}, incoming: ${pajTimestamp}, recent: ${isRecent}`);
                     }
                     break;
                 }
