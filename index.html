@@ -814,7 +814,7 @@ function scrollToStopInList(stopId, containerId) {
 // ===== PIN ICON HELPER =====
 function getPinIcon(color, scale) {
     scale = scale || 1;
-    const pinPath = 'M 0,0 C -15,0 -20,-15 -20,-30 C -20,-45 0,-60 0,-60 C 0,-60 20,-45 20,-30 C 20,-15 15,0 0,0 Z';
+    const pinPath = 'M 0,0 C -15,-20 -25,-30 -25,-45 C -25,-60 0,-75 0,-75 C 0,-75 25,-60 25,-45 C 25,-30 15,-20 0,0 Z';
     return {
         path: pinPath,
         fillColor: color,
@@ -838,6 +838,20 @@ function startPulseAnimation() {
         for (let id in driverPulseCircles) {
             const circle = driverPulseCircles[id];
             if (circle) circle.setRadius(radius);
+        }
+        // Pulse the teardrop pin scale
+        const scaleBase = 0.8;
+        const scaleAmp = 0.15;
+        const scale = scaleBase + scaleAmp * Math.sin(time * 2);
+        for (let id in driverMarkers) {
+            const marker = driverMarkers[id];
+            if (marker) {
+                const icon = marker.getIcon();
+                if (icon && typeof icon === 'object' && icon.scale !== undefined) {
+                    const newIcon = { ...icon, scale: scale };
+                    marker.setIcon(newIcon);
+                }
+            }
         }
     }, 200);
 }
