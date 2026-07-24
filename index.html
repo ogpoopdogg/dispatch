@@ -452,6 +452,129 @@
                 padding: 2px 6px;
             }
         }
+
+        /* Light mode additional overrides */
+        body.light-mode {
+            background: #fff !important;
+        }
+        body.light-mode header {
+            background: #fff !important;
+            border-bottom: 1px solid #000 !important;
+        }
+        body.light-mode .app-grid {
+            background: #fff !important;
+        }
+        body.light-mode .map-wrapper {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .manifest-panel {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .driver-badge {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .stop-item {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .add-stop-area {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .add-stop-area input,
+        body.light-mode .add-stop-area select {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .settings-card {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .settings-card input {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .login-box {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .login-box input {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode button {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .badge {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .header-actions button,
+        body.light-mode .gear-btn,
+        body.light-mode .dispatch-btn,
+        body.light-mode .map-toggle-btn {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .day-toggle button {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .day-toggle button.active {
+            background: #000 !important;
+            color: #fff !important;
+        }
+        body.light-mode .stop-item .assign-select {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .settings-actions .save-btn {
+            background: #000 !important;
+            color: #fff !important;
+        }
+        body.light-mode .settings-actions .close-btn {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .debug-box {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+        body.light-mode .driver-modal .modal-card {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .driver-modal .modal-map {
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .driver-modal .modal-stops .stop-item {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+        }
+        body.light-mode .driver-modal .modal-header h2 {
+            color: #000 !important;
+        }
+        body.light-mode .driver-modal .modal-header button {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
     </style>
 </head>
 <body>
@@ -477,16 +600,14 @@
             <span class="badge">LIVE</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <button class="gear-btn" onclick="openSettings()" title="Drivers">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            </button>
             <button onclick="toggleMapVisibility()" id="mapToggleBtn" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">
                 <svg viewBox="0 0 24 24" style="width:16px; height:16px; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:2;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 Map
             </button>
-            <div class="header-actions-stack">
-                <button class="gear-btn" onclick="openSettings()" title="Drivers">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-                </button>
-                <button onclick="toggleDispatchMode()" id="dispatchBtn" class="dispatch-btn">Dispatch</button>
-            </div>
+            <button onclick="toggleDispatchMode()" id="dispatchBtn" class="dispatch-btn">Dispatch</button>
         </div>
     </header>
 
@@ -545,6 +666,7 @@
             <span id="driverLastUpdate" style="font-size:13px; color:var(--muted);">Last update: —</span>
             <span id="driverStopCount" style="font-weight:600;">0 stops</span>
         </div>
+        <div id="driverAddress" style="font-size:13px; color:var(--muted); padding:4px 0;"></div>
         <div class="modal-stops" id="driverModalStops"></div>
     </div>
 </div>
@@ -696,6 +818,10 @@ let dispatchActive = false;
 
 // Pulse animation for driver markers
 let driverPulseCircles = {};
+
+// Modal pulse circles
+let modalPulseCircle = null;
+let modalPulseAnimationId = null;
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -969,10 +1095,44 @@ function startPulseAnimation() {
             const circle = driverPulseCircles[id];
             if (circle) circle.setRadius(radius);
         }
-        // Removed marker scale animation as requested
         pulseAnimationId = requestAnimationFrame(animate);
     }
     pulseAnimationId = requestAnimationFrame(animate);
+}
+
+function startModalPulse(circle) {
+    if (modalPulseAnimationId) cancelAnimationFrame(modalPulseAnimationId);
+    let startTime = performance.now();
+    function animate(time) {
+        const elapsed = (time - startTime) / 1000;
+        const baseRadius = 15;
+        const amplitude = 8;
+        const radius = baseRadius + amplitude * Math.sin(elapsed * 2.5);
+        if (circle) circle.setRadius(radius);
+        modalPulseAnimationId = requestAnimationFrame(animate);
+    }
+    modalPulseAnimationId = requestAnimationFrame(animate);
+}
+
+function stopModalPulse() {
+    if (modalPulseAnimationId) {
+        cancelAnimationFrame(modalPulseAnimationId);
+        modalPulseAnimationId = null;
+    }
+}
+
+// ===== REVERSE GEOCODE =====
+function reverseGeocode(lat, lng) {
+    return new Promise((resolve, reject) => {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+                resolve(results[0].formatted_address);
+            } else {
+                reject('Unable to get address');
+            }
+        });
+    });
 }
 
 // ===== INIT =====
@@ -1311,11 +1471,7 @@ function updateMapMarkers() {
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
-        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-        const status = getGPSStatus(pos.updatedAt, devId);
-        let color = drv.color || '#f7c948';
-        if (status.status === 'standby') color = '#f1c40f';
-        else if (status.status === 'offline') color = '#95a5a6';
+        const color = drv.color || '#f7c948';
         const icon = getDriverIcon(drv.name || 'Driver', color);
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
@@ -1428,6 +1584,13 @@ function openDriverModal(driverId) {
     activeModalDriverId = driverId;
     const drv = drivers[driverId];
     document.getElementById('driverModalTitle').innerHTML = `Driver`;
+    // Clear old modal pulse
+    if (modalPulseCircle) {
+        modalPulseCircle.setMap(null);
+        modalPulseCircle = null;
+    }
+    stopModalPulse();
+    
     setTimeout(() => {
         const container = document.getElementById('driver-map');
         const isLight = document.body.classList.contains('light-mode');
@@ -1461,19 +1624,45 @@ function openDriverModal(driverId) {
         if (container._markers) container._markers.forEach(m => m.setMap(null));
         container._markers = [];
         if (drv?.lastLocation) {
-            const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
-            const status = getGPSStatus(drv.lastLocation.updatedAt, devId);
-            let color = drv.color || '#f7c948';
-            if (status.status === 'standby') color = '#f1c40f';
-            else if (status.status === 'offline') color = '#95a5a6';
+            const color = drv.color || '#f7c948';
             const icon = getDriverIcon(drv.name || 'Driver', color);
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
                 map: mmap,
                 icon: icon
             });
+            // Double-click to open Google Maps
+            mk.addListener('dblclick', function() {
+                openGoogleMaps(drv.lastLocation.lat, drv.lastLocation.lng);
+            });
             container._markers.push(mk);
+
+            // Create pulsating circle for modal
+            modalPulseCircle = new google.maps.Circle({
+                center: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
+                radius: 15,
+                fillColor: color,
+                fillOpacity: 0.2,
+                strokeColor: color,
+                strokeOpacity: 0.6,
+                strokeWeight: 2,
+                map: mmap
+            });
+            startModalPulse(modalPulseCircle);
+
+            // Reverse geocode address
+            reverseGeocode(drv.lastLocation.lat, drv.lastLocation.lng)
+                .then(address => {
+                    const link = `<a href="https://www.google.com/maps?q=${drv.lastLocation.lat},${drv.lastLocation.lng}" target="_blank" style="color:var(--accent); text-decoration:underline;">${address}</a>`;
+                    document.getElementById('driverAddress').innerHTML = '📍 ' + link;
+                })
+                .catch(() => {
+                    document.getElementById('driverAddress').innerHTML = '📍 <span style="color:var(--muted);">Address unavailable</span>';
+                });
+        } else {
+            document.getElementById('driverAddress').innerHTML = '';
         }
+
         const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
         const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !== 'completed');
         if (container._polyline) container._polyline.setMap(null);
@@ -1532,6 +1721,11 @@ function fitDriverMapToStops(mapInstance, driverId) {
 function closeDriverModal() {
     document.getElementById('driverModal').style.display = 'none';
     activeModalDriverId = null;
+    if (modalPulseCircle) {
+        modalPulseCircle.setMap(null);
+        modalPulseCircle = null;
+    }
+    stopModalPulse();
 }
 
 function renderDriverStops(driverId) {
