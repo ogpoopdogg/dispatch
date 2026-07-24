@@ -133,13 +133,11 @@
         .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
         .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
         .stop-item:hover { border-color: #3a3a5a; }
-        .stop-item.completed { background: #0f2a1a; border-left-color: #2ecc71; opacity: 0.9; order: 999; }
-        .stop-item.assigned { background: rgba(0, 255, 0, 0.12); }
+        .stop-item.completed { background: #0f2a1a; opacity: 0.9; order: 999; }
         .stop-item .info { flex: 1; min-width: 0; cursor: pointer; }
         .stop-item .info .name { font-weight: 600; font-size: 13px; }
         .stop-item .info .addr { font-size: 12px; color: var(--muted); }
         .stop-item .info .city { font-size: 11px; color: var(--muted); }
-        .stop-item .assign-badge { background: #1a1a2e; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); white-space: nowrap; }
         .stop-item .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .stop-item .actions button { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 6px 10px; border-radius: 12px; transition: 0.2s; }
         .stop-item .actions button:hover { background: #2a2a3e; color: white; }
@@ -264,6 +262,9 @@
         body.light-mode .map-fit-btn svg {
             stroke: #000;
         }
+
+        #dispatchOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; cursor: pointer; }
+        .manifest-panel.dispatch-mode { position: relative; z-index: 9999; }
     </style>
 </head>
 <body>
@@ -271,7 +272,7 @@
 <!-- Login Overlay -->
 <div id="login-overlay">
     <div class="login-box">
-        <h2>🚚 DISPATCH LOGIN</h2>
+        <h2>DISPATCH LOGIN</h2>
         <input type="email" id="loginEmail" placeholder="Email (@ec.com)" autofocus>
         <input type="password" id="loginPassword" placeholder="Password">
         <button onclick="login()">Sign In</button>
@@ -289,10 +290,10 @@
             <span class="badge">LIVE</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
-            <button onclick="openSettings()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">⚙️ Drivers</button>
-            <button onclick="toggleMapVisibility()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">🗺️ Map</button>
-            <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">📅 Next Day</button>
-            <button onclick="logout()" style="background:#2a0a0a; border:1px solid #e74c3c; color:#e74c3c; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Logout</button>
+            <button onclick="openSettings()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Drivers</button>
+            <button onclick="toggleMapVisibility()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Map</button>
+            <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Next Day</button>
+            <button onclick="enterDispatchMode()" style="background:#1a3a2a; border:1px solid #2ecc71; color:#2ecc71; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Dispatch</button>
         </div>
     </header>
 
@@ -302,9 +303,9 @@
         </div>
         <div class="driver-badge-container" id="driverBadges"></div>
 
-        <div class="manifest-panel">
+        <div class="manifest-panel" id="manifestPanel">
             <div class="panel-header">
-                <h2>📋 Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
+                <h2>Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
                 <div class="day-toggle">
                     <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
                     <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
@@ -327,11 +328,14 @@
     </div>
 </div>
 
+<!-- Dispatch Overlay -->
+<div id="dispatchOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; cursor:pointer;"></div>
+
 <!-- Driver Modal -->
 <div class="driver-modal" id="driverModal">
     <div class="modal-card">
         <div class="modal-header">
-            <h2 id="driverModalTitle">👤 Driver</h2>
+            <h2 id="driverModalTitle">Driver</h2>
             <button onclick="closeDriverModal()" style="background:transparent; border:none; color:white; font-size:28px; cursor:pointer;">✕</button>
         </div>
         <div class="modal-map"><div id="driver-map"></div></div>
@@ -346,7 +350,7 @@
 <!-- Settings Modal -->
 <div class="settings-modal" id="settingsModal">
     <div class="settings-card">
-        <h2>⚙️ Drivers &amp; PAJ GPS</h2>
+        <h2>Drivers &amp; PAJ GPS</h2>
         
         <div class="field">
             <label>PAJ GPS Email (your login at connect.paj-gps.de)</label>
@@ -364,18 +368,18 @@
         
         <!-- Test Connection Button -->
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
-            <h3 style="font-size:14px; margin-bottom:10px;">🔧 Find Your Device IDs</h3>
+            <h3 style="font-size:14px; margin-bottom:10px;">Find Your Device IDs</h3>
             <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click the button below to see all your PAJ GPS devices and their IDs.</p>
             <button onclick="testPAJConnection()" style="background:#1a3a2a; border:2px solid #2ecc71; color:#2ecc71; padding:10px 20px; border-radius:30px; cursor:pointer; font-weight:700; font-size:14px; width:100%;">
-                🔍 Test Connection & List Devices
+                Test Connection & List Devices
             </button>
             <div class="debug-box" id="debugOutput">
-                <span class="info">💡 Click the green button above to find your Device IDs.</span>
+                <span class="info">Click the green button above to find your Device IDs.</span>
             </div>
         </div>
 
         <div class="settings-actions">
-            <button class="save-btn" onclick="saveSettings()">💾 Save</button>
+            <button class="save-btn" onclick="saveSettings()">Save</button>
             <button class="close-btn" onclick="closeSettings()">✕ Close</button>
         </div>
     </div>
@@ -733,6 +737,9 @@ function initApp() {
         if (pajToken) fetchAllDevicePositions();
     }, 3000);
     initBusinessAutocomplete();
+
+    // Dispatch overlay click to exit
+    document.getElementById('dispatchOverlay').addEventListener('click', exitDispatchMode);
 }
 
 function updateGlobalUpdateTime() {
@@ -740,6 +747,21 @@ function updateGlobalUpdateTime() {
     if (el) {
         el.textContent = '⏱ ' + new Date().toLocaleTimeString();
     }
+}
+
+// ===== DISPATCH MODE =====
+function enterDispatchMode() {
+    // Show overlay
+    document.getElementById('dispatchOverlay').style.display = 'block';
+    // Add class to manifest panel
+    document.querySelector('.manifest-panel').classList.add('dispatch-mode');
+    // Scroll to manifest
+    document.getElementById('manifestPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function exitDispatchMode() {
+    document.getElementById('dispatchOverlay').style.display = 'none';
+    document.querySelector('.manifest-panel').classList.remove('dispatch-mode');
 }
 
 // ===== PAJ GPS =====
@@ -904,7 +926,7 @@ function initMap() {
     const fitButton = fitControlDiv.querySelector('.map-fit-btn');
     fitButton.addEventListener('click', function(e) {
         e.stopPropagation();
-        fitMainMapToStops();
+        fitMainMapToStopsAndDrivers();
     });
     map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(fitControlDiv);
 
@@ -922,14 +944,28 @@ function initMap() {
     });
 }
 
-// ===== FIT MAP TO STOPS =====
-function fitMainMapToStops() {
+// ===== FIT MAP TO STOPS AND DRIVERS =====
+function fitMainMapToStopsAndDrivers() {
     const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
-    const entries = Object.values(allStops).filter(s => s.lat && s.lng);
-    if (entries.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
-    entries.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
-    map.fitBounds(bounds);
+    let hasPoints = false;
+    // Add stops
+    Object.values(allStops).forEach(s => {
+        if (s.lat && s.lng) {
+            bounds.extend({ lat: s.lat, lng: s.lng });
+            hasPoints = true;
+        }
+    });
+    // Add drivers
+    Object.values(drivers).forEach(drv => {
+        if (drv.lastLocation && drv.lastLocation.lat && drv.lastLocation.lng) {
+            bounds.extend({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+            hasPoints = true;
+        }
+    });
+    if (hasPoints) {
+        map.fitBounds(bounds);
+    }
 }
 
 // ===== UPDATE MAP MARKERS (drivers + stops) =====
@@ -1044,7 +1080,7 @@ function openDriverModal(driverId) {
     document.getElementById('driverModal').style.display = 'flex';
     activeModalDriverId = driverId;
     const drv = drivers[driverId];
-    document.getElementById('driverModalTitle').innerHTML = `👤 ${drv?.name || 'Driver'}`;
+    document.getElementById('driverModalTitle').innerHTML = `Driver`;
     setTimeout(() => {
         const container = document.getElementById('driver-map');
         const isLight = document.body.classList.contains('light-mode');
@@ -1127,15 +1163,23 @@ function openDriverModal(driverId) {
 function fitDriverMapToStops(mapInstance, driverId) {
     const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
     const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.lat && s.lng);
-    if (assigned.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
-    assigned.forEach(([id, s]) => bounds.extend({ lat: s.lat, lng: s.lng }));
+    let hasPoints = false;
+    assigned.forEach(([id, s]) => {
+        if (s.lat && s.lng) {
+            bounds.extend({ lat: s.lat, lng: s.lng });
+            hasPoints = true;
+        }
+    });
     // Also include driver location if available
     const drv = drivers[driverId];
     if (drv && drv.lastLocation) {
         bounds.extend({ lat: drv.lastLocation.lat, lng: drv.lastLocation.lng });
+        hasPoints = true;
     }
-    mapInstance.fitBounds(bounds);
+    if (hasPoints) {
+        mapInstance.fitBounds(bounds);
+    }
 }
 
 function closeDriverModal() {
@@ -1150,19 +1194,24 @@ function renderDriverStops(driverId) {
     container.innerHTML = '';
     if (assigned.length === 0) { container.innerHTML = '<div style="color:var(--muted);padding:12px;">No assigned stops</div>'; return; }
     assigned.sort((a,b) => (a[1].order || 0) - (b[1].order || 0));
+    const driverColor = drivers[driverId]?.color || '#f7c948';
     assigned.forEach(([id, s]) => {
         const div = document.createElement('div');
-        div.className = `stop-item ${s.status === 'completed' ? 'completed' : ''} ${s.assignedDriver ? 'assigned' : ''}`;
-        div.style.borderLeftColor = drivers[driverId]?.color || '#f7c948';
-        const ts = s.status === 'completed' ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        const isCompleted = s.status === 'completed';
+        const isAssigned = !!s.assignedDriver;
+        const bgColor = isAssigned && !isCompleted ? `${driverColor}33` : '';
+        div.className = `stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''}`;
+        div.style.borderLeftColor = driverColor;
+        if (bgColor) div.style.background = bgColor;
+        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
         div.innerHTML = `
             <div class="info" onclick="zoomToStop('${id}')">
                 <div class="name">${s.name || 'No name'} ${ts}</div>
                 <div class="addr">${s.address || ''} ${s.city || ''}</div>
             </div>
             <div class="actions">
-                ${s.status === 'completed' ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
-                <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+                ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete">Complete</button>`}
+                <button onclick="moveToTomorrow('${id}')" title="Move">Move</button>
             </div>
         `;
         container.appendChild(div);
@@ -1186,23 +1235,22 @@ function renderStopList() {
     for (let [id, s] of entries) {
         const isCompleted = s.status === 'completed';
         const isAssigned = !!s.assignedDriver;
+        const driverColor = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
+        const bgColor = isAssigned && !isCompleted ? `${driverColor}33` : '';
         const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
-        const driverName = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].name : 'Unassigned';
-        const color = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
         html += `
-            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''}" data-id="${id}" style="border-left-color:${color};">
+            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''}" data-id="${id}" style="border-left-color:${driverColor}; ${bgColor ? `background:${bgColor};` : ''}">
                 <div class="info" onclick="zoomToStop('${id}')">
                     <div class="name">${s.name || 'No name'} ${ts}</div>
                     <div class="addr">${s.address || ''} ${s.city || ''}</div>
                 </div>
-                <div class="assign-badge" style="border-color:${color};">${driverName}</div>
                 <div class="actions">
                     <select class="assign-select" onchange="assignStop('${id}', this.value)">
                         <option value="">Unassign</option>
                         ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
                     </select>
-                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">↩️</button>` : `<button onclick="completeStop('${id}')" title="Complete">✅</button>`}
-                    <button onclick="moveToTomorrow('${id}')" title="→ tomorrow">➡️</button>
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete">Complete</button>`}
+                    <button onclick="moveToTomorrow('${id}')" title="Move">Move</button>
                     <button onclick="deleteStop('${id}')" style="color:#e74c3c;">✕</button>
                 </div>
             </div>
