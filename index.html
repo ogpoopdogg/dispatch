@@ -314,7 +314,7 @@ const OFFLINE_THRESHOLD = 60 * 60 * 1000;
 let addressLookupData = null;
 let addressLookupMap = {};
 
-// Cache for device statuses from /device endpoint
+// Cache for device statuses from /device
 let deviceStatuses = {};
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
@@ -326,19 +326,25 @@ function getGPSStatus(lastUpdated, driverId) {
     // If we have a cached status from /device, use it
     if (driverId && deviceStatuses[driverId]) {
         const st = deviceStatuses[driverId];
+        console.log(`📌 Status for device ${driverId}: connection_status=${st.connection_status}, last_update=${st.last_update_by_service}`);
         if (st.connection_status === 1) {
             return { status: 'online', label: '● Online', class: 'status-online' };
-        } else if (st.connection_status === 0 || st.connection_status === 2) {
-            // If connection_status is 0 or 2, but last update is recent, show standby
+        } else if (st.connection_status === 2) {
+            // connection_status 2 might be standby (check docs)
+            return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+        } else {
+            // For any other status (e.g., 0 or undefined), check recency
             const lastUpdate = st.last_update_by_service || st.last_dateunix || 0;
-            if (lastUpdate && (Date.now() - lastUpdate * 1000) < OFFLINE_THRESHOLD) {
+            if (lastUpdate && (Date.now() - lastUpdate * 1000) < STANDBY_THRESHOLD) {
+                return { status: 'online', label: '● Online', class: 'status-online' };
+            } else if (lastUpdate && (Date.now() - lastUpdate * 1000) < OFFLINE_THRESHOLD) {
                 return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
             } else {
                 return { status: 'offline', label: '○ Offline', class: 'status-offline' };
             }
         }
     }
-    // Fallback to timestamp-based calculation
+    // Fallback to timestamp-based calculation (if no cached status)
     if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
     const diff = Date.now() - lastUpdated;
     if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
@@ -532,13 +538,12 @@ async function fetchDeviceStatuses() {
                     last_update_by_service: d.last_update_by_service,
                     last_dateunix: d.last_dateunix
                 };
-                // Also update lastDateUnix if available
+                console.log(`📡 Device ${idNum}: connection_status=${d.connection_status}, last_update_by_service=${d.last_update_by_service}`);
                 if (d.last_dateunix) {
                     lastDateUnix[idNum] = d.last_dateunix;
                 }
             }
         });
-        console.log('📡 Device statuses updated:', deviceStatuses);
     } catch(e) {
         console.warn('Failed to fetch device statuses:', e);
     }
@@ -664,7 +669,8 @@ function updateAllMarkers() {
     for (let [id, drv] of Object.entries(drivers)) {
         if (!drv.lastLocation) continue;
         const pos = drv.lastLocation;
-        const status = getGPSStatus(pos.updatedAt, parseInt(String(drv.deviceId).trim(), 10));
+        const devId = drv.deviceId ? parseInt(String(drv.deviceId).trim(), 10) : null;
+        const status = getGPSStatus(pos.updatedAt, devId);
         let color = drv.color || '#f7c948';
         if (status.status === 'standby') color = '#f1c40f';
         else if (status.status === 'offline') color = '#95a5a6';
