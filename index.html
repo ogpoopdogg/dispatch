@@ -51,6 +51,9 @@
         body.light-mode .suggestion-item { color: #000; border-color: #ddd; }
         body.light-mode .suggestion-item:hover { background: var(--accent); color: #fff; }
         body.light-mode #stopDriver { background: #f9fafb; color: #000; border-color: #ddd; }
+        body.light-mode .stop-item.greyed-out { background: #e5e7eb !important; opacity: 0.5; }
+        body.light-mode .stop-item.highlight-unassigned { border-color: #2563eb !important; box-shadow: 0 0 12px rgba(37,99,235,0.7) !important; }
+        body.light-mode .stop-tooltip { background: rgba(0,0,0,0.85); color: #fff; }
 
         /* Stop item layout */
         .stop-item .info {
@@ -82,45 +85,6 @@
         }
         .stop-item {
             padding: 6px 8px !important;
-            position: relative;
-        }
-
-        /* Tooltip above stop */
-        .stop-tooltip {
-            display: none;
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            white-space: nowrap;
-            font-size: 12px;
-            z-index: 100;
-            pointer-events: none;
-        }
-        .stop-item:hover .stop-tooltip {
-            display: block;
-        }
-        body.light-mode .stop-tooltip {
-            background: #eee;
-            color: #000;
-        }
-
-        /* Assignment mode styles */
-        .stop-item.assigned-grey {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-        .stop-item.unassigned-glow {
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 15px var(--accent);
-            cursor: pointer;
-        }
-        .stop-item.unassigned-glow:hover {
-            transform: scale(1.02);
         }
 
         #login-overlay { position: fixed; inset: 0; background: #0b0b14; z-index: 99999; display: flex; align-items: center; justify-content: center; }
@@ -186,6 +150,118 @@
         .stop-item .actions button:hover { background: #2a2a3e; color: white; }
         .stop-item .assign-select { background: #0b0b14; border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
         .stop-item .timestamp { font-size: 11px; color: #2ecc71; font-weight: 600; margin-left: 4px; }
+
+        /* Grey out assigned stops when in assignment mode */
+        .stop-item.greyed-out { background: #2a2a3a !important; opacity: 0.5; pointer-events: none; }
+        .stop-item.greyed-out .info { pointer-events: none; cursor: default; }
+        .stop-item.greyed-out .actions { opacity: 0.3; pointer-events: none; }
+
+        /* Highlight unassigned stops with glowing border */
+        .stop-item.highlight-unassigned { border-color: var(--accent) !important; box-shadow: 0 0 12px rgba(247, 201, 72, 0.6) !important; animation: glow-pulse 1.2s ease-in-out infinite alternate; cursor: pointer; }
+        .stop-item.highlight-unassigned .info { cursor: pointer; }
+        @keyframes glow-pulse {
+            0% { box-shadow: 0 0 8px rgba(247, 201, 72, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(247, 201, 72, 0.8); }
+        }
+
+        /* Tooltip above stop on hover */
+        .stop-item .stop-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 999;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .stop-item .stop-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(0,0,0,0.88);
+        }
+        .stop-item:hover .stop-tooltip {
+            display: block;
+        }
+        .stop-item .stop-tooltip .tooltip-addr {
+            color: #fff;
+        }
+
+        /* Search bar */
+        .manifest-search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .manifest-search input {
+            flex: 1;
+            background: #0b0b14;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+        }
+        .manifest-search input:focus { border-color: var(--accent); }
+        .manifest-search input::placeholder { color: var(--muted); }
+        .manifest-search .clear-search {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 10px;
+            display: none;
+            align-items: center;
+        }
+        .manifest-search .clear-search.visible { display: flex; }
+
+        /* COPY button in header */
+        .copy-btn-header {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .copy-btn-header:hover {
+            background: #2a2a3e;
+            border-color: var(--accent);
+        }
+        .copy-btn-header.copied {
+            border-color: #2ecc71;
+            background: #0a2a1a;
+            color: #2ecc71;
+        }
 
         .driver-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(4px); }
         .driver-modal .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -271,6 +347,12 @@
             }
             .settings-card .driver-row .remove-driver {
                 flex: 0 0 auto;
+            }
+            .stop-item .stop-tooltip {
+                max-width: 200px;
+                font-size: 10px;
+                padding: 4px 10px;
+                white-space: normal;
             }
         }
         .hidden { display: none !important; }
@@ -614,64 +696,13 @@
             border: 1px solid #000 !important;
             color: #000 !important;
         }
-
-        /* Search bar */
-        #searchStops {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            background: var(--card2);
-            color: var(--text);
-            font-size: 14px;
-            outline: none;
-            margin-bottom: 12px;
-        }
-        #searchStops:focus {
-            border-color: var(--accent);
-        }
-        body.light-mode #searchStops {
-            background: #f9fafb;
-            color: #000;
-        }
-
-        /* Cancel assignment button */
-        #cancelAssignmentBtn {
-            display: none;
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-        #cancelAssignmentBtn:hover {
-            background: #c0392b;
-        }
-
-        .copy-btn {
-            background: var(--card2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-left: 6px;
-        }
-        .copy-btn:hover {
-            background: #2a2a3e;
-            border-color: var(--accent);
-        }
-        body.light-mode .copy-btn {
-            background: #f9fafb;
-            color: #000;
-            border-color: #ddd;
-        }
+        body.light-mode .stop-item.greyed-out { background: #e5e7eb !important; opacity: 0.5; }
+        body.light-mode .stop-item.highlight-unassigned { border-color: #2563eb !important; box-shadow: 0 0 12px rgba(37,99,235,0.7) !important; }
+        body.light-mode .stop-tooltip { background: rgba(0,0,0,0.85); color: #fff; }
+        body.light-mode .stop-tooltip .tooltip-addr { color: #fff; }
+        body.light-mode .manifest-search input { background: #fff !important; border: 1px solid #000 !important; color: #000 !important; }
+        body.light-mode .copy-btn-header { background: #fff !important; border: 1px solid #000 !important; color: #000 !important; }
+        body.light-mode .copy-btn-header.copied { border-color: #2ecc71; background: #d4edda !important; color: #155724 !important; }
     </style>
 </head>
 <body>
@@ -695,7 +726,7 @@
             <img src="icon2.png" onclick="toggleTheme()" style="height:32px; width:auto; cursor:pointer;" alt="Logo" />
             <span style="font-size:16px; font-weight:700; color:var(--text);">E&C DISPATCH</span>
             <span class="badge">LIVE</span>
-            <button class="copy-btn" onclick="copyRemainingNames()" title="Copy remaining names to clipboard">📋 Copy</button>
+            <button class="copy-btn-header" onclick="copyStopNames()" title="Copy all remaining stop names to clipboard">📋 COPY</button>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
             <button class="gear-btn" onclick="openSettings()" title="Drivers">
@@ -727,12 +758,14 @@
                         <button class="active" data-day="today" onclick="switchDay('today')">Today</button>
                         <button data-day="tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
                     </div>
-                    <button id="cancelAssignmentBtn" onclick="exitAssignmentMode()">✕ Cancel</button>
                 </div>
             </div>
 
             <!-- Search bar -->
-            <input type="text" id="searchStops" placeholder="Search stops by name or address..." oninput="searchStops()">
+            <div class="manifest-search">
+                <input type="text" id="manifestSearchInput" placeholder="Search by name or address..." oninput="filterStops()">
+                <button class="clear-search" id="manifestSearchClear" onclick="clearSearch()">✕</button>
+            </div>
 
             <div class="add-stop-area hidden">
                 <div class="input-with-suggestions">
@@ -925,15 +958,12 @@ let driverPulseCircles = {};
 let modalPulseCircle = null;
 let modalPulseAnimationId = null;
 
-// Assignment mode state
+// Assignment mode state (driver selected from map)
+let selectedDriverForAssignment = null;
 let assignmentModeActive = false;
-let selectedDriverId = null;
-let assignmentPulseCircle = null;
-let assignmentLabel = null; // InfoWindow or Marker
-let assignmentLabelDiv = null;
 
-// Search term
-let searchTerm = '';
+// Search state
+let searchQuery = '';
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
@@ -1590,16 +1620,13 @@ function updateMapMarkers() {
             map: map,
             icon: icon
         });
-        // Add click listener for assignment mode
-        marker.addListener('click', function() {
-            if (assignmentModeActive && selectedDriverId === id) {
-                // If already in assignment mode for this driver, exit
-                exitAssignmentMode();
-            } else {
-                startAssignmentMode(id);
-            }
-        });
         driverMarkers[id] = marker;
+
+        // Click listener for assignment mode
+        marker.addListener('click', function() {
+            // Enter assignment mode with this driver
+            enterAssignmentMode(id);
+        });
 
         // Create pulsating circle for this driver
         const circle = new google.maps.Circle({
@@ -1656,6 +1683,79 @@ function updateMapMarkers() {
         });
         stopMarkers.push(marker);
     });
+}
+
+// ===== ASSIGNMENT MODE (from map click) =====
+function enterAssignmentMode(driverId) {
+    // Clear any existing assignment mode
+    exitAssignmentMode(false);
+    
+    selectedDriverForAssignment = driverId;
+    assignmentModeActive = true;
+    
+    // Hide the map
+    const wrapper = document.getElementById('mainMapWrapper');
+    wrapper.classList.add('hidden');
+    document.getElementById('mapToggleBtn').classList.remove('map-open');
+    document.getElementById('manifestMapBtn').classList.remove('map-open');
+    localStorage.setItem('ec_map_visible', 'false');
+    
+    // Scroll to manifest
+    document.getElementById('manifestPanel').scrollIntoView({ behavior: 'smooth' });
+    
+    // Re-render stop list with highlighting
+    renderStopList();
+    
+    // Show a notification banner
+    const driverName = drivers[driverId]?.name || 'Driver';
+    const banner = document.createElement('div');
+    banner.id = 'assignmentBanner';
+    banner.style.cssText = `
+        background: var(--accent);
+        color: #0b0b14;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 12px;
+        flex-wrap: wrap;
+    `;
+    banner.innerHTML = `
+        <span>✋ Click a stop name below to assign to <strong>${driverName}</strong></span>
+        <button onclick="exitAssignmentMode(true)" style="background:rgba(0,0,0,0.2); border:none; border-radius:30px; padding:4px 16px; font-weight:600; cursor:pointer; color:#0b0b14;">Cancel</button>
+    `;
+    const panel = document.querySelector('.manifest-panel');
+    const existing = document.getElementById('assignmentBanner');
+    if (existing) existing.remove();
+    panel.insertBefore(banner, panel.firstChild);
+}
+
+function exitAssignmentMode(render) {
+    selectedDriverForAssignment = null;
+    assignmentModeActive = false;
+    const banner = document.getElementById('assignmentBanner');
+    if (banner) banner.remove();
+    if (render !== false) {
+        renderStopList();
+    }
+}
+
+function handleStopClick(stopId) {
+    if (assignmentModeActive && selectedDriverForAssignment) {
+        // Assign the stop to the selected driver
+        assignStop(stopId, selectedDriverForAssignment);
+        // Stay in assignment mode - re-render to update highlighting
+        renderStopList();
+        // Also update driver modal if open
+        if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+    } else {
+        // Normal behavior: zoom to stop
+        zoomToStop(stopId);
+    }
 }
 
 // ===== DRIVER BADGES =====
@@ -1886,74 +1986,97 @@ function renderStopList() {
     const container = document.getElementById('stopList');
     const empty = document.getElementById('emptyMsg');
     const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+    
+    // Apply search filter
     let entries = Object.entries(allStops);
-    if (entries.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-
-    // Filter by search term
-    if (searchTerm.trim() !== '') {
-        const term = searchTerm.toLowerCase().trim();
+    const searchQueryLower = searchQuery.toLowerCase().trim();
+    if (searchQueryLower) {
         entries = entries.filter(([id, s]) => {
             const name = (s.name || '').toLowerCase();
             const address = (s.address || '').toLowerCase();
             const city = (s.city || '').toLowerCase();
-            return name.includes(term) || address.includes(term) || city.includes(term);
+            return name.includes(searchQueryLower) || address.includes(searchQueryLower) || city.includes(searchQueryLower);
         });
-        if (entries.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">No stops match your search.</div>';
-            return;
-        }
     }
-
+    
+    if (entries.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        if (searchQueryLower) {
+            empty.textContent = 'No stops match your search.';
+        } else {
+            empty.textContent = 'No stops — add one above.';
+        }
+        return;
+    }
+    empty.style.display = 'none';
+    
     entries.sort((a,b) => {
         if (a[1].status === 'completed' && b[1].status !== 'completed') return 1;
         if (a[1].status !== 'completed' && b[1].status === 'completed') return -1;
         return (a[1].order || 0) - (b[1].order || 0);
     });
-
+    
+    // Build full address for tooltip
+    const getFullAddress = (s) => {
+        const parts = [];
+        if (s.address) parts.push(s.address);
+        if (s.city) parts.push(s.city);
+        return parts.join(', ') || 'No address';
+    };
+    
     let html = '';
     for (let [id, s] of entries) {
         const isCompleted = s.status === 'completed';
         const isAssigned = !!s.assignedDriver;
         const driverColor = s.assignedDriver && drivers[s.assignedDriver] ? drivers[s.assignedDriver].color : '#555';
-        const bgColor = isAssigned && !isCompleted ? `${driverColor}33` : '';
-        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
-
-        // Determine assignment mode classes
+        const fullAddr = getFullAddress(s);
+        
+        // Determine classes for assignment mode
         let extraClasses = '';
-        let clickHandler = `zoomToStop('${id}')`;
-        if (assignmentModeActive && selectedDriverId) {
+        let infoOnClick = `handleStopClick('${id}')`;
+        let infoCursor = 'pointer';
+        
+        if (assignmentModeActive && selectedDriverForAssignment) {
             if (isAssigned) {
-                // Assigned: grey out
-                extraClasses += ' assigned-grey';
-            } else {
-                // Unassigned: highlight and make clickable to assign
-                extraClasses += ' unassigned-glow';
-                clickHandler = `assignStopOnClick('${id}')`;
+                // Assigned stops are greyed out
+                extraClasses += ' greyed-out';
+                infoOnClick = `handleStopClick('${id}')`; // still allow click but greyed out
+                infoCursor = 'default';
+            } else if (!isCompleted) {
+                // Unassigned stops are highlighted
+                extraClasses += ' highlight-unassigned';
+                infoOnClick = `handleStopClick('${id}')`;
+                infoCursor = 'pointer';
             }
         }
-
-        const tooltip = (s.address || '') + (s.city ? ', ' + s.city : '');
+        
+        const ts = isCompleted ? `<span class="timestamp">✓ ${s.completedAt ? new Date(s.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</span>` : '';
+        
+        // Build the address tooltip above the stop
+        const tooltipHtml = `<div class="stop-tooltip"><span class="tooltip-addr">${fullAddr}</span></div>`;
+        
         html += `
-            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''} ${extraClasses}" data-id="${id}" style="border-left-color:${driverColor}; ${bgColor ? `background:${bgColor};` : ''}">
-                <div class="info" onclick="${clickHandler}">
+            <div class="stop-item ${isCompleted ? 'completed' : ''} ${isAssigned ? 'assigned' : ''} ${extraClasses}" data-id="${id}" style="border-left-color:${driverColor}; position:relative;" title="${fullAddr}">
+                ${tooltipHtml}
+                <div class="info" onclick="${infoOnClick}" style="cursor:${infoCursor};">
                     <div class="name">${s.name || 'No name'} ${ts}</div>
                     <div class="addr">${s.address || ''} ${s.city || ''}</div>
                 </div>
-                <div class="stop-tooltip">${tooltip}</div>
                 <div class="actions">
-                    <select class="assign-select" onchange="assignStop('${id}', this.value)">
+                    <select class="assign-select" onchange="assignStop('${id}', this.value)" onclick="event.stopPropagation();">
                         <option value="">Unassign</option>
                         ${Object.entries(drivers).map(([did, d]) => `<option value="${did}" ${s.assignedDriver === did ? 'selected' : ''}>${d.name}</option>`).join('')}
                     </select>
-                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete">👍</button>`}
-                    <button onclick="moveToTomorrow('${id}')" title="Move">➡️</button>
-                    <button onclick="deleteStop('${id}')" style="color:#e74c3c;">✕</button>
+                    ${isCompleted ? `<button onclick="reopenStop('${id}')" title="Re-open" style="pointer-events:auto;">Reopen</button>` : `<button onclick="completeStop('${id}')" title="Complete" style="pointer-events:auto;">👍</button>`}
+                    <button onclick="moveToTomorrow('${id}')" title="Move" style="pointer-events:auto;">➡️</button>
+                    <button onclick="deleteStop('${id}')" style="color:#e74c3c; pointer-events:auto;">✕</button>
                 </div>
             </div>
         `;
     }
     container.innerHTML = html;
+    
     if (sortableInstance) sortableInstance.destroy();
     try {
         sortableInstance = new Sortable(container, {
@@ -1968,6 +2091,100 @@ function renderStopList() {
             }
         });
     } catch(e) {}
+}
+
+// ===== SEARCH BAR =====
+function filterStops() {
+    const input = document.getElementById('manifestSearchInput');
+    const clearBtn = document.getElementById('manifestSearchClear');
+    searchQuery = input.value;
+    if (searchQuery.length > 0) {
+        clearBtn.classList.add('visible');
+    } else {
+        clearBtn.classList.remove('visible');
+    }
+    renderStopList();
+}
+
+function clearSearch() {
+    document.getElementById('manifestSearchInput').value = '';
+    document.getElementById('manifestSearchClear').classList.remove('visible');
+    searchQuery = '';
+    renderStopList();
+}
+
+// ===== COPY STOP NAMES =====
+function copyStopNames() {
+    const todayStops = stopsToday || {};
+    const tomorrowStops = stopsTomorrow || {};
+    
+    // Collect all non-completed stop names from both days
+    const names = [];
+    
+    Object.values(todayStops).forEach(s => {
+        if (s.status !== 'completed' && s.name) {
+            names.push(s.name.trim());
+        }
+    });
+    
+    Object.values(tomorrowStops).forEach(s => {
+        if (s.status !== 'completed' && s.name) {
+            names.push(s.name.trim());
+        }
+    });
+    
+    if (names.length === 0) {
+        const btn = document.querySelector('.copy-btn-header');
+        btn.textContent = '📋 No names';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '📋 COPY';
+            btn.classList.remove('copied');
+        }, 1500);
+        return;
+    }
+    
+    const text = names.join('\n');
+    
+    // Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('.copy-btn-header');
+            btn.textContent = '✅ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📋 COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        const btn = document.querySelector('.copy-btn-header');
+        btn.textContent = '✅ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '📋 COPY';
+            btn.classList.remove('copied');
+        }, 2000);
+    } catch(e) {
+        alert('Could not copy. Please select and copy manually:\n\n' + text);
+    }
+    document.body.removeChild(textarea);
 }
 
 // ===== STOP ACTIONS =====
@@ -2027,21 +2244,6 @@ function assignStop(id, driverId) {
     const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref('developer/dispatch_dashboard/stops_tomorrow');
     ref.child(id).update({ assignedDriver: driverId || null });
     if (activeModalDriverId) renderDriverStops(activeModalDriverId);
-    // If assignment mode is active, exit after assignment? User may want to assign multiple.
-    // We'll keep it active.
-}
-
-// Assign stop on click in assignment mode
-function assignStopOnClick(id) {
-    if (assignmentModeActive && selectedDriverId) {
-        assignStop(id, selectedDriverId);
-        // Optionally re-render to update UI
-        renderStopList();
-        // Exit assignment mode after assigning? We'll keep it active.
-        // But we might want to highlight that it's assigned.
-        // We can flash or show a message.
-        // For now, just re-render.
-    }
 }
 
 function moveToTomorrow(id) {
@@ -2160,118 +2362,6 @@ function saveSettings() {
     renderDriverBadges();
     renderStopList();
     closeSettings();
-}
-
-// ===== ASSIGNMENT MODE FUNCTIONS =====
-function startAssignmentMode(driverId) {
-    // Exit any previous assignment mode
-    exitAssignmentMode();
-
-    assignmentModeActive = true;
-    selectedDriverId = driverId;
-
-    // Show cancel button
-    document.getElementById('cancelAssignmentBtn').style.display = 'inline-block';
-
-    // Add pulsing circle and label on the driver marker
-    const drv = drivers[driverId];
-    if (drv && drv.lastLocation && map) {
-        const pos = drv.lastLocation;
-        const color = drv.color || '#f7c948';
-        // Remove any existing assignment overlay
-        if (assignmentPulseCircle) {
-            assignmentPulseCircle.setMap(null);
-            assignmentPulseCircle = null;
-        }
-        if (assignmentLabel) {
-            assignmentLabel.setMap(null);
-            assignmentLabel = null;
-        }
-
-        // Pulsing circle
-        assignmentPulseCircle = new google.maps.Circle({
-            center: { lat: pos.lat, lng: pos.lng },
-            radius: 15,
-            fillColor: color,
-            fillOpacity: 0.3,
-            strokeColor: color,
-            strokeOpacity: 0.8,
-            strokeWeight: 3,
-            map: map
-        });
-        // Animate the circle
-        let startTime = performance.now();
-        function pulseAssignment() {
-            if (!assignmentPulseCircle || !assignmentModeActive) return;
-            const elapsed = (performance.now() - startTime) / 1000;
-            const baseRadius = 15;
-            const amplitude = 10;
-            const radius = baseRadius + amplitude * Math.sin(elapsed * 2.5);
-            assignmentPulseCircle.setRadius(radius);
-            requestAnimationFrame(pulseAssignment);
-        }
-        pulseAssignment();
-
-        // Label below marker
-        const labelContent = `Assigning to: ${drv.name || 'Driver'}`;
-        const infowindow = new google.maps.InfoWindow({
-            content: `<div style="color:#fff; background:rgba(0,0,0,0.7); padding:4px 10px; border-radius:12px; font-weight:600; font-size:13px;">${labelContent}</div>`,
-            position: { lat: pos.lat - 0.002, lng: pos.lng } // offset below marker
-        });
-        infowindow.open(map);
-        assignmentLabel = infowindow;
-    }
-
-    // Re-render stop list with highlighting
-    renderStopList();
-}
-
-function exitAssignmentMode() {
-    assignmentModeActive = false;
-    selectedDriverId = null;
-
-    // Hide cancel button
-    document.getElementById('cancelAssignmentBtn').style.display = 'none';
-
-    // Remove assignment overlays
-    if (assignmentPulseCircle) {
-        assignmentPulseCircle.setMap(null);
-        assignmentPulseCircle = null;
-    }
-    if (assignmentLabel) {
-        assignmentLabel.setMap(null);
-        assignmentLabel = null;
-    }
-
-    // Re-render stop list normally
-    renderStopList();
-}
-
-// ===== COPY REMAINING NAMES =====
-function copyRemainingNames() {
-    // Collect all stops from today and tomorrow that are not completed
-    const allStops = { ...stopsToday, ...stopsTomorrow };
-    const names = Object.values(allStops)
-        .filter(s => s.status !== 'completed')
-        .map(s => s.name || '')
-        .filter(name => name.trim() !== '');
-    if (names.length === 0) {
-        alert('No remaining stops to copy.');
-        return;
-    }
-    const text = names.join('\n');
-    navigator.clipboard.writeText(text).then(() => {
-        alert(`Copied ${names.length} names to clipboard.`);
-    }).catch(err => {
-        alert('Failed to copy: ' + err);
-    });
-}
-
-// ===== SEARCH STOPS =====
-function searchStops() {
-    const input = document.getElementById('searchStops');
-    searchTerm = input.value.trim();
-    renderStopList();
 }
 
 </script>
