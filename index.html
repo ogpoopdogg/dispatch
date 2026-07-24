@@ -133,7 +133,7 @@
         .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
         .stop-item { background: var(--card2); border-radius: 14px; padding: 8px 12px; border-left: 5px solid transparent; display: flex; align-items: center; gap: 8px; cursor: grab; transition: 0.15s; border: 1px solid var(--border); position: relative; }
         .stop-item:hover { border-color: #3a3a5a; }
-        .stop-item.completed { background: #0f2a1a; opacity: 0.9; order: 999; }
+        .stop-item.completed { background: #4a4a5a !important; opacity: 0.85; order: 999; }
         .stop-item .info { flex: 1; min-width: 0; cursor: pointer; }
         .stop-item .info .name { font-weight: 600; font-size: 13px; }
         .stop-item .info .addr { font-size: 12px; color: var(--muted); }
@@ -267,10 +267,32 @@
         .manifest-panel.dispatch-mode { position: relative; z-index: 9999; }
 
         /* Map toggle button open state */
-        .header-actions button.map-open {
+        .map-open {
             background: rgba(0, 255, 0, 0.2) !important;
             border-color: #00ff00 !important;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        /* Dispatch button styles */
+        .dispatch-btn {
+            background: var(--card2);
+            border: 1px solid #3b82f6;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .dispatch-btn:hover {
+            background: #2a2a3e;
+            border-color: var(--accent);
+        }
+        .dispatch-active {
+            background: #1a3a2a !important;
+            border: 1px solid #2ecc71 !important;
+            color: #2ecc71 !important;
         }
 
         /* Pulse animation for stop highlight */
@@ -296,6 +318,11 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            transition: 0.2s;
+        }
+        .manifest-map-btn:hover {
+            background: #2a2a3e;
+            border-color: var(--accent);
         }
         .manifest-map-btn svg {
             width: 16px;
@@ -335,9 +362,12 @@
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
             <button onclick="openSettings()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Drivers</button>
-            <button onclick="toggleMapVisibility()" id="mapToggleBtn" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Map</button>
+            <button onclick="toggleMapVisibility()" id="mapToggleBtn" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">
+                <svg viewBox="0 0 24 24" style="width:16px; height:16px; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:2;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                Map
+            </button>
             <button onclick="nextDayPrompt()" style="background:var(--card2); border:1px solid #3b82f6; color:var(--text); padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Next Day</button>
-            <button onclick="enterDispatchMode()" style="background:#1a3a2a; border:1px solid #2ecc71; color:#2ecc71; padding:8px 16px; border-radius:30px; font-weight:600; font-size:13px; cursor:pointer;">Dispatch</button>
+            <button onclick="toggleDispatchMode()" id="dispatchBtn" class="dispatch-btn">Dispatch</button>
         </div>
     </header>
 
@@ -351,7 +381,7 @@
             <div class="panel-header">
                 <h2>Manifest <span id="dayLabel" style="font-size:14px; font-weight:400; color:var(--muted);">Today</span></h2>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <button class="manifest-map-btn" onclick="toggleMapVisibility()" title="Toggle Map">
+                    <button class="manifest-map-btn" id="manifestMapBtn" onclick="toggleMapVisibility()" title="Toggle Map">
                         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                         Map
                     </button>
@@ -538,6 +568,9 @@ let addressLookupMap = {};
 // Store connection_status per device (from /getAllDeviceStatus)
 let deviceStatuses = {};
 
+// Dispatch mode state
+let dispatchActive = false;
+
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
 function getDriversRef() { return db.ref('developer/dispatch_dashboard/drivers'); }
 function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_config'); }
@@ -707,13 +740,16 @@ function toggleMapVisibility() {
     const wrapper = document.getElementById('mainMapWrapper');
     wrapper.classList.toggle('hidden');
     const btn = document.getElementById('mapToggleBtn');
-    if (wrapper.classList.contains('hidden')) {
+    const manifestBtn = document.getElementById('manifestMapBtn');
+    const isHidden = wrapper.classList.contains('hidden');
+    if (isHidden) {
         btn.classList.remove('map-open');
+        manifestBtn.classList.remove('map-open');
         localStorage.setItem('ec_map_visible', 'false');
     } else {
         btn.classList.add('map-open');
+        manifestBtn.classList.add('map-open');
         localStorage.setItem('ec_map_visible', 'true');
-        // Trigger resize after toggle to let map adjust
         if (map) {
             setTimeout(() => {
                 google.maps.event.trigger(map, 'resize');
@@ -754,6 +790,22 @@ function scrollToStopInList(stopId, containerId) {
     }
 }
 
+// ===== PIN ICON HELPER =====
+function getPinIcon(color, scale) {
+    scale = scale || 1;
+    const pinPath = 'M 0,0 C -15,0 -20,-15 -20,-30 C -20,-45 0,-60 0,-60 C 0,-60 20,-45 20,-30 C 20,-15 15,0 0,0 Z';
+    return {
+        path: pinPath,
+        fillColor: color,
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+        scale: scale,
+        anchor: new google.maps.Point(0, 0),
+        labelOrigin: new google.maps.Point(0, -70 * scale)
+    };
+}
+
 // ===== INIT =====
 function initApp() {
     getDriversRef().on('value', snap => {
@@ -791,9 +843,10 @@ function initApp() {
             const wrapper = document.getElementById('mainMapWrapper');
             wrapper.classList.add('hidden');
             document.getElementById('mapToggleBtn').classList.remove('map-open');
+            document.getElementById('manifestMapBtn').classList.remove('map-open');
         } else {
-            // default visible, ensure button has class
             document.getElementById('mapToggleBtn').classList.add('map-open');
+            document.getElementById('manifestMapBtn').classList.add('map-open');
         }
     }).catch(() => {
         getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
@@ -820,7 +873,17 @@ function updateGlobalUpdateTime() {
 }
 
 // ===== DISPATCH MODE =====
+function toggleDispatchMode() {
+    if (dispatchActive) {
+        exitDispatchMode();
+    } else {
+        enterDispatchMode();
+    }
+}
+
 function enterDispatchMode() {
+    dispatchActive = true;
+    document.getElementById('dispatchBtn').classList.add('dispatch-active');
     // Show overlay
     document.getElementById('dispatchOverlay').style.display = 'block';
     // Add class to manifest panel
@@ -830,6 +893,8 @@ function enterDispatchMode() {
 }
 
 function exitDispatchMode() {
+    dispatchActive = false;
+    document.getElementById('dispatchBtn').classList.remove('dispatch-active');
     document.getElementById('dispatchOverlay').style.display = 'none';
     document.querySelector('.manifest-panel').classList.remove('dispatch-mode');
 }
@@ -1019,8 +1084,10 @@ function initMap() {
         const wrapper = document.getElementById('mainMapWrapper');
         wrapper.classList.add('hidden');
         document.getElementById('mapToggleBtn').classList.remove('map-open');
+        document.getElementById('manifestMapBtn').classList.remove('map-open');
     } else {
         document.getElementById('mapToggleBtn').classList.add('map-open');
+        document.getElementById('manifestMapBtn').classList.add('map-open');
     }
 }
 
@@ -1067,13 +1134,17 @@ function updateMapMarkers() {
         let color = drv.color || '#f7c948';
         if (status.status === 'standby') color = '#f1c40f';
         else if (status.status === 'offline') color = '#95a5a6';
+        const icon = getPinIcon(color, 0.8);
         const marker = new google.maps.Marker({
             position: { lat: pos.lat, lng: pos.lng },
             map: map,
-            label: { text: drv.name || 'Driver', color: '#fff', fontWeight: 'bold', fontSize: '12px' },
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color,
-                    fillOpacity: status.status === 'offline' ? 0.5 : 1,
-                    strokeColor: '#fff', strokeWeight: 2 }
+            icon: icon,
+            label: {
+                text: drv.name || 'Driver',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '12px'
+            }
         });
         driverMarkers[id] = marker;
     }
@@ -1199,11 +1270,16 @@ function openDriverModal(driverId) {
             let color = drv.color || '#f7c948';
             if (status.status === 'standby') color = '#f1c40f';
             else if (status.status === 'offline') color = '#95a5a6';
+            const icon = getPinIcon(color, 0.8);
             const mk = new google.maps.Marker({
                 position: { lat: drv.lastLocation.lat, lng: drv.lastLocation.lng },
                 map: mmap,
-                label: { text: drv.name, color: '#fff', fontWeight: 'bold' },
-                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: color, fillOpacity: status.status === 'offline' ? 0.5 : 1, strokeColor: '#fff', strokeWeight: 2 }
+                icon: icon,
+                label: {
+                    text: drv.name,
+                    color: '#fff',
+                    fontWeight: 'bold'
+                }
             });
             container._markers.push(mk);
         }
