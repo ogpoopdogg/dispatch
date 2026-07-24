@@ -308,14 +308,14 @@ let gpsInterval = null;
 let pajToken = null;
 const PAJ_BASE = 'https://connect.paj-gps.de/api/v1';
 
-// Thresholds used only for fallback when status is unknown
+// Thresholds for fallback only
 const STANDBY_THRESHOLD = 15 * 60 * 1000;
 const OFFLINE_THRESHOLD = 60 * 60 * 1000;
 
 let addressLookupData = null;
 let addressLookupMap = {};
 
-// Cache for device statuses (connection_status) from /getAllDeviceStatus
+// Store connection_status per device (from /device endpoint)
 let deviceStatuses = {};
 
 function getStopsRef() { return db.ref(`developer/dispatch_dashboard/stops_${currentDay}`); }
@@ -324,22 +324,22 @@ function getMasterRef() { return db.ref('developer/dispatch_dashboard/master_con
 
 // ===== GPS STATUS HELPER =====
 function getGPSStatus(lastUpdated, driverId) {
-    // Priority 1: use connection_status from /getAllDeviceStatus
+    // 1. Use connection_status from /device if available
     if (driverId && deviceStatuses[driverId] !== undefined) {
         const connStatus = deviceStatuses[driverId];
-        console.log(`📌 Status for device ${driverId}: connection_status=${connStatus}`);
+        // connection_status: 1 = online, 0 = offline, 2 = standby? Let's treat 1 as online, anything else as offline (with fallback)
         if (connStatus === 1) {
             return { status: 'online', label: '● Online', class: 'status-online' };
         } else if (connStatus === 0 || connStatus === 2) {
-            // If connection_status is 0 or 2, but we have a recent last_update, show standby
-            // We don't have the last_update here, so we'll fallback to timestamp for standby
-            // For now, treat as offline.
+            // Could be offline or standby, use timestamp to decide
+            if (lastUpdated && (Date.now() - lastUpdated) < OFFLINE_THRESHOLD) {
+                return { status: 'standby', label: '◐ Standby', class: 'status-standby' };
+            }
             return { status: 'offline', label: '○ Offline', class: 'status-offline' };
-        } else {
-            // Unknown status, fallback to timestamp
         }
+        // Unknown status, fallback to timestamp
     }
-    // Fallback to timestamp-based calculation
+    // 2. Fallback: use lastUpdated timestamp
     if (!lastUpdated) return { status: 'offline', label: '○ Offline', class: 'status-offline' };
     const diff = Date.now() - lastUpdated;
     if (diff < STANDBY_THRESHOLD) return { status: 'online', label: '● Online', class: 'status-online' };
@@ -514,8 +514,47 @@ async function authenticatePAJ() {
 let authRetryInProgress = false;
 let lastDateUnix = {};
 
+// Fetch device statuses (connection_status) from /device
+async function fetchDeviceStatuses() {
+    if (!pajToken) return;
+    try {
+        const response = await fetch(`${PAJ_BASE}/device`, {
+            headers: { 'Authorization': `Bearer ${pajToken}` }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        let devices = data.success || data.data || data;
+        if (!Array.isArray(devices)) return;
+        devices.forEach(d => {
+            const devId = d.id || d.deviceId || d.imei;
+            if (devId) {
+                const idNum = parseInt(devId, 10);
+                // Extract connection_status (might be at root or in a nested object)
+                const connStatus = d.connection_status !== undefined ? d.connection_status :
+                                   (d.status && d.status.connection_status !== undefined ? d.status.connection_status : undefined);
+                if (connStatus !== undefined) {
+                    deviceStatuses[idNum] = connStatus;
+                    console.log(`📡 Device ${idNum}: connection_status=${connStatus}`);
+                }
+                // Also store last_dateunix if available for timestamp fallback
+                if (d.last_dateunix) {
+                    lastDateUnix[idNum] = d.last_dateunix;
+                }
+            }
+        });
+        // Force re-render after status update
+        renderDriverBadges();
+        updateAllMarkers();
+    } catch(e) {
+        console.warn('Failed to fetch device statuses:', e);
+    }
+}
+
 async function fetchAllDevicePositions() {
     if (!pajToken) return;
+    
+    // First, fetch statuses from /device
+    await fetchDeviceStatuses();
     
     const deviceEntries = Object.entries(drivers).filter(([id, drv]) => drv.deviceId && String(drv.deviceId).trim() !== '');
     if (deviceEntries.length === 0) {
@@ -523,15 +562,23 @@ async function fetchAllDevicePositions() {
         return;
     }
     
-    // Build device IDs list
-    const deviceIds = deviceEntries.map(([did, drv]) => parseInt(String(drv.deviceId).trim(), 10));
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Build payload for positions
+    const deviceIDs = deviceEntries.map(([did, drv]) => {
+        const devId = parseInt(String(drv.deviceId).trim(), 10);
+        // Use stored timestamp if available, else 24h ago
+        let dateunix = lastDateUnix[devId];
+        if (!dateunix || (nowSec - dateunix) > 86400) {
+            dateunix = nowSec - 86400; // 24h fallback
+        }
+        return { deviceId: devId, dateunix };
+    });
     
-    // We'll use /getAllDeviceStatus which returns both status and lastPoint
-    const payload = { device_ids: deviceIds };
-    console.log('📡 Sending getAllDeviceStatus payload:', JSON.stringify(payload));
+    const payload = { deviceIDs, fromLastPoint: true };
+    console.log('📡 Sending payload for positions:', JSON.stringify(payload));
     
     try {
-        const response = await fetch(`${PAJ_BASE}/getAllDeviceStatus`, {
+        const response = await fetch(`${PAJ_BASE}/trackerdata/getalllastpositions`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${pajToken}`,
@@ -555,62 +602,42 @@ async function fetchAllDevicePositions() {
             return;
         }
         const data = await response.json();
-        console.log('📨 getAllDeviceStatus response:', data);
+        console.log('📨 Positions response:', data);
         if (!data.success || typeof data.success !== 'object') {
             console.warn('⚠️ No success object in response.');
             return;
         }
-        
         let updated = false;
         const now = Date.now();
-        
-        // Process each device
-        for (const [deviceIdStr, deviceData] of Object.entries(data.success)) {
+        for (const [deviceIdStr, points] of Object.entries(data.success)) {
+            if (!Array.isArray(points) || points.length === 0) continue;
+            const latest = points[0];
+            if (!latest || typeof latest !== 'object') continue;
+            const lat = latest.lat;
+            const lng = latest.lng;
+            if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) continue;
+            const tsSec = latest.dateunix;
+            let pajTimestamp = now;
+            if (tsSec && !isNaN(tsSec)) {
+                pajTimestamp = tsSec * 1000;
+                const devId = parseInt(deviceIdStr, 10);
+                lastDateUnix[devId] = tsSec;
+            }
             const devId = parseInt(deviceIdStr, 10);
-            if (!devId) continue;
-            
-            // Extract status from deviceStatus
-            const deviceStatus = deviceData.deviceStatus || {};
-            const connectionStatus = deviceStatus.connection_status;
-            // Store the connection status for this device
-            if (connectionStatus !== undefined) {
-                deviceStatuses[devId] = connectionStatus;
-                console.log(`📡 Device ${devId}: connection_status=${connectionStatus}`);
-            } else {
-                console.warn(`⚠️ No connection_status for device ${devId}`);
-            }
-            
-            // Extract lastPoint (position)
-            const lastPoint = deviceData.lastPoint || null;
-            if (lastPoint && lastPoint.lat !== undefined && lastPoint.lng !== undefined) {
-                const lat = lastPoint.lat;
-                const lng = lastPoint.lng;
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const tsSec = lastPoint.dateunix;
-                    let pajTimestamp = now;
-                    if (tsSec && !isNaN(tsSec)) pajTimestamp = tsSec * 1000;
-                    // Store latest timestamp
-                    if (tsSec && !isNaN(tsSec)) lastDateUnix[devId] = tsSec;
-                    console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
-                    // Update driver location
-                    let matched = false;
-                    for (let [did, drv] of Object.entries(drivers)) {
-                        const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
-                        if (drvDeviceId && drvDeviceId === String(devId)) {
-                            matched = true;
-                            drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
-                            getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
-                            updated = true;
-                            break;
-                        }
-                    }
-                    if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
+            console.log(`📍 Device ${devId}: lat=${lat}, lng=${lng}, timestamp=${pajTimestamp}`);
+            let matched = false;
+            for (let [did, drv] of Object.entries(drivers)) {
+                const drvDeviceId = drv.deviceId ? String(drv.deviceId).trim() : '';
+                if (drvDeviceId && drvDeviceId === String(devId)) {
+                    matched = true;
+                    drv.lastLocation = { lat, lng, updatedAt: pajTimestamp };
+                    getDriversRef().child(did).update({ lastLocation: drv.lastLocation });
+                    updated = true;
+                    break;
                 }
-            } else {
-                console.log(`ℹ️ No position for device ${devId}`);
             }
+            if (!matched) console.log(`⚠️ No driver configured for device ${devId}`);
         }
-        
         if (updated) {
             updateAllMarkers();
             renderDriverBadges();
