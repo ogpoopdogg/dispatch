@@ -1989,6 +1989,25 @@
             }
         }
 
+        // ===== OPEN MAP AND ZOOM =====
+        function openMapAndZoomToStop(stopId) {
+            const wrapper = document.getElementById('mainMapWrapper');
+            const btn = document.getElementById('mapToggleBtn');
+            const manifestBtn = document.getElementById('manifestMapBtn');
+            if (wrapper.classList.contains('hidden')) {
+                wrapper.classList.remove('hidden');
+                btn.classList.add('map-open');
+                manifestBtn.classList.add('map-open');
+                localStorage.setItem('ec_map_visible', 'true');
+                if (map) {
+                    setTimeout(() => {
+                        google.maps.event.trigger(map, 'resize');
+                    }, 100);
+                }
+            }
+            zoomToStop(stopId);
+        }
+
         // ===== ZOOM TO STOP =====
         function zoomToStop(stopId) {
             const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
@@ -2170,47 +2189,57 @@
         }
 
         function handleMainMapStopClick(stopId) {
-            const wrapper = document.getElementById('mainMapWrapper');
-            if (!wrapper.classList.contains('hidden')) {
-                wrapper.classList.add('hidden');
-                document.getElementById('mapToggleBtn').classList.remove('map-open');
-                document.getElementById('manifestMapBtn').classList.remove('map-open');
-                localStorage.setItem('ec_map_visible', 'false');
-            }
-            document.getElementById('manifestPanel').scrollIntoView({ behavior: 'smooth' });
+            // We don't want to close map here; instead we highlight in manifest
             highlightStopInManifest(stopId);
         }
 
-        // ===== GLOBAL TOOLTIP =====
-        function showTooltip(e, name, address, city, driverName) {
+        // ===== ADDRESS OVERLAY =====
+        function showAddressOverlay(stopId) {
+            const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
+            const stop = allStops[stopId];
+            if (!stop) return;
+            const address = stop.address || '';
+            const city = stop.city || '';
+            const fullAddress = address + (city ? ', ' + city : '');
             const tooltip = document.getElementById('globalTooltip');
-            document.getElementById('tooltipName').textContent = name || 'Stop';
-            document.getElementById('tooltipAddr').textContent = address || '';
-            document.getElementById('tooltipCity').textContent = city || '';
-            document.getElementById('tooltipDriver').textContent = driverName ? `👤 ${driverName}` : '';
+            document.getElementById('tooltipName').textContent = '📍 Address';
+            document.getElementById('tooltipAddr').textContent = fullAddress || 'No address';
+            document.getElementById('tooltipCity').textContent = '';
+            document.getElementById('tooltipDriver').textContent = '';
 
-            let x = e.clientX + 14;
-            let y = e.clientY - 8;
-            // Keep tooltip in viewport
-            const rect = tooltip.getBoundingClientRect();
-            const tw = 400;
-            const th = 120;
-            if (x + tw > window.innerWidth) x = e.clientX - tw - 14;
-            if (y + th > window.innerHeight) y = window.innerHeight - th - 10;
-            if (y < 10) y = 10;
-            if (x < 10) x = 10;
+            // Position above the stop item
+            const item = document.querySelector(`.stop-item[data-id="${stopId}"]`);
+            if (item) {
+                const rect = item.getBoundingClientRect();
+                let x = rect.left + rect.width / 2 - 150; // approximate center
+                let y = rect.top - 80;
+                if (x < 10) x = 10;
+                if (y < 10) y = 10;
+                if (x + 300 > window.innerWidth) x = window.innerWidth - 310;
+                tooltip.style.left = x + 'px';
+                tooltip.style.top = y + 'px';
+                tooltip.style.display = 'block';
+                // Remove any existing click listener
+                document.removeEventListener('click', hideAddressOverlay);
+                // Add a one-time click listener to hide
+                setTimeout(() => {
+                    document.addEventListener('click', hideAddressOverlay);
+                }, 10);
+            }
+        }
 
-            tooltip.style.left = x + 'px';
-            tooltip.style.top = y + 'px';
-            tooltip.style.display = 'block';
-            clearTimeout(tooltipTimeout);
+        function hideAddressOverlay() {
+            document.getElementById('globalTooltip').style.display = 'none';
+            document.removeEventListener('click', hideAddressOverlay);
+        }
+
+        // ===== GLOBAL TOOLTIP (original, but we are not using it for hover anymore) =====
+        function showTooltip(e, name, address, city, driverName) {
+            // Not used anymore
         }
 
         function hideTooltip() {
-            clearTimeout(tooltipTimeout);
-            tooltipTimeout = setTimeout(() => {
-                document.getElementById('globalTooltip').style.display = 'none';
-            }, 80);
+            // Not used anymore
         }
 
         // ===== INIT =====
@@ -2245,15 +2274,21 @@
                         map.setZoom(cfg.map_zoom);
                     }
                 }
+                // Map visibility: default hidden unless explicitly set to 'true'
                 const mapVisible = localStorage.getItem('ec_map_visible');
-                if (mapVisible === 'false') {
+                if (mapVisible === 'true') {
+                    const wrapper = document.getElementById('mainMapWrapper');
+                    wrapper.classList.remove('hidden');
+                    document.getElementById('mapToggleBtn').classList.add('map-open');
+                    document.getElementById('manifestMapBtn').classList.add('map-open');
+                } else {
                     const wrapper = document.getElementById('mainMapWrapper');
                     wrapper.classList.add('hidden');
                     document.getElementById('mapToggleBtn').classList.remove('map-open');
                     document.getElementById('manifestMapBtn').classList.remove('map-open');
-                } else {
-                    document.getElementById('mapToggleBtn').classList.add('map-open');
-                    document.getElementById('manifestMapBtn').classList.add('map-open');
+                    if (!localStorage.getItem('ec_map_visible')) {
+                        localStorage.setItem('ec_map_visible', 'false');
+                    }
                 }
             }).catch(() => {
                 getMasterRef().set({ paj_email: '', paj_password: '', paj_token: '' });
@@ -2685,7 +2720,7 @@
                 renderStopList();
                 if (activeModalDriverId) renderDriverStops(activeModalDriverId);
             } else {
-                zoomToStop(stopId);
+                openMapAndZoomToStop(stopId);
             }
         }
 
@@ -2853,15 +2888,12 @@
                 const allStops = currentDay === 'today' ? stopsToday : stopsTomorrow;
                 const assigned = Object.entries(allStops).filter(([id, s]) => s.assignedDriver === driverId && s.status !==
                     'completed');
-                if (container._polyline) container._polyline.setMap(null);
-                if (assigned.length > 1) {
-                    const path = assigned.map(([id, s]) => ({ lat: s.lat || 0, lng: s.lng || 0 })).filter(p => p.lat && p
-                        .lng);
-                    if (path.length > 1) {
-                        container._polyline = new google.maps.Polyline({ path, map: mmap, strokeColor: drv.color ||
-                                '#f7c948', strokeWeight: 4 });
-                    }
+                // Remove any existing polyline (we don't use it)
+                if (container._polyline) {
+                    container._polyline.setMap(null);
+                    container._polyline = null;
                 }
+                // No polyline added
                 assigned.forEach(([id, s]) => {
                     if (s.lat && s.lng) {
                         const mk = new google.maps.Marker({
@@ -3042,8 +3074,6 @@
                    data-stop-address="${s.address || ''}"
                    data-stop-city="${s.city || ''}"
                    data-stop-driver="${driverName}"
-                   @dragstart="onDragStart(event)"
-                   @dragend="onDragEnd(event)"
               >
                 <div class="info" onclick="${infoOnClick}" style="cursor:${infoCursor};">
                   <div class="name">${s.name || 'No name'} ${ts}</div>
@@ -3081,24 +3111,15 @@
                     'drag-over'));
                 });
 
-                // Tooltip: show on mouseenter with address
-                item.addEventListener('mouseenter', function(e) {
-                    const name = this.dataset.stopName || 'Stop';
-                    const address = this.dataset.stopAddress || '';
-                    const city = this.dataset.stopCity || '';
-                    const driver = this.dataset.stopDriver || '';
-                    showTooltip(e, name, address, city, driver);
-                });
-                item.addEventListener('mousemove', function(e) {
-                    const name = this.dataset.stopName || 'Stop';
-                    const address = this.dataset.stopAddress || '';
-                    const city = this.dataset.stopCity || '';
-                    const driver = this.dataset.stopDriver || '';
-                    showTooltip(e, name, address, city, driver);
-                });
-                item.addEventListener('mouseleave', function(e) {
-                    hideTooltip();
-                });
+                // Double-click on name to show address overlay
+                const nameEl = item.querySelector('.name');
+                if (nameEl) {
+                    nameEl.addEventListener('dblclick', function(e) {
+                        e.stopPropagation();
+                        const stopId = item.dataset.stopId;
+                        if (stopId) showAddressOverlay(stopId);
+                    });
+                }
             });
 
             // Destroy previous Sortable instance
@@ -3400,25 +3421,6 @@
             renderStopList();
             closeSettings();
         }
-
-        // ===== GLOBAL TOOLTIP MOUSE TRACKING =====
-        document.addEventListener('mousemove', function(e) {
-            const tooltip = document.getElementById('globalTooltip');
-            if (tooltip.style.display === 'block') {
-                // Only update position if tooltip is visible
-                let x = e.clientX + 14;
-                let y = e.clientY - 8;
-                const rect = tooltip.getBoundingClientRect();
-                const tw = rect.width || 400;
-                const th = rect.height || 120;
-                if (x + tw > window.innerWidth) x = e.clientX - tw - 14;
-                if (y + th > window.innerHeight) y = window.innerHeight - th - 10;
-                if (y < 10) y = 10;
-                if (x < 10) x = 10;
-                tooltip.style.left = x + 'px';
-                tooltip.style.top = y + 'px';
-            }
-        });
     </script>
 </body>
 </html>
