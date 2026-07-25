@@ -1168,7 +1168,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: transparent;
             z-index: 9998;
             cursor: pointer;
         }
@@ -1609,7 +1609,7 @@
     </div>
 
     <!-- Dispatch Overlay -->
-    <div id="dispatchOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; cursor:pointer;"></div>
+    <div id="dispatchOverlay" style="display:none; position:fixed; inset:0; background:transparent; z-index:9998; cursor:pointer;"></div>
 
     <!-- Driver Modal -->
     <div class="driver-modal" id="driverModal">
@@ -2772,7 +2772,7 @@
                 badge.addEventListener('drop', function(e) {
                     e.preventDefault();
                     this.classList.remove('drag-over');
-                    const stopId = e.dataTransfer.getData('text/plain');
+                    const stopId = dragStopId || e.dataTransfer.getData('text/plain');
                     if (stopId && drivers[id]) {
                         assignStop(stopId, id);
                         renderStopList();
@@ -3109,6 +3109,7 @@
                     // Remove drag-over from all driver badges
                     document.querySelectorAll('.driver-badge.drag-over').forEach(b => b.classList.remove(
                     'drag-over'));
+                    dragStopId = null;
                 });
 
                 // Double-click on name to show address overlay
