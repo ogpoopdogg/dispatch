@@ -1641,6 +1641,10 @@
                 <label>PAJ GPS Password</label>
                 <input type="password" id="pajPassword" placeholder="Your PAJ GPS password">
             </div>
+            <div class="field">
+                <label>Dispatcher Personal Phone (for SMS relay)</label>
+                <input type="text" id="dispatcherPhone" placeholder="+14165556789">
+            </div>
 
             <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
 
@@ -1680,6 +1684,8 @@
     </script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
     </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js">
+    </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI&libraries=places,geometry&callback=initMap" async defer>
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js">
@@ -1695,6 +1701,7 @@
         });
         const auth = firebase.auth();
         const db = firebase.database();
+        const functions = firebase.functions();
 
         // ===== MAP STYLES =====
         const mapStyles = [{
@@ -2266,6 +2273,7 @@
                 const cfg = snap.val() || {};
                 document.getElementById('pajEmail').value = cfg.paj_email || '';
                 document.getElementById('pajPassword').value = cfg.paj_password || '';
+                document.getElementById('dispatcherPhone').value = cfg.dispatcherPhone || '';
                 pajToken = cfg.paj_token || null;
                 if (cfg.paj_email && cfg.paj_password) authenticatePAJ();
                 if (cfg.map_center_lat && cfg.map_center_lng && cfg.map_zoom) {
@@ -3296,8 +3304,39 @@
         function assignStop(id, driverId) {
             const ref = currentDay === 'today' ? db.ref('developer/dispatch_dashboard/stops_today') : db.ref(
                 'developer/dispatch_dashboard/stops_tomorrow');
-            ref.child(id).update({ assignedDriver: driverId || null });
-            if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+            // First get stop data
+            ref.child(id).once('value').then(snap => {
+                const stop = snap.val();
+                if (!stop) return;
+                // Update assignment
+                ref.child(id).update({ assignedDriver: driverId || null });
+                // If assigning to a driver and driver has phone, send SMS
+                if (driverId && drivers[driverId] && drivers[driverId].phone) {
+                    const driver = drivers[driverId];
+                    const stopName = stop.name || 'Stop';
+                    const stopAddress = stop.address || '';
+                    const stopCity = stop.city || '';
+                    // Call Cloud Function
+                    sendAssignmentSMS(driverId, driver.phone, stopName, stopAddress, stopCity, id);
+                }
+                if (activeModalDriverId) renderDriverStops(activeModalDriverId);
+            });
+        }
+
+        function sendAssignmentSMS(driverId, driverPhone, stopName, address, city, stopId) {
+            const sendSMS = firebase.functions().httpsCallable('sendAssignmentSMS');
+            sendSMS({
+                driverId: driverId,
+                driverPhone: driverPhone,
+                stopName: stopName,
+                address: address,
+                city: city,
+                stopId: stopId,
+                day: currentDay
+            }).catch(err => {
+                console.error('SMS send error:', err);
+                // Optionally show a toast notification
+            });
         }
 
         function moveToTomorrow(id) {
@@ -3356,6 +3395,10 @@
         function openSettings() {
             document.getElementById('settingsModal').style.display = 'flex';
             renderSettingsList();
+            getMasterRef().once('value').then(snap => {
+                const cfg = snap.val() || {};
+                document.getElementById('dispatcherPhone').value = cfg.dispatcherPhone || '';
+            });
         }
 
         function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
@@ -3368,6 +3411,7 @@
                 row.className = 'driver-row';
                 row.innerHTML = `
               <input type="text" value="${drv.name || ''}" placeholder="Name" data-id="${id}" class="drv-name">
+              <input type="text" value="${drv.phone || ''}" placeholder="Phone (e.g., +14165551234)" data-id="${id}" class="drv-phone">
               <input type="color" value="${drv.color || '#f7c948'}" data-id="${id}" class="drv-color color-pick">
               <input type="text" value="${drv.deviceId || ''}" placeholder="Device ID" data-id="${id}" class="drv-device">
               <button class="remove-driver" onclick="removeDriver('${id}')">✕</button>
@@ -3378,7 +3422,7 @@
 
         function addDriverRow() {
             const ref = getDriversRef();
-            ref.push({ name: 'Driver', color: '#f7c948', deviceId: '', lastLocation: null });
+            ref.push({ name: 'Driver', color: '#f7c948', deviceId: '', phone: '', lastLocation: null });
         }
 
         function removeDriver(id) {
@@ -3406,15 +3450,17 @@
         function saveSettings() {
             const email = document.getElementById('pajEmail').value.trim();
             const pass = document.getElementById('pajPassword').value.trim();
-            getMasterRef().update({ paj_email: email, paj_password: pass });
+            const dispatcherPhone = document.getElementById('dispatcherPhone').value.trim();
+            getMasterRef().update({ paj_email: email, paj_password: pass, dispatcherPhone: dispatcherPhone });
             const rows = document.querySelectorAll('#driverSettingsList .driver-row');
             rows.forEach(row => {
                 const id = row.querySelector('.drv-name').dataset.id;
                 const name = row.querySelector('.drv-name').value;
+                const phone = row.querySelector('.drv-phone').value;
                 const color = row.querySelector('.drv-color').value;
                 const deviceId = row.querySelector('.drv-device').value;
                 if (id) {
-                    getDriversRef().child(id).update({ name, color, deviceId });
+                    getDriversRef().child(id).update({ name, phone, color, deviceId });
                 }
             });
             if (email && pass) authenticatePAJ();
