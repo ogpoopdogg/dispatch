@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E&amp;C Dispatch</title>
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="icon-512.png">
+<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='light'?'light':'dark';}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#FFD100;--on-yellow:#000;
+  --bg:#000;--surface:#151515;--surface-2:#1e1e1e;--field:#0c0c0c;--line:#2d2d2d;
+  --ink:#f4f4f1;--ink-2:#a2a29d;--ink-3:#6f6f6b;--accent-ink:#FFD100;--focus:#FFD100;
+  --ok:#3fbf6f;--ok-bg:rgba(63,191,111,.14);--danger:#f0524f;--danger-bg:rgba(240,82,79,.14);
+  --shadow:0 18px 50px rgba(0,0,0,.55);--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+  --font:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color-scheme:dark;
+}
+[data-theme=light]{
+  --bg:#ebebe8;--surface:#fff;--surface-2:#f4f4f1;--field:#fff;--line:#d6d6d1;
+  --ink:#0b0b0b;--ink-2:#55554f;--ink-3:#8a8a84;--accent-ink:#000;--focus:#000;
+  --ok:#14853f;--ok-bg:rgba(20,133,63,.1);--danger:#c2251f;--danger-bg:rgba(194,37,31,.08);
+  --shadow:0 18px 50px rgba(0,0,0,.18);color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased;min-height:100vh}
+body.no-scroll{overflow:hidden}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent-ink)}
+h1,h2,h3{font-stretch:75%;font-weight:800;line-height:1.15;margin:0}
+h1{font-size:30px}h2{font-size:20px}h3{font-size:17px}
+p{margin:0}
+.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.i.sm{width:16px;height:16px}
+.muted{color:var(--ink-2)}.small{font-size:14px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:12px;border:1px solid transparent;font-weight:600;font-size:16px;cursor:pointer;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.block{width:100%}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn-primary{background:var(--yellow);color:var(--on-yellow);font-weight:700}
+.btn-secondary{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--ink)}
+.btn-danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:0;background:transparent;color:inherit;cursor:pointer;position:relative}
+.icon-btn:hover{background:rgba(255,255,255,.08)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-row>.btn{flex:1 1 140px}
+
+/* Fields */
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:14px;font-weight:600;color:var(--ink-2);margin:0 0 6px}
+.field input{width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--field);font-size:16px;outline:none}
+.field input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,209,0,.18)}
+.seg{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
+.seg label{flex:1;position:relative;margin:0}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:9px;font-weight:600;font-size:14px;color:var(--ink-2);text-align:center;padding:0 6px;line-height:1.2}
+.seg input:checked+span{background:var(--yellow);color:var(--on-yellow)}
+
+/* Screens */
+.center-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.auth{width:100%;max-width:420px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+.brand img{height:44px;width:auto}
+.wordmark{font-stretch:75%;font-weight:800;font-size:24px}
+.wordmark b{color:var(--yellow)}
+.auth h1{font-size:40px;line-height:1.02;margin-bottom:12px}
+.auth .lead{color:var(--ink-2);margin-bottom:26px}
+.spinner{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--yellow);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.uid-box{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px dashed var(--yellow);border-radius:12px;padding:10px 12px;margin:16px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere}
+
+/* Top bar */
+.topbar{position:sticky;top:0;z-index:30;background:#000;color:#f4f4f1;border-bottom:3px solid var(--yellow);padding:calc(8px + var(--safe-t)) 12px 8px}
+.topbar-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.topbar img{height:32px;width:auto}
+.topbar .wordmark{font-size:20px;line-height:1}
+.topbar .spacer{flex:1}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#a2a29d}
+.live .dot{width:9px;height:9px;border-radius:50%;background:#6f6f6b}
+.live.on .dot{background:#3fbf6f;box-shadow:0 0 0 3px rgba(63,191,111,.25)}
+.live.on{color:#f4f4f1}
+.live.off .dot{background:var(--yellow)}
+.mute-x{position:absolute;inset:0;display:grid;place-items:center;color:#f0524f}
+
+/* Banners */
+.banner{position:sticky;top:calc(53px + var(--safe-t));z-index:25;display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:left;padding:14px 16px;cursor:pointer;font-weight:700;font-size:17px}
+.banner .grow{flex:1;min-width:0}
+.banner small{display:block;font-weight:500;font-size:14px;opacity:.8}
+.banner-alert{background:var(--yellow);color:#000;animation:flash 1s steps(2,jump-none) infinite}
+@keyframes flash{0%{background:var(--yellow)}50%{background:#fff3b0}}
+.banner-sound{background:var(--surface-2);color:var(--ink);border-bottom:1px solid var(--line);font-size:15px}
+.banner-pill{background:#000;color:var(--yellow);border-radius:99px;padding:6px 14px;font-size:14px;white-space:nowrap}
+
+/* Layout */
+main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;position:sticky;top:calc(56px + var(--safe-t));z-index:20}
+.tabs button{min-height:44px;border:0;border-radius:10px;background:none;color:var(--ink-2);font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+.count{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--surface-2);color:var(--ink);font-size:12px;display:inline-grid;place-items:center}
+.tabs button[aria-selected=true] .count{background:var(--yellow);color:#000}
+.count.hot{background:var(--yellow);color:#000}
+.group-head{font-size:14px;font-weight:700;color:var(--ink-2);margin:18px 4px 8px;display:flex;justify-content:space-between}
+
+/* Job cards */
+.job{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px;margin-bottom:12px;position:relative}
+.job.unseen{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow),0 10px 30px rgba(255,209,0,.12)}
+.job.overdue{border-left:5px solid var(--danger)}
+.job-top{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.req-no{font-stretch:75%;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.job-co{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job-age{font-size:13px;color:var(--ink-2);white-space:nowrap}
+.route{position:relative;padding-left:26px;margin-bottom:10px}
+.route::before{content:'';position:absolute;left:7px;top:10px;bottom:22px;border-left:2px dashed var(--yellow);opacity:.7}
+.stop{position:relative;margin-bottom:8px}
+.stop::before{content:'';position:absolute;left:-26px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 4px var(--surface)}
+.stop.to::before{border-radius:3px;background:var(--surface);border:3px solid var(--yellow)}
+.stop b{display:block;font-size:18px;line-height:1.25}
+.stop small{display:block;color:var(--ink-2);font-size:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.chip .i{width:13px;height:13px}
+.chip.new{background:var(--yellow);border-color:var(--yellow);color:#000}
+.chip.warn{border-color:var(--yellow);color:var(--accent-ink)}
+.chip.bad{background:var(--danger-bg);border-color:transparent;color:var(--danger)}
+.chip.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
+.text-preview{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4;margin-bottom:12px;overflow-wrap:anywhere}
+.text-preview span{display:block;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:2px}
+.job-actions{display:flex;gap:8px}
+.job-actions .btn-primary{flex:1;min-height:54px;font-size:17px}
+.job-actions .btn-secondary{min-width:54px;min-height:54px;padding:0}
+.done-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.done-row .grow{flex:1;min-width:0}
+.done-row .names{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.done-row .meta{font-size:13px;color:var(--ink-2)}
+.done-row.cancelled .names{text-decoration:line-through;color:var(--ink-2)}
+.empty{text-align:center;padding:46px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:16px}
+.empty .i{width:36px;height:36px;color:var(--ink-3);margin-bottom:8px}
+.empty p{color:var(--ink-2);margin-top:4px}
+
+/* Detail list */
+.dl{display:grid;grid-template-columns:104px 1fr;gap:10px 14px;margin:0}
+.dl dt{font-size:14px;color:var(--ink-2)}
+.dl dd{margin:0;overflow-wrap:anywhere}
+.dl dd small{display:block;color:var(--ink-2);font-size:14px}
+.dl dd a{font-weight:600}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.setting:first-child{border-top:0}
+.setting .grow{flex:1}
+.setting small{display:block;color:var(--ink-2);font-size:13px}
+.switch{position:relative;width:52px;height:30px;flex:none}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:15px;background:var(--line);transition:background .15s}
+.switch span::after{content:'';position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch input:checked+span{background:var(--yellow)}
+.switch input:checked+span::after{transform:translateX(22px)}
+.switch input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+.section-title{font-size:15px;font-weight:700;margin:20px 0 4px}
+
+/* Sheet */
+.overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background-color .2s}
+.overlay.open{background:rgba(0,0,0,.6)}
+.sheet{width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:var(--shadow);transform:translateY(100%);transition:transform .22s ease-out;padding-bottom:var(--safe-b)}
+.overlay.open .sheet{transform:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 12px 8px 20px}
+.sheet-head h2{font-size:22px}
+.sheet-body{overflow-y:auto;padding:4px 20px 22px;overscroll-behavior:contain}
+@media (min-width:720px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:86vh}}
+
+/* Toasts */
+.toasts{position:fixed;left:0;right:0;bottom:calc(16px + var(--safe-b));z-index:90;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 12px}
+.toast{pointer-events:auto;max-width:560px;width:100%;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 10px 10px 14px;font-weight:600;font-size:15px;box-shadow:var(--shadow);animation:toastIn .2s ease-out}
+.toast .grow{flex:1}
+.toast.ok{background:var(--ok);color:#fff}
+.toast.error{background:var(--danger);color:#fff}
+.toast button{border:0;background:rgba(0,0,0,.18);color:inherit;font-weight:800;border-radius:8px;min-height:38px;padding:0 14px;cursor:pointer}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.banner-alert{animation:none}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+</svg>
+
+<section id="view-loading" class="center-screen"><div class="spinner" role="status" aria-label="Loading"></div></section>
+
+<section id="view-auth" class="center-screen" hidden>
+  <div class="auth">
+    <div class="brand"><img src="icon2.png" alt="" onerror="this.remove()"><div class="wordmark">E&amp;C <b>Dispatch</b></div></div>
+    <h1>Dispatch sign-in.</h1>
+    <p class="lead">For E&amp;C Courier staff. Customer requests arrive here live.</p>
+    <form id="auth-form" novalidate>
+      <div class="field"><label for="auth-email">Email</label><input id="auth-email" type="email" autocomplete="username" inputmode="email"></div>
+      <div class="field"><label for="auth-password">Password</label><input id="auth-password" type="password" autocomplete="current-password"></div>
+      <button class="btn btn-primary block" type="submit" id="auth-submit">Sign in</button>
+    </form>
+    <button class="btn btn-secondary block" type="button" data-act="google" style="margin-top:10px">Sign in with Google</button>
+  </div>
+</section>
+
+<section id="view-denied" class="center-screen" hidden>
+  <div class="auth">
+    <div class="brand"><img src="icon2.png" alt="" onerror="this.remove()"><div class="wordmark">E&amp;C <b>Dispatch</b></div></div>
+    <h1>Not set up for dispatch.</h1>
+    <p class="lead">Signed in as <b id="denied-email"></b>. To give this account access, add its ID to the <b>staff</b> list in the Firebase console with the value <b>true</b>.</p>
+    <div class="uid-box"><span id="denied-uid"></span><button class="btn btn-secondary sm" type="button" data-act="copy-uid">Copy ID</button></div>
+    <div class="btn-row"><button class="btn btn-primary" type="button" data-act="recheck">Check again</button><button class="btn btn-secondary" type="button" data-act="signout">Sign out</button></div>
+  </div>
+</section>
+
+<div id="view-app" hidden>
+  <header class="topbar">
+    <div class="topbar-in">
+      <img src="icon2.png" alt="" onerror="this.remove()">
+      <div class="wordmark">E&amp;C <b>Dispatch</b></div>
+      <div class="spacer"></div>
+      <span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span>
+      <button class="icon-btn" type="button" data-act="toggle-sound" id="sound-btn" aria-label="Alert sound on"><svg class="i"><use href="#i-sound"/></svg></button>
+      <button class="icon-btn" type="button" data-act="settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
+    </div>
+  </header>
+
+  <button class="banner banner-sound" type="button" id="sound-banner" data-act="unlock-sound" hidden>
+    <svg class="i"><use href="#i-sound"/></svg><span class="grow">Tap here to turn on alert sounds<small>Phones block sound until you tap the page once.</small></span>
+  </button>
+  <button class="banner banner-alert" type="button" id="alert-banner" data-act="ack-all" hidden>
+    <svg class="i"><use href="#i-bell"/></svg><span class="grow" id="alert-text"></span><span class="banner-pill">Got it</span>
+  </button>
+
+  <main>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="queue" aria-selected="true">Queue <span class="count" id="count-queue">0</span></button>
+      <button type="button" role="tab" data-tab="scheduled" aria-selected="false">Scheduled <span class="count" id="count-scheduled">0</span></button>
+      <button type="button" role="tab" data-tab="done" aria-selected="false">Done</button>
+    </div>
+    <section id="panel-queue"></section>
+    <section id="panel-scheduled" hidden></section>
+    <section id="panel-done" hidden></section>
+  </main>
+</div>
+
+<div class="overlay" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="icon-btn" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+'use strict';
+
+/* =========================================================
+   E&C Dispatch – receives customer pickup requests live,
+   alerts with sound + visuals, and copies the dispatch text.
+   ========================================================= */
+const REPEAT_ALARM_MS = 20000;   // how often the alarm repeats until someone taps "Got it"
+const DONE_DAYS = 2;             // Done tab shows today and yesterday
+
+firebase.initializeApp({
+  apiKey: 'AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg',
+  authDomain: 'eandccourier-36fcc.firebaseapp.com',
+  databaseURL: 'https://eandccourier-36fcc-default-rtdb.firebaseio.com',
+  projectId: 'eandccourier-36fcc',
+  messagingSenderId: '1067680083511',
+  appId: '1:1067680083511:android:22d1eb3757302492bd19b2'
+});
+const auth = firebase.auth();
+const db = firebase.database();
+const TS = firebase.database.ServerValue.TIMESTAMP;
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+
+/* ---------------- State ---------------- */
+const S = {
+  user: null,
+  pending: {},      // status === 'new'
+  done: {},         // dispatched recently
+  cancelled: {},    // cancelled recently
+  loaded: false,
+  listeners: [],
+  tab: 'queue',
+  day: '',
+  sessionToken: 0,
+  settings: loadSettings()
+};
+function loadSettings() {
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mode: IS_ANDROID ? 'messages' : 'copy', theme: 'dark' };
+  try { return Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { return def; }
+}
+function saveSettings() { try { localStorage.setItem('ecd_settings', JSON.stringify(S.settings)); } catch (e) { /* ignore */ } }
+
+/* ---------------- Utilities ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icon = (n, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const pad = (n) => String(n).padStart(2, '0');
+const localDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseLocalDate = (s) => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => localDateStr(new Date());
+const fmtDay = (s) => (s ? parseLocalDate(s).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }) : '');
+const fmtTime = (ts) => (ts ? new Date(ts).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : '');
+const fmtDateTime = (ts) => (ts ? new Date(ts).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+const phoneDigits = (v) => String(v || '').replace(/\D/g, '');
+function ago(ts) {
+  if (!ts) return '';
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} h ${m % 60} min ago`;
+  return fmtDateTime(ts);
+}
+function friendlyError(err) {
+  const code = String((err && err.code) || '');
+  const map = {
+    'auth/invalid-credential': 'That email and password don\u2019t match an account.',
+    'auth/wrong-password': 'That email and password don\u2019t match an account.',
+    'auth/user-not-found': 'That email and password don\u2019t match an account.',
+    'auth/too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
+    'auth/network-request-failed': 'No connection. Check your internet and try again.'
+  };
+  if (map[code]) return map[code];
+  if (/permission[_ ]denied/i.test(code + ' ' + ((err && err.message) || ''))) return 'This account doesn\u2019t have dispatch permission.';
+  return (err && err.message) || 'Something went wrong.';
+}
+
+/* ---------------- The dispatch text ----------------
+   Format: "<pickup name> for <delivery name> , <order details separated by commas>"
+   Order details: items, item description, Prepaid/Collect, PO, driver notes.
+   Never included: addresses, phone numbers, emails, scheduled date. */
+function oneLine(s) { return String(s || '').replace(/\s*[\r\n]+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
+function dispatchText(r) {
+  const head = `${oneLine(r.pickup && r.pickup.name)} for ${oneLine(r.delivery && r.delivery.name)}`;
+  const details = [
+    r.items_text,
+    r.item_details,
+    r.payment === 'collect' ? 'Collect' : 'Prepaid',
+    r.po ? `PO ${r.po}` : '',
+    r.notes
+  ].map(oneLine).filter(Boolean);
+  return details.length ? `${head} , ${details.join(', ')}` : head;
+}
+
+/* ---------------- Request phase helpers ---------------- */
+const isFuture = (r) => r.when === 'scheduled' && r.scheduled_for && r.scheduled_for > todayStr();
+const isOverdue = (r) => r.when === 'scheduled' && r.scheduled_for && r.scheduled_for < todayStr();
+// A request alerts once when it arrives, again if the customer edits it, and again on its scheduled day.
+const alertKey = (id, r) => `${id}|${isFuture(r) ? 'sched' : 'due'}|${r.updated_at || r.created_at || 0}`;
+
+/* ---------------- Acknowledged alerts (persist across reloads) ---------------- */
+let acked = new Set();
+try { acked = new Set(JSON.parse(localStorage.getItem('ecd_acked') || '[]')); } catch (e) { /* ignore */ }
+function saveAcked() {
+  const live = new Set(Object.entries(S.pending).map(([id, r]) => alertKey(id, r)));
+  acked = new Set([...acked].filter((k) => live.has(k)));
+  try { localStorage.setItem('ecd_acked', JSON.stringify([...acked])); } catch (e) { /* ignore */ }
+}
+const unacked = () => Object.entries(S.pending).filter(([id, r]) => !acked.has(alertKey(id, r)));
+function ack(id) { const r = S.pending[id]; if (!r || acked.has(alertKey(id, r))) return; acked.add(alertKey(id, r)); saveAcked(); refreshAlarm(); renderAll(); }
+function ackAll() { Object.entries(S.pending).forEach(([id, r]) => acked.add(alertKey(id, r))); saveAcked(); refreshAlarm(); renderAll(); }
+
+/* =========================================================
+   Sound, vibration, wake lock, system notifications
+   ========================================================= */
+let audioCtx = null;
+function audioReady() { return !!(audioCtx && audioCtx.state === 'running'); }
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state !== 'running') audioCtx.resume().then(updateSoundUi).catch(() => {});
+  } catch (e) { /* no audio support */ }
+  updateSoundUi();
+}
+document.addEventListener('pointerdown', unlockAudio, { capture: true });
+document.addEventListener('keydown', unlockAudio, { capture: true });
+
+function tone(freq, start, dur, vol) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'triangle';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(start);
+  o.stop(start + dur + 0.05);
+}
+function playChime(kind) {
+  if (!S.settings.sound || !audioReady()) return;
+  const t = audioCtx.currentTime + 0.02;
+  if (kind === 'cancel') { tone(660, t, 0.35, 0.5); tone(440, t + 0.22, 0.5, 0.5); return; }
+  // Rising three-note chime, played twice so it's hard to miss
+  [0, 0.75].forEach((o) => { tone(880, t + o, 0.4, 0.7); tone(1175, t + o + 0.16, 0.4, 0.7); tone(1568, t + o + 0.32, 0.6, 0.7); });
+}
+function buzz(pattern) { if (S.settings.vibrate && navigator.vibrate) { try { navigator.vibrate(pattern); } catch (e) { /* ignore */ } } }
+
+let wakeLock = null;
+async function applyWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    if (S.settings.wake && document.visibilityState === 'visible' && S.user && !$('#view-app').hidden) {
+      if (!wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    } else if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+
+let swReg = null;
+async function registerSw() {
+  if (!('serviceWorker' in navigator) || swReg) return swReg;
+  try { swReg = await navigator.serviceWorker.register('sw.js', { scope: './' }); } catch (e) { swReg = null; }
+  return swReg;
+}
+async function systemNotify(title, body) {
+  if (!S.settings.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (document.visibilityState === 'visible') return; // the in-page alert covers it
+  const opts = { body, tag: 'ec-dispatch', renotify: true, requireInteraction: true, vibrate: [300, 150, 300, 150, 300], icon: 'icon-512.png', badge: 'icon-512.png' };
+  try {
+    const reg = swReg || (await registerSw());
+    if (reg) { await reg.showNotification(title, opts); return; }
+    new Notification(title, opts); // desktop browsers
+  } catch (e) { /* not supported */ }
+}
+
+/* ---------------- Alarm loop ---------------- */
+let alarmTimer = null;
+let titleTimer = null;
+let lastAlarmKeys = new Set();
+function refreshAlarm() {
+  const list = unacked();
+  const banner = $('#alert-banner');
+  if (!list.length) {
+    banner.hidden = true;
+    clearInterval(alarmTimer); alarmTimer = null;
+    clearInterval(titleTimer); titleTimer = null;
+    document.title = 'E&C Dispatch';
+    lastAlarmKeys = new Set();
+    return;
+  }
+  // Banner text
+  const first = list[0][1];
+  const sched = isFuture(first);
+  $('#alert-text').innerHTML = list.length === 1
+    ? `${sched ? 'New scheduled request' : first.updated_at ? 'Request updated' : 'New request'} #${esc(first.ref_no)}<small>${esc(first.company_name || '')}: ${esc(first.pickup && first.pickup.name)} for ${esc(first.delivery && first.delivery.name)}${sched ? `, for ${esc(fmtDay(first.scheduled_for))}` : ''}</small>`
+    : `${list.length} requests need attention<small>Tap to mark them seen. They stay in the queue until dispatched.</small>`;
+  banner.hidden = false;
+
+  // Fire immediately for anything we haven't alarmed for yet in this session
+  const keys = new Set(list.map(([id, r]) => alertKey(id, r)));
+  const fresh = [...keys].some((k) => !lastAlarmKeys.has(k));
+  lastAlarmKeys = keys;
+  if (fresh) {
+    playChime('new');
+    buzz([400, 150, 400, 150, 400]);
+    systemNotify(list.length === 1 ? `New request #${first.ref_no}` : `${list.length} new requests`,
+      list.length === 1 ? `${first.company_name || ''}: ${first.pickup && first.pickup.name} for ${first.delivery && first.delivery.name}` : 'Open E&C Dispatch to see them.');
+  }
+  if (!alarmTimer && S.settings.repeat) {
+    alarmTimer = setInterval(() => { if (unacked().length) { playChime('new'); buzz([300, 150, 300]); } }, REPEAT_ALARM_MS);
+  }
+  if (!S.settings.repeat && alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
+  if (!titleTimer) {
+    let on = false;
+    titleTimer = setInterval(() => { on = !on; document.title = on ? `(${unacked().length}) New request` : 'E&C Dispatch'; }, 1000);
+  }
+}
+
+function updateSoundUi() {
+  const btn = $('#sound-btn');
+  if (btn) {
+    btn.innerHTML = S.settings.sound ? icon('sound') : icon('mute');
+    btn.setAttribute('aria-label', S.settings.sound ? 'Alert sound on. Tap to mute.' : 'Alert sound muted. Tap to turn on.');
+    btn.style.color = S.settings.sound ? '' : '#f0524f';
+  }
+  const banner = $('#sound-banner');
+  if (banner) banner.hidden = !(S.settings.sound && !audioReady() && S.user && !$('#view-app').hidden);
+}
+
+/* =========================================================
+   Toasts and sheet
+   ========================================================= */
+function toast(message, type = 'info', ms = 4000, action) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  el.innerHTML = `<span class="grow">${esc(message)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
+  $('#toasts').appendChild(el);
+  const remove = () => { el.style.opacity = '0'; el.style.transition = 'opacity .2s'; setTimeout(() => el.remove(), 220); };
+  const t = setTimeout(remove, ms);
+  if (action) $('button', el).addEventListener('click', () => { clearTimeout(t); remove(); action.run(); });
+  else el.addEventListener('click', () => { clearTimeout(t); remove(); });
+}
+
+let sheetOpen = false;
+let sheetResolver = null;
+function openSheet(title, html, onMount) {
+  if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
+  $('#sheet-title').textContent = title;
+  $('#sheet-body').innerHTML = html;
+  if (!sheetOpen) {
+    sheetOpen = true;
+    history.pushState({ sheet: true }, '');
+    const el = $('#sheet');
+    el.hidden = false;
+    document.body.classList.add('no-scroll');
+    requestAnimationFrame(() => el.classList.add('open'));
+  }
+  if (onMount) onMount($('#sheet-body'));
+}
+function _hideSheet() {
+  if (!sheetOpen) return;
+  sheetOpen = false;
+  if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
+  const el = $('#sheet');
+  el.classList.remove('open');
+  document.body.classList.remove('no-scroll');
+  setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
+}
+function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
+window.addEventListener('popstate', () => { if (sheetOpen) _hideSheet(); });
+$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+function confirmSheet(title, body, ok, danger) {
+  return new Promise((resolve) => {
+    openSheet(title, `<p class="muted" style="margin-bottom:20px">${body}</p><div class="btn-row"><button class="btn btn-secondary" type="button" data-c="0">Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" type="button" data-c="1">${esc(ok)}</button></div>`);
+    sheetResolver = resolve;
+    $$('#sheet-body [data-c]').forEach((b) => b.addEventListener('click', () => { const r = sheetResolver; sheetResolver = null; closeSheet(); if (r) r(b.dataset.c === '1'); }));
+  });
+}
+
+/* =========================================================
+   Auth and staff check
+   ========================================================= */
+function show(view) { ['loading', 'auth', 'denied', 'app'].forEach((v) => { $('#view-' + v).hidden = v !== view; }); }
+
+$('#auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#auth-submit');
+  btn.disabled = true;
+  try { await auth.signInWithEmailAndPassword($('#auth-email').value.trim(), $('#auth-password').value); }
+  catch (err) { toast(friendlyError(err), 'error'); }
+  finally { btn.disabled = false; }
+});
+async function googleSignIn() {
+  const p = new firebase.auth.GoogleAuthProvider();
+  try { await auth.signInWithPopup(p); }
+  catch (err) {
+    if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(err.code)) auth.signInWithRedirect(p);
+    else if (err.code !== 'auth/popup-closed-by-user') toast(friendlyError(err), 'error');
+  }
+}
+auth.getRedirectResult().catch(() => {});
+
+function detachAll() { S.listeners.forEach((off) => { try { off(); } catch (e) { /* ignore */ } }); S.listeners = []; }
+function listen(ref, cb, errCb) { ref.on('value', cb, errCb); S.listeners.push(() => ref.off('value', cb)); }
+
+auth.onAuthStateChanged((user) => handleUser(user));
+async function handleUser(user) {
+  detachAll();
+  S.sessionToken++;
+  const token = S.sessionToken;
+  S.user = user;
+  Object.assign(S, { pending: {}, done: {}, cancelled: {}, loaded: false });
+  refreshAlarm();
+  if (!user) { show('auth'); applyWakeLock(); updateSoundUi(); return; }
+  show('loading');
+  let isStaff = false;
+  try { isStaff = (await db.ref(`staff/${user.uid}`).once('value')).val() === true; } catch (e) { isStaff = false; }
+  if (token !== S.sessionToken) return;
+  if (!isStaff) {
+    $('#denied-email').textContent = user.email || '';
+    $('#denied-uid').textContent = user.uid;
+    show('denied');
+    return;
+  }
+  show('app');
+  startListening();
+  applyWakeLock();
+  updateSoundUi();
+  if (S.settings.notify) registerSw();
+}
+
+/* =========================================================
+   Live data
+   ========================================================= */
+function startListening() {
+  detachAll();
+  S.day = todayStr();
+  const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - (DONE_DAYS - 1));
+  const sinceTs = since.getTime();
+
+  listen(db.ref('requests').orderByChild('status').equalTo('new'), (snap) => {
+    S.pending = snap.val() || {};
+    S.loaded = true;
+    saveAcked();
+    refreshAlarm();
+    renderAll();
+  }, (err) => toast('Lost access to requests: ' + friendlyError(err), 'error', 8000));
+
+  listen(db.ref('requests').orderByChild('dispatched_at').startAt(sinceTs), (snap) => {
+    const all = snap.val() || {};
+    S.done = Object.fromEntries(Object.entries(all).filter(([, r]) => r.status === 'dispatched'));
+    if (S.tab === 'done') renderDone();
+  });
+  let firstCancelled = true;
+  listen(db.ref('requests').orderByChild('cancelled_at').startAt(sinceTs), (snap) => {
+    const all = snap.val() || {};
+    const before = S.cancelled;
+    S.cancelled = Object.fromEntries(Object.entries(all).filter(([, r]) => r.status === 'cancelled'));
+    if (!firstCancelled) {
+      Object.entries(S.cancelled).forEach(([id, c]) => {
+        if (!before[id]) { toast(`Request #${c.ref_no} was cancelled by ${c.company_name || 'the customer'}.`, 'error', 9000); playChime('cancel'); buzz([200, 100, 200]); }
+      });
+    }
+    firstCancelled = false;
+    if (S.tab === 'done') renderDone();
+  });
+
+  const conn = db.ref('.info/connected');
+  let offTimer = null;
+  const onConn = (s) => {
+    clearTimeout(offTimer);
+    const live = $('#live');
+    if (s.val() === true) { live.className = 'live on'; $('#live-text').textContent = 'Live'; }
+    else offTimer = setTimeout(() => { live.className = 'live off'; $('#live-text').textContent = 'Reconnecting'; }, 2000);
+  };
+  conn.on('value', onConn);
+  S.listeners.push(() => conn.off('value', onConn));
+}
+
+/* Midnight rollover, scheduled requests becoming due, and age labels */
+setInterval(() => {
+  if (!S.user || $('#view-app').hidden) return;
+  if (S.day !== todayStr()) { startListening(); return; }
+  $$('[data-age]').forEach((el) => { el.textContent = ago(Number(el.dataset.age)); });
+}, 30000);
+document.addEventListener('visibilitychange', () => {
+  applyWakeLock();
+  if (document.visibilityState === 'visible' && S.user && !$('#view-app').hidden) {
+    if (S.day !== todayStr()) startListening(); else { refreshAlarm(); renderAll(); }
+  }
+});
+
+/* =========================================================
+   Rendering
+   ========================================================= */
+function queueList() {
+  return Object.entries(S.pending).filter(([, r]) => !isFuture(r))
+    .sort((a, b) => (isOverdue(b[1]) - isOverdue(a[1])) || ((a[1].created_at || 0) - (b[1].created_at || 0)));
+}
+function scheduledList() {
+  return Object.entries(S.pending).filter(([, r]) => isFuture(r))
+    .sort((a, b) => a[1].scheduled_for.localeCompare(b[1].scheduled_for) || ((a[1].created_at || 0) - (b[1].created_at || 0)));
+}
+function buttonLabel() {
+  return S.settings.mode === 'messages' ? 'Send to Messages' : S.settings.mode === 'sms' ? 'Copy & start a text' : 'Copy & mark dispatched';
+}
+function jobCard(id, r) {
+  const unseen = !acked.has(alertKey(id, r));
+  const chips = [];
+  if (unseen) chips.push('<span class="chip new">New</span>');
+  if (r.updated_at) chips.push('<span class="chip warn">Changed by customer</span>');
+  if (r.when === 'scheduled' && r.scheduled_for) {
+    if (isOverdue(r)) chips.push(`<span class="chip bad">${icon('alert')}Was due ${esc(fmtDay(r.scheduled_for))}</span>`);
+    else if (isFuture(r)) chips.push(`<span class="chip warn">${icon('calendar')}${esc(fmtDay(r.scheduled_for))}</span>`);
+    else chips.push(`<span class="chip warn">${icon('calendar')}Scheduled for today</span>`);
+  }
+  chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
+  if (r.pickup && !r.pickup.verified) chips.push('<span class="chip">Pickup address unmatched</span>');
+  if (r.delivery && !r.delivery.verified) chips.push('<span class="chip">Delivery address unmatched</span>');
+  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}" data-id="${esc(id)}">
+    <div class="job-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span><span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span></div>
+    <div class="route">
+      <div class="stop"><b>${esc(r.pickup && r.pickup.name)}</b><small>${esc(r.pickup && r.pickup.address)}</small></div>
+      <div class="stop to"><b>${esc(r.delivery && r.delivery.name)}</b><small>${esc(r.delivery && r.delivery.address)}</small></div>
+    </div>
+    <div class="chips">${chips.join('')}</div>
+    <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
+    <div class="job-actions">
+      <button class="btn btn-primary" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
+      <button class="btn btn-secondary" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}">${icon('more')}</button>
+    </div>
+  </article>`;
+}
+function renderQueue() {
+  const list = queueList();
+  $('#panel-queue').innerHTML = list.length ? list.map(([id, r]) => jobCard(id, r)).join('')
+    : (S.loaded ? `<div class="empty">${icon('inbox')}<h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner.</p></div>` : '<div class="empty"><div class="spinner" style="margin:0 auto"></div></div>');
+}
+function renderScheduled() {
+  const list = scheduledList();
+  if (!list.length) { $('#panel-scheduled').innerHTML = `<div class="empty">${icon('calendar')}<h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>`; return; }
+  let html = '';
+  let day = '';
+  list.forEach(([id, r]) => {
+    if (r.scheduled_for !== day) {
+      day = r.scheduled_for;
+      const n = list.filter(([, x]) => x.scheduled_for === day).length;
+      html += `<div class="group-head"><span>${esc(fmtDay(day))}</span><span>${n} ${n === 1 ? 'request' : 'requests'}</span></div>`;
+    }
+    html += jobCard(id, r);
+  });
+  $('#panel-scheduled').innerHTML = html;
+}
+function renderDone() {
+  const rows = [
+    ...Object.entries(S.done).map(([id, r]) => ({ id, r, t: r.dispatched_at || 0, kind: 'done' })),
+    ...Object.entries(S.cancelled).map(([id, r]) => ({ id, r, t: r.cancelled_at || 0, kind: 'cancelled' }))
+  ].sort((a, b) => b.t - a.t);
+  if (!rows.length) { $('#panel-done').innerHTML = `<div class="empty">${icon('check')}<h3>Nothing dispatched yet today</h3><p>Dispatched and cancelled requests from today and yesterday show here.</p></div>`; return; }
+  let html = '';
+  let day = '';
+  rows.forEach(({ id, r, t, kind }) => {
+    const d = localDateStr(new Date(t));
+    if (d !== day) { day = d; html += `<div class="group-head"><span>${d === todayStr() ? 'Today' : 'Yesterday'}</span></div>`; }
+    const meta = kind === 'done'
+      ? `Dispatched ${esc(fmtTime(t))}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email.split('@')[0])}` : ''}`
+      : `Cancelled by customer ${esc(fmtTime(t))}`;
+    html += `<div class="done-row${kind === 'cancelled' ? ' cancelled' : ''}">
+      <span class="req-no">#${esc(r.ref_no)}</span>
+      <span class="grow"><span class="names" style="display:block">${esc(r.pickup && r.pickup.name)} for ${esc(r.delivery && r.delivery.name)}</span><span class="meta">${esc(r.company_name)}, ${meta}</span></span>
+      ${kind === 'done' ? `<button class="icon-btn" type="button" data-act="recopy" data-id="${esc(id)}" aria-label="Copy text again">${icon('copy')}</button>
+      <button class="icon-btn" type="button" data-act="undo" data-id="${esc(id)}" aria-label="Move back to queue">${icon('undo')}</button>` : ''}
+    </div>`;
+  });
+  $('#panel-done').innerHTML = html;
+}
+function renderCounts() {
+  const q = queueList().length;
+  const s = scheduledList().length;
+  $('#count-queue').textContent = q;
+  $('#count-scheduled').textContent = s;
+  $('#count-queue').classList.toggle('hot', q > 0);
+}
+function renderAll() {
+  if ($('#view-app').hidden) return;
+  renderCounts();
+  if (S.tab === 'queue') renderQueue();
+  if (S.tab === 'scheduled') renderScheduled();
+  if (S.tab === 'done') renderDone();
+  if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
+    if (S.pending[openDetailId]) openDetails(openDetailId, true); else closeSheet();
+  }
+}
+function switchTab(tab) {
+  S.tab = tab;
+  $$('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  ['queue', 'scheduled', 'done'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  renderAll();
+  window.scrollTo(0, 0);
+}
+
+/* =========================================================
+   Dispatch actions
+   ========================================================= */
+function copySync(text) {
+  let ok = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    ok = document.execCommand('copy');
+    ta.remove();
+  } catch (e) { ok = false; }
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).catch(() => {}); ok = true; }
+  return ok;
+}
+function launch(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+let sharing = false;
+// Must run straight from the tap: browsers only allow the clipboard, the share menu and app launches from a tap.
+function dispatch(id, mode) {
+  const r = S.pending[id];
+  if (!r) { toast('That request is no longer waiting. It may have been cancelled or dispatched.', 'error'); return; }
+  if (sharing) return;
+  const text = dispatchText(r);
+  const copied = copySync(text); // backup: the text is also on the clipboard
+  acked.add(alertKey(id, r));
+  saveAcked();
+  const markDispatched = (msg) => {
+    db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
+      .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
+    toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
+  };
+  if (mode === 'messages' && navigator.share) {
+    // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
+    sharing = true;
+    navigator.share({ text })
+      .then(() => markDispatched(`#${r.ref_no} sent to the share menu and marked dispatched.`))
+      .catch((err) => {
+        if (err && err.name === 'AbortError') toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
+        else toast(`The share menu didn\u2019t open.${copied ? ' The text is copied.' : ''}`, 'error', 10000,
+          { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); markDispatched(`#${r.ref_no} marked dispatched.`); } });
+      })
+      .finally(() => { sharing = false; });
+    return;
+  }
+  if (!copied) toast('Couldn\u2019t copy automatically. Open Details and copy the text by hand.', 'error', 8000);
+  markDispatched(`#${r.ref_no} copied and marked dispatched.`);
+  if (mode === 'sms' || mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
+}
+async function undoDispatch(id) {
+  const r = S.done[id];
+  if (r) acked.add(alertKey(id, r)); // already seen; don't sound the alarm again when it returns to the queue
+  try {
+    await db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_by: null, dispatched_by_email: null });
+    toast('Moved back to the queue.', 'info');
+  } catch (err) { toast(friendlyError(err), 'error'); }
+}
+function recopy(id) {
+  const r = S.done[id];
+  if (!r) return;
+  const text = dispatchText(r);
+  const ok = copySync(text);
+  if (S.settings.mode === 'messages' && navigator.share) { navigator.share({ text }).catch(() => {}); return; }
+  toast(ok ? `#${r.ref_no} copied again.` : 'Couldn\u2019t copy automatically.', ok ? 'ok' : 'error');
+  if (S.settings.mode === 'sms') launch(`sms:?body=${encodeURIComponent(text)}`);
+}
+
+let openDetailId = null;
+function mapsLink(L) {
+  if (!L) return '';
+  const q = L.lat != null ? `${L.lat},${L.lng}` : L.address;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q || '')}`;
+}
+function openDetails(id, refresh) {
+  const r = S.pending[id];
+  if (!r) return;
+  openDetailId = id;
+  if (!refresh) ack(id);
+  const leg = (L) => {
+    L = L || {};
+    const lines = [`<b>${esc(L.name)}</b>`, `<small>${esc(L.address)}${L.city && !String(L.address || '').includes(L.city) ? `, ${esc(L.city)}` : ''}</small>`];
+    if (L.address) lines.push(`<small><a href="${esc(mapsLink(L))}" target="_blank" rel="noopener">Open in Maps</a></small>`);
+    if (L.phone) lines.push(`<small><a href="tel:${esc(phoneDigits(L.phone))}">${esc(L.phone)}</a></small>`);
+    if (L.email) lines.push(`<small><a href="mailto:${esc(L.email)}">${esc(L.email)}</a></small>`);
+    return lines.join('');
+  };
+  const rb = r.requested_by || {};
+  const html = `<div data-detail>
+    <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
+    <dl class="dl">
+      <dt>Customer</dt><dd><b>${esc(r.company_name)}</b><small>${esc(rb.name || '')}</small>${rb.phone ? `<small><a href="tel:${esc(phoneDigits(rb.phone))}">${esc(rb.phone)}</a></small>` : ''}${rb.email ? `<small><a href="mailto:${esc(rb.email)}">${esc(rb.email)}</a></small>` : ''}</dd>
+      <dt>Submitted</dt><dd>${esc(fmtDateTime(r.created_at))}${r.updated_at ? `<small>Changed ${esc(fmtDateTime(r.updated_at))}</small>` : ''}</dd>
+      <dt>When</dt><dd>${r.when === 'scheduled' && r.scheduled_for ? esc(fmtDay(r.scheduled_for)) : 'As soon as possible'}</dd>
+      <dt>Pickup</dt><dd>${leg(r.pickup)}</dd>
+      <dt>Delivery</dt><dd>${leg(r.delivery)}</dd>
+      <dt>Items</dt><dd>${[r.items_text, r.item_details].filter(Boolean).map(esc).join('<br>')}</dd>
+      <dt>Payment</dt><dd>${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</dd>
+      ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
+      ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
+    </dl>
+    <div style="display:grid;gap:10px;margin-top:22px">
+      <button class="btn btn-primary block" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
+      <div class="btn-row">
+        ${S.settings.mode !== 'copy' ? `<button class="btn btn-secondary" type="button" data-act="dispatch-copy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy only</button>` : ''}
+        <button class="btn btn-secondary" type="button" data-act="preview-copy" data-id="${esc(id)}">Copy, don\u2019t dispatch</button>
+      </div>
+    </div></div>`;
+  if (refresh) { $('#sheet-title').textContent = `Request #${r.ref_no}`; $('#sheet-body').innerHTML = html; }
+  else openSheet(`Request #${r.ref_no}`, html);
+}
+
+/* =========================================================
+   Settings
+   ========================================================= */
+function openSettings() {
+  const st = S.settings;
+  const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
+  const notifSupported = 'Notification' in window;
+  openSheet('Settings', `
+    <p class="section-title" style="margin-top:0">When I tap the main button</p>
+    <div class="seg" role="radiogroup" aria-label="Main button">
+      <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send to Messages</span></label>
+      <label><input type="radio" name="mode" value="sms"${st.mode === 'sms' ? ' checked' : ''}><span>Copy, start a new text</span></label>
+      <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
+    </div>
+    <p class="small muted" style="margin-top:8px">Send to Messages opens the share menu: tap Messages, then the conversation, and the text is already typed in. Start a new text opens a new message with the text filled in, and you choose who it goes to. Every option also copies the text and marks the request dispatched.</p>
+    <p class="section-title">Alerts</p>
+    <div>
+      ${sw('sound', 'Alert sound', 'Turn the phone\u2019s media volume up.')}
+      ${sw('repeat', 'Repeat until I tap Got it', `Plays again every ${REPEAT_ALARM_MS / 1000} seconds.`)}
+      ${sw('vibrate', 'Vibrate', '')}
+      ${sw('wake', 'Keep the screen on', 'Stops the phone sleeping while this page is open.')}
+      ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you\u2019re in another app, as long as this page is still open.') : ''}
+    </div>
+    <button class="btn btn-secondary block" type="button" data-act="test-alert" style="margin-top:12px">${icon('bell', 'sm')}Test the alert</button>
+    <p class="section-title">Display</p>
+    <div class="seg" role="radiogroup" aria-label="Theme">
+      <label><input type="radio" name="theme" value="dark"${st.theme === 'dark' ? ' checked' : ''}><span>Dark</span></label>
+      <label><input type="radio" name="theme" value="light"${st.theme === 'light' ? ' checked' : ''}><span>Light</span></label>
+    </div>
+    <p class="section-title">Account</p>
+    <p class="small muted" style="margin-bottom:10px">Signed in as ${esc(S.user && S.user.email)}</p>
+    <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>`, (body) => {
+    $$('input[name=mode]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mode = x.value; saveSettings(); renderAll(); }));
+    $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
+    $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
+      const key = x.dataset.setting;
+      if (key === 'notify' && x.checked) {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { x.checked = false; toast('Notifications are blocked. Allow them for this site in Chrome\u2019s site settings.', 'error', 7000); return; }
+        await registerSw();
+      }
+      S.settings[key] = x.checked;
+      saveSettings();
+      if (key === 'wake') applyWakeLock();
+      if (key === 'sound') updateSoundUi();
+      if (key === 'repeat') { clearInterval(alarmTimer); alarmTimer = null; refreshAlarm(); }
+    }));
+  });
+}
+function applyTheme() {
+  document.documentElement.dataset.theme = S.settings.theme === 'light' ? 'light' : 'dark';
+}
+function testAlert() {
+  unlockAudio();
+  setTimeout(() => {
+    playChime('new');
+    buzz([400, 150, 400, 150, 400]);
+    if (!audioReady()) toast('Sound is blocked until you tap the page. Tap again to test.', 'error');
+    else if (!S.settings.sound) toast('Alert sound is turned off.', 'error');
+    else toast('That\u2019s the new request alert.', 'ok');
+  }, 120);
+}
+
+/* =========================================================
+   One click handler
+   ========================================================= */
+document.addEventListener('click', async (e) => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab) { switchTab(tab.dataset.tab); return; }
+  const el = e.target.closest('[data-act]');
+  if (!el) {
+    const card = e.target.closest('.job.unseen');
+    if (card) ack(card.dataset.id);
+    return;
+  }
+  const id = el.dataset.id;
+  switch (el.dataset.act) {
+    case 'google': googleSignIn(); break;
+    case 'signout': auth.signOut(); break;
+    case 'signout-ask': if (await confirmSheet('Sign out?', 'New requests won\u2019t alert on this phone while you\u2019re signed out.', 'Sign out', true)) auth.signOut(); break;
+    case 'recheck': handleUser(auth.currentUser); break;
+    case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
+    case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
+    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
+    case 'settings': openSettings(); break;
+    case 'sheet-close': closeSheet(); break;
+    case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
+    case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id, S.settings.mode); break;
+    case 'dispatch-copy': if (sheetOpen) _hideSheet(); dispatch(id, 'copy'); break;
+    case 'preview-copy': { const r = S.pending[id]; if (r) toast(copySync(dispatchText(r)) ? 'Copied. It\u2019s still in the queue.' : 'Couldn\u2019t copy.', 'info'); break; }
+    case 'details': openDetails(id); break;
+    case 'recopy': recopy(id); break;
+    case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was copied by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
+    case 'test-alert': testAlert(); break;
+    default: break;
+  }
+});
+
+applyTheme();
+updateSoundUi();
+</script></body></html>
