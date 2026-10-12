@@ -17,14 +17,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -60,7 +60,7 @@ jobs:
             echo "VARIANT=release" >> "$GITHUB_ENV"
           else
             echo "VARIANT=debug" >> "$GITHUB_ENV"
-            echo "::warning::No signing key secrets, so this is a debug build. Each debug build has a different key: uninstall the old app before installing a new one. See APP-SETUP.md, step 4."
+            echo "::warning::No signing key secrets, so this is a debug build. Each debug build has a different key: uninstall the old app before installing a new one. See APP-SETUP.md, step 5."
           fi
 
       - name: Build APK
@@ -77,7 +77,7 @@ jobs:
           cp app/build/outputs/apk/$VARIANT/*.apk "../dist/ec-dispatch-${{ github.run_number }}-$VARIANT.apk"
           ls -la ../dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ec-dispatch-${{ github.run_number }}-${{ env.VARIANT }}${{ env.PUSH == 'no' && '-no-push' || '' }}
           path: dist/*.apk
