@@ -267,6 +267,7 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<!-- capacitor runtime -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -292,6 +293,11 @@ const auth = firebase.auth();
 const db = firebase.database();
 const TS = firebase.database.ServerValue.TIMESTAMP;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
+
+/* Running as the installed phone app (Capacitor)? Then use native push and the native share menu. */
+const CAP = window.Capacitor && window.Capacitor.registerPlugin && window.Capacitor.isNativePlatform() ? window.Capacitor : null;
+const Push = CAP ? CAP.registerPlugin('PushNotifications') : null;
+const NativeShare = CAP ? CAP.registerPlugin('Share') : null;
 
 /* ---------------- State ---------------- */
 const S = {
@@ -396,6 +402,7 @@ function unlockAudio() {
   updateSoundUi();
 }
 document.addEventListener('pointerdown', unlockAudio, { capture: true });
+if (CAP) unlockAudio();
 document.addEventListener('keydown', unlockAudio, { capture: true });
 
 function tone(freq, start, dur, vol) {
@@ -445,6 +452,63 @@ async function systemNotify(title, body) {
     if (reg) { await reg.showNotification(title, opts); return; }
     new Notification(title, opts); // desktop browsers
   } catch (e) { /* not supported */ }
+}
+
+/* ---------------- Push notifications (installed app only) ----------------
+   The phone registers with Firebase Cloud Messaging and saves its token under
+   push_tokens/<uid>. A Cloud Function (functions/index.js) sends every staff
+   phone a notification when a request arrives, even if the app is closed. */
+const pushKey = (t) => String(t).replace(/[.#$\[\]\/]/g, '_');
+let pushToken = null;
+let pushState = CAP ? 'off' : 'web'; // web | off | blocked | error | on
+function initPushListeners() {
+  if (!Push) return;
+  Push.addListener('registration', async ({ value }) => {
+    pushToken = value;
+    const u = auth.currentUser;
+    if (!u) return;
+    try {
+      await db.ref(`push_tokens/${u.uid}/${pushKey(value)}`).set({ token: value, platform: CAP.getPlatform(), email: u.email || null, updated_at: TS });
+      pushState = 'on';
+    } catch (err) {
+      pushState = 'error';
+      toast('Couldn\u2019t turn on phone alerts: ' + friendlyError(err), 'error', 9000);
+    }
+  });
+  Push.addListener('registrationError', (err) => {
+    pushState = 'error';
+    toast('Phone alerts couldn\u2019t start: ' + ((err && err.error) || 'unknown error'), 'error', 9000);
+  });
+  // Tapped a notification: show the queue
+  Push.addListener('pushNotificationActionPerformed', () => { if (!$('#view-app').hidden) switchTab('queue'); });
+}
+async function setupPush() {
+  if (!Push) return;
+  try {
+    let perm = await Push.checkPermissions();
+    if (perm.receive !== 'granted' && perm.receive !== 'denied') perm = await Push.requestPermissions();
+    if (perm.receive !== 'granted') {
+      pushState = 'blocked';
+      toast('Notifications are off for this app, so you won\u2019t get alerts when it\u2019s closed. Turn them on in the phone\u2019s Settings > Apps > E&C Dispatch > Notifications.', 'error', 12000);
+      return;
+    }
+    await Push.register(); // the 'registration' listener saves the token
+  } catch (err) { pushState = 'error'; }
+}
+async function removePushToken() {
+  const u = auth.currentUser;
+  if (!pushToken || !u) return;
+  try { await db.ref(`push_tokens/${u.uid}/${pushKey(pushToken)}`).remove(); } catch (e) { /* ignore */ }
+}
+async function signOut() {
+  await removePushToken(); // stop alerts to this phone while signed out
+  auth.signOut();
+}
+async function sendTestPush() {
+  try {
+    await db.ref(`push_tests/${S.user.uid}`).set(TS);
+    toast('Test sent. Lock the phone or leave the app: the alert should arrive within a few seconds.', 'ok', 8000);
+  } catch (err) { toast('Couldn\u2019t send the test: ' + friendlyError(err), 'error'); }
 }
 
 /* ---------------- Alarm loop ---------------- */
@@ -602,7 +666,8 @@ async function handleUser(user) {
   startListening();
   applyWakeLock();
   updateSoundUi();
-  if (S.settings.notify) registerSw();
+  if (CAP) setupPush();
+  else if (S.settings.notify) registerSw();
 }
 
 /* =========================================================
@@ -804,6 +869,9 @@ function launch(url) {
 }
 
 let sharing = false;
+const canShare = () => !!(NativeShare || navigator.share);
+const shareText = (text) => (NativeShare ? NativeShare.share({ text }) : navigator.share({ text }));
+const isShareCancel = (err) => !!err && (err.name === 'AbortError' || /cancel/i.test(String(err.message || '')));
 // Must run straight from the tap: browsers only allow the clipboard, the share menu and app launches from a tap.
 function dispatch(id, mode) {
   const r = S.pending[id];
@@ -818,13 +886,13 @@ function dispatch(id, mode) {
       .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
     toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
   };
-  if (mode === 'messages' && navigator.share) {
+  if (mode === 'messages' && canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
     sharing = true;
-    navigator.share({ text })
+    shareText(text)
       .then(() => markDispatched(`#${r.ref_no} sent to the share menu and marked dispatched.`))
       .catch((err) => {
-        if (err && err.name === 'AbortError') toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
+        if (isShareCancel(err)) toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
         else toast(`The share menu didn\u2019t open.${copied ? ' The text is copied.' : ''}`, 'error', 10000,
           { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); markDispatched(`#${r.ref_no} marked dispatched.`); } });
       })
@@ -848,7 +916,7 @@ function recopy(id) {
   if (!r) return;
   const text = dispatchText(r);
   const ok = copySync(text);
-  if (S.settings.mode === 'messages' && navigator.share) { navigator.share({ text }).catch(() => {}); return; }
+  if (S.settings.mode === 'messages' && canShare()) { shareText(text).catch(() => {}); return; }
   toast(ok ? `#${r.ref_no} copied again.` : 'Couldn\u2019t copy automatically.', ok ? 'ok' : 'error');
   if (S.settings.mode === 'sms') launch(`sms:?body=${encodeURIComponent(text)}`);
 }
@@ -903,7 +971,13 @@ function openDetails(id, refresh) {
 function openSettings() {
   const st = S.settings;
   const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
-  const notifSupported = 'Notification' in window;
+  const notifSupported = !CAP && 'Notification' in window;
+  const pushInfo = {
+    on: 'On. New requests alert this phone even when the app is closed.',
+    off: 'Starting\u2026',
+    blocked: 'Off. Turn on notifications in the phone\u2019s Settings > Apps > E&C Dispatch.',
+    error: 'Not working. Check the internet connection, then sign out and back in.'
+  }[pushState];
   openSheet('Settings', `
     <p class="section-title" style="margin-top:0">When I tap the main button</p>
     <div class="seg" role="radiogroup" aria-label="Main button">
@@ -921,6 +995,9 @@ function openSettings() {
       ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you\u2019re in another app, as long as this page is still open.') : ''}
     </div>
     <button class="btn btn-secondary block" type="button" data-act="test-alert" style="margin-top:12px">${icon('bell', 'sm')}Test the alert</button>
+    ${CAP ? `<p class="section-title">Alerts when the app is closed</p>
+    <p class="small muted" style="margin-bottom:10px">${esc(pushInfo)} If alerts arrive late, set the app\u2019s battery use to Unrestricted in Settings > Apps > E&C Dispatch > Battery.</p>
+    <button class="btn btn-secondary block" type="button" data-act="test-push">${icon('send', 'sm')}Send a test alert to this phone</button>` : ''}
     <p class="section-title">Display</p>
     <div class="seg" role="radiogroup" aria-label="Theme">
       <label><input type="radio" name="theme" value="dark"${st.theme === 'dark' ? ' checked' : ''}><span>Dark</span></label>
@@ -975,8 +1052,8 @@ document.addEventListener('click', async (e) => {
   const id = el.dataset.id;
   switch (el.dataset.act) {
     case 'google': googleSignIn(); break;
-    case 'signout': auth.signOut(); break;
-    case 'signout-ask': if (await confirmSheet('Sign out?', 'New requests won\u2019t alert on this phone while you\u2019re signed out.', 'Sign out', true)) auth.signOut(); break;
+    case 'signout': signOut(); break;
+    case 'signout-ask': if (await confirmSheet('Sign out?', 'New requests won\u2019t alert on this phone while you\u2019re signed out.', 'Sign out', true)) signOut(); break;
     case 'recheck': handleUser(auth.currentUser); break;
     case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
     case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
@@ -991,10 +1068,13 @@ document.addEventListener('click', async (e) => {
     case 'recopy': recopy(id); break;
     case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was copied by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
     case 'test-alert': testAlert(); break;
+    case 'test-push': sendTestPush(); break;
     default: break;
   }
 });
 
 applyTheme();
 updateSoundUi();
+initPushListeners();
+if (CAP) { const g = $('[data-act=google]'); if (g) g.hidden = true; }
 </script></body></html>

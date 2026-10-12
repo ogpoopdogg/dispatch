@@ -1,0 +1,12 @@
+{
+  "appId": "com.eandc.dispatch",
+  "appName": "E&C Dispatch",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}
