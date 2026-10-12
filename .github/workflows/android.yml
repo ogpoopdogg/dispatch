@@ -1,0 +1,93 @@
+name: Build Android app
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Also publish the APK as a GitHub Release (easy to download on a phone)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Test the push notification function
+        working-directory: functions
+        run: npm ci && node --test
+
+      - name: Copy the web app into the Android project
+        run: npm ci && npm run sync
+
+      - name: Add Firebase config (google-services.json)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          fi
+          if [ -f android/app/google-services.json ]; then
+            echo "PUSH=yes" >> "$GITHUB_ENV"
+          else
+            echo "PUSH=no" >> "$GITHUB_ENV"
+            echo "::warning::No google-services.json, so this APK can't receive push notifications. See APP-SETUP.md, step 2."
+          fi
+
+      - name: Set up release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "VARIANT=release" >> "$GITHUB_ENV"
+          else
+            echo "VARIANT=debug" >> "$GITHUB_ENV"
+            echo "::warning::No signing key secrets, so this is a debug build. Each debug build has a different key: uninstall the old app before installing a new one. See APP-SETUP.md, step 4."
+          fi
+
+      - name: Build APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          TASK=assemble$(echo "${VARIANT:0:1}" | tr a-z A-Z)${VARIANT:1}
+          ./gradlew "$TASK" -PversionCode=${{ github.run_number }} --no-daemon --stacktrace
+          mkdir -p ../dist
+          cp app/build/outputs/apk/$VARIANT/*.apk "../dist/ec-dispatch-${{ github.run_number }}-$VARIANT.apk"
+          ls -la ../dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ec-dispatch-${{ github.run_number }}-${{ env.VARIANT }}${{ env.PUSH == 'no' && '-no-push' || '' }}
+          path: dist/*.apk
+
+      - name: Publish GitHub Release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" dist/*.apk \
+            --target "${{ github.sha }}" \
+            --title "E&C Dispatch build ${{ github.run_number }}" \
+            --notes "Android app. Open this page on the phone and tap the .apk to install."
