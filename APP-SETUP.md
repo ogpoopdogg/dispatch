@@ -91,10 +91,15 @@ way, with nothing to install, is **Google Cloud Shell**:
    cd dispatch/functions
    npm install
    npx firebase-tools login --no-localhost
-   npx firebase-tools deploy --only functions --project eandccourier-36fcc
+   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush --project eandccourier-36fcc
    ```
 
    If `login` says you're already signed in, carry on.
+
+   Deploy only these two functions, as above. The project also has other
+   functions (`fleetHuntHistory`, `pajApi`, `pollNow`) that live outside this
+   repo. A plain `--only functions` deploy offers to delete them: always
+   answer **No** if you see that question.
 
 On any computer with Node.js 22, the same commands work too.
 
