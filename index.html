@@ -17,7 +17,7 @@
   --bg:#000;--surface:#151515;--surface-2:#1e1e1e;--field:#0c0c0c;--line:#2d2d2d;
   --ink:#f4f4f1;--ink-2:#a2a29d;--ink-3:#6f6f6b;--accent-ink:#FFD100;--focus:#FFD100;
   --ok:#3fbf6f;--ok-bg:rgba(63,191,111,.14);--danger:#f0524f;--danger-bg:rgba(240,82,79,.14);
-  --shadow:0 18px 50px rgba(0,0,0,.55);--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+  --shadow:0 18px 50px rgba(0,0,0,.55);--nav-h:64px;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
   --font:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color-scheme:dark;
 }
 [data-theme=light]{
@@ -79,21 +79,23 @@ p{margin:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 .uid-box{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px dashed var(--yellow);border-radius:12px;padding:10px 12px;margin:16px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere}
 
-/* Top bar */
-.topbar{position:sticky;top:0;z-index:30;background:#000;color:#f4f4f1;border-bottom:3px solid var(--yellow);padding:calc(8px + var(--safe-t)) 12px 8px}
-.topbar-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
-.topbar img{height:32px;width:auto}
+/* App header: top bar and alert banners stay pinned together */
+.app-head{position:sticky;top:0;z-index:30}
+.topbar{background:#000;color:#f4f4f1;border-bottom:3px solid var(--yellow);padding:calc(10px + var(--safe-t)) 16px 10px}
+.topbar-in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.topbar img{height:34px;width:auto}
 .topbar .wordmark{font-size:20px;line-height:1}
+.topbar .sub{font-size:13px;color:#a2a29d;line-height:1.2;margin-top:3px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .spacer{flex:1}
-.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#a2a29d}
-.live .dot{width:9px;height:9px;border-radius:50%;background:#6f6f6b}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#a2a29d;border:1px solid #2d2d2d;border-radius:99px;padding:4px 10px;white-space:nowrap}
+.live .dot{width:8px;height:8px;border-radius:50%;background:#6f6f6b}
 .live.on .dot{background:#3fbf6f;box-shadow:0 0 0 3px rgba(63,191,111,.25)}
 .live.on{color:#f4f4f1}
-.live.off .dot{background:var(--yellow)}
-.mute-x{position:absolute;inset:0;display:grid;place-items:center;color:#f0524f}
+.live.off{color:#000;background:var(--yellow);border-color:var(--yellow)}
+.live.off .dot{background:#000}
 
 /* Banners */
-.banner{position:sticky;top:calc(53px + var(--safe-t));z-index:25;display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:left;padding:14px 16px;cursor:pointer;font-weight:700;font-size:17px}
+.banner{display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:left;padding:14px 16px;cursor:pointer;font-weight:700;font-size:17px}
 .banner .grow{flex:1;min-width:0}
 .banner small{display:block;font-weight:500;font-size:14px;opacity:.8}
 .banner-alert{background:var(--yellow);color:#000;animation:flash 1s steps(2,jump-none) infinite}
@@ -101,31 +103,41 @@ p{margin:0}
 .banner-sound{background:var(--surface-2);color:var(--ink);border-bottom:1px solid var(--line);font-size:15px}
 .banner-pill{background:#000;color:var(--yellow);border-radius:99px;padding:6px 14px;font-size:14px;white-space:nowrap}
 
-/* Layout */
-main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;position:sticky;top:calc(56px + var(--safe-t));z-index:20}
-.tabs button{min-height:44px;border:0;border-radius:10px;background:none;color:var(--ink-2);font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
-.count{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--surface-2);color:var(--ink);font-size:12px;display:inline-grid;place-items:center}
-.tabs button[aria-selected=true] .count{background:var(--yellow);color:#000}
-.count.hot{background:var(--yellow);color:#000}
-.group-head{font-size:14px;font-weight:700;color:var(--ink-2);margin:18px 4px 8px;display:flex;justify-content:space-between}
+/* Pages */
+main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) + var(--safe-b) + 28px)}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.page-head p{margin-top:4px}
+.group-head{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;margin:22px 2px 8px}
+.group-head:first-child{margin-top:0}
+
+/* Bottom navigation */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+.tabbar-in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--nav-h)}
+.tab{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:var(--ink-3);font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tab .i{width:22px;height:22px}
+.tab[aria-current=page]{color:var(--ink)}
+.tab[aria-current=page]::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--yellow)}
+.tab .dot{position:absolute;top:8px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--yellow);color:#000;font-size:11px;font-weight:800;display:grid;place-items:center}
+.tab .dot.quiet{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
 
 /* Job cards */
-.job{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px;margin-bottom:12px;position:relative}
+.job{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
 .job.unseen{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow),0 10px 30px rgba(255,209,0,.12)}
 .job.overdue{border-left:5px solid var(--danger)}
-.job-top{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.job-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .req-no{font-stretch:75%;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
 .job-co{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job-age{font-size:13px;color:var(--ink-2);white-space:nowrap}
-.route{position:relative;padding-left:26px;margin-bottom:10px}
-.route::before{content:'';position:absolute;left:7px;top:10px;bottom:22px;border-left:2px dashed var(--yellow);opacity:.7}
-.stop{position:relative;margin-bottom:8px}
-.stop::before{content:'';position:absolute;left:-26px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 4px var(--surface)}
-.stop.to::before{border-radius:3px;background:var(--surface);border:3px solid var(--yellow)}
-.stop b{display:block;font-size:18px;line-height:1.25}
-.stop small{display:block;color:var(--ink-2);font-size:14px}
+.legs{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.leg{position:relative;padding:10px 12px 10px 16px}
+.leg::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--yellow)}
+.leg.to{background:var(--surface-2);border-top:1px solid var(--line)}
+.leg.to::before{background:var(--ink-2)}
+.leg-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin-bottom:2px}
+.leg-label::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--yellow);flex:none}
+.leg.to .leg-label::before{border-radius:2px;background:transparent;border:2px solid var(--ink-2)}
+.leg b{display:block;font-size:18px;line-height:1.25}
+.leg small{display:block;color:var(--ink-2);font-size:14px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
 .chip .i{width:13px;height:13px}
@@ -134,18 +146,45 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
 .chip.bad{background:var(--danger-bg);border-color:transparent;color:var(--danger)}
 .chip.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .text-preview{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4;margin-bottom:12px;overflow-wrap:anywhere}
-.text-preview span{display:block;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:2px}
+.text-preview span{display:block;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em}
 .job-actions{display:flex;gap:8px}
 .job-actions .btn-primary{flex:1;min-height:54px;font-size:17px}
-.job-actions .btn-secondary{min-width:54px;min-height:54px;padding:0}
-.done-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
-.done-row .grow{flex:1;min-width:0}
-.done-row .names{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.done-row .meta{font-size:13px;color:var(--ink-2)}
-.done-row.cancelled .names{text-decoration:line-through;color:var(--ink-2)}
-.empty{text-align:center;padding:46px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:16px}
-.empty .i{width:36px;height:36px;color:var(--ink-3);margin-bottom:8px}
-.empty p{color:var(--ink-2);margin-top:4px}
+.job-actions .btn-secondary{min-height:54px}
+
+/* Done list */
+.searchbox{position:relative;margin-bottom:10px}
+.searchbox .i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.searchbox input{width:100%;min-height:48px;padding:12px 14px 12px 44px;border:1px solid var(--line);border-radius:10px;background:var(--field);font-size:16px;outline:none}
+.searchbox input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,209,0,.18)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink-2);font-weight:600;font-size:14px;cursor:pointer}
+.chip-btn[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.list-summary{font-size:14px;color:var(--ink-2);margin:12px 2px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:14px 16px;cursor:pointer;color:var(--ink)}
+.row:first-child{border-top:0}
+.row:hover{background:var(--surface-2)}
+.row .grow{flex:1;min-width:0}
+.row .chev{color:var(--ink-3)}
+.row-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.row .req-no{font-size:18px}
+.row-date{font-size:13px;color:var(--ink-2);flex:1}
+.row-route{font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.row-route .arrow{color:var(--accent-ink);margin:0 4px}
+.row-sub{font-size:14px;color:var(--ink-2);margin-top:2px}
+.row.cancelled .row-route{text-decoration:line-through;color:var(--ink-2)}
+.empty{text-align:center;padding:42px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:16px}
+.empty .i{width:36px;height:36px;color:var(--ink-3);margin-bottom:10px}
+.empty p{color:var(--ink-2);margin-top:6px}
+
+/* Settings cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+.card>h2{font-size:14px;font-stretch:100%;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.card>h2+.setting{border-top:0}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.kv:first-of-type{border-top:0}
+.kv span:first-child{color:var(--ink-2)}
+.kv span:last-child{text-align:right;overflow-wrap:anywhere}
 
 /* Detail list */
 .dl{display:grid;grid-template-columns:104px 1fr;gap:10px 14px;margin:0}
@@ -164,7 +203,6 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
 .switch input:checked+span{background:var(--yellow)}
 .switch input:checked+span::after{transform:translateX(22px)}
 .switch input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
-.section-title{font-size:15px;font-weight:700;margin:20px 0 4px}
 
 /* Sheet */
 .overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background-color .2s}
@@ -174,10 +212,11 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 12px 8px 20px}
 .sheet-head h2{font-size:22px}
 .sheet-body{overflow-y:auto;padding:4px 20px 22px;overscroll-behavior:contain}
-@media (min-width:720px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:86vh}}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0}
+@media (min-width:720px){.overlay{align-items:center}.sheet{border-radius:20px;max-height:86vh}.grab{display:none}}
 
 /* Toasts */
-.toasts{position:fixed;left:0;right:0;bottom:calc(16px + var(--safe-b));z-index:90;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 12px}
+.toasts{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b) + 12px);z-index:90;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 12px}
 .toast{pointer-events:auto;max-width:560px;width:100%;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 10px 10px 14px;font-weight:600;font-size:15px;box-shadow:var(--shadow);animation:toastIn .2s ease-out}
 .toast .grow{flex:1}
 .toast.ok{background:var(--ok);color:#fff}
@@ -200,6 +239,9 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></symbol>
   <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
 </svg>
 
@@ -230,38 +272,73 @@ main{max-width:760px;margin:0 auto;padding:14px 12px calc(28px + var(--safe-b))}
 </section>
 
 <div id="view-app" hidden>
-  <header class="topbar">
-    <div class="topbar-in">
-      <img src="icon2.png" alt="" onerror="this.remove()">
-      <div class="wordmark">E&amp;C <b>Dispatch</b></div>
-      <div class="spacer"></div>
-      <span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span>
-      <button class="icon-btn" type="button" data-act="toggle-sound" id="sound-btn" aria-label="Alert sound on"><svg class="i"><use href="#i-sound"/></svg></button>
-      <button class="icon-btn" type="button" data-act="settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
-    </div>
-  </header>
+  <div class="app-head">
+    <header class="topbar">
+      <div class="topbar-in">
+        <img src="icon2.png" alt="" onerror="this.remove()">
+        <div><div class="wordmark">E&amp;C <b>Dispatch</b></div><div class="sub" id="hdr-sub"></div></div>
+        <div class="spacer"></div>
+        <span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span>
+        <button class="icon-btn" type="button" data-act="toggle-sound" id="sound-btn" aria-label="Alert sound on"><svg class="i"><use href="#i-sound"/></svg></button>
+      </div>
+    </header>
+    <button class="banner banner-sound" type="button" id="sound-banner" data-act="unlock-sound" hidden>
+      <svg class="i"><use href="#i-sound"/></svg><span class="grow">Tap here to turn on alert sounds<small>Phones block sound until you tap the page once.</small></span>
+    </button>
+    <button class="banner banner-alert" type="button" id="alert-banner" data-act="ack-all" hidden>
+      <svg class="i"><use href="#i-bell"/></svg><span class="grow" id="alert-text"></span><span class="banner-pill">Got it</span>
+    </button>
+  </div>
 
-  <button class="banner banner-sound" type="button" id="sound-banner" data-act="unlock-sound" hidden>
-    <svg class="i"><use href="#i-sound"/></svg><span class="grow">Tap here to turn on alert sounds<small>Phones block sound until you tap the page once.</small></span>
-  </button>
-  <button class="banner banner-alert" type="button" id="alert-banner" data-act="ack-all" hidden>
-    <svg class="i"><use href="#i-bell"/></svg><span class="grow" id="alert-text"></span><span class="banner-pill">Got it</span>
-  </button>
+  <main class="app-main">
+    <!-- Queue -->
+    <section id="panel-queue">
+      <div class="page-head">
+        <div><h1>Queue</h1><p class="muted small" id="queue-sub"></p></div>
+        <button class="btn btn-secondary sm" type="button" data-act="ack-seen" id="queue-ack" hidden><svg class="i sm"><use href="#i-check"/></svg>Mark all seen</button>
+      </div>
+      <div id="queue-list"></div>
+    </section>
 
-  <main>
-    <div class="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="queue" aria-selected="true">Queue <span class="count" id="count-queue">0</span></button>
-      <button type="button" role="tab" data-tab="scheduled" aria-selected="false">Scheduled <span class="count" id="count-scheduled">0</span></button>
-      <button type="button" role="tab" data-tab="done" aria-selected="false">Done</button>
-    </div>
-    <section id="panel-queue"></section>
-    <section id="panel-scheduled" hidden></section>
-    <section id="panel-done" hidden></section>
+    <!-- Scheduled -->
+    <section id="panel-scheduled" hidden>
+      <div class="page-head"><div><h1>Scheduled</h1><p class="muted small">Booked for a later day. Each moves to the Queue on its day.</p></div></div>
+      <div id="scheduled-list"></div>
+    </section>
+
+    <!-- Done -->
+    <section id="panel-done" hidden>
+      <div class="page-head"><div><h1>Done</h1><p class="muted small">Dispatched and cancelled, today and yesterday.</p></div></div>
+      <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="done-q" type="search" placeholder="Search names, company or request #" aria-label="Search done requests"></div>
+      <div class="filter-row" role="group" aria-label="Show">
+        <button class="chip-btn" type="button" data-act="done-filter" data-f="all" aria-pressed="true">All</button>
+        <button class="chip-btn" type="button" data-act="done-filter" data-f="done" aria-pressed="false">Dispatched</button>
+        <button class="chip-btn" type="button" data-act="done-filter" data-f="cancelled" aria-pressed="false">Cancelled</button>
+      </div>
+      <p class="list-summary" id="done-summary"></p>
+      <div id="done-list"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="panel-settings" hidden>
+      <div class="page-head"><div><h1>Settings</h1></div></div>
+      <div id="settings-body"></div>
+    </section>
   </main>
+
+  <nav class="tabbar" aria-label="Main">
+    <div class="tabbar-in">
+      <button class="tab" type="button" data-tab="queue" aria-current="page"><svg class="i"><use href="#i-inbox"/></svg>Queue<span class="dot" id="dot-queue" hidden></span></button>
+      <button class="tab" type="button" data-tab="scheduled"><svg class="i"><use href="#i-calendar"/></svg>Scheduled<span class="dot quiet" id="dot-scheduled" hidden></span></button>
+      <button class="tab" type="button" data-tab="done"><svg class="i"><use href="#i-check"/></svg>Done</button>
+      <button class="tab" type="button" data-tab="settings"><svg class="i"><use href="#i-gear"/></svg>Settings</button>
+    </div>
+  </nav>
 </div>
 
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheet-title"></h2><button class="icon-btn" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
   </div>
@@ -308,6 +385,8 @@ const S = {
   loaded: false,
   listeners: [],
   tab: 'queue',
+  doneQ: '',          // Done tab search
+  doneFilter: 'all',  // all | done | cancelled
   day: '',
   sessionToken: 0,
   settings: loadSettings()
@@ -397,10 +476,12 @@ function audioReady() { return !!(audioCtx && audioCtx.state === 'running'); }
 function unlockAudio() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state !== 'running') audioCtx.resume().then(updateSoundUi).catch(() => {});
+    if (audioCtx.state !== 'running') audioCtx.resume().then(updateSoundUiSoon).catch(() => {});
   } catch (e) { /* no audio support */ }
-  updateSoundUi();
+  updateSoundUiSoon();
 }
+// Wait until the tap has finished: hiding the sound banner mid-tap shifts the page and the tap lands on the wrong thing
+const updateSoundUiSoon = () => setTimeout(updateSoundUi, 350);
 document.addEventListener('pointerdown', unlockAudio, { capture: true });
 if (CAP) unlockAudio();
 document.addEventListener('keydown', unlockAudio, { capture: true });
@@ -474,9 +555,11 @@ function initPushListeners() {
       pushState = 'error';
       toast('Couldn\u2019t turn on phone alerts: ' + friendlyError(err), 'error', 9000);
     }
+    refreshSettings();
   });
   Push.addListener('registrationError', (err) => {
     pushState = 'error';
+    refreshSettings();
     toast('Phone alerts couldn\u2019t start: ' + ((err && err.error) || 'unknown error'), 'error', 9000);
   });
   // Tapped a notification: show the queue
@@ -489,11 +572,12 @@ async function setupPush() {
     if (perm.receive !== 'granted' && perm.receive !== 'denied') perm = await Push.requestPermissions();
     if (perm.receive !== 'granted') {
       pushState = 'blocked';
+      refreshSettings();
       toast('Notifications are off for this app, so you won\u2019t get alerts when it\u2019s closed. Turn them on in the phone\u2019s Settings > Apps > E&C Dispatch > Notifications.', 'error', 12000);
       return;
     }
     await Push.register(); // the 'registration' listener saves the token
-  } catch (err) { pushState = 'error'; }
+  } catch (err) { pushState = 'error'; refreshSettings(); }
 }
 async function removePushToken() {
   const u = auth.currentUser;
@@ -663,6 +747,7 @@ async function handleUser(user) {
     return;
   }
   show('app');
+  $('#hdr-sub').textContent = user.email || '';
   startListening();
   applyWakeLock();
   updateSoundUi();
@@ -760,26 +845,29 @@ function jobCard(id, r) {
   if (r.delivery && !r.delivery.verified) chips.push('<span class="chip">Delivery address unmatched</span>');
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}" data-id="${esc(id)}">
     <div class="job-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span><span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span></div>
-    <div class="route">
-      <div class="stop"><b>${esc(r.pickup && r.pickup.name)}</b><small>${esc(r.pickup && r.pickup.address)}</small></div>
-      <div class="stop to"><b>${esc(r.delivery && r.delivery.name)}</b><small>${esc(r.delivery && r.delivery.address)}</small></div>
+    <div class="legs">
+      <div class="leg"><span class="leg-label">Pickup</span><b>${esc(r.pickup && r.pickup.name)}</b><small>${esc(r.pickup && r.pickup.address)}</small></div>
+      <div class="leg to"><span class="leg-label">Delivery</span><b>${esc(r.delivery && r.delivery.name)}</b><small>${esc(r.delivery && r.delivery.address)}</small></div>
     </div>
     <div class="chips">${chips.join('')}</div>
     <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
     <div class="job-actions">
       <button class="btn btn-primary" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
-      <button class="btn btn-secondary" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}">${icon('more')}</button>
+      <button class="btn btn-secondary" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}">Details</button>
     </div>
   </article>`;
 }
 function renderQueue() {
   const list = queueList();
-  $('#panel-queue').innerHTML = list.length ? list.map(([id, r]) => jobCard(id, r)).join('')
+  const oldest = list.reduce((m, [, r]) => Math.min(m, r.created_at || Infinity), Infinity);
+  $('#queue-sub').innerHTML = !S.loaded ? 'Loading…'
+    : list.length ? `${list.length} waiting${oldest !== Infinity ? `, oldest <span data-age="${oldest}">${esc(ago(oldest))}</span>` : ''}` : 'Nothing waiting';
+  $('#queue-list').innerHTML = list.length ? list.map(([id, r]) => jobCard(id, r)).join('')
     : (S.loaded ? `<div class="empty">${icon('inbox')}<h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner.</p></div>` : '<div class="empty"><div class="spinner" style="margin:0 auto"></div></div>');
 }
 function renderScheduled() {
   const list = scheduledList();
-  if (!list.length) { $('#panel-scheduled').innerHTML = `<div class="empty">${icon('calendar')}<h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>`; return; }
+  if (!list.length) { $('#scheduled-list').innerHTML = `<div class="empty">${icon('calendar')}<h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>`; return; }
   let html = '';
   let day = '';
   list.forEach(([id, r]) => {
@@ -790,37 +878,59 @@ function renderScheduled() {
     }
     html += jobCard(id, r);
   });
-  $('#panel-scheduled').innerHTML = html;
+  $('#scheduled-list').innerHTML = html;
+}
+function doneRow({ id, r, t, kind }) {
+  const who = kind === 'done'
+    ? `Dispatched ${fmtTime(t)}${r.dispatched_by_email ? ` by ${r.dispatched_by_email.split('@')[0]}` : ''}`
+    : `Cancelled by customer ${fmtTime(t)}`;
+  return `<button class="row${kind === 'cancelled' ? ' cancelled' : ''}" type="button" data-act="details" data-id="${esc(id)}">
+    <span class="grow">
+      <span class="row-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="row-date">${esc(r.company_name || '')}</span>${kind === 'done' ? '<span class="chip ok">Dispatched</span>' : '<span class="chip bad">Cancelled</span>'}</span>
+      <span class="row-route" style="display:block">${esc(r.pickup && r.pickup.name)}<span class="arrow">→</span>${esc(r.delivery && r.delivery.name)}</span>
+      <span class="row-sub" style="display:block">${esc(who)}</span>
+    </span>
+    ${icon('chevron', 'chev')}
+  </button>`;
 }
 function renderDone() {
-  const rows = [
+  const all = [
     ...Object.entries(S.done).map(([id, r]) => ({ id, r, t: r.dispatched_at || 0, kind: 'done' })),
     ...Object.entries(S.cancelled).map(([id, r]) => ({ id, r, t: r.cancelled_at || 0, kind: 'cancelled' }))
   ].sort((a, b) => b.t - a.t);
-  if (!rows.length) { $('#panel-done').innerHTML = `<div class="empty">${icon('check')}<h3>Nothing dispatched yet today</h3><p>Dispatched and cancelled requests from today and yesterday show here.</p></div>`; return; }
+  const q = S.doneQ.trim().toLowerCase();
+  const rows = all.filter(({ r, kind }) => (S.doneFilter === 'all' || S.doneFilter === kind)
+    && (!q || [r.ref_no, r.company_name, r.pickup && r.pickup.name, r.delivery && r.delivery.name, r.po]
+      .some((v) => String(v == null ? '' : v).toLowerCase().includes(q))));
+  const nDone = all.filter((x) => x.kind === 'done').length;
+  const nCan = all.length - nDone;
+  $('#done-summary').textContent = all.length ? `${nDone} dispatched, ${nCan} cancelled${rows.length !== all.length ? `. Showing ${rows.length}.` : ''}` : '';
+  if (!all.length) { $('#done-list').innerHTML = `<div class="empty">${icon('check')}<h3>Nothing dispatched yet today</h3><p>Dispatched and cancelled requests from today and yesterday show here.</p></div>`; return; }
+  if (!rows.length) { $('#done-list').innerHTML = `<div class="empty">${icon('search')}<h3>No matches</h3><p>Try a different name or request number.</p></div>`; return; }
   let html = '';
   let day = '';
-  rows.forEach(({ id, r, t, kind }) => {
-    const d = localDateStr(new Date(t));
-    if (d !== day) { day = d; html += `<div class="group-head"><span>${d === todayStr() ? 'Today' : 'Yesterday'}</span></div>`; }
-    const meta = kind === 'done'
-      ? `Dispatched ${esc(fmtTime(t))}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email.split('@')[0])}` : ''}`
-      : `Cancelled by customer ${esc(fmtTime(t))}`;
-    html += `<div class="done-row${kind === 'cancelled' ? ' cancelled' : ''}">
-      <span class="req-no">#${esc(r.ref_no)}</span>
-      <span class="grow"><span class="names" style="display:block">${esc(r.pickup && r.pickup.name)} for ${esc(r.delivery && r.delivery.name)}</span><span class="meta">${esc(r.company_name)}, ${meta}</span></span>
-      ${kind === 'done' ? `<button class="icon-btn" type="button" data-act="recopy" data-id="${esc(id)}" aria-label="Copy text again">${icon('copy')}</button>
-      <button class="icon-btn" type="button" data-act="undo" data-id="${esc(id)}" aria-label="Move back to queue">${icon('undo')}</button>` : ''}
-    </div>`;
+  let open = false;
+  rows.forEach((row) => {
+    const d = localDateStr(new Date(row.t));
+    if (d !== day) {
+      if (open) html += '</div>';
+      day = d;
+      html += `<div class="group-head"><span>${d === todayStr() ? 'Today' : 'Yesterday'}</span></div><div class="list">`;
+      open = true;
+    }
+    html += doneRow(row);
   });
-  $('#panel-done').innerHTML = html;
+  if (open) html += '</div>';
+  $('#done-list').innerHTML = html;
 }
 function renderCounts() {
   const q = queueList().length;
   const s = scheduledList().length;
-  $('#count-queue').textContent = q;
-  $('#count-scheduled').textContent = s;
-  $('#count-queue').classList.toggle('hot', q > 0);
+  const dq = $('#dot-queue');
+  const ds = $('#dot-scheduled');
+  dq.textContent = q; dq.hidden = !q;
+  ds.textContent = s; ds.hidden = !s;
+  $('#queue-ack').hidden = !unacked().length;
 }
 function renderAll() {
   if ($('#view-app').hidden) return;
@@ -829,13 +939,14 @@ function renderAll() {
   if (S.tab === 'scheduled') renderScheduled();
   if (S.tab === 'done') renderDone();
   if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
-    if (S.pending[openDetailId]) openDetails(openDetailId, true); else closeSheet();
+    if (findReq(openDetailId)) openDetails(openDetailId, true); else closeSheet();
   }
 }
 function switchTab(tab) {
   S.tab = tab;
-  $$('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-  ['queue', 'scheduled', 'done'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  $$('.tab[data-tab]').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  ['queue', 'scheduled', 'done', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  if (tab === 'settings') renderSettings();
   renderAll();
   window.scrollTo(0, 0);
 }
@@ -927,11 +1038,18 @@ function mapsLink(L) {
   const q = L.lat != null ? `${L.lat},${L.lng}` : L.address;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q || '')}`;
 }
+function findReq(id) {
+  if (S.pending[id]) return { r: S.pending[id], kind: 'pending' };
+  if (S.done[id]) return { r: S.done[id], kind: 'done' };
+  if (S.cancelled[id]) return { r: S.cancelled[id], kind: 'cancelled' };
+  return null;
+}
 function openDetails(id, refresh) {
-  const r = S.pending[id];
-  if (!r) return;
+  const found = findReq(id);
+  if (!found) return;
+  const { r, kind } = found;
   openDetailId = id;
-  if (!refresh) ack(id);
+  if (!refresh && kind === 'pending') ack(id);
   const leg = (L) => {
     L = L || {};
     const lines = [`<b>${esc(L.name)}</b>`, `<small>${esc(L.address)}${L.city && !String(L.address || '').includes(L.city) ? `, ${esc(L.city)}` : ''}</small>`];
@@ -945,6 +1063,8 @@ function openDetails(id, refresh) {
     <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
     <dl class="dl">
       <dt>Customer</dt><dd><b>${esc(r.company_name)}</b><small>${esc(rb.name || '')}</small>${rb.phone ? `<small><a href="tel:${esc(phoneDigits(rb.phone))}">${esc(rb.phone)}</a></small>` : ''}${rb.email ? `<small><a href="mailto:${esc(rb.email)}">${esc(rb.email)}</a></small>` : ''}</dd>
+      ${kind === 'done' ? `<dt>Status</dt><dd><span class="chip ok">Dispatched</span><small>${esc(fmtDateTime(r.dispatched_at))}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email)}` : ''}</small></dd>` : ''}
+      ${kind === 'cancelled' ? `<dt>Status</dt><dd><span class="chip bad">Cancelled</span><small>By the customer ${esc(fmtDateTime(r.cancelled_at))}</small></dd>` : ''}
       <dt>Submitted</dt><dd>${esc(fmtDateTime(r.created_at))}${r.updated_at ? `<small>Changed ${esc(fmtDateTime(r.updated_at))}</small>` : ''}</dd>
       <dt>When</dt><dd>${r.when === 'scheduled' && r.scheduled_for ? esc(fmtDay(r.scheduled_for)) : 'As soon as possible'}</dd>
       <dt>Pickup</dt><dd>${leg(r.pickup)}</dd>
@@ -954,13 +1074,17 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    <div style="display:grid;gap:10px;margin-top:22px">
+    ${kind === 'pending' ? `<div style="display:grid;gap:10px;margin-top:22px">
       <button class="btn btn-primary block" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
       <div class="btn-row">
         ${S.settings.mode !== 'copy' ? `<button class="btn btn-secondary" type="button" data-act="dispatch-copy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy only</button>` : ''}
         <button class="btn btn-secondary" type="button" data-act="preview-copy" data-id="${esc(id)}">Copy, don\u2019t dispatch</button>
       </div>
-    </div></div>`;
+    </div>` : ''}
+    ${kind === 'done' ? `<div class="btn-row" style="margin-top:22px">
+      <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy again</button>
+      <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
+    </div>` : ''}</div>`;
   if (refresh) { $('#sheet-title').textContent = `Request #${r.ref_no}`; $('#sheet-body').innerHTML = html; }
   else openSheet(`Request #${r.ref_no}`, html);
 }
@@ -968,61 +1092,70 @@ function openDetails(id, refresh) {
 /* =========================================================
    Settings
    ========================================================= */
-function openSettings() {
+function renderSettings() {
   const st = S.settings;
   const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
   const notifSupported = !CAP && 'Notification' in window;
   const pushInfo = {
     on: 'On. New requests alert this phone even when the app is closed.',
-    off: 'Starting\u2026',
-    blocked: 'Off. Turn on notifications in the phone\u2019s Settings > Apps > E&C Dispatch.',
+    off: 'Starting…',
+    blocked: 'Off. Turn on notifications in the phone’s Settings > Apps > E&C Dispatch.',
     error: 'Not working. Check the internet connection, then sign out and back in.'
   }[pushState];
-  openSheet('Settings', `
-    <p class="section-title" style="margin-top:0">When I tap the main button</p>
-    <div class="seg" role="radiogroup" aria-label="Main button">
-      <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send to Messages</span></label>
-      <label><input type="radio" name="mode" value="sms"${st.mode === 'sms' ? ' checked' : ''}><span>Copy, start a new text</span></label>
-      <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
-    </div>
-    <p class="small muted" style="margin-top:8px">Send to Messages opens the share menu: tap Messages, then the conversation, and the text is already typed in. Start a new text opens a new message with the text filled in, and you choose who it goes to. Every option also copies the text and marks the request dispatched.</p>
-    <p class="section-title">Alerts</p>
-    <div>
-      ${sw('sound', 'Alert sound', 'Turn the phone\u2019s media volume up.')}
+  const body = $('#settings-body');
+  body.innerHTML = `
+    <section class="card">
+      <h2>Main button</h2>
+      <div class="seg" role="radiogroup" aria-label="Main button">
+        <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send to Messages</span></label>
+        <label><input type="radio" name="mode" value="sms"${st.mode === 'sms' ? ' checked' : ''}><span>Copy, start a new text</span></label>
+        <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
+      </div>
+      <p class="small muted" style="margin-top:10px">Send to Messages opens the share menu: tap Messages, then the conversation, and the text is already typed in. Start a new text opens a new message with the text filled in, and you choose who it goes to. Every option also copies the text and marks the request dispatched.</p>
+    </section>
+    <section class="card">
+      <h2>Alerts</h2>
+      ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
       ${sw('repeat', 'Repeat until I tap Got it', `Plays again every ${REPEAT_ALARM_MS / 1000} seconds.`)}
       ${sw('vibrate', 'Vibrate', '')}
-      ${sw('wake', 'Keep the screen on', 'Stops the phone sleeping while this page is open.')}
-      ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you\u2019re in another app, as long as this page is still open.') : ''}
-    </div>
-    <button class="btn btn-secondary block" type="button" data-act="test-alert" style="margin-top:12px">${icon('bell', 'sm')}Test the alert</button>
-    ${CAP ? `<p class="section-title">Alerts when the app is closed</p>
-    <p class="small muted" style="margin-bottom:10px">${esc(pushInfo)} If alerts arrive late, set the app\u2019s battery use to Unrestricted in Settings > Apps > E&C Dispatch > Battery.</p>
-    <button class="btn btn-secondary block" type="button" data-act="test-push">${icon('send', 'sm')}Send a test alert to this phone</button>` : ''}
-    <p class="section-title">Display</p>
-    <div class="seg" role="radiogroup" aria-label="Theme">
-      <label><input type="radio" name="theme" value="dark"${st.theme === 'dark' ? ' checked' : ''}><span>Dark</span></label>
-      <label><input type="radio" name="theme" value="light"${st.theme === 'light' ? ' checked' : ''}><span>Light</span></label>
-    </div>
-    <p class="section-title">Account</p>
-    <p class="small muted" style="margin-bottom:10px">Signed in as ${esc(S.user && S.user.email)}</p>
-    <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>`, (body) => {
-    $$('input[name=mode]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mode = x.value; saveSettings(); renderAll(); }));
-    $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
-    $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
-      const key = x.dataset.setting;
-      if (key === 'notify' && x.checked) {
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') { x.checked = false; toast('Notifications are blocked. Allow them for this site in Chrome\u2019s site settings.', 'error', 7000); return; }
-        await registerSw();
-      }
-      S.settings[key] = x.checked;
-      saveSettings();
-      if (key === 'wake') applyWakeLock();
-      if (key === 'sound') updateSoundUi();
-      if (key === 'repeat') { clearInterval(alarmTimer); alarmTimer = null; refreshAlarm(); }
-    }));
-  });
+      ${sw('wake', 'Keep the screen on', 'Stops the phone sleeping while the app is open.')}
+      ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you’re in another app, as long as this page is still open.') : ''}
+      <button class="btn btn-secondary block" type="button" data-act="test-alert" style="margin-top:12px">${icon('bell', 'sm')}Test the alert</button>
+    </section>
+    ${CAP ? `<section class="card">
+      <h2>Alerts when the app is closed</h2>
+      <p class="small muted" style="margin-bottom:12px">${esc(pushInfo)} If alerts arrive late, set the app’s battery use to Unrestricted in Settings > Apps > E&C Dispatch > Battery.</p>
+      <button class="btn btn-secondary block" type="button" data-act="test-push">${icon('send', 'sm')}Send a test alert to this phone</button>
+    </section>` : ''}
+    <section class="card">
+      <h2>Display</h2>
+      <div class="seg" role="radiogroup" aria-label="Theme">
+        <label><input type="radio" name="theme" value="dark"${st.theme === 'dark' ? ' checked' : ''}><span>Dark</span></label>
+        <label><input type="radio" name="theme" value="light"${st.theme === 'light' ? ' checked' : ''}><span>Light</span></label>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Account</h2>
+      <div class="kv"><span>Signed in as</span><span>${esc(S.user && S.user.email)}</span></div>
+      <button class="btn btn-danger block" type="button" data-act="signout-ask" style="margin-top:12px">Sign out</button>
+    </section>`;
+  $$('input[name=mode]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mode = x.value; saveSettings(); renderAll(); }));
+  $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
+  $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
+    const key = x.dataset.setting;
+    if (key === 'notify' && x.checked) {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { x.checked = false; toast('Notifications are blocked. Allow them for this site in Chrome’s site settings.', 'error', 7000); return; }
+      await registerSw();
+    }
+    S.settings[key] = x.checked;
+    saveSettings();
+    if (key === 'wake') applyWakeLock();
+    if (key === 'sound') updateSoundUi();
+    if (key === 'repeat') { clearInterval(alarmTimer); alarmTimer = null; refreshAlarm(); }
+  }));
 }
+const refreshSettings = () => { if (S.tab === 'settings' && !$('#view-app').hidden) renderSettings(); };
 function applyTheme() {
   document.documentElement.dataset.theme = S.settings.theme === 'light' ? 'light' : 'dark';
 }
@@ -1057,21 +1190,29 @@ document.addEventListener('click', async (e) => {
     case 'recheck': handleUser(auth.currentUser); break;
     case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
     case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
-    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
-    case 'settings': openSettings(); break;
+    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
+    case 'settings': switchTab('settings'); break;
+    case 'ack-seen': ackAll(); break;
+    case 'done-filter':
+      S.doneFilter = el.dataset.f;
+      $$('[data-act=done-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
+      renderDone();
+      break;
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id, S.settings.mode); break;
     case 'dispatch-copy': if (sheetOpen) _hideSheet(); dispatch(id, 'copy'); break;
     case 'preview-copy': { const r = S.pending[id]; if (r) toast(copySync(dispatchText(r)) ? 'Copied. It\u2019s still in the queue.' : 'Couldn\u2019t copy.', 'info'); break; }
     case 'details': openDetails(id); break;
-    case 'recopy': recopy(id); break;
+    case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was copied by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
     case 'test-alert': testAlert(); break;
     case 'test-push': sendTestPush(); break;
     default: break;
   }
 });
+
+$('#done-q').addEventListener('input', (e) => { S.doneQ = e.target.value; renderDone(); });
 
 applyTheme();
 updateSoundUi();
