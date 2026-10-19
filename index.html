@@ -227,6 +227,10 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .toast.ok{background:var(--ok);color:#fff}
 .toast.error{background:var(--danger);color:#fff}
 .toast button{border:0;background:rgba(0,0,0,.18);color:inherit;font-weight:800;border-radius:8px;min-height:38px;padding:0 14px;cursor:pointer}
+.sent{position:fixed;inset:0;z-index:95;display:grid;place-items:center;pointer-events:none;animation:sentFade 1.1s ease-out forwards}
+.sent div{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--ok);color:#fff;border-radius:28px;padding:26px 40px;box-shadow:var(--shadow);font-stretch:75%;font-weight:800;font-size:30px}
+.sent .i{width:72px;height:72px;stroke-width:3}
+@keyframes sentFade{0%{opacity:0;transform:scale(.85)}12%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0}}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.banner-alert{animation:none}}
 </style></head><body>
@@ -300,7 +304,6 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
     <section id="panel-queue">
       <div class="page-head">
         <div><h1>Queue</h1><p class="muted small" id="queue-sub"></p></div>
-        <button class="btn btn-secondary sm" type="button" data-act="ack-seen" id="queue-ack" hidden><svg class="i sm"><use href="#i-check"/></svg>Mark all seen</button>
       </div>
       <div id="queue-list"></div>
     </section>
@@ -349,6 +352,7 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="sent" id="sent" hidden aria-hidden="true"><div><svg class="i"><use href="#i-check"/></svg><span id="sent-text">Sent</span></div></div>
 <!-- capacitor runtime -->
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -411,6 +415,7 @@ function loadSettings() {
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
   if (st.mode !== 'messages' && st.mode !== 'copy') st.mode = 'messages'; // the old "start a new text" option was removed
+  Object.assign(st, { repeat: true, vibrate: true, wake: true }); // always on; no longer in Settings
   return st;
 }
 function saveSettings() { try { localStorage.setItem('ecd_settings', JSON.stringify(S.settings)); } catch (e) { /* ignore */ } }
@@ -931,8 +936,6 @@ function jobCard(id, r) {
     else chips.push(`<span class="chip warn">${icon('calendar')}Scheduled for today</span>`);
   }
   chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
-  if (r.pickup && !r.pickup.verified) chips.push('<span class="chip">Pickup address unmatched</span>');
-  if (r.delivery && !r.delivery.verified) chips.push('<span class="chip">Delivery address unmatched</span>');
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}" data-id="${esc(id)}">
     <div class="job-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span><span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span></div>
     <div class="legs">
@@ -1020,7 +1023,6 @@ function renderCounts() {
   const ds = $('#dot-scheduled');
   dq.textContent = q; dq.hidden = !q;
   ds.textContent = s; ds.hidden = !s;
-  $('#queue-ack').hidden = !unacked().length;
 }
 function renderAll() {
   if ($('#view-app').hidden) return;
@@ -1094,6 +1096,7 @@ function dispatch(id, mode) {
   const markDispatched = (msg) => {
     db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
       .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
+    showSent(mode === 'messages' ? 'Sent' : 'Copied');
     toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
   };
   if (mode === 'messages' && canShare()) {
@@ -1112,6 +1115,17 @@ function dispatch(id, mode) {
   if (!copied) toast('Couldn\u2019t copy automatically. Open Details and copy the text by hand.', 'error', 8000);
   markDispatched(`#${r.ref_no} copied and marked dispatched.`);
   if (mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
+}
+// Big green check for about a second, so it's obvious the dispatch worked
+let sentTimer = null;
+function showSent(label) {
+  const el = $('#sent');
+  $('#sent-text').textContent = label;
+  el.hidden = true;
+  void el.offsetWidth; // restart the animation
+  el.hidden = false;
+  clearTimeout(sentTimer);
+  sentTimer = setTimeout(() => { el.hidden = true; }, 1100);
 }
 async function undoDispatch(id) {
   const r = S.done[id];
@@ -1172,12 +1186,8 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    ${kind === 'pending' ? `<div style="display:grid;gap:10px;margin-top:22px">
+    ${kind === 'pending' ? `<div style="margin-top:22px">
       <button class="btn btn-primary block" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
-      <div class="btn-row">
-        ${S.settings.mode !== 'copy' ? `<button class="btn btn-secondary" type="button" data-act="dispatch-copy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy only</button>` : ''}
-        <button class="btn btn-secondary" type="button" data-act="preview-copy" data-id="${esc(id)}">Copy, don\u2019t dispatch</button>
-      </div>
     </div>` : ''}
     ${kind === 'done' ? `<div class="btn-row" style="margin-top:22px">
       <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy again</button>
@@ -1213,9 +1223,6 @@ function renderSettings() {
     <section class="card">
       <h2>Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
-      ${sw('repeat', 'Repeat until I tap Got it', `Plays again every ${REPEAT_ALARM_MS / 1000} seconds.`)}
-      ${sw('vibrate', 'Vibrate', '')}
-      ${sw('wake', 'Keep the screen on', 'Stops the phone sleeping while the app is open.')}
       ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you’re in another app, as long as this page is still open.') : ''}
       <button class="btn btn-secondary block" type="button" data-act="test-alert" style="margin-top:12px">${icon('bell', 'sm')}Test the alert</button>
     </section>
@@ -1290,7 +1297,6 @@ document.addEventListener('click', async (e) => {
     case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
     case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
     case 'settings': switchTab('settings'); break;
-    case 'ack-seen': ackAll(); break;
     case 'done-filter':
       S.doneFilter = el.dataset.f;
       $$('[data-act=done-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
@@ -1299,8 +1305,6 @@ document.addEventListener('click', async (e) => {
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id, S.settings.mode); break;
-    case 'dispatch-copy': if (sheetOpen) _hideSheet(); dispatch(id, 'copy'); break;
-    case 'preview-copy': { const r = S.pending[id]; if (r) toast(copySync(textFor(id, r)) ? 'Copied. It\u2019s still in the queue.' : 'Couldn\u2019t copy.', 'info'); break; }
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
