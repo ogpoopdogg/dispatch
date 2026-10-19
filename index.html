@@ -411,10 +411,10 @@ const S = {
   settings: loadSettings()
 };
 function loadSettings() {
-  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mode: IS_ANDROID ? 'messages' : 'copy', theme: 'dark' };
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'dark' };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
-  if (st.mode !== 'messages' && st.mode !== 'copy') st.mode = 'messages'; // the old "start a new text" option was removed
+  delete st.mode; // one Dispatch button now; the old main-button choice was removed
   Object.assign(st, { repeat: true, vibrate: true, wake: true }); // always on; no longer in Settings
   return st;
 }
@@ -922,9 +922,7 @@ function scheduledList() {
   return Object.entries(S.pending).filter(([, r]) => isFuture(r))
     .sort((a, b) => a[1].scheduled_for.localeCompare(b[1].scheduled_for) || ((a[1].created_at || 0) - (b[1].created_at || 0)));
 }
-function buttonLabel() {
-  return S.settings.mode === 'messages' ? 'Send' : 'Copy & mark dispatched';
-}
+const buttonLabel = () => 'Dispatch';
 function jobCard(id, r) {
   const unseen = !acked.has(alertKey(id, r));
   const chips = [];
@@ -1084,23 +1082,22 @@ const canShare = () => !!(NativeShare || navigator.share);
 const shareText = (text) => (NativeShare ? NativeShare.share({ text }) : navigator.share({ text }));
 const isShareCancel = (err) => !!err && (err.name === 'AbortError' || /cancel/i.test(String(err.message || '')));
 // Must run straight from the tap: browsers only allow the clipboard, the share menu and app launches from a tap.
-function dispatch(id, mode) {
+function dispatch(id) {
   const r = S.pending[id];
   if (!r) { toast('That request is no longer waiting. It may have been cancelled or dispatched.', 'error'); return; }
   if (sharing) return;
   if (S.fromCache || !db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return; }
   const text = textFor(id, r);
-  // Send doesn't touch the clipboard: a copied text can reappear in the message box after sending
-  const copied = mode === 'copy' ? copySync(text) : true;
+  // Doesn't touch the clipboard: a copied text can reappear in the message box after sending
   acked.add(alertKey(id, r));
   saveAcked();
   const markDispatched = (msg) => {
     db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
       .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
-    showSent(mode === 'messages' ? 'Sent' : 'Copied');
+    showSent('Dispatched');
     toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
   };
-  if (mode === 'messages' && canShare()) {
+  if (canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
     sharing = true;
     shareText(text)
@@ -1113,9 +1110,8 @@ function dispatch(id, mode) {
       .finally(() => { sharing = false; });
     return;
   }
-  if (!copied) toast('Couldn\u2019t copy automatically. Open Details and copy the text by hand.', 'error', 8000);
-  markDispatched(`#${r.ref_no} ${mode === 'messages' ? 'sent' : 'copied'} and marked dispatched.`);
-  if (mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
+  markDispatched(`#${r.ref_no} sent and marked dispatched.`);
+  launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 // Big green check for about a second, so it's obvious the dispatch worked
 let sentTimer = null;
@@ -1140,9 +1136,8 @@ function recopy(id) {
   const r = S.done[id];
   if (!r) return;
   const text = textFor(id, r);
-  if (S.settings.mode === 'messages' && canShare()) { shareText(text).catch(() => {}); return; }
-  const ok = copySync(text);
-  toast(ok ? `#${r.ref_no} copied again.` : 'Couldn\u2019t copy automatically.', ok ? 'ok' : 'error');
+  if (canShare()) shareText(text).catch(() => {});
+  else launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 
 let openDetailId = null;
@@ -1191,7 +1186,7 @@ function openDetails(id, refresh) {
       <button class="btn btn-primary block" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
     </div>` : ''}
     ${kind === 'done' ? `<div class="btn-row" style="margin-top:22px">
-      <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('copy', 'sm')}Copy again</button>
+      <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('send', 'sm')}Send again</button>
       <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
     </div>` : ''}</div>`;
   if (refresh) { $('#sheet-title').textContent = `Request #${r.ref_no}`; $('#sheet-body').innerHTML = html; }
@@ -1213,14 +1208,6 @@ function renderSettings() {
   }[pushState];
   const body = $('#settings-body');
   body.innerHTML = `
-    <section class="card">
-      <h2>Main button</h2>
-      <div class="seg" role="radiogroup" aria-label="Main button">
-        <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send</span></label>
-        <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
-      </div>
-      <p class="small muted" style="margin-top:10px">Send opens the share menu: tap Messages, then the conversation, and the text is already typed in. It doesn\u2019t copy the text. Copy only puts the text on the clipboard so you can paste it yourself. Both mark the request dispatched.</p>
-    </section>
     <section class="card">
       <h2>Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
@@ -1244,7 +1231,6 @@ function renderSettings() {
       <div class="kv"><span>Signed in as</span><span>${esc(S.user && S.user.email)}</span></div>
       <button class="btn btn-danger block" type="button" data-act="signout-ask" style="margin-top:12px">Sign out</button>
     </section>`;
-  $$('input[name=mode]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mode = x.value; saveSettings(); renderAll(); }));
   $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
     const key = x.dataset.setting;
@@ -1305,7 +1291,7 @@ document.addEventListener('click', async (e) => {
       break;
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
-    case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id, S.settings.mode); break;
+    case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
