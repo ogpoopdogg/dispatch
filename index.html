@@ -1090,7 +1090,8 @@ function dispatch(id, mode) {
   if (sharing) return;
   if (S.fromCache || !db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return; }
   const text = textFor(id, r);
-  const copied = copySync(text); // backup: the text is also on the clipboard
+  // Send doesn't touch the clipboard: a copied text can reappear in the message box after sending
+  const copied = mode === 'copy' ? copySync(text) : true;
   acked.add(alertKey(id, r));
   saveAcked();
   const markDispatched = (msg) => {
@@ -1106,14 +1107,14 @@ function dispatch(id, mode) {
       .then(() => markDispatched(`#${r.ref_no} sent to the share menu and marked dispatched.`))
       .catch((err) => {
         if (isShareCancel(err)) toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
-        else toast(`The share menu didn\u2019t open.${copied ? ' The text is copied.' : ''}`, 'error', 10000,
+        else toast('The share menu didn\u2019t open.', 'error', 10000,
           { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); markDispatched(`#${r.ref_no} marked dispatched.`); } });
       })
       .finally(() => { sharing = false; });
     return;
   }
   if (!copied) toast('Couldn\u2019t copy automatically. Open Details and copy the text by hand.', 'error', 8000);
-  markDispatched(`#${r.ref_no} copied and marked dispatched.`);
+  markDispatched(`#${r.ref_no} ${mode === 'messages' ? 'sent' : 'copied'} and marked dispatched.`);
   if (mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 // Big green check for about a second, so it's obvious the dispatch worked
@@ -1139,8 +1140,8 @@ function recopy(id) {
   const r = S.done[id];
   if (!r) return;
   const text = textFor(id, r);
-  const ok = copySync(text);
   if (S.settings.mode === 'messages' && canShare()) { shareText(text).catch(() => {}); return; }
+  const ok = copySync(text);
   toast(ok ? `#${r.ref_no} copied again.` : 'Couldn\u2019t copy automatically.', ok ? 'ok' : 'error');
 }
 
@@ -1218,7 +1219,7 @@ function renderSettings() {
         <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send</span></label>
         <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
       </div>
-      <p class="small muted" style="margin-top:10px">Send opens the share menu: tap Messages, then the conversation, and the text is already typed in. Copy only puts the text on the clipboard so you can paste it yourself. Both mark the request dispatched.</p>
+      <p class="small muted" style="margin-top:10px">Send opens the share menu: tap Messages, then the conversation, and the text is already typed in. It doesn\u2019t copy the text. Copy only puts the text on the clipboard so you can paste it yourself. Both mark the request dispatched.</p>
     </section>
     <section class="card">
       <h2>Alerts</h2>
