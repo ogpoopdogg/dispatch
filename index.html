@@ -10,7 +10,7 @@
 <script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='light'?'light':'dark';}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --yellow:#FFD100;--on-yellow:#000;
@@ -75,8 +75,6 @@ p{margin:0}
 .wordmark b{color:var(--yellow)}
 .auth h1{font-size:40px;line-height:1.02;margin-bottom:12px}
 .auth .lead{color:var(--ink-2);margin-bottom:26px}
-.spinner{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--yellow);animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 .uid-box{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px dashed var(--yellow);border-radius:12px;padding:10px 12px;margin:16px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere}
 
 /* App header: top bar and alert banners stay pinned together */
@@ -121,9 +119,9 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .tab .dot.quiet{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
 
 /* Job cards */
-.job{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
-.job.unseen{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow),0 10px 30px rgba(255,209,0,.12)}
-.job.overdue{border-left:5px solid var(--danger)}
+.job{background:var(--surface);border:2px solid var(--line);border-top:6px solid var(--yellow);border-radius:18px;padding:14px;margin-bottom:26px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.job.unseen{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow),0 10px 30px rgba(255,209,0,.18)}
+.job.overdue{border-top-color:var(--danger)}
 .job-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .req-no{font-stretch:75%;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
 .job-co{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -147,6 +145,13 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .chip.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .text-preview{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4;margin-bottom:12px;overflow-wrap:anywhere}
 .text-preview span{display:block;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em}
+.text-edit{display:block;margin-bottom:12px}
+.text-edit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px;margin-bottom:4px}
+.text-edit-head span{font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.text-edit-head button{border:0;background:none;color:var(--accent-ink);font-weight:700;font-size:13px;padding:4px 0;cursor:pointer}
+.text-edit textarea{display:block;width:100%;min-height:64px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;line-height:1.4;color:var(--ink);outline:none}
+.text-edit textarea:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,209,0,.18)}
+.text-edit.edited textarea{border-color:var(--yellow)}
 .job-actions{display:flex;gap:8px}
 .job-actions .btn-primary{flex:1;min-height:54px;font-size:17px}
 .job-actions .btn-secondary{min-height:54px}
@@ -245,7 +250,7 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
 </svg>
 
-<section id="view-loading" class="center-screen"><div class="spinner" role="status" aria-label="Loading"></div></section>
+<section id="view-loading" class="center-screen"><div class="brand" style="margin:0"><img src="icon2.png" alt="" onerror="this.remove()"><div class="wordmark">E&amp;C <b>Dispatch</b></div></div></section>
 
 <section id="view-auth" class="center-screen" hidden>
   <div class="auth">
@@ -345,9 +350,9 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <!-- capacitor runtime -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 'use strict';
 
@@ -358,17 +363,26 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 const REPEAT_ALARM_MS = 20000;   // how often the alarm repeats until someone taps "Got it"
 const DONE_DAYS = 2;             // Done tab shows today and yesterday
 
-firebase.initializeApp({
-  apiKey: 'AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg',
-  authDomain: 'eandccourier-36fcc.firebaseapp.com',
-  databaseURL: 'https://eandccourier-36fcc-default-rtdb.firebaseio.com',
-  projectId: 'eandccourier-36fcc',
-  messagingSenderId: '1067680083511',
-  appId: '1:1067680083511:android:22d1eb3757302492bd19b2'
-});
-const auth = firebase.auth();
-const db = firebase.database();
-const TS = firebase.database.ServerValue.TIMESTAMP;
+// Firebase loads in the background (deferred scripts) so the app can draw instantly from the last saved queue.
+let auth = null;
+let db = null;
+let TS = null;
+function startFirebase() {
+  if (typeof firebase === 'undefined') { toast('Couldn\u2019t connect. Check the internet connection, then close and reopen the app.', 'error', 15000); return; }
+  firebase.initializeApp({
+    apiKey: 'AIzaSyAKmgoXA4m3cRTmxJq4aUyva5SVvFbTNqg',
+    authDomain: 'eandccourier-36fcc.firebaseapp.com',
+    databaseURL: 'https://eandccourier-36fcc-default-rtdb.firebaseio.com',
+    projectId: 'eandccourier-36fcc',
+    messagingSenderId: '1067680083511',
+    appId: '1:1067680083511:android:22d1eb3757302492bd19b2'
+  });
+  auth = firebase.auth();
+  db = firebase.database();
+  TS = firebase.database.ServerValue.TIMESTAMP;
+  auth.getRedirectResult().catch(() => {});
+  auth.onAuthStateChanged((user) => handleUser(user));
+}
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
 
 /* Running as the installed phone app (Capacitor)? Then use native push and the native share menu. */
@@ -383,6 +397,7 @@ const S = {
   done: {},         // dispatched recently
   cancelled: {},    // cancelled recently
   loaded: false,
+  fromCache: false, // showing the saved queue until the live one arrives
   listeners: [],
   tab: 'queue',
   doneQ: '',          // Done tab search
@@ -393,7 +408,10 @@ const S = {
 };
 function loadSettings() {
   const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mode: IS_ANDROID ? 'messages' : 'copy', theme: 'dark' };
-  try { return Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { return def; }
+  let st = def;
+  try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
+  if (st.mode !== 'messages' && st.mode !== 'copy') st.mode = 'messages'; // the old "start a new text" option was removed
+  return st;
 }
 function saveSettings() { try { localStorage.setItem('ecd_settings', JSON.stringify(S.settings)); } catch (e) { /* ignore */ } }
 
@@ -467,6 +485,55 @@ function saveAcked() {
 const unacked = () => Object.entries(S.pending).filter(([id, r]) => !acked.has(alertKey(id, r)));
 function ack(id) { const r = S.pending[id]; if (!r || acked.has(alertKey(id, r))) return; acked.add(alertKey(id, r)); saveAcked(); refreshAlarm(); renderAll(); }
 function ackAll() { Object.entries(S.pending).forEach(([id, r]) => acked.add(alertKey(id, r))); saveAcked(); refreshAlarm(); renderAll(); }
+
+/* ---------------- Edited dispatch text (kept for DONE_DAYS) ----------------
+   Keyed to the request's version, so a customer change brings back the fresh text. */
+const editKey = (id, r) => `${id}|${r.updated_at || r.created_at || 0}`;
+let edits = {};
+try { edits = JSON.parse(localStorage.getItem('ecd_edits') || '{}'); } catch (e) { /* ignore */ }
+function saveEdits() {
+  const cutoff = Date.now() - DONE_DAYS * 86400000;
+  Object.keys(edits).forEach((k) => { if (!edits[k] || edits[k].t < cutoff) delete edits[k]; });
+  try { localStorage.setItem('ecd_edits', JSON.stringify(edits)); } catch (e) { /* ignore */ }
+}
+function textFor(id, r) { const e = edits[editKey(id, r)]; return e ? e.text : dispatchText(r); }
+function textEditor(id, r, where) {
+  const edited = !!edits[editKey(id, r)];
+  return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
+    <div class="text-edit-head"><span>Text that gets sent (tap to change)</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
+    <textarea data-edit="${esc(id)}" data-where="${where}" rows="3" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
+  </div>`;
+}
+function setEdit(id, text) {
+  const r = S.pending[id] || S.done[id];
+  if (!r) return;
+  const k = editKey(id, r);
+  if (text == null || text.trim() === dispatchText(r)) delete edits[k];
+  else edits[k] = { text, t: Date.now() };
+  saveEdits();
+  const edited = !!edits[k];
+  $$('[data-edit-box]').filter((b) => b.dataset.editBox === id).forEach((b) => {
+    b.classList.toggle('edited', edited);
+    $('[data-act=reset-edit]', b).hidden = !edited;
+    const ta = $('textarea', b);
+    if (text == null) ta.value = dispatchText(r);
+    else if (ta !== document.activeElement) ta.value = text;
+  });
+}
+document.addEventListener('input', (e) => {
+  const ta = e.target.closest && e.target.closest('textarea[data-edit]');
+  if (ta) setEdit(ta.dataset.edit, ta.value);
+});
+
+/* ---------------- Saved queue, so the app opens instantly ---------------- */
+function saveCache() {
+  if (!S.user) return;
+  try {
+    localStorage.setItem('ecd_cache', JSON.stringify({ uid: S.user.uid, email: S.user.email || '', pending: S.pending }));
+  } catch (e) { /* ignore */ }
+}
+function readCache() { try { return JSON.parse(localStorage.getItem('ecd_cache') || 'null'); } catch (e) { return null; } }
+function clearCache() { try { localStorage.removeItem('ecd_cache'); } catch (e) { /* ignore */ } }
 
 /* =========================================================
    Sound, vibration, wake lock, system notifications
@@ -585,6 +652,7 @@ async function removePushToken() {
   try { await db.ref(`push_tokens/${u.uid}/${pushKey(pushToken)}`).remove(); } catch (e) { /* ignore */ }
 }
 async function signOut() {
+  if (!auth) return;
   await removePushToken(); // stop alerts to this phone while signed out
   auth.signOut();
 }
@@ -708,6 +776,7 @@ function show(view) { ['loading', 'auth', 'denied', 'app'].forEach((v) => { $('#
 
 $('#auth-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!auth) return;
   const btn = $('#auth-submit');
   btn.disabled = true;
   try { await auth.signInWithEmailAndPassword($('#auth-email').value.trim(), $('#auth-password').value); }
@@ -715,6 +784,7 @@ $('#auth-form').addEventListener('submit', async (e) => {
   finally { btn.disabled = false; }
 });
 async function googleSignIn() {
+  if (!auth) return;
   const p = new firebase.auth.GoogleAuthProvider();
   try { await auth.signInWithPopup(p); }
   catch (err) {
@@ -722,38 +792,56 @@ async function googleSignIn() {
     else if (err.code !== 'auth/popup-closed-by-user') toast(friendlyError(err), 'error');
   }
 }
-auth.getRedirectResult().catch(() => {});
-
 function detachAll() { S.listeners.forEach((off) => { try { off(); } catch (e) { /* ignore */ } }); S.listeners = []; }
 function listen(ref, cb, errCb) { ref.on('value', cb, errCb); S.listeners.push(() => ref.off('value', cb)); }
 
-auth.onAuthStateChanged((user) => handleUser(user));
 async function handleUser(user) {
   detachAll();
   S.sessionToken++;
   const token = S.sessionToken;
+  const cache = readCache();
+  // Same staff member as last time: keep showing the saved queue and check access in the background
+  const known = !!(user && cache && cache.uid === user.uid);
   S.user = user;
-  Object.assign(S, { pending: {}, done: {}, cancelled: {}, loaded: false });
+  if (known) Object.assign(S, { done: {}, cancelled: {} });
+  else Object.assign(S, { pending: {}, done: {}, cancelled: {}, loaded: false, fromCache: false });
   refreshAlarm();
-  if (!user) { show('auth'); applyWakeLock(); updateSoundUi(); return; }
-  show('loading');
+  if (!user) { clearCache(); show('auth'); applyWakeLock(); updateSoundUi(); return; }
+  if (known) openApp(user);
+  else show('loading');
   let isStaff = false;
   try { isStaff = (await db.ref(`staff/${user.uid}`).once('value')).val() === true; } catch (e) { isStaff = false; }
   if (token !== S.sessionToken) return;
   if (!isStaff) {
+    detachAll();
+    clearCache();
+    Object.assign(S, { pending: {}, loaded: false, fromCache: false });
+    refreshAlarm();
     $('#denied-email').textContent = user.email || '';
     $('#denied-uid').textContent = user.uid;
     show('denied');
     return;
   }
+  if (!known) openApp(user);
+  if (CAP) setupPush();
+  else if (S.settings.notify) registerSw();
+}
+function openApp(user) {
   show('app');
   $('#hdr-sub').textContent = user.email || '';
   startListening();
   applyWakeLock();
   updateSoundUi();
-  if (CAP) setupPush();
-  else if (S.settings.notify) registerSw();
+  renderAll();
 }
+// Draw the saved queue right away, before Firebase has loaded
+(function showSavedQueue() {
+  const cache = readCache();
+  if (!cache || !cache.uid) return;
+  Object.assign(S, { pending: cache.pending || {}, loaded: true, fromCache: true });
+  show('app');
+  $('#hdr-sub').textContent = cache.email || '';
+}());
 
 /* =========================================================
    Live data
@@ -767,7 +855,9 @@ function startListening() {
   listen(db.ref('requests').orderByChild('status').equalTo('new'), (snap) => {
     S.pending = snap.val() || {};
     S.loaded = true;
+    S.fromCache = false;
     saveAcked();
+    saveCache();
     refreshAlarm();
     renderAll();
   }, (err) => toast('Lost access to requests: ' + friendlyError(err), 'error', 8000));
@@ -828,7 +918,7 @@ function scheduledList() {
     .sort((a, b) => a[1].scheduled_for.localeCompare(b[1].scheduled_for) || ((a[1].created_at || 0) - (b[1].created_at || 0)));
 }
 function buttonLabel() {
-  return S.settings.mode === 'messages' ? 'Send to Messages' : S.settings.mode === 'sms' ? 'Copy & start a text' : 'Copy & mark dispatched';
+  return S.settings.mode === 'messages' ? 'Send' : 'Copy & mark dispatched';
 }
 function jobCard(id, r) {
   const unseen = !acked.has(alertKey(id, r));
@@ -850,7 +940,7 @@ function jobCard(id, r) {
       <div class="leg to"><span class="leg-label">Delivery</span><b>${esc(r.delivery && r.delivery.name)}</b><small>${esc(r.delivery && r.delivery.address)}</small></div>
     </div>
     <div class="chips">${chips.join('')}</div>
-    <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
+    ${textEditor(id, r, 'card')}
     <div class="job-actions">
       <button class="btn btn-primary" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}${esc(buttonLabel())}</button>
       <button class="btn btn-secondary" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}">Details</button>
@@ -860,10 +950,10 @@ function jobCard(id, r) {
 function renderQueue() {
   const list = queueList();
   const oldest = list.reduce((m, [, r]) => Math.min(m, r.created_at || Infinity), Infinity);
-  $('#queue-sub').innerHTML = !S.loaded ? 'Loading…'
+  $('#queue-sub').innerHTML = !S.loaded ? 'Connecting…'
     : list.length ? `${list.length} waiting${oldest !== Infinity ? `, oldest <span data-age="${oldest}">${esc(ago(oldest))}</span>` : ''}` : 'Nothing waiting';
   $('#queue-list').innerHTML = list.length ? list.map(([id, r]) => jobCard(id, r)).join('')
-    : (S.loaded ? `<div class="empty">${icon('inbox')}<h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner.</p></div>` : '<div class="empty"><div class="spinner" style="margin:0 auto"></div></div>');
+    : (S.loaded ? `<div class="empty">${icon('inbox')}<h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner.</p></div>` : '');
 }
 function renderScheduled() {
   const list = scheduledList();
@@ -934,12 +1024,20 @@ function renderCounts() {
 }
 function renderAll() {
   if ($('#view-app').hidden) return;
+  // A redraw replaces the text boxes; put the cursor back where it was so typing isn't interrupted
+  const a = document.activeElement;
+  const typing = a && a.matches && a.matches('textarea[data-edit]')
+    ? { id: a.dataset.edit, where: a.dataset.where, start: a.selectionStart, end: a.selectionEnd } : null;
   renderCounts();
   if (S.tab === 'queue') renderQueue();
   if (S.tab === 'scheduled') renderScheduled();
   if (S.tab === 'done') renderDone();
   if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
     if (findReq(openDetailId)) openDetails(openDetailId, true); else closeSheet();
+  }
+  if (typing) {
+    const ta = $$('textarea[data-edit]').find((t) => t.dataset.edit === typing.id && t.dataset.where === typing.where);
+    if (ta && ta !== document.activeElement) { ta.focus({ preventScroll: true }); try { ta.setSelectionRange(typing.start, typing.end); } catch (e) { /* ignore */ } }
   }
 }
 function switchTab(tab) {
@@ -988,7 +1086,8 @@ function dispatch(id, mode) {
   const r = S.pending[id];
   if (!r) { toast('That request is no longer waiting. It may have been cancelled or dispatched.', 'error'); return; }
   if (sharing) return;
-  const text = dispatchText(r);
+  if (S.fromCache || !db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return; }
+  const text = textFor(id, r);
   const copied = copySync(text); // backup: the text is also on the clipboard
   acked.add(alertKey(id, r));
   saveAcked();
@@ -1012,7 +1111,7 @@ function dispatch(id, mode) {
   }
   if (!copied) toast('Couldn\u2019t copy automatically. Open Details and copy the text by hand.', 'error', 8000);
   markDispatched(`#${r.ref_no} copied and marked dispatched.`);
-  if (mode === 'sms' || mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
+  if (mode === 'messages') launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 async function undoDispatch(id) {
   const r = S.done[id];
@@ -1025,11 +1124,10 @@ async function undoDispatch(id) {
 function recopy(id) {
   const r = S.done[id];
   if (!r) return;
-  const text = dispatchText(r);
+  const text = textFor(id, r);
   const ok = copySync(text);
   if (S.settings.mode === 'messages' && canShare()) { shareText(text).catch(() => {}); return; }
   toast(ok ? `#${r.ref_no} copied again.` : 'Couldn\u2019t copy automatically.', ok ? 'ok' : 'error');
-  if (S.settings.mode === 'sms') launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 
 let openDetailId = null;
@@ -1060,7 +1158,7 @@ function openDetails(id, refresh) {
   };
   const rb = r.requested_by || {};
   const html = `<div data-detail>
-    <div class="text-preview"><span>Text that gets copied</span>${esc(dispatchText(r))}</div>
+    ${kind === 'cancelled' ? `<div class="text-preview"><span>Text that would have been sent</span>${esc(textFor(id, r))}</div>` : textEditor(id, r, 'sheet')}
     <dl class="dl">
       <dt>Customer</dt><dd><b>${esc(r.company_name)}</b><small>${esc(rb.name || '')}</small>${rb.phone ? `<small><a href="tel:${esc(phoneDigits(rb.phone))}">${esc(rb.phone)}</a></small>` : ''}${rb.email ? `<small><a href="mailto:${esc(rb.email)}">${esc(rb.email)}</a></small>` : ''}</dd>
       ${kind === 'done' ? `<dt>Status</dt><dd><span class="chip ok">Dispatched</span><small>${esc(fmtDateTime(r.dispatched_at))}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email)}` : ''}</small></dd>` : ''}
@@ -1107,11 +1205,10 @@ function renderSettings() {
     <section class="card">
       <h2>Main button</h2>
       <div class="seg" role="radiogroup" aria-label="Main button">
-        <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send to Messages</span></label>
-        <label><input type="radio" name="mode" value="sms"${st.mode === 'sms' ? ' checked' : ''}><span>Copy, start a new text</span></label>
+        <label><input type="radio" name="mode" value="messages"${st.mode === 'messages' ? ' checked' : ''}><span>Send</span></label>
         <label><input type="radio" name="mode" value="copy"${st.mode === 'copy' ? ' checked' : ''}><span>Copy only</span></label>
       </div>
-      <p class="small muted" style="margin-top:10px">Send to Messages opens the share menu: tap Messages, then the conversation, and the text is already typed in. Start a new text opens a new message with the text filled in, and you choose who it goes to. Every option also copies the text and marks the request dispatched.</p>
+      <p class="small muted" style="margin-top:10px">Send opens the share menu: tap Messages, then the conversation, and the text is already typed in. Copy only puts the text on the clipboard so you can paste it yourself. Both mark the request dispatched.</p>
     </section>
     <section class="card">
       <h2>Alerts</h2>
@@ -1178,6 +1275,7 @@ document.addEventListener('click', async (e) => {
   if (tab) { switchTab(tab.dataset.tab); return; }
   const el = e.target.closest('[data-act]');
   if (!el) {
+    if (e.target.closest('textarea')) return;
     const card = e.target.closest('.job.unseen');
     if (card) ack(card.dataset.id);
     return;
@@ -1202,7 +1300,8 @@ document.addEventListener('click', async (e) => {
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id, S.settings.mode); break;
     case 'dispatch-copy': if (sheetOpen) _hideSheet(); dispatch(id, 'copy'); break;
-    case 'preview-copy': { const r = S.pending[id]; if (r) toast(copySync(dispatchText(r)) ? 'Copied. It\u2019s still in the queue.' : 'Couldn\u2019t copy.', 'info'); break; }
+    case 'preview-copy': { const r = S.pending[id]; if (r) toast(copySync(textFor(id, r)) ? 'Copied. It\u2019s still in the queue.' : 'Couldn\u2019t copy.', 'info'); break; }
+    case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was copied by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
@@ -1218,4 +1317,6 @@ applyTheme();
 updateSoundUi();
 initPushListeners();
 if (CAP) { const g = $('[data-act=google]'); if (g) g.hidden = true; }
+renderAll();
+document.addEventListener('DOMContentLoaded', startFirebase);
 </script></body></html>
