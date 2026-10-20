@@ -107,7 +107,9 @@ p{margin:0}
 .topbar{position:relative;background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(18px);backdrop-filter:saturate(1.5) blur(18px);padding:calc(10px + var(--safe-t)) 16px 10px}
 .topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--yellow) 18%,var(--yellow) 82%,transparent);box-shadow:0 0 14px rgba(255,209,0,.55)}
 .topbar-in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.topbar .wordmark{font-size:21px;line-height:1}
+.topbar-in>div:not(.spacer){min-width:0}
+.topbar .wordmark{font-size:21px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .live,.topbar .icon-btn{flex:none}
 .topbar .sub{font-size:12.5px;color:var(--ink-2);line-height:1.2;margin-top:4px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .spacer{flex:1}
 .live{display:inline-flex;align-items:center;gap:7px;height:32px;font-size:13px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-2);border-radius:99px;padding:0 12px;white-space:nowrap;transition:background-color .3s,color .3s}
@@ -236,6 +238,9 @@ main.app-main{max-width:680px;margin:0 auto;padding:26px 16px calc(var(--nav-h) 
 .chip-btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 16px;border-radius:99px;border:1.5px solid var(--yellow-line);box-shadow:var(--glow);background:var(--surface-3);color:var(--ink-2);font-weight:700;font-size:14px;cursor:pointer;transition:background-color .25s var(--ease),color .2s,border-color .2s,transform .14s}
 .chip-btn:active{transform:scale(.95)}
 .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000}
+.range-row{position:relative;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:-6px -16px 12px;padding:6px 16px 10px;scroll-snap-type:x proximity}
+.range-row::-webkit-scrollbar{display:none}
+.range-row .chip-btn{flex:none;white-space:nowrap;scroll-snap-align:start}
 .list-summary{font-size:14px;color:var(--ink-2);margin:16px 4px}
 .list{background:var(--surface);border:1px solid var(--line-2);border-radius:20px;overflow:hidden;box-shadow:var(--card-shadow)}
 .row{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:16px 16px 16px 20px;cursor:pointer;color:var(--ink);transition:background-color .2s}
@@ -410,7 +415,16 @@ main.app-main{max-width:680px;margin:0 auto;padding:26px 16px calc(var(--nav-h) 
 
     <!-- Done -->
     <section id="panel-done" hidden>
-      <div class="page-head"><div><h1>Done</h1><p class="muted small">Dispatched and cancelled, today and yesterday.</p></div></div>
+      <div class="page-head"><div><h1>Done</h1><p class="muted small">Dispatched and cancelled, <span id="done-range-label">today and yesterday</span>.</p></div></div>
+      <div class="range-row" role="group" aria-label="Date range">
+        <button class="chip-btn" type="button" data-act="done-range" data-r="recent" aria-pressed="true">Today &amp; yesterday</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="today" aria-pressed="false">Today</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="yesterday" aria-pressed="false">Yesterday</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="3" aria-pressed="false">Last 3 days</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="7" aria-pressed="false">Last 7 days</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="30" aria-pressed="false">Last 30 days</button>
+        <button class="chip-btn" type="button" data-act="done-range" data-r="all" aria-pressed="false">All time</button>
+      </div>
       <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="done-q" type="search" placeholder="Search names, company or request #" aria-label="Search done requests"></div>
       <div class="filter-row" role="group" aria-label="Show">
         <button class="chip-btn" type="button" data-act="done-filter" data-f="all" aria-pressed="true">All</button>
@@ -501,6 +515,8 @@ const S = {
   tab: 'queue',
   doneQ: '',          // Done tab search
   doneFilter: 'all',  // all | done | cancelled
+  doneRange: 'recent', // recent (today and yesterday) | today | yesterday | 3 | 7 | 30 | all
+  hist: null,         // { done, cancelled, loading } for ranges beyond today and yesterday
   day: '',
   sessionToken: 0,
   contacts: readContacts(), // drivers, shared by every dispatcher phone (dispatch_contacts/)
@@ -607,7 +623,7 @@ function textEditor(id, r, where) {
   </div>`;
 }
 function setEdit(id, text) {
-  const r = S.pending[id] || S.done[id];
+  const r = S.pending[id] || doneReq(id);
   if (!r) return;
   const k = editKey(id, r);
   if (text == null || text.trim() === dispatchText(r)) delete edits[k];
@@ -954,8 +970,63 @@ function openApp(user) {
 /* =========================================================
    Live data
    ========================================================= */
+/* Done tab date ranges. Today and yesterday come from the live listeners below;
+   longer ranges load from Firebase only while chosen. */
+const RANGES = {
+  recent: { label: 'today and yesterday', days: 2 },
+  today: { label: 'today', days: 1 },
+  yesterday: { label: 'yesterday', days: 2, end: 1 },
+  3: { label: 'the last 3 days', days: 3, hist: true },
+  7: { label: 'the last 7 days', days: 7, hist: true },
+  30: { label: 'the last 30 days', days: 30, hist: true },
+  all: { label: 'all time', hist: true }
+};
+// Start (inclusive) and end (exclusive) of a range, as timestamps
+function rangeBounds(key) {
+  const R = RANGES[key];
+  const day = (n) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - n); return d.getTime(); };
+  return { from: R.days ? day(R.days - 1) : 0, to: R.end ? day(R.end - 1) : Infinity };
+}
+let histOff = [];
+function stopHistory() { histOff.forEach((off) => { try { off(); } catch (e) { /* ignore */ } }); histOff = []; S.hist = null; }
+function loadHistory() {
+  stopHistory();
+  if (!db || !RANGES[S.doneRange].hist) return;
+  const { from } = rangeBounds(S.doneRange);
+  const h = S.hist = { done: {}, cancelled: {}, loading: 2 };
+  const watch = (field, status, key) => {
+    const ref = db.ref('requests').orderByChild(field).startAt(from || 1);
+    let first = true;
+    const cb = (snap) => {
+      if (S.hist !== h) return;
+      h[key] = Object.fromEntries(Object.entries(snap.val() || {}).filter(([, r]) => r.status === status));
+      if (first) { first = false; h.loading--; }
+      if (S.tab === 'done') renderDone();
+    };
+    ref.on('value', cb, (err) => { if (S.hist === h) { h.loading = 0; toast('Couldn\u2019t load older requests: ' + friendlyError(err), 'error', 8000); renderDone(); } });
+    histOff.push(() => ref.off('value', cb));
+  };
+  watch('dispatched_at', 'dispatched', 'done');
+  watch('cancelled_at', 'cancelled', 'cancelled');
+}
+const doneReq = (id) => S.done[id] || (S.hist && S.hist.done[id]);
+const cancelledReq = (id) => S.cancelled[id] || (S.hist && S.hist.cancelled[id]);
+function setDoneRange(key) {
+  if (!RANGES[key]) return;
+  S.doneRange = key;
+  $$('[data-act=done-range]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.r === key));
+    const row = b.parentElement;
+    if (b.dataset.r === key) row.scrollTo({ left: b.offsetLeft - (row.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' });
+  });
+  $('#done-range-label').textContent = RANGES[key].label;
+  if (RANGES[key].hist) loadHistory(); else stopHistory();
+  renderDone();
+}
+
 function startListening() {
   detachAll();
+  S.listeners.push(stopHistory);
   S.day = todayStr();
   const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - (DONE_DAYS - 1));
   const sinceTs = since.getTime();
@@ -988,6 +1059,7 @@ function startListening() {
     firstCancelled = false;
     if (S.tab === 'done') renderDone();
   });
+  if (RANGES[S.doneRange].hist) loadHistory();
 
   const conn = db.ref('.info/connected');
   let offTimer = null;
@@ -1119,10 +1191,18 @@ function doneRow({ id, r, t, kind }) {
   </button>`;
 }
 function renderDone() {
+  const hist = RANGES[S.doneRange].hist ? S.hist : null;
+  const src = hist || { done: S.done, cancelled: S.cancelled };
+  const { from, to } = rangeBounds(S.doneRange);
   const all = [
-    ...Object.entries(S.done).map(([id, r]) => ({ id, r, t: r.dispatched_at || 0, kind: 'done' })),
-    ...Object.entries(S.cancelled).map(([id, r]) => ({ id, r, t: r.cancelled_at || 0, kind: 'cancelled' }))
-  ].sort((a, b) => b.t - a.t);
+    ...Object.entries(src.done).map(([id, r]) => ({ id, r, t: r.dispatched_at || 0, kind: 'done' })),
+    ...Object.entries(src.cancelled).map(([id, r]) => ({ id, r, t: r.cancelled_at || 0, kind: 'cancelled' }))
+  ].filter((x) => x.t >= from && x.t < to).sort((a, b) => b.t - a.t);
+  if (hist && hist.loading > 0) {
+    $('#done-summary').textContent = '';
+    $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>Loading ${esc(RANGES[S.doneRange].label)}\u2026</h3><p>Getting older requests from the database.</p></div>`;
+    return;
+  }
   const q = S.doneQ.trim().toLowerCase();
   const rows = all.filter(({ r, kind }) => (S.doneFilter === 'all' || S.doneFilter === kind)
     && (!q || [r.ref_no, r.company_name, r.pickup && r.pickup.name, r.delivery && r.delivery.name, r.po]
@@ -1130,7 +1210,7 @@ function renderDone() {
   const nDone = all.filter((x) => x.kind === 'done').length;
   const nCan = all.length - nDone;
   $('#done-summary').textContent = all.length ? `${nDone} dispatched, ${nCan} cancelled${rows.length !== all.length ? `. Showing ${rows.length}.` : ''}` : '';
-  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing dispatched yet today</h3><p>Dispatched and cancelled requests from today and yesterday show here.</p></div>`; return; }
+  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing in ${esc(RANGES[S.doneRange].label)}</h3><p>Pick a longer range above to see older requests.</p></div>`; return; }
   if (!rows.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try a different name or request number.</p></div>`; return; }
   let html = '';
   let day = '';
@@ -1140,7 +1220,9 @@ function renderDone() {
     if (d !== day) {
       if (open) html += '</div>';
       day = d;
-      html += `<div class="group-head"><span>${d === todayStr() ? 'Today' : 'Yesterday'}</span></div><div class="list">`;
+      const yest = new Date(); yest.setDate(yest.getDate() - 1);
+      const n = rows.filter((x) => localDateStr(new Date(x.t)) === d).length;
+      html += `<div class="group-head"><span>${d === todayStr() ? 'Today' : d === localDateStr(yest) ? 'Yesterday' : esc(new Date(row.t).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: new Date(row.t).getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }))}</span><span>${n}</span></div><div class="list">`;
       open = true;
     }
     html += doneRow(row);
@@ -1295,7 +1377,7 @@ function showSent(label) {
   sentTimer = setTimeout(() => { el.hidden = true; }, 1100);
 }
 async function undoDispatch(id) {
-  const r = S.done[id];
+  const r = doneReq(id);
   if (r) acked.add(alertKey(id, r)); // already seen; don't sound the alarm again when it returns to the queue
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null });
@@ -1303,7 +1385,7 @@ async function undoDispatch(id) {
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
 function recopy(id) {
-  const r = S.done[id];
+  const r = doneReq(id);
   if (!r) return;
   const text = textFor(id, r);
   if (canShare()) shareText(text).catch(() => {});
@@ -1318,8 +1400,8 @@ function mapsLink(L) {
 }
 function findReq(id) {
   if (S.pending[id]) return { r: S.pending[id], kind: 'pending' };
-  if (S.done[id]) return { r: S.done[id], kind: 'done' };
-  if (S.cancelled[id]) return { r: S.cancelled[id], kind: 'cancelled' };
+  if (doneReq(id)) return { r: doneReq(id), kind: 'done' };
+  if (cancelledReq(id)) return { r: cancelledReq(id), kind: 'cancelled' };
   return null;
 }
 function openDetails(id, refresh) {
@@ -1487,6 +1569,7 @@ document.addEventListener('click', async (e) => {
       $$('[data-act=done-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
       renderDone();
       break;
+    case 'done-range': setDoneRange(el.dataset.r); break;
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
