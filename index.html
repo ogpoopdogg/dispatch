@@ -1169,9 +1169,9 @@ function pickDriver(id) {
   const r = S.pending[id];
   if (!r) return;
   const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-act="send-driver" data-id="${esc(id)}" data-driver="${esc(did)}">${icon('send')}<span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
-  openSheet(`Send #${r.ref_no} to`, `${rows}<p class="small muted" style="margin-top:6px">The text sends straight from this phone. Add or change drivers in Settings.</p>`);
+  openSheet(`Send #${r.ref_no} to`, `${rows}<p class="small muted" style="margin-top:6px">Opens your chat with that driver in Messages with the text typed in. Tap send there. Add or change drivers in Settings.</p>`);
 }
-// Texts one driver straight from the app (installed app), or opens a new text to them (browser)
+// Opens one driver's chat in the messaging app with the text typed in
 let driverSending = false;
 async function sendToDriver(id, did) {
   const r = readyToSend(id);
@@ -1183,13 +1183,14 @@ async function sendToDriver(id, did) {
     markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
     return;
   }
+  // Open the driver's own chat in the messaging app with the text typed in, so it goes out the way
+  // that chat normally does (RCS chat when the driver has it; apps can't send RCS themselves)
   driverSending = true;
-  toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 4000);
   try {
-    await SmsSender.send({ to: cleanPhone(d.phone), body: text });
-    markRequestDispatched(id, r, d.name, `#${r.ref_no} texted to ${d.name} and marked dispatched.`);
+    await SmsSender.compose({ to: [cleanPhone(d.phone)], body: text });
+    markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
   } catch (err) {
-    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''} It\u2019s still in the queue.`, 'error', 10000);
+    toast(`Couldn\u2019t open Messages for ${d.name}. ${(err && err.message) || ''} #${r.ref_no} is still in the queue.`, 'error', 10000);
   } finally { driverSending = false; }
 }
 // Big green check for about a second, so it's obvious the dispatch worked
@@ -1279,7 +1280,7 @@ function contactsSettings() {
   return `<section class="card">
       <h2>Drivers</h2>
       ${err}
-      <p class="small muted" style="margin-bottom:6px">\u201cSend to driver\u201d on each request texts the driver you pick, straight from this phone. Shared with every dispatcher.</p>
+      <p class="small muted" style="margin-bottom:6px">\u201cSend to driver\u201d on each request opens your chat with the driver you pick, with the text typed in. Shared with every dispatcher.</p>
       ${drivers || '<p class="small muted">No drivers yet.</p>'}
       <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary sm" type="submit">Add</button></form>
     </section>`;
