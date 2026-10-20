@@ -47,7 +47,9 @@ p{margin:0}
 .btn.block{width:100%}
 .btn.sm{min-height:38px;padding:0 12px;font-size:14px;border-radius:10px}
 .btn-primary{background:var(--yellow);color:var(--on-yellow);font-weight:700}
-.btn-secondary{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.btn-secondary{background:var(--surface-2);border-color:var(--yellow);color:var(--ink)}
+.btn-primary,.btn-secondary{border-width:2px;box-shadow:0 0 0 1px rgba(255,209,0,.15),0 4px 14px rgba(255,209,0,.22)}
+.btn-primary{border-color:var(--yellow)}
 .btn-ghost{background:transparent;color:var(--ink)}
 .btn-danger{background:transparent;border-color:var(--danger);color:var(--danger)}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:0;background:transparent;color:inherit;cursor:pointer;position:relative}
@@ -157,7 +159,7 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .job-actions .btn-secondary{min-height:54px}
 .send-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .send-row .btn{flex:1 1 30%;min-height:46px;padding:0 10px}
-.pick{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;margin-bottom:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink);text-align:left;cursor:pointer;font-size:17px;font-weight:700}
+.pick{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px;margin-bottom:8px;border:2px solid var(--yellow);box-shadow:0 4px 14px rgba(255,209,0,.18);border-radius:12px;background:var(--surface-2);color:var(--ink);text-align:left;cursor:pointer;font-size:17px;font-weight:700}
 .pick small{display:block;font-weight:500;font-size:14px;color:var(--ink-2)}
 .pick .grow{flex:1;min-width:0}
 .contact{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
@@ -167,8 +169,7 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .add-row{display:flex;gap:8px;margin-top:10px}
 .add-row input{flex:1;min-width:0;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--field);font-size:16px;outline:none}
 .add-row input:focus{border-color:var(--yellow)}
-.group-box{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
-.group-box h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+
 
 /* Done list */
 .searchbox{position:relative;margin-bottom:10px}
@@ -176,7 +177,7 @@ main.app-main{max-width:680px;margin:0 auto;padding:22px 16px calc(var(--nav-h) 
 .searchbox input{width:100%;min-height:48px;padding:12px 14px 12px 44px;border:1px solid var(--line);border-radius:10px;background:var(--field);font-size:16px;outline:none}
 .searchbox input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,209,0,.18)}
 .filter-row{display:flex;gap:6px;flex-wrap:wrap}
-.chip-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink-2);font-weight:600;font-size:14px;cursor:pointer}
+.chip-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--yellow);background:transparent;color:var(--ink-2);font-weight:600;font-size:14px;cursor:pointer}
 .chip-btn[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .list-summary{font-size:14px;color:var(--ink-2);margin:12px 2px}
 .list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
@@ -423,7 +424,7 @@ const S = {
   doneFilter: 'all',  // all | done | cancelled
   day: '',
   sessionToken: 0,
-  contacts: readContacts(), // drivers and group chats, shared by every dispatcher phone (dispatch_contacts/)
+  contacts: readContacts(), // drivers, shared by every dispatcher phone (dispatch_contacts/)
   contactsError: '',
   settings: loadSettings()
 };
@@ -558,7 +559,6 @@ function readContacts() {
   try { return Object.assign({ drivers: {}, groups: {} }, JSON.parse(localStorage.getItem('ecd_contacts') || '{}')); } catch (e) { return { drivers: {}, groups: {} }; }
 }
 const byName = (o) => Object.entries(o || {}).sort((a, b) => String(a[1].name || '').localeCompare(String(b[1].name || '')));
-const groupNumbers = (g) => Object.values((g && g.numbers) || {}).filter(Boolean);
 const cleanPhone = (v) => String(v || '').replace(/[^\d+]/g, '');
 function readCache() { try { return JSON.parse(localStorage.getItem('ecd_cache') || 'null'); } catch (e) { return null; } }
 function clearCache() { try { localStorage.removeItem('ecd_cache'); } catch (e) { /* ignore */ } }
@@ -959,14 +959,11 @@ const hasDrivers = () => Object.keys(S.contacts.drivers || {}).length > 0;
 function sendButtons(id, block) {
   return hasDrivers()
     ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}">${icon('send')}Send to driver ▾</button>`
-    : `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}Dispatch</button>`;
+    : `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send')}Group Chat</button>`;
 }
-// Group chat buttons, plus Dispatch (share menu) as the backup when drivers are set up
+// Group Chat (share menu: pick the group from the top row) next to Send to driver
 function sendRow(id) {
-  const groups = byName(S.contacts.groups).filter(([, g]) => groupNumbers(g).length);
-  const btns = groups.map(([gid, g]) => `<button class="btn btn-secondary" type="button" data-act="send-group" data-id="${esc(id)}" data-group="${esc(gid)}">${icon('send', 'sm')}${esc(g.name)}</button>`);
-  if (hasDrivers()) btns.push(`<button class="btn btn-secondary" type="button" data-act="dispatch" data-id="${esc(id)}">Dispatch</button>`);
-  return btns.length ? `<div class="send-row">${btns.join('')}</div>` : '';
+  return hasDrivers() ? `<div class="send-row"><button class="btn btn-secondary" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('send', 'sm')}Group Chat</button></div>` : '';
 }
 function jobCard(id, r) {
   const unseen = !acked.has(alertKey(id, r));
@@ -1195,21 +1192,6 @@ async function sendToDriver(id, did) {
     toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''} It\u2019s still in the queue.`, 'error', 10000);
   } finally { driverSending = false; }
 }
-// Opens Messages with every number in the group and the text typed in; the dispatcher taps Send
-async function sendToGroup(id, gid) {
-  const r = readyToSend(id);
-  const g = S.contacts.groups[gid];
-  if (!r || !g) return;
-  const nums = groupNumbers(g).map(cleanPhone).filter(Boolean);
-  if (!nums.length) { toast(`${g.name} has no phone numbers yet. Add them in Settings.`, 'error'); return; }
-  const text = textFor(id, r);
-  try {
-    if (SmsSender) await SmsSender.compose({ to: nums, body: text });
-    else launch(`sms:${nums.join(',')}?body=${encodeURIComponent(text)}`);
-  } catch (err) { toast(`Messages didn\u2019t open. ${(err && err.message) || ''}`, 'error', 9000); return; }
-  markRequestDispatched(id, r, g.name, `#${r.ref_no} opened in the ${g.name} chat and marked dispatched. Tap Send in Messages.`);
-}
-
 // Big green check for about a second, so it's obvious the dispatch worked
 let sentTimer = null;
 function showSent(label) {
@@ -1292,27 +1274,14 @@ function openDetails(id, refresh) {
    Settings
    ========================================================= */
 function contactsSettings() {
-  const err = S.contactsError ? `<p class="small" style="color:var(--danger);margin-bottom:10px">Couldn\u2019t load drivers and group chats: ${esc(S.contactsError)} The database rule for dispatch_contacts may be missing (APP-SETUP.md, step 3).</p>` : '';
+  const err = S.contactsError ? `<p class="small" style="color:var(--danger);margin-bottom:10px">Couldn\u2019t load drivers: ${esc(S.contactsError)} The database rule for dispatch_contacts may be missing (APP-SETUP.md, step 3).</p>` : '';
   const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="grow"><b>${esc(d.name)}</b><small>${esc(d.phone)}</small></span><button class="btn btn-secondary sm" type="button" data-act="del-driver" data-driver="${esc(did)}">Remove</button></div>`).join('');
-  const groups = byName(S.contacts.groups).map(([gid, g]) => {
-    const nums = Object.entries(g.numbers || {}).map(([nid, n]) => `<div class="contact"><span class="grow">${esc(n)}</span><button class="icon-btn" type="button" data-act="del-number" data-group="${esc(gid)}" data-num="${esc(nid)}" aria-label="Remove ${esc(n)}">${icon('x')}</button></div>`).join('');
-    return `<div class="group-box"><h3><span>${esc(g.name)}</span><button class="btn btn-danger sm" type="button" data-act="del-group" data-group="${esc(gid)}">Delete</button></h3>
-      ${nums || '<p class="small muted">No numbers yet.</p>'}
-      <form class="add-row" data-form="add-number" data-group="${esc(gid)}"><input type="tel" inputmode="tel" placeholder="Add a phone number" aria-label="Phone number for ${esc(g.name)}"><button class="btn btn-secondary sm" type="submit">Add</button></form>
-    </div>`;
-  }).join('');
   return `<section class="card">
       <h2>Drivers</h2>
       ${err}
       <p class="small muted" style="margin-bottom:6px">\u201cSend to driver\u201d on each request texts the driver you pick, straight from this phone. Shared with every dispatcher.</p>
       ${drivers || '<p class="small muted">No drivers yet.</p>'}
       <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary sm" type="submit">Add</button></form>
-    </section>
-    <section class="card">
-      <h2>Group chats</h2>
-      <p class="small muted">Each group gets a button on every request. It opens Messages with these people and the text typed in, then you tap Send. Enter every person in the group so it opens the same conversation.</p>
-      ${groups}
-      <form class="add-row" data-form="add-group" style="margin-top:14px"><input placeholder="New group name, like WPG chat" aria-label="Group name" autocomplete="off"><button class="btn btn-secondary sm" type="submit">Add group</button></form>
     </section>`;
 }
 async function saveContact(fn) {
@@ -1330,14 +1299,6 @@ document.addEventListener('submit', async (e) => {
     const phone = ins[1].value.trim();
     if (!name || cleanPhone(phone).replace('+', '').length < 7) { toast('Enter the driver\u2019s name and full phone number.', 'error'); return; }
     if (await saveContact((ref) => ref.child('drivers').push({ name, phone }))) toast(`${name} added.`, 'ok');
-  } else if (f.dataset.form === 'add-group') {
-    const name = ins[0].value.trim();
-    if (!name) return;
-    if (await saveContact((ref) => ref.child('groups').push({ name }))) toast(`${name} added. Now add its phone numbers.`, 'ok');
-  } else if (f.dataset.form === 'add-number') {
-    const phone = ins[0].value.trim();
-    if (cleanPhone(phone).replace('+', '').length < 7) { toast('Enter a full phone number.', 'error'); return; }
-    if (await saveContact((ref) => ref.child(`groups/${f.dataset.group}/numbers`).push(phone))) toast('Number added.', 'ok');
   }
 });
 
@@ -1440,24 +1401,11 @@ document.addEventListener('click', async (e) => {
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
     case 'pick-driver': pickDriver(id); break;
     case 'send-driver': if (sheetOpen) _hideSheet(); sendToDriver(id, el.dataset.driver); break;
-    case 'send-group': if (sheetOpen) _hideSheet(); sendToGroup(id, el.dataset.group); break;
     case 'del-driver': {
       const d = S.contacts.drivers[el.dataset.driver];
       if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());
       break;
     }
-    case 'del-group': {
-      const g = S.contacts.groups[el.dataset.group];
-      if (g && await confirmSheet(`Delete ${g.name}?`, 'The button disappears from every request on every dispatcher phone.', 'Delete', true)) saveContact((ref) => ref.child(`groups/${el.dataset.group}`).remove());
-      break;
-    }
-    case 'del-number': saveContact((ref) => ref.child(`groups/${el.dataset.group}/numbers/${el.dataset.num}`).remove()); break;
-    case 'reset-edit': setEdit(id, null); break;
-    case 'details': openDetails(id); break;
-    case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
-    case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was copied by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
-    case 'test-alert': testAlert(); break;
-    case 'test-push': sendTestPush(); break;
     default: break;
   }
 });
