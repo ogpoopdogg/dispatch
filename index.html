@@ -238,6 +238,9 @@ main.app-main{max-width:680px;margin:0 auto;padding:26px 16px calc(var(--nav-h) 
 .chip-btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 16px;border-radius:99px;border:1.5px solid var(--yellow-line);box-shadow:var(--glow);background:var(--surface-3);color:var(--ink-2);font-weight:700;font-size:14px;cursor:pointer;transition:background-color .25s var(--ease),color .2s,border-color .2s,transform .14s}
 .chip-btn:active{transform:scale(.95)}
 .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000}
+.load-more{margin-top:18px}
+.load-more .i{transform:rotate(90deg)}
+.list-end{text-align:center;color:var(--ink-3);font-size:14px;margin:22px 0 4px}
 .range-row{position:relative;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:-6px -16px 12px;padding:6px 16px 10px;scroll-snap-type:x proximity}
 .range-row::-webkit-scrollbar{display:none}
 .range-row .chip-btn{flex:none;white-space:nowrap;scroll-snap-align:start}
@@ -423,7 +426,6 @@ main.app-main{max-width:680px;margin:0 auto;padding:26px 16px calc(var(--nav-h) 
         <button class="chip-btn" type="button" data-act="done-range" data-r="3" aria-pressed="false">Last 3 days</button>
         <button class="chip-btn" type="button" data-act="done-range" data-r="7" aria-pressed="false">Last 7 days</button>
         <button class="chip-btn" type="button" data-act="done-range" data-r="30" aria-pressed="false">Last 30 days</button>
-        <button class="chip-btn" type="button" data-act="done-range" data-r="all" aria-pressed="false">All time</button>
       </div>
       <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="done-q" type="search" placeholder="Search names, company or request #" aria-label="Search done requests"></div>
       <div class="filter-row" role="group" aria-label="Show">
@@ -515,7 +517,8 @@ const S = {
   tab: 'queue',
   doneQ: '',          // Done tab search
   doneFilter: 'all',  // all | done | cancelled
-  doneRange: 'recent', // recent (today and yesterday) | today | yesterday | 3 | 7 | 30 | all
+  doneRange: 'recent', // recent (today and yesterday) | today | yesterday | 3 | 7 | 30
+  more: null,         // { items, before, busy, end }: older requests added with "Load 20 more"
   hist: null,         // { done, cancelled, loading } for ranges beyond today and yesterday
   day: '',
   sessionToken: 0,
@@ -978,14 +981,14 @@ const RANGES = {
   yesterday: { label: 'yesterday', days: 2, end: 1 },
   3: { label: 'the last 3 days', days: 3, hist: true },
   7: { label: 'the last 7 days', days: 7, hist: true },
-  30: { label: 'the last 30 days', days: 30, hist: true },
-  all: { label: 'all time', hist: true }
+  30: { label: 'the last 30 days', days: 30, hist: true }
 };
+const MORE_STEP = 20; // "Load 20 more" fetches this many older requests at a time
 // Start (inclusive) and end (exclusive) of a range, as timestamps
 function rangeBounds(key) {
   const R = RANGES[key];
   const day = (n) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - n); return d.getTime(); };
-  return { from: R.days ? day(R.days - 1) : 0, to: R.end ? day(R.end - 1) : Infinity };
+  return { from: day(R.days - 1), to: R.end ? day(R.end - 1) : Infinity };
 }
 let histOff = [];
 function stopHistory() { histOff.forEach((off) => { try { off(); } catch (e) { /* ignore */ } }); histOff = []; S.hist = null; }
@@ -995,7 +998,7 @@ function loadHistory() {
   const { from } = rangeBounds(S.doneRange);
   const h = S.hist = { done: {}, cancelled: {}, loading: 2 };
   const watch = (field, status, key) => {
-    const ref = db.ref('requests').orderByChild(field).startAt(from || 1);
+    const ref = db.ref('requests').orderByChild(field).startAt(from);
     let first = true;
     const cb = (snap) => {
       if (S.hist !== h) return;
@@ -1009,11 +1012,38 @@ function loadHistory() {
   watch('dispatched_at', 'dispatched', 'done');
   watch('cancelled_at', 'cancelled', 'cancelled');
 }
-const doneReq = (id) => S.done[id] || (S.hist && S.hist.done[id]);
-const cancelledReq = (id) => S.cancelled[id] || (S.hist && S.hist.cancelled[id]);
+const moreReq = (id, kind) => S.more && S.more.items[id] && S.more.items[id].kind === kind ? S.more.items[id].r : null;
+const doneReq = (id) => S.done[id] || (S.hist && S.hist.done[id]) || moreReq(id, 'done');
+const cancelledReq = (id) => S.cancelled[id] || (S.hist && S.hist.cancelled[id]) || moreReq(id, 'cancelled');
+// Fetches the next MORE_STEP requests (dispatched or cancelled) older than anything shown so far
+async function loadMore() {
+  if (!db) { toast('Still connecting. Try again in a moment.', 'info'); return; }
+  const key = S.doneRange;
+  const m = S.more || (S.more = { items: {}, before: rangeBounds(key).from, busy: false, end: false });
+  if (m.busy || m.end) return;
+  m.busy = true;
+  renderDone();
+  try {
+    const older = (field, status, kind) => db.ref('requests').orderByChild(field).endAt(m.before).limitToLast(MORE_STEP + 5).once('value')
+      .then((snap) => Object.entries(snap.val() || {}).filter(([id, r]) => r.status === status && !m.items[id] && (r[field] || 0) < rangeBounds(key).from)
+        .map(([id, r]) => ({ id, r, t: r[field] || 0, kind })));
+    const [d, c] = await Promise.all([older('dispatched_at', 'dispatched', 'done'), older('cancelled_at', 'cancelled', 'cancelled')]);
+    if (S.more !== m) return; // range changed while loading
+    const next = [...d, ...c].sort((a, b) => b.t - a.t).slice(0, MORE_STEP);
+    next.forEach((x) => { m.items[x.id] = x; });
+    if (next.length < MORE_STEP) m.end = true;
+    else m.before = next[next.length - 1].t;
+  } catch (err) {
+    toast('Couldn\u2019t load older requests: ' + friendlyError(err), 'error', 8000);
+  } finally {
+    m.busy = false;
+    if (S.more === m) renderDone();
+  }
+}
 function setDoneRange(key) {
   if (!RANGES[key]) return;
   S.doneRange = key;
+  S.more = null;
   $$('[data-act=done-range]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.r === key));
     const row = b.parentElement;
@@ -1026,6 +1056,7 @@ function setDoneRange(key) {
 
 function startListening() {
   detachAll();
+  S.more = null;
   S.listeners.push(stopHistory);
   S.day = todayStr();
   const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - (DONE_DAYS - 1));
@@ -1197,7 +1228,9 @@ function renderDone() {
   const all = [
     ...Object.entries(src.done).map(([id, r]) => ({ id, r, t: r.dispatched_at || 0, kind: 'done' })),
     ...Object.entries(src.cancelled).map(([id, r]) => ({ id, r, t: r.cancelled_at || 0, kind: 'cancelled' }))
-  ].filter((x) => x.t >= from && x.t < to).sort((a, b) => b.t - a.t);
+  ].filter((x) => x.t >= from && x.t < to)
+    .concat(S.more ? Object.values(S.more.items).filter((x) => x.r.status === (x.kind === 'done' ? 'dispatched' : 'cancelled')) : [])
+    .sort((a, b) => b.t - a.t);
   if (hist && hist.loading > 0) {
     $('#done-summary').textContent = '';
     $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>Loading ${esc(RANGES[S.doneRange].label)}\u2026</h3><p>Getting older requests from the database.</p></div>`;
@@ -1210,8 +1243,12 @@ function renderDone() {
   const nDone = all.filter((x) => x.kind === 'done').length;
   const nCan = all.length - nDone;
   $('#done-summary').textContent = all.length ? `${nDone} dispatched, ${nCan} cancelled${rows.length !== all.length ? `. Showing ${rows.length}.` : ''}` : '';
-  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing in ${esc(RANGES[S.doneRange].label)}</h3><p>Pick a longer range above to see older requests.</p></div>`; return; }
-  if (!rows.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try a different name or request number.</p></div>`; return; }
+  const m = S.more;
+  const more = m && m.end
+    ? `<p class="list-end">${Object.keys(m.items).length ? 'That\u2019s everything. No older requests.' : 'No older requests.'}</p>`
+    : `<button class="btn btn-secondary block load-more" type="button" data-act="load-more"${m && m.busy ? ' disabled' : ''}>${m && m.busy ? 'Loading\u2026' : `${icon('chevron', 'sm')}Load ${MORE_STEP} more`}</button>`;
+  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing in ${esc(RANGES[S.doneRange].label)}</h3><p>Tap \u201cLoad ${MORE_STEP} more\u201d to see older requests.</p></div>${more}`; return; }
+  if (!rows.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try a different name or request number, or load older requests.</p></div>${more}`; return; }
   let html = '';
   let day = '';
   let open = false;
@@ -1228,7 +1265,7 @@ function renderDone() {
     html += doneRow(row);
   });
   if (open) html += '</div>';
-  $('#done-list').innerHTML = html;
+  $('#done-list').innerHTML = html + more;
 }
 function renderCounts() {
   const q = queueList().length;
@@ -1381,6 +1418,7 @@ async function undoDispatch(id) {
   if (r) acked.add(alertKey(id, r)); // already seen; don't sound the alarm again when it returns to the queue
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null });
+    if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
     toast('Moved back to the queue.', 'info');
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
@@ -1570,6 +1608,7 @@ document.addEventListener('click', async (e) => {
       renderDone();
       break;
     case 'done-range': setDoneRange(el.dataset.r); break;
+    case 'load-more': loadMore(); break;
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
