@@ -494,7 +494,7 @@ function startFirebase() {
   auth = firebase.auth();
   db = firebase.database();
   TS = firebase.database.ServerValue.TIMESTAMP;
-  auth.getRedirectResult().catch(() => {});
+  auth.getRedirectResult().catch((err) => reportFailedSignIn(err && err.customData && err.customData.email, err, 'google'));
   auth.onAuthStateChanged((user) => handleUser(user));
 }
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
@@ -557,6 +557,37 @@ function ago(ts) {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h} h ${m % 60} min ago`;
   return fmtDateTime(ts);
+}
+/* ---------------- Security log ----------------
+   Failed and refused sign-ins are reported to the E&C security log (the Security section of the
+   usage page). Firebase runs no server code when a password is wrong, so the app has to say so.
+   The server adds the real IP address and checks the sign-in token sent with a refusal.
+   A report never blocks a sign-in, and is dropped if it can't be sent. */
+const SECURITY_REPORT_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/auditSignInReport';
+const REPORT_QUIET = ['auth/network-request-failed', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+function sendSecurityReport(report) {
+  try {
+    const body = JSON.stringify(Object.assign({ app: 'dispatch', at: Date.now(), page: CAP ? 'phone app' : location.pathname }, report));
+    // text/plain needs no CORS preflight, and a beacon is still sent when the page closes
+    if (navigator.sendBeacon && navigator.sendBeacon(SECURITY_REPORT_URL, new Blob([body], { type: 'text/plain' }))) return;
+    fetch(SECURITY_REPORT_URL, { method: 'POST', mode: 'no-cors', keepalive: true, body }).catch(() => {});
+  } catch (e) { /* never get in the way of signing in */ }
+}
+/** A sign-in Firebase refused. Only the error code is sent, never the password. */
+function reportFailedSignIn(email, err, method) {
+  const code = String((err && err.code) || 'unknown');
+  if (REPORT_QUIET.includes(code)) return;
+  sendSecurityReport({ kind: 'failed', method: method || 'password', email: String(email || '').trim().toLowerCase().slice(0, 200), code });
+}
+const reportedRefusals = new Set();
+/** A signed-in account the app turned away (once per account and reason while the app is open). */
+async function reportRefusedSignIn(user, reason) {
+  const key = user.uid + '|' + reason;
+  if (reportedRefusals.has(key)) return;
+  reportedRefusals.add(key);
+  let idToken = null;
+  try { idToken = await user.getIdToken(); } catch (e) { /* sent without it; the server marks it unverified */ }
+  sendSecurityReport({ kind: 'refused', email: String(user.email || '').toLowerCase().slice(0, 200), reason, idToken });
 }
 function friendlyError(err) {
   const code = String((err && err.code) || '');
@@ -906,8 +937,9 @@ $('#auth-form').addEventListener('submit', async (e) => {
   if (!auth) return;
   const btn = $('#auth-submit');
   btn.disabled = true;
-  try { await auth.signInWithEmailAndPassword($('#auth-email').value.trim(), $('#auth-password').value); }
-  catch (err) { toast(friendlyError(err), 'error'); }
+  const email = $('#auth-email').value.trim();
+  try { await auth.signInWithEmailAndPassword(email, $('#auth-password').value); }
+  catch (err) { reportFailedSignIn(email, err); toast(friendlyError(err), 'error'); }
   finally { btn.disabled = false; }
 });
 async function googleSignIn() {
@@ -915,6 +947,7 @@ async function googleSignIn() {
   const p = new firebase.auth.GoogleAuthProvider();
   try { await auth.signInWithPopup(p); }
   catch (err) {
+    reportFailedSignIn(err && err.customData && err.customData.email, err, 'google');
     if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(err.code)) auth.signInWithRedirect(p);
     else if (err.code !== 'auth/popup-closed-by-user') toast(friendlyError(err), 'error');
   }
@@ -936,10 +969,11 @@ async function handleUser(user) {
   if (!user) { clearCache(); show('auth'); applyWakeLock(); updateSoundUi(); return; }
   if (known) openApp(user);
   else show('loading');
-  let isStaff = false;
-  try { isStaff = (await db.ref(`staff/${user.uid}`).once('value')).val() === true; } catch (e) { isStaff = false; }
+  let isStaff = false, staffErr = '';
+  try { isStaff = (await db.ref(`staff/${user.uid}`).once('value')).val() === true; } catch (e) { isStaff = false; staffErr = String((e && (e.code || e.message)) || e); }
   if (token !== S.sessionToken) return;
   if (!isStaff) {
+    reportRefusedSignIn(user, staffErr ? 'Staff check failed: ' + staffErr.slice(0, 100) : 'Not on the staff list');
     detachAll();
     clearCache();
     Object.assign(S, { pending: {}, loaded: false, fromCache: false });
