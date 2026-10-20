@@ -1401,6 +1401,12 @@ document.addEventListener('click', async (e) => {
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
     case 'pick-driver': pickDriver(id); break;
     case 'send-driver': if (sheetOpen) _hideSheet(); sendToDriver(id, el.dataset.driver); break;
+    case 'reset-edit': setEdit(id, null); break;
+    case 'details': openDetails(id); break;
+    case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
+    case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was sent by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
+    case 'test-alert': testAlert(); break;
+    case 'test-push': sendTestPush(); break;
     case 'del-driver': {
       const d = S.contacts.drivers[el.dataset.driver];
       if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());
