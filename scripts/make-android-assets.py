@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 SRC = Path('icon2.png')
 RES = Path('android/app/src/main/res')
 BG = (0, 0, 0, 255)  # app background (black, matches the top bar)
+ICON_BG = (255, 209, 0, 255)  # launcher icon tile (the app's yellow), so the crown's dark outline shows
 
 crown = Image.open(SRC).convert('RGBA')
 # icon2.png has a small grey sparkle mark in its bottom-right corner, outside the crown; clear it
@@ -26,6 +27,12 @@ def fit(img, box):
     return img.resize((max(1, round(img.width * s)), max(1, round(img.height * s))), Image.LANCZOS)
 
 
+def corner_safe(img, radius):
+    """Scale img so its corners sit inside a circle of the given radius (launchers clip icons to circles)."""
+    s = radius / math.hypot(img.width / 2, img.height / 2)
+    return img.resize((max(1, round(img.width * s)), max(1, round(img.height * s))), Image.LANCZOS)
+
+
 def centered(canvas, img):
     canvas.alpha_composite(img, ((canvas.width - img.width) // 2, (canvas.height - img.height) // 2))
     return canvas
@@ -35,15 +42,16 @@ def centered(canvas, img):
 DENS = {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}
 for d, k in DENS.items():
     n = round(48 * k)
-    sq = centered(Image.new('RGBA', (n, n), BG), fit(crown, round(n * 0.78)))
+    sq = centered(Image.new('RGBA', (n, n), ICON_BG), corner_safe(crown, n * 0.42))
     sq.save(RES / f'mipmap-{d}/ic_launcher.png')
     mask = Image.new('L', (n, n), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, n - 1, n - 1), fill=255)
-    rnd = centered(Image.new('RGBA', (n, n), BG), fit(crown, round(n * 0.62)))
+    rnd = centered(Image.new('RGBA', (n, n), ICON_BG), corner_safe(crown, n * 0.38))
     rnd.putalpha(mask)
     rnd.save(RES / f'mipmap-{d}/ic_launcher_round.png')
     f = round(108 * k)
-    centered(Image.new('RGBA', (f, f), (0, 0, 0, 0)), fit(crown, round(f * 0.56))).save(RES / f'mipmap-{d}/ic_launcher_foreground.png')
+    # 33dp = radius of the adaptive icon's 66dp safe zone
+    centered(Image.new('RGBA', (f, f), (0, 0, 0, 0)), corner_safe(crown, 33 * k)).save(RES / f'mipmap-{d}/ic_launcher_foreground.png')
 
     # Notification status-bar icon: white on transparent, 24dp. Android only uses the alpha,
     # so keep the crown's dark line work (not the whole outline, which would be a plain blob).
