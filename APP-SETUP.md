@@ -82,6 +82,17 @@ These let each staff member save their own phone's push token, use the
 "Send a test alert" button in Settings, and share the **Drivers** and **Group
 chats** lists in Settings with every dispatcher phone.
 
+Also add this inside `"requests"` → `"$rid"`, next to `"dispatched_by_email"`.
+The app saves who each request was sent to, and without it the database
+refuses every dispatch:
+
+```json
+"dispatched_to": {
+  ".write": "auth != null && root.child('staff').child(auth.uid).val() == true && data.parent().exists()",
+  ".validate": "newData.isString() && newData.val().length <= 100"
+}
+```
+
 ### 4. Deploy the push function
 
 You need to do this once, and again whenever `functions/` changes. The easiest
