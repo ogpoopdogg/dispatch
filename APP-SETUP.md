@@ -71,11 +71,16 @@ not replace your current rules.
   "$uid": {
     ".write": "auth != null && auth.uid === $uid && root.child('staff').child(auth.uid).val() === true"
   }
+},
+"dispatch_contacts": {
+  ".read": "auth != null && root.child('staff').child(auth.uid).val() === true",
+  ".write": "auth != null && root.child('staff').child(auth.uid).val() === true"
 }
 ```
 
-These let each staff member save their own phone's push token, and use the
-"Send a test alert" button in Settings.
+These let each staff member save their own phone's push token, use the
+"Send a test alert" button in Settings, and share the **Drivers** and **Group
+chats** lists in Settings with every dispatcher phone.
 
 ### 4. Deploy the push function
 
