@@ -1936,7 +1936,11 @@ async function sendToDriver(id, did) {
     await smsSend(cleanPhone(d.phone), text);
     markRequestDispatched(id, r, d.name, `#${r.ref_no} texted to ${d.name} and marked dispatched.`);
   } catch (err) {
-    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''} It\u2019s still in the queue.`, 'error', 10000);
+    // Backup: the phone's Messages app with the text typed in; it's dispatched once that opens
+    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+      markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
+    } });
   } finally { driverSending = false; }
 }
 // Big green check for about a second, so it's obvious the dispatch worked
@@ -2485,7 +2489,12 @@ async function ndSendDriver(did) {
   driverSending = true;
   toast(`Sending to ${d.name}…`, 'info', 4000);
   try { await smsSend(cleanPhone(d.phone), text); ndSent(r, d.name); }
-  catch (err) { toast(`Not sent to ${d.name}. ${(err && err.message) || ''} Your dispatch is still here.`, 'error', 10000); }
+  catch (err) {
+    toast(`Not sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+      ndSent(r, d.name);
+    } });
+  }
   finally { driverSending = false; }
 }
 // Save to queue, or schedule it for a later day
