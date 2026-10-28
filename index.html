@@ -496,9 +496,22 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-when input[type=date]{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;outline:none;color-scheme:inherit}
 .nd-send{border-top:1px solid var(--line);margin:4px -12px 0;padding:10px 12px 0}
 .nd-send .text-preview{margin-bottom:8px}
-.nd-send-label{font-size:10.5px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;margin:0 0 4px}
-.nd-drivers{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:6px}
-.nd-drivers .pick{min-height:46px;animation:none}
+/* The form starts mid-screen (where Pieces and count used to sit), in easy reach of the right thumb;
+   the dimmed backdrop fills the top.
+   While typing (keyboard up) it grows to full height like before. */
+@media (max-width:719px){
+  .sheet{position:relative}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height var(--t) var(--out)}
+  .sheet.tall.mid:has(:is(input:not([type=radio]):not([type=checkbox]),textarea):focus){height:92dvh}
+}
+.nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
+.nd-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t) ease}
+.nd-pop.open .nd-scrim{background:rgba(0,0,0,.45)}
+.nd-pop-card{position:relative;max-height:85%;display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--line-strong);border-radius:14px 14px 0 0;box-shadow:var(--shadow);padding:0 12px calc(12px + var(--safe-b));transform:translateY(100%);transition:transform var(--t) var(--out)}
+.nd-pop.open .nd-pop-card{transform:none}
+.nd-pop-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 6px 2px;font-size:11px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.12em}
+.nd-pop-list{overflow-y:auto;overscroll-behavior:contain}
+.nd-pop-list .pick{min-height:50px;animation:none}
 .nd-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
 .nd-actions .full{grid-column:1/-1}
@@ -653,6 +666,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheet-title"></h2><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
+    <div class="nd-pop" id="nd-pop" hidden><div class="nd-scrim" data-act="nd-pop-close"></div><div class="nd-pop-card" role="dialog" aria-label="Send to which driver"><div class="nd-pop-head"><b>Send to</b><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div><div class="nd-pop-list" id="nd-pop-list"></div></div></div>
   </div>
 </div>
 <!-- Map picker for a new dispatch's address (same idea as Route Planner's) -->
@@ -681,7 +695,6 @@ const REPEAT_ALARM_MS = 20000;
 // New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
 const FORM_FIELDS = [
   { key: 'items', label: 'Pieces and count', hint: 'e.g. 2 boxes' },
-  { key: 'details', label: 'Description', hint: 'e.g. fragile, keep upright' },
   { key: 'payment', label: 'Prepaid / Collect' },
   { key: 'po', label: 'PO number' },
   { key: 'notes', label: 'Notes for the driver' },
@@ -1139,6 +1152,8 @@ let sheetResolver = null;
 function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
+  $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
+  _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-body').innerHTML = html;
   if (!sheetOpen) {
@@ -1154,6 +1169,7 @@ function openSheet(title, html, onMount, tall) {
 function _hideSheet() {
   if (!sheetOpen) return;
   sheetOpen = false;
+  _hidePop();
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   const el = $('#sheet');
   el.classList.remove('open');
@@ -1161,9 +1177,9 @@ function _hideSheet() {
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
-window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (sheetOpen) _hideSheet(); });
+window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
 $('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else closeSheet(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen) closePop(); else closeSheet(); } });
 function confirmSheet(title, body, ok, danger) {
   return new Promise((resolve) => {
     openSheet(title, `<p class="muted">${body}</p><div class="btn-row"><button class="btn btn-secondary" type="button" data-c="0">Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" type="button" data-c="1">${esc(ok)}</button></div>`);
@@ -1929,7 +1945,7 @@ function placeParts(comps, formatted) {
 
 /* ---------- Draft (kept if the form is closed by mistake) ---------- */
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'piece', other: '' }], details: '', payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
+const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
@@ -1951,16 +1967,15 @@ function openNewDispatch() {
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
     ${leg('pickup', 'Pickup')}
     ${leg('delivery', 'Delivery')}
-    ${f.items || f.details ? `<section class="nd-block">
+    ${f.items || f.notes ? `<section class="nd-block">
       ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button></div>` : ''}
-      ${f.details ? `<div class="field"><label for="nd-details">Description</label><textarea id="nd-details" data-nd-f="details" maxlength="500" rows="1" placeholder="Optional, e.g. fragile, keep upright"></textarea></div>` : ''}
+      ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>` : ''}
     </section>` : ''}
-    ${f.payment || f.po || f.notes || f.when ? `<section class="nd-block">
+    ${f.payment || f.po || f.when ? `<section class="nd-block">
       ${f.payment || f.po ? `<div class="${f.payment && f.po ? 'two' : ''}">
         ${f.payment ? `<div class="field"><label>Payment</label><div class="seg" role="radiogroup" aria-label="Payment"><label><input type="radio" name="nd-pay" value="prepaid"><span>Prepaid</span></label><label><input type="radio" name="nd-pay" value="collect"><span>Collect</span></label></div></div>` : ''}
         ${f.po ? `<div class="field"><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" placeholder="Optional" autocomplete="off"></div>` : ''}
       </div>` : ''}
-      ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1" placeholder="Optional: door #, hours, gate code"></textarea></div>` : ''}
       ${f.when ? `<div class="field"><label>When</label><div class="nd-when"><div class="seg" role="radiogroup" aria-label="When"><label><input type="radio" name="nd-when" value="asap"><span>Now</span></label><label><input type="radio" name="nd-when" value="later"><span>Later</span></label></div><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}" aria-label="Date" hidden></div></div>` : ''}
     </section>` : ''}
     <div class="nd-send">
@@ -1974,7 +1989,7 @@ function openNewDispatch() {
     ndAttachPlaces();
     ndUpdate(true);
     if (!ND.pickup.name && window.matchMedia('(pointer:fine)').matches) $('#nd-pickup-name').focus();
-  }, true);
+  }, 'mid');
 }
 function ndFillLeg(k) {
   const L = ND[k];
@@ -1984,7 +1999,7 @@ function ndFillLeg(k) {
 }
 function ndFillAll(body) {
   ndFillLeg('pickup'); ndFillLeg('delivery');
-  ['details', 'po', 'notes', 'date'].forEach((k) => { const el = $(`[data-nd-f="${k}"]`, body); if (el) el.value = ND[k] || ''; });
+  ['po', 'notes', 'date'].forEach((k) => { const el = $(`[data-nd-f="${k}"]`, body); if (el) el.value = ND[k] || ''; });
   $$('input[name=nd-pay]', body).forEach((x) => { x.checked = x.value === ND.payment; });
   $$('input[name=nd-when]', body).forEach((x) => { x.checked = x.value === ND.when; });
   ndRenderItems();
@@ -2010,7 +2025,6 @@ function ndRecord() {
     return o;
   };
   const items = f.items ? clampText(itemsText(ND.items), 500) : '';
-  const details = f.details ? ND.details.trim() : '';
   const later = ndLater() && ND.date;
   return {
     source: 'dispatcher',
@@ -2021,7 +2035,7 @@ function ndRecord() {
     pickup: leg(ND.pickup),
     delivery: leg(ND.delivery),
     items_text: items || null,
-    item_details: items ? (details || null) : details, // the rules need one of the two, even if empty
+    item_details: items ? null : '', // the rules need one of the two, even if empty
     payment: f.payment ? ND.payment : 'prepaid',
     text_hide: f.payment ? null : { payment: true },
     po: (f.po && ND.po.trim()) || null,
@@ -2046,7 +2060,7 @@ function ndValid() {
     else if (badAddr) errs.push([`#nd-${k}-address`, `Pick the ${label} address from Google’s list or the map.`]);
   });
   const f = S.settings.form;
-  if (f.items && !itemsText(ND.items) && !(f.details && ND.details.trim())) errs.push(['[data-nd-qty]', 'Add how many pieces.']);
+  if (f.items && !itemsText(ND.items)) errs.push(['[data-nd-qty]', 'Add how many pieces.']);
   if (ndLater() && !(ND.date && ND.date > todayStr())) { mark($('#nd-date'), true); errs.push(['#nd-date', 'Pick the date it’s booked for.']); } else mark($('#nd-date'), false);
   if (!errs.length) return ndRecord();
   const el = $(errs[0][0]);
@@ -2081,11 +2095,10 @@ function ndUpdate(force) {
     box.innerHTML = `<div class="nd-actions"><button class="btn btn-primary full" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Schedule it'}</button></div>`;
     return;
   }
-  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-act="nd-send-driver" data-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
-  box.innerHTML = `${drivers ? `<p class="nd-send-label">Send to</p><div class="nd-drivers">${drivers}</div>` : ''}
-    <div class="nd-actions">
+  box.innerHTML = `<div class="nd-actions">
       <button class="btn btn-secondary" type="button" data-act="nd-save">${icon('inbox', 'sm')}Save to queue</button>
-      <button class="btn ${drivers ? 'btn-secondary' : 'btn-primary'}" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button>
+      <button class="btn btn-secondary" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button>
+      <button class="btn btn-primary full" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>
     </div>`;
 }
 // "Saved" when the name is already a customer, "New customer" when it'll be added
@@ -2135,7 +2148,7 @@ function ndPick(k, name) {
   ndHideSuggest(k);
   ndUpdate();
   // Straight on to the next thing to fill in, keyboard stays up
-  const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-details') || $('#nd-po');
+  const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-notes') || $('#nd-po');
   if (!c.address) $(`#nd-${k}-address`).focus();
   else if (next) next.focus();
 }
@@ -2256,7 +2269,7 @@ async function ndCommit(r, status, to) {
 const deniedMsg = (err) => (/permission[_ ]denied/i.test(String((err && (err.code || err.message)) || '')) ? 'the Firebase rules don’t allow it yet. Publish the updated rules.' : friendlyError(err));
 // After the text has gone out: close the form, celebrate, then file it under Done
 function ndSent(r, to) {
-  closeSheet();
+  if (popOpen && history.state && history.state.pop) { _hidePop(); history.go(-2); } else closeSheet();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
   clearDraft();
   const file = () => ndCommit(r, 'dispatched', to)
@@ -2264,25 +2277,47 @@ function ndSent(r, to) {
     .catch((err) => toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }));
   file();
 }
+// Group Chat only shares the text. It's dispatched (and filed in Done) once it's sent to a driver.
 function ndSendGroup() {
   if (sharing) return;
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
+  const shared = () => toast('Shared. Tap Send to driver once it’s assigned.', 'info', 6000);
   if (canShare()) {
     sharing = true;
     shareText(text)
-      .then(() => ndSent(r, null))
+      .then(shared)
       .catch((err) => {
-        if (isShareCancel(err)) toast('Not sent. Your dispatch is still here.', 'info', 5000);
-        else toast('The share menu didn’t open.', 'error', 10000, { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); ndSent(r, null); } });
+        if (isShareCancel(err)) return;
+        toast('The share menu didn’t open.', 'error', 10000, { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); shared(); } });
       })
       .finally(() => { sharing = false; });
     return;
   }
   launch(`sms:?body=${encodeURIComponent(text)}`);
-  ndSent(r, null);
+  shared();
 }
+/* Send to driver: the list of drivers slides up over the form */
+let popOpen = false;
+function ndPickDriver() {
+  if (!ndValid()) return;
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-act="nd-send-driver" data-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
+  $('#nd-pop-list').innerHTML = rows ? `<div class="pick-grid">${rows}</div>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
+  const el = $('#nd-pop');
+  el.hidden = false;
+  popOpen = true;
+  history.pushState({ pop: true }, '');
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+function _hidePop() {
+  const el = $('#nd-pop');
+  if (!el || !popOpen) return;
+  popOpen = false;
+  el.classList.remove('open');
+  setTimeout(() => { if (!popOpen) el.hidden = true; }, 180);
+}
+function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
 async function ndSendDriver(did) {
   const d = S.contacts.drivers[did];
   if (!d || driverSending) return;
@@ -2532,6 +2567,8 @@ document.addEventListener('click', async (e) => {
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
     case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
     case 'nd-group': ndSendGroup(); break;
+    case 'nd-pick-driver': ndPickDriver(); break;
+    case 'nd-pop-close': closePop(); break;
     case 'nd-save': ndSave(el); break;
     case 'nd-clear': if (await confirmSheet('Start over?', 'This clears everything typed in the new dispatch.', 'Clear it', true)) { clearDraft(); openNewDispatch(); } break;
     case 'del-driver': {
