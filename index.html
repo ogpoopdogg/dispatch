@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="icon-512.png">
-<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='light'?'light':'dark';}catch(e){}</script>
+<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='dark'?'dark':'light';}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -187,7 +187,7 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 .group-head:first-child{margin-top:0}
 
 /* Queue summary: four live numbers in one strip */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);box-shadow:var(--sh-2);overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px -4px rgba(0,0,0,.16);overflow:hidden}
 .kpi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:7px 8px 8px 10px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
 .kpi+.kpi{border-left:1px solid var(--line)}
 button.kpi{cursor:pointer}
@@ -211,9 +211,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .tab[aria-current=page] .ti{background:var(--yellow);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(255,209,0,.6)}
 .tab[aria-current=page] .i{stroke-width:2.3}
 /* Queue tab glows while requests are waiting */
-.tab.has-jobs .ti{animation:tabGlow 1.6s ease-in-out infinite}
-.tab.has-jobs:not([aria-current=page]) .ti{color:var(--accent-ink);background:var(--yellow-soft)}
-@keyframes tabGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 0 rgba(255,209,0,0)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 16px rgba(255,209,0,.75)}}
+.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
+.tab.has-jobs .i{animation:tabNudge 1.3s ease-in-out infinite}
+.tab.has-jobs:not([aria-current=page]) .ti{color:#000;background:var(--yellow)}
+.tab.has-jobs:not([aria-current=page]){color:var(--ink)}
+@keyframes tabGlow{0%{box-shadow:0 0 0 0 rgba(255,190,0,.85),0 0 4px rgba(255,190,0,.4);transform:scale(1)}50%{box-shadow:0 0 0 9px rgba(255,190,0,0),0 0 26px 4px rgba(255,190,0,.95);transform:scale(1.1)}100%{box-shadow:0 0 0 0 rgba(255,190,0,0),0 0 4px rgba(255,190,0,.4);transform:scale(1)}}
+@keyframes tabNudge{50%{transform:translateY(-1px)}}
 .tab .dot{position:absolute;top:4px;left:calc(50% + 10px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface);animation:pop var(--t-slow) var(--spring)}
 .tab .dot.quiet{background:var(--surface-3);color:var(--ink);box-shadow:0 0 0 2px var(--surface),inset 0 0 0 1px var(--line-strong)}
 @keyframes pop{from{transform:scale(0)}}
@@ -784,7 +787,7 @@ const S = {
   settings: loadSettings()
 };
 function loadSettings() {
-  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'dark' };
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'light' };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
   st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
@@ -1726,7 +1729,10 @@ function dispatch(id) {
   // Doesn't touch the clipboard: a copied text can reappear in the message box after sending
   acked.add(alertKey(id, r));
   saveAcked();
-  const markDispatched = (msg) => markRequestDispatched(id, r, null, msg);
+  // With drivers set up, Group Chat only posts the text: the job stays in the queue until Send to driver
+  const markDispatched = hasDrivers()
+    ? () => { toast(`#${r.ref_no} posted. It stays in the queue until you send it to a driver.`, 'info', 5000); }
+    : (msg) => markRequestDispatched(id, r, null, msg);
   if (canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
     sharing = true;
@@ -2562,7 +2568,14 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
-  if (t.dataset.ndType) { ND.items[+t.dataset.ndType].type = t.value; ndRenderItems(); if (t.value === 'other') { const o = $(`[data-nd-other="${t.dataset.ndType}"]`); if (o) o.focus(); } ndUpdate(); }
+  if (t.dataset.ndType) {
+    ND.items[+t.dataset.ndType].type = t.value;
+    ndRenderItems();
+    // Straight on to the weight (number pad), or "What is it?" for Other
+    const next = t.value === 'other' ? $(`[data-nd-other="${t.dataset.ndType}"]`) : $(`[data-nd-wt="${t.dataset.ndType}"]`);
+    if (next) { next.focus({ preventScroll: true }); if (next.select) next.select(); ndReveal(next); }
+    ndUpdate();
+  }
   else if (t.name === 'nd-pay' || t.name === 'nd-when') t.dispatchEvent(new Event('input', { bubbles: true }));
 });
 document.addEventListener('keydown', (e) => {
