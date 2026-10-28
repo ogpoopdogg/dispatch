@@ -505,7 +505,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    While typing (keyboard up) it grows to full height like before. */
 @media (max-width:719px){
   .sheet{position:relative}
-  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height var(--t) var(--out)}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px))}
   .sheet.mid{will-change:auto}
   /* Keyboard up: just the part being filled sits right on top of it, suggestions get the room above */
   .sheet.tall.mid.kb{height:var(--nd-kb-h,240px)}
@@ -741,6 +741,7 @@ const CAP = window.Capacitor && window.Capacitor.registerPlugin && window.Capaci
 const Push = CAP ? CAP.registerPlugin('PushNotifications') : null;
 const NativeShare = CAP ? CAP.registerPlugin('Share') : null;
 const SmsSender = CAP ? CAP.registerPlugin('SmsSender') : null; // android/.../SmsSenderPlugin.java
+const Keyboard = CAP ? CAP.registerPlugin('Keyboard') : null; // @capacitor/keyboard: opens it for New dispatch
 
 /* ---------------- State ---------------- */
 const S = {
@@ -1165,6 +1166,7 @@ function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
+  if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
   $('#sheet-reset').hidden = tall !== 'mid';
   _hidePop();
   $('#sheet-title').textContent = title;
@@ -2002,7 +2004,7 @@ function openNewDispatch() {
     ndFillAll(body);
     ndAttachPlaces();
     ndUpdate(true);
-    if (!ND.pickup.name && window.matchMedia('(pointer:fine)').matches) $('#nd-pickup-name').focus();
+    ndTypeNow();
   }, 'mid');
 }
 function ndFillLeg(k) {
@@ -2416,16 +2418,27 @@ function ndReveal(el) {
 // Keyboard up or down: the form glides to its new spot instead of jumping
 let fullH = window.innerHeight;
 let ndLastTop = null;
+let kbKnown = 0;   // keyboard height from the last time it opened
+try { kbKnown = +localStorage.getItem('ecd_kbh') || 0; } catch (e) { kbKnown = 0; }
+let expectKb = 0;  // when the keyboard was asked for and hasn't shown yet
 function ndKeyboard() {
   const sheet = $('#sheet .sheet');
   const vv = window.visualViewport;
   fullH = Math.max(fullH, window.innerHeight);
   const inset = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0; // keyboard drawn over the page
-  document.documentElement.style.setProperty('--kb', `${inset > 80 ? inset : 0}px`);
-  if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
+  const shown = Math.max(fullH - window.innerHeight, inset);
+  if (shown > 120) {
+    expectKb = 0;
+    if (Math.abs(shown - kbKnown) > 2) { kbKnown = shown; try { localStorage.setItem('ecd_kbh', String(shown)); } catch (e) { /* ignore */ } }
+  }
   const a = document.activeElement;
   const typing = !!(a && a.closest && a.closest('[data-nd]') && a.matches('input:not([type=radio]):not([type=checkbox]),textarea'));
-  const up = typing && (fullH - window.innerHeight > 120 || inset > 120);
+  // Keyboard on its way: leave room for it now so the card doesn't move when it lands
+  const waiting = !!(expectKb && typing && shown <= 120 && ndOpen());
+  if (!typing) expectKb = 0;
+  document.documentElement.style.setProperty('--kb', `${waiting ? kbKnown : inset > 80 ? inset : 0}px`);
+  if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
+  const up = typing && (shown > 120 || waiting);
   if (up) {
     const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
     const leg = $('#sheet-body .nd-leg');
@@ -2433,7 +2446,7 @@ function ndKeyboard() {
   }
   const before = ndLastTop;
   sheet.classList.toggle('kb', up);
-  const now = sheet.getBoundingClientRect().top;
+  const now = sheet.offsetTop; // layout spot, ignoring any slide that's still running
   ndLastTop = now;
   if (before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
     sheet.classList.add('moving');
@@ -2445,16 +2458,26 @@ function ndKeyboard() {
 }
 window.addEventListener('resize', ndKeyboard);
 if (window.visualViewport) visualViewport.addEventListener('resize', ndKeyboard);
+// Cursor in Pickup with the keyboard up, ready to type. Once the keyboard's height is known,
+// the card is put straight where it'll sit on the keyboard, so nothing bounces.
+function ndTypeNow() {
+  const name = $('#nd-pickup-name');
+  const body = $('#sheet-body');
+  if (!name) return;
+  if (body) body.scrollTop = 0;
+  if (kbKnown && fullH - window.innerHeight < 120) {
+    expectKb = Date.now();
+    setTimeout(() => { if (expectKb && Date.now() - expectKb >= 1400) { expectKb = 0; ndKeyboard(); } }, 1500);
+  }
+  name.focus({ preventScroll: true });
+  if (Keyboard) Keyboard.show().catch(() => {});
+  ndKeyboard();
+}
 // Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
 function ndReset() {
   clearDraft();
   ndMode = '';
   openNewDispatch();
-  const body = $('#sheet-body');
-  if (body) body.scrollTop = 0;
-  const name = $('#nd-pickup-name');
-  if (name) name.focus({ preventScroll: true });
-  ndKeyboard();
 }
 
 /* ---------- Typing in the form ---------- */
