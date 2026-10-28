@@ -93,6 +93,16 @@ refuses every dispatch:
 }
 ```
 
+**Remove from queue** marks a request `"status": "removed"` with `removed_at`,
+`removed_by` and `removed_by_email`, and *Move back to queue* clears them. The
+rules must allow it: in `"requests"` add `"removed_at"` to `".indexOn"`, add
+`'removed'` to the `status` rule's allowed values and staff transitions
+(`new` → `removed` and `removed` → `new`), and add `removed_at`, `removed_by` and
+`removed_by_email` next to `dispatched_by_email`, written the same way as the
+`dispatched_*` fields. The customer `.write` rule also refuses those three fields,
+as it does the `dispatched_*` ones. Without these, Remove shows an error and the
+request stays in the queue.
+
 ### 4. Deploy the push function
 
 You need to do this once, and again whenever `functions/` changes. The easiest
