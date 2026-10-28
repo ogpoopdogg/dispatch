@@ -14,8 +14,9 @@ function describeChange(before, after) {
   const company = after.company_name ? `${after.company_name}: ` : '';
   const when = after.when === 'scheduled' && after.scheduled_for ? `, for ${fmtDay(after.scheduled_for)}` : '';
 
-  // Brand new request (not one moved back to the queue with Undo, which the app treats as already seen)
-  if (after.status === 'new' && (!before || before.status == null)) {
+  // Brand new request (not one moved back to the queue with Undo, which the app treats as already seen).
+  // One a dispatcher made in the app stays quiet: they already know about it.
+  if (after.status === 'new' && (!before || before.status == null) && after.source !== 'dispatcher') {
     return { kind: 'new', title: `New ${when ? 'scheduled ' : ''}request #${after.ref_no}`, body: `${company}${route(after)}${when}` };
   }
   // Customer edited a waiting request
