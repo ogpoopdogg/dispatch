@@ -1911,10 +1911,19 @@ function pickDriver(id) {
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
 let driverSending = false;
+// Texts straight from the phone. If the phone never reports back, stop waiting after 25 s
+// so the Send buttons don't stay locked.
+function smsSend(to, body) {
+  return Promise.race([
+    SmsSender.send({ to, body }),
+    new Promise((_, no) => setTimeout(() => no(new Error('The phone didn’t confirm the text. Check Messages to see if it went.')), 25000))
+  ]);
+}
 async function sendToDriver(id, did) {
   const r = readyToSend(id);
   const d = S.contacts.drivers[did];
-  if (!r || !d || driverSending) return;
+  if (driverSending) { toast('Still sending the last text. One moment.', 'info'); return; }
+  if (!r || !d) return;
   const text = textFor(id, r);
   if (!SmsSender) {
     launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
@@ -1924,7 +1933,7 @@ async function sendToDriver(id, did) {
   driverSending = true;
   toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 4000);
   try {
-    await SmsSender.send({ to: cleanPhone(d.phone), body: text });
+    await smsSend(cleanPhone(d.phone), text);
     markRequestDispatched(id, r, d.name, `#${r.ref_no} texted to ${d.name} and marked dispatched.`);
   } catch (err) {
     toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''} It\u2019s still in the queue.`, 'error', 10000);
@@ -2467,14 +2476,15 @@ function _hidePop() {
 function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
 async function ndSendDriver(did) {
   const d = S.contacts.drivers[did];
-  if (!d || driverSending) return;
+  if (driverSending) { toast('Still sending the last text. One moment.', 'info'); return; }
+  if (!d) return;
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
   if (!SmsSender) { launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`); ndSent(r, d.name); return; }
   driverSending = true;
   toast(`Sending to ${d.name}…`, 'info', 4000);
-  try { await SmsSender.send({ to: cleanPhone(d.phone), body: text }); ndSent(r, d.name); }
+  try { await smsSend(cleanPhone(d.phone), text); ndSent(r, d.name); }
   catch (err) { toast(`Not sent to ${d.name}. ${(err && err.message) || ''} Your dispatch is still here.`, 'error', 10000); }
   finally { driverSending = false; }
 }
