@@ -26,3 +26,7 @@ test('dispatching, undo and deletes stay quiet', () => {
   assert.strictEqual(describeChange(base, null), null);
   assert.strictEqual(describeChange(base, { ...base }), null);
 });
+test('removing from the queue and moving it back stay quiet', () => {
+  assert.strictEqual(describeChange(base, { ...base, status: 'removed', removed_at: 9 }), null);
+  assert.strictEqual(describeChange({ ...base, status: 'removed', removed_at: 9 }, base), null);
+});
