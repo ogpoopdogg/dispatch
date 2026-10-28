@@ -235,9 +235,9 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
 /* A request card: the top part, and a tab under its right side holding the two buttons.
    The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
-.job{position:relative;--job-line:var(--yellow);overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
+.job{position:relative;--job-line:var(--yellow);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
 .job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
-.job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,max(58%,200px));margin:-1px 0 0 auto;padding:6px 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
+.job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,var(--tab-w));margin:-1px 0 0 auto;padding:0 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
 /* Rounded inside corner where the text's bottom edge turns down into the tab */
 .job-tab::before{content:'';position:absolute;top:0;left:-13px;width:13px;height:13px;background:radial-gradient(circle at 0 100%,transparent 12px,var(--job-line) 12.5px,var(--job-line) 13.2px,var(--surface) 13.8px)}
 .job-tab .btn{width:100%;min-width:0}
@@ -253,8 +253,10 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .job.overdue .req-no{background:var(--danger);color:#fff;box-shadow:none}
 .job-co{flex:1;min-width:0;font-weight:750;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job-tools{display:flex;flex:none;margin:-4px 0}
-.chip-btn.job-move{flex:none;min-height:30px;padding:0 8px;font-size:12px;font-weight:750;letter-spacing:-.01em;color:var(--ink);margin:-3px 0}
-.job-head .job-co{min-width:52px}
+/* Schedule for later / Send to queue, left of Group Chat (same column as the tab below) */
+.job-row{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--tab-w) - 21px);gap:6px;margin-bottom:6px}
+.job-row>.job-move:only-child{grid-column:1}
+.job-row .btn.job-move{white-space:normal;line-height:1.1;padding:0 8px;color:var(--ink)}
 .job-meta{display:flex;align-items:center;gap:4px;margin:4px 0 6px;min-width:0}
 .job-meta .chips{flex:1;min-width:0}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -1509,9 +1511,6 @@ function jobCard(id, r) {
     <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
-      ${isFuture(r)
-        ? `<button class="chip-btn job-move" type="button" data-act="to-queue" data-id="${esc(id)}">Send to queue</button>`
-        : `<button class="chip-btn job-move" type="button" data-act="schedule-later" data-id="${esc(id)}">Schedule for later</button>`}
       <span class="job-tools">
         <button class="icon-btn sm" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}" title="Details">${icon('more')}</button>
         <button class="icon-btn sm del" type="button" data-act="remove" data-id="${esc(id)}" aria-label="Remove request ${esc(r.ref_no)} from the queue" title="Remove from queue">${icon('trash')}</button>
@@ -1523,8 +1522,11 @@ function jobCard(id, r) {
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
     ${textEditor(id, r, 'card')}
+    <div class="job-actions job-row">${isFuture(r)
+      ? `<button class="btn btn-secondary job-move" type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox', 'sm')}Send to queue</button>`
+      : `<button class="btn btn-secondary job-move" type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar', 'sm')}Schedule for later</button>`}${groupChatButton(id)}</div>
     </div>
-    <div class="job-actions job-tab">${groupChatButton(id)}${sendButtons(id)}</div>
+    <div class="job-actions job-tab">${sendButtons(id)}</div>
   </article>`;
 }
 const skeletons = () => '<div class="cards" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
