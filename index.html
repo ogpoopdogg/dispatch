@@ -187,7 +187,7 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 .group-head:first-child{margin-top:0}
 
 /* Queue summary: four live numbers in one strip */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-2);overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);box-shadow:var(--sh-2);overflow:hidden}
 .kpi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:7px 8px 8px 10px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
 .kpi+.kpi{border-left:1px solid var(--line)}
 button.kpi{cursor:pointer}
@@ -235,9 +235,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
 /* A request card: the top part, and a tab under its right side holding the two buttons.
    The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
-.job{position:relative;--job-line:var(--line);overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
-.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 13px;transition:border-color var(--t) ease}
-.job-top::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--yellow)}
+.job{position:relative;--job-line:var(--yellow);overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
+.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
 .job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,max(58%,200px));margin:-1px 0 0 auto;padding:6px 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
 /* Rounded inside corner where the text's bottom edge turns down into the tab */
 .job-tab::before{content:'';position:absolute;top:0;left:-13px;width:13px;height:13px;background:radial-gradient(circle at 0 100%,transparent 12px,var(--job-line) 12.5px,var(--job-line) 13.2px,var(--surface) 13.8px)}
@@ -248,13 +247,14 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .job.unseen.enter{animation:cardIn .36s var(--out) both,jobGlow 1.8s ease-in-out .36s infinite alternate}
 @keyframes jobGlow{from{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 0 rgba(255,209,0,0))}to{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 9px rgba(255,209,0,.5))}}
 .job.overdue{--job-line:var(--danger)}
-.job.overdue .job-top::before{background:var(--danger)}
 .job-head{display:flex;align-items:center;gap:8px;min-width:0;margin-right:-4px}
 .req-no{font-stretch:75%;font-weight:800;font-size:17px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .job .req-no{background:var(--yellow);color:#000;border-radius:var(--r-xs);padding:1px 7px;line-height:1.25;box-shadow:0 3px 10px -4px rgba(255,209,0,.6)}
 .job.overdue .req-no{background:var(--danger);color:#fff;box-shadow:none}
 .job-co{flex:1;min-width:0;font-weight:750;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job-tools{display:flex;flex:none;margin:-4px 0}
+.chip-btn.job-move{flex:none;min-height:30px;padding:0 8px;font-size:12px;font-weight:750;letter-spacing:-.01em;color:var(--ink);margin:-3px 0}
+.job-head .job-co{min-width:52px}
 .job-meta{display:flex;align-items:center;gap:4px;margin:4px 0 6px;min-width:0}
 .job-meta .chips{flex:1;min-width:0}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -339,7 +339,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .range-row .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000}
 .list-summary{font-size:12px;font-weight:650;color:var(--ink-2);margin:4px 2px 0}
 .list-summary:empty{display:none}
-.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
+.list{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
 @media (min-width:760px){.list{display:grid;grid-template-columns:1fr 1fr}.list>.row:nth-child(2){border-top:0}.list>.row:nth-child(odd){border-right:1px solid var(--line)}}
 .row{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:7px 10px 7px 14px;cursor:pointer;color:var(--ink);font-size:14px;line-height:1.3;transition:background-color var(--t-fast) ease;-webkit-tap-highlight-color:transparent}
 .row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ok)}
@@ -377,7 +377,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Settings ---------- */
 #settings-body{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start}
 @media (min-width:760px){#settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}#settings-body>.card:first-child{grid-row:span 3}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
+.card{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
 .card>h2{display:flex;align-items:center;gap:8px;font-size:12px;font-stretch:100%;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
 .card>h2 .i{width:22px;height:22px;padding:4px;border-radius:var(--r-xs);background:var(--yellow);color:#000;stroke-width:2.4}
 .card>h2 em{margin-left:auto;font-style:normal;font-weight:700;letter-spacing:.04em;color:var(--ink-3)}
@@ -413,6 +413,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .sheet-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:10px}
 .sheet-actions>.btn:first-child:last-child,.sheet-actions>.btn.full{grid-column:1/-1}
 .sheet-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
+.sched-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.sched-days .chip-btn{flex-direction:column;gap:1px;min-height:48px;font-size:14px;font-weight:750;color:var(--ink)}
+.sched-days .chip-btn small{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.sched-days .chip-btn.on{background:var(--yellow);border-color:var(--yellow);color:#000}
+.sched-days .chip-btn.on small{color:#000}
+#sched-date{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;color-scheme:inherit}
 
 /* ---------- Sheet ---------- */
 .overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background-color var(--t-slow) ease}
@@ -460,7 +466,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes sentFade{0%{opacity:0}10%{opacity:1}78%{opacity:1}100%{opacity:0}}
 /* ---------- New dispatch form ---------- */
 .sheet.tall{height:92vh;height:92dvh;max-height:none}
-.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
 .nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:11px;font-stretch:100%;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
@@ -488,11 +494,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .ac-new b{color:var(--ink)}
 .tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
 .tag.saved{background:var(--ok-bg);color:var(--ok)}
-.nd-block{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
-.item-row{display:grid;grid-template-columns:128px minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+.nd-block{background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.item-row{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;margin-bottom:6px}
+.wt{position:relative;display:block}
+.wt input{width:100%;min-height:var(--ctl);padding:0 34px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;font-weight:600;outline:none;-moz-appearance:textfield}
+.wt input::-webkit-outer-spin-button,.wt input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.wt input:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.wt span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--ink-3);pointer-events:none}
 .item-row .icon-btn{width:var(--ctl-sm)}
 .stepper{display:flex;align-items:center;height:var(--ctl);border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);overflow:hidden}
-.stepper button{width:40px;height:100%;border:0;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stepper button{width:36px;height:100%;border:0;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stepper button:active{background:var(--yellow);color:#000}
 .stepper input{flex:1;width:36px;min-width:0;height:100%;border:0;background:none;text-align:center;font-weight:800;font-size:16px;padding:0;outline:none;-moz-appearance:textfield}
 .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -1498,6 +1509,9 @@ function jobCard(id, r) {
     <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
+      ${isFuture(r)
+        ? `<button class="chip-btn job-move" type="button" data-act="to-queue" data-id="${esc(id)}">Send to queue</button>`
+        : `<button class="chip-btn job-move" type="button" data-act="schedule-later" data-id="${esc(id)}">Schedule for later</button>`}
       <span class="job-tools">
         <button class="icon-btn sm" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}" title="Details">${icon('more')}</button>
         <button class="icon-btn sm del" type="button" data-act="remove" data-id="${esc(id)}" aria-label="Remove request ${esc(r.ref_no)} from the queue" title="Remove from queue">${icon('trash')}</button>
@@ -1759,6 +1773,45 @@ function leaveCard(id) {
     setTimeout(resolve, 500); // never hold up the write
   });
 }
+/* Schedule for later (queue card) and Send to queue (scheduled card): changes the request's day.
+   The alert for its new state is marked seen first, so the dispatcher's own move doesn't sound the alarm. */
+async function moveRequest(id, change, msg) {
+  const r = readyToSend(id);
+  if (!r) return;
+  const was = { when: r.when || 'asap', scheduled_for: r.scheduled_for || null };
+  acked.add(alertKey(id, Object.assign({}, r, change))); // kept once the list updates (saveAcked drops keys not in it yet)
+  shownCards.delete(id);
+  try {
+    await db.ref(`requests/${id}`).update(change);
+    toast(msg(r.ref_no), 'ok', 8000, { label: 'Undo', run: () => { acked.add(alertKey(id, Object.assign({}, r, was))); db.ref(`requests/${id}`).update(was).catch((err) => toast(friendlyError(err), 'error')); } });
+  } catch (err) { toast(`Couldn’t move it: ${friendlyError(err)}`, 'error', 10000); }
+}
+function askSchedule(id) {
+  const r = readyToSend(id);
+  if (!r) return;
+  const days = [];
+  for (let i = 1; i <= 6; i++) { const d = new Date(); d.setDate(d.getDate() + i); days.push(localDateStr(d)); }
+  const first = days[0];
+  openSheet(`Schedule #${r.ref_no} for later`, `<div class="sched-days">${days.map((d, i) => { const [wd, md] = fmtDay(d).split(', '); return `<button class="chip-btn" type="button" data-act="sched-pick" data-day="${d}">${i === 0 ? 'Tomorrow' : esc(wd)}<small>${esc(md || '')}</small></button>`; }).join('')}</div>
+    <div class="field"><label for="sched-date">Or pick a date</label><input type="date" id="sched-date" min="${first}" value="${first}"></div>
+    <div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="sched-go" data-id="${esc(id)}" id="sched-go">${icon('calendar', 'sm')}Schedule</button></div>`, () => {
+    $('#sched-date').addEventListener('input', schedUpdate);
+    schedUpdate();
+  });
+}
+function schedUpdate() {
+  const v = $('#sched-date') && $('#sched-date').value;
+  const ok = !!v && v > todayStr();
+  $$('.sched-days .chip-btn').forEach((b) => b.classList.toggle('on', b.dataset.day === v));
+  const go = $('#sched-go');
+  if (go) { go.disabled = !ok; go.lastChild.textContent = ok ? `Schedule for ${fmtDay(v)}` : 'Pick a day after today'; }
+}
+function scheduleFor(id, day) {
+  if (!day || day <= todayStr()) return;
+  closeSheet();
+  moveRequest(id, { when: 'scheduled', scheduled_for: day }, (n) => `#${n} scheduled for ${fmtDay(day)}.`);
+}
+
 /* Remove from queue: for duplicates, requests handled by phone, or anything that won't be dispatched.
    The request keeps its record (status "removed") and can be moved back from Done > Removed. */
 async function askRemove(id) {
@@ -1925,7 +1978,9 @@ const ITEM_TYPES = [
 function itemLabel(it) {
   const t = ITEM_TYPES.find((x) => x.id === it.type) || ITEM_TYPES[0];
   const qty = Number(it.qty) || 0;
-  return it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
+  const base = it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
+  const lbs = Number(it.weight) || 0;
+  return lbs > 0 ? `${base} (${lbs} ${lbs === 1 ? 'lb' : 'lbs'})` : base;
 }
 const itemsText = (items) => (items || []).filter((it) => Number(it.qty) > 0).map(itemLabel).join(', ');
 const clampText = (s, max) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
@@ -1967,7 +2022,7 @@ function placeParts(comps, formatted) {
 
 /* ---------- Draft (kept if the form is closed by mistake) ---------- */
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
+const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '', weight: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
@@ -2032,6 +2087,7 @@ function ndRenderItems() {
   box.innerHTML = ND.items.map((it, i) => `<div class="item-row">
       <div class="stepper"><button type="button" data-act="nd-qty" data-i="${i}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="999" data-nd-qty="${i}" value="${esc(it.qty)}" aria-label="How many"><button type="button" data-act="nd-qty" data-i="${i}" data-d="1" aria-label="One more">+</button></div>
       <select data-nd-type="${i}" aria-label="Kind">${ITEM_TYPES.map((t) => `<option value="${t.id}"${t.id === it.type ? ' selected' : ''}>${t.label}</option>`).join('')}</select>
+      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
     </div>`).join('');
@@ -2496,6 +2552,7 @@ document.addEventListener('input', (e) => {
   else if (t.dataset.ndF) { ND[t.dataset.ndF] = t.value; t.classList.remove('invalid'); }
   else if (t.dataset.ndQty) ND.items[+t.dataset.ndQty].qty = Math.max(0, Math.min(999, parseInt(t.value, 10) || 0));
   else if (t.dataset.ndOther) ND.items[+t.dataset.ndOther].other = t.value;
+  else if (t.dataset.ndWt) ND.items[+t.dataset.ndWt].weight = t.value.trim();
   else if (t.name === 'nd-pay') ND.payment = t.value;
   else if (t.name === 'nd-when') { ND.when = t.value; if (t.value === 'later' && !ND.date) { ND.date = tomorrowStr(); $('#nd-date').value = ND.date; } }
   ndUpdate();
@@ -2682,6 +2739,10 @@ document.addEventListener('click', async (e) => {
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'remove': askRemove(id); break;
+    case 'schedule-later': askSchedule(id); break;
+    case 'sched-pick': $('#sched-date').value = el.dataset.day; schedUpdate(); break;
+    case 'sched-go': scheduleFor(el.dataset.id, $('#sched-date').value); break;
+    case 'to-queue': moveRequest(id, { when: 'asap', scheduled_for: null }, (n) => `#${n} moved to the queue.`); break;
     case 'restore': if (sheetOpen) _hideSheet(); restoreRemoved(id); break;
     case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was sent by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
     case 'test-alert': testAlert(); break;
@@ -2700,7 +2761,7 @@ document.addEventListener('click', async (e) => {
       ndUpdate();
       break;
     }
-    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '' }); ndRenderItems(); ndUpdate(); break;
+    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
     case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
     case 'nd-group': ndSendGroup(); break;
