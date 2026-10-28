@@ -440,6 +440,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .overlay.open{background:rgba(0,0,0,.55)}
 .sheet{width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--glass-line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow),0 -1px 0 rgba(255,209,0,.3);transform:translateY(100%);transition:transform var(--t-slow) var(--out);will-change:transform;padding-bottom:var(--safe-b)}
 .overlay.open .sheet{transform:none}
+.overlay.hold .sheet,.overlay.open.hold .sheet{transform:translateY(calc(100% + var(--kb,0px) + 24px));transition:none}
+.overlay.lift .sheet{transition:transform .26s var(--out)}
 .sheet.dragging{transition:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 6px 14px;border-bottom:1px solid var(--line);touch-action:none}
 .sheet-head h2{flex:1;font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -468,7 +470,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}}
 
 /* Small success check at the top */
-.tick{position:fixed;left:50%;top:calc(var(--safe-t) + 8px);z-index:96;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:4px 12px 4px 4px;border-radius:99px;background:var(--surface);color:var(--ink);border:1px solid rgba(63,207,120,.5);box-shadow:var(--shadow),0 0 18px rgba(63,207,120,.25);font-size:13px;font-weight:700;line-height:1.2;pointer-events:none;transform:translateX(-50%);animation:tickIn .42s var(--spring) both,tickOut .3s ease-in 2.25s forwards}
+.tick{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--safe-t) + 8px);z-index:96;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:4px 12px 4px 4px;border-radius:99px;background:var(--surface);color:var(--ink);border:1px solid rgba(63,207,120,.5);box-shadow:var(--shadow),0 0 18px rgba(63,207,120,.25);font-size:13px;font-weight:700;line-height:1.2;pointer-events:none;animation:tickIn .42s var(--spring) both,tickOut .3s ease-in 2.25s forwards}
 .tick-msg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tick-ring{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 4px 12px -4px rgba(63,207,120,.8);overflow:visible}
 .tick-ring::after{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);background-size:250% 100%;background-position:120% 0;animation:tickShine .55s .5s ease-out forwards}
@@ -476,15 +478,15 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .tick-ring path{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .38s .12s var(--ease) forwards}
 .tick-star{position:absolute;top:-6px;right:-7px;width:13px;height:13px;background:#fff6b3;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 3px rgba(255,214,0,.9));opacity:0;transform:scale(0) rotate(-45deg);animation:tickStar .7s .48s var(--out) forwards}
 .tick-star.s2{top:auto;bottom:-3px;right:auto;left:-5px;width:8px;height:8px;animation-delay:.6s}
-@keyframes tickIn{from{opacity:0;transform:translate(-50%,-12px) scale(.9)}}
-@keyframes tickOut{to{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
+@keyframes tickIn{from{opacity:0;transform:translateY(-12px) scale(.9)}}
+@keyframes tickOut{to{opacity:0;transform:translateY(-10px) scale(.96)}}
 @keyframes tickShine{to{background-position:-120% 0}}
 @keyframes tickStar{0%{opacity:0;transform:scale(0) rotate(-45deg)}45%{opacity:1;transform:scale(1.25) rotate(20deg)}100%{opacity:0;transform:scale(.6) rotate(60deg)}}
 .chip.posted{background:var(--ok-bg);color:var(--ok);border-color:transparent}
 .chip.posted .i{width:12px;height:12px}
 
 /* Big "Sent" check */
-.sent{position:fixed;inset:0;z-index:95;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(63,207,120,.22),transparent 60%);animation:sentFade 1.15s var(--ease) forwards}
+.sent{position:fixed;left:0;right:0;top:0;height:var(--full-h,100%);z-index:95;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(63,207,120,.22),transparent 60%);animation:sentFade 1.15s var(--ease) forwards}
 .sent>div{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid rgba(63,207,120,.55);color:var(--ink);border-radius:20px;padding:22px 32px 18px;box-shadow:var(--shadow),0 0 50px rgba(63,207,120,.3);font-stretch:75%;font-weight:800;font-size:24px;text-align:center;animation:sentPop .45s var(--spring)}
 .sent-ring{position:relative;display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 8px 24px -6px rgba(63,207,120,.8);animation:ringPop .45s var(--spring)}
 .sent-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(63,207,120,.7);animation:ringOut .8s .1s var(--out) forwards;opacity:0}
@@ -1195,17 +1197,18 @@ function updateSoundUi() {
    Toasts and sheet
    ========================================================= */
 function toast(message, type = 'info', ms = 4000, action) {
-  if (type === 'ok') { tick(message); return; } // success: the small green check at the top, out of the way
+  if (type === 'ok') { tick(message); return () => {}; } // success: the small green check at the top, out of the way
   const el = document.createElement('div');
   el.className = `toast ${type}${action ? ' timed' : ''}`;
   if (action) el.style.setProperty('--toast-ms', `${ms}ms`);
   el.setAttribute('role', type === 'error' ? 'alert' : 'status');
   el.innerHTML = `${icon(type === 'ok' ? 'check' : type === 'error' ? 'alert' : 'bell')}<span class="grow">${esc(message)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
   $('#toasts').appendChild(el);
-  const remove = () => { el.style.opacity = '0'; el.style.transform = 'translateY(10px) scale(.97)'; setTimeout(() => el.remove(), 220); };
+  const remove = () => { clearTimeout(t); if (!el.isConnected) return; el.style.opacity = '0'; el.style.transform = 'translateY(10px) scale(.97)'; setTimeout(() => el.remove(), 220); };
   const t = setTimeout(remove, ms);
-  if (action) $('button', el).addEventListener('click', () => { clearTimeout(t); remove(); action.run(); });
-  else el.addEventListener('click', () => { clearTimeout(t); remove(); });
+  if (action) $('button', el).addEventListener('click', () => { remove(); action.run(); });
+  else el.addEventListener('click', remove);
+  return remove;
 }
 
 // Small green check at the top: draws itself, then a little star glints
@@ -1234,11 +1237,24 @@ function openSheet(title, html, onMount, tall) {
     sheetOpen = true;
     history.pushState({ sheet: true }, '');
     const el = $('#sheet');
+    el.classList.remove('lift');
+    // New dispatch on a phone: keyboard first, then the form slides up onto it
+    el.classList.toggle('hold', tall === 'mid' && window.matchMedia && matchMedia('(max-width:719px)').matches && !reduceMotion());
     el.hidden = false;
     document.body.classList.add('no-scroll');
     requestAnimationFrame(() => el.classList.add('open'));
   }
   if (onMount) onMount($('#sheet-body'));
+}
+let liftTimer = 0;
+function sheetLift() {
+  clearTimeout(liftTimer);
+  const el = $('#sheet');
+  if (!el.classList.contains('hold')) return;
+  ndLastTop = $('#sheet .sheet').offsetTop; // it slides from below, not from its old spot
+  el.classList.add('lift');
+  el.classList.remove('hold');
+  setTimeout(() => el.classList.remove('lift'), 300);
 }
 function _hideSheet() {
   if (!sheetOpen) return;
@@ -1246,7 +1262,8 @@ function _hideSheet() {
   _hidePop();
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   const el = $('#sheet');
-  el.classList.remove('open');
+  clearTimeout(liftTimer);
+  el.classList.remove('open', 'hold', 'lift');
   document.body.classList.remove('no-scroll');
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
@@ -1785,8 +1802,7 @@ function dispatch(id) {
     shareText(text)
       .then(() => markDispatched(`#${r.ref_no} sent to the share menu and marked dispatched.`))
       .catch((err) => {
-        if (isShareCancel(err)) toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
-        else toast('The share menu didn\u2019t open.', 'error', 10000,
+        if (!isShareCancel(err)) toast('The share menu didn\u2019t open.', 'error', 10000,
           { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); markDispatched(`#${r.ref_no} marked dispatched.`); } });
       })
       .finally(() => { sharing = false; });
@@ -1795,15 +1811,22 @@ function dispatch(id) {
   markDispatched(`#${r.ref_no} sent and marked dispatched.`);
   launch(`sms:?body=${encodeURIComponent(text)}`);
 }
-function markRequestDispatched(id, r, to, msg) {
+// Resolves once the database has it (true), or false if it couldn't be saved
+function markRequestDispatched(id, r, to) {
   acked.add(alertKey(id, r));
   saveAcked();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
-  leaveCard(id).then(() => {
-    db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
-      .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
-    toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
-  });
+  return leaveCard(id).then(() => db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
+    .then(() => true)
+    .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); return false; }));
+}
+// The text didn't go: quietly put it back in the queue
+function backToQueue(id, r) {
+  if (r) acked.add(alertKey(id, Object.assign({}, r, { status: 'new' })));
+  shownCards.delete(id);
+  if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
+  return db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null })
+    .catch((err) => toast(`#${(r && r.ref_no) || ''} couldn\u2019t go back to the queue: ${friendlyError(err)}`, 'error', 10000));
 }
 /* A card leaving the queue slides out and the cards below close the gap.
    Resolves when it's done, so the database write (which redraws the list) comes after. */
@@ -1885,7 +1908,6 @@ function removeFromQueue(id) {
         const denied = /permission[_ ]denied/i.test(String((err && (err.code || err.message)) || ''));
         toast(denied ? `#${r.ref_no} couldn\u2019t be removed: the Firebase rules don\u2019t allow it yet. Publish the updated rules, then try again.` : `#${r.ref_no} couldn\u2019t be removed: ${friendlyError(err)}`, 'error', 12000);
       });
-    toast(`#${r.ref_no} removed from the queue.`, 'info', 8000, { label: 'Undo', run: () => restoreRemoved(id, r) });
   });
 }
 async function restoreRemoved(id, known) {
@@ -1894,7 +1916,6 @@ async function restoreRemoved(id, known) {
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', removed_at: null, removed_by: null, removed_by_email: null });
     if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
-    toast('Moved back to the queue.', 'info');
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
 function readyToSend(id) {
@@ -1910,7 +1931,7 @@ function pickDriver(id) {
   openSheet(`Send #${r.ref_no} to`, `<div class="pick-grid">${rows}</div><p class="pick-note">Tap a driver: the text sends straight from this phone. Add or change drivers in Settings.</p>`);
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
-let driverSending = false;
+const sendingIds = new Set(); // jobs whose text is on its way
 // Texts straight from the phone. If the phone never reports back, stop waiting after 25 s
 // so the Send buttons don't stay locked.
 function smsSend(to, body) {
@@ -1919,34 +1940,38 @@ function smsSend(to, body) {
     new Promise((_, no) => setTimeout(() => no(new Error('The phone didn’t confirm the text. Check Messages to see if it went.')), 25000))
   ]);
 }
+/* The job is marked sent the moment it's tapped, while the text goes out in the background.
+   If the phone says the text failed, it goes back in the queue with the reason. */
 async function sendToDriver(id, did) {
+  if (sendingIds.has(id)) return;
   const r = readyToSend(id);
   const d = S.contacts.drivers[did];
-  if (driverSending) { toast('Still sending the last text. One moment.', 'info'); return; }
   if (!r || !d) return;
   const text = textFor(id, r);
-  if (!SmsSender) {
-    launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-    markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
-    return;
-  }
-  driverSending = true;
-  toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 4000);
-  try {
-    await smsSend(cleanPhone(d.phone), text);
-    markRequestDispatched(id, r, d.name, `#${r.ref_no} texted to ${d.name} and marked dispatched.`);
-  } catch (err) {
+  const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+  if (!SmsSender) { inMessages(); markRequestDispatched(id, r, d.name); return; }
+  sendingIds.add(id);
+  const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
+  const sms = smsSend(cleanPhone(d.phone), text);
+  const saved = markRequestDispatched(id, r, d.name);
+  try { await sms; }
+  catch (err) {
+    if (await saved) await backToQueue(id, r);
     // Backup: the phone's Messages app with the text typed in; it's dispatched once that opens
-    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
-      launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-      markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
+    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}, so it\u2019s back in the queue. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      const again = S.pending[id];
+      inMessages();
+      if (again) markRequestDispatched(id, again, d.name);
     } });
-  } finally { driverSending = false; }
+  } finally { sendingIds.delete(id); done(); }
 }
 // Big green check for about a second, so it's obvious the dispatch worked
 let sentTimer = null;
 function showSent(label) {
   const el = $('#sent');
+  const a = document.activeElement;
+  if (a && a.blur && a !== document.body) a.blur(); // keyboard away now, not after the check is up
+  document.documentElement.style.setProperty('--full-h', `${Math.max(fullH, window.innerHeight)}px`);
   $('#sent-text').textContent = label;
   el.hidden = true;
   void el.offsetWidth; // restart the animation
@@ -1961,7 +1986,6 @@ async function undoDispatch(id) {
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null });
     if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
-    toast('Moved back to the queue.', 'info');
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
 function recopy(id) {
@@ -2427,15 +2451,14 @@ async function ndCommit(r, status, to) {
   return { id: ref.key, ref_no: rec.ref_no };
 }
 const deniedMsg = (err) => (/permission[_ ]denied/i.test(String((err && (err.code || err.message)) || '')) ? 'the Firebase rules don’t allow it yet. Publish the updated rules.' : friendlyError(err));
-// After the text has gone out: close the form, celebrate, then file it under Done
+// Close the form, celebrate, and file it under Done. Resolves with the saved job, or null.
 function ndSent(r, to) {
   if (popOpen && history.state && history.state.pop) { _hidePop(); history.go(-2); } else closeSheet();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
   clearDraft();
   const file = () => ndCommit(r, 'dispatched', to)
-    .then(({ id, ref_no: n }) => toast(`#${n} ${to ? `texted to ${to}` : 'sent'} and saved in Done.`, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) }))
-    .catch((err) => toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }));
-  file();
+    .catch((err) => { toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }); return null; });
+  return file();
 }
 // Group Chat only shares the text. It's dispatched (and filed in Done) once it's sent to a driver.
 function ndSendGroup() {
@@ -2443,7 +2466,7 @@ function ndSendGroup() {
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
-  const shared = () => toast('Shared. Tap Send to driver once it’s assigned.', 'info', 6000);
+  const shared = () => {};
   if (canShare()) {
     sharing = true;
     shareText(text)
@@ -2478,24 +2501,28 @@ function _hidePop() {
   setTimeout(() => { if (!popOpen) el.hidden = true; }, 180);
 }
 function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
+// Same as the queue: sent and filed straight away, back in the queue if the text fails
 async function ndSendDriver(did) {
   const d = S.contacts.drivers[did];
-  if (driverSending) { toast('Still sending the last text. One moment.', 'info'); return; }
   if (!d) return;
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
-  if (!SmsSender) { launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`); ndSent(r, d.name); return; }
-  driverSending = true;
-  toast(`Sending to ${d.name}…`, 'info', 4000);
-  try { await smsSend(cleanPhone(d.phone), text); ndSent(r, d.name); }
+  const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+  if (!SmsSender) { inMessages(); ndSent(r, d.name); return; }
+  const done = toast(`Sending to ${d.name}…`, 'info', 25000);
+  const sms = smsSend(cleanPhone(d.phone), text);
+  const saved = ndSent(r, d.name);
+  try { await sms; }
   catch (err) {
-    toast(`Not sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
-      launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-      ndSent(r, d.name);
+    const job = await saved;
+    if (job) await backToQueue(job.id, null);
+    toast(`${job ? `#${job.ref_no} ` : ''}wasn’t sent to ${d.name}${job ? ', so it’s in the queue' : ''}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      inMessages();
+      const again = job && S.pending[job.id];
+      if (again) markRequestDispatched(job.id, again, d.name);
     } });
-  }
-  finally { driverSending = false; }
+  } finally { done(); }
 }
 // Save to queue, or schedule it for a later day
 let ndSaving = false;
@@ -2583,7 +2610,9 @@ function ndKeyboard() {
   sheet.classList.toggle('kb', up);
   const now = sheet.offsetTop; // layout spot, ignoring any slide that's still running
   ndLastTop = now;
-  if (before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
+  const held = $('#sheet').classList.contains('hold');
+  if (held && shown > 120) requestAnimationFrame(sheetLift);
+  if (!held && before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
     sheet.classList.add('moving');
     const anim = sheet.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
     anim.onfinish = anim.oncancel = () => { sheet.classList.remove('moving'); ['pickup', 'delivery'].forEach(ndPlaceSuggest); };
@@ -2607,6 +2636,8 @@ function ndTypeNow() {
   name.focus({ preventScroll: true });
   if (Keyboard) Keyboard.show().catch(() => {});
   ndKeyboard();
+  // Slides up when the keyboard lands, or soon anyway if the phone doesn't say
+  if ($('#sheet').classList.contains('hold')) liftTimer = setTimeout(sheetLift, kbKnown ? 320 : 650);
 }
 // Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
 function ndReset() {
@@ -2831,7 +2862,7 @@ document.addEventListener('click', async (e) => {
     case 'recheck': handleUser(auth.currentUser); break;
     case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
     case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
-    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
+    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); break;
     case 'settings': switchTab('settings'); break;
     case 'done-filter':
       S.doneFilter = el.dataset.f;
