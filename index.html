@@ -233,15 +233,22 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Job cards ---------- */
 .cards{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
-.job{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 10px 13px;box-shadow:var(--sh-2);overflow:hidden;transition:border-color var(--t) ease,box-shadow var(--t) ease}
-.job::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--yellow)}
+/* A request card: the top part, and a tab under its right side holding the two buttons.
+   The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
+.job{position:relative;--job-line:var(--line);overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
+.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 13px;transition:border-color var(--t) ease}
+.job-top::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--yellow)}
+.job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,max(58%,200px));margin:-1px 0 0 auto;padding:6px 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
+/* Rounded inside corner where the text's bottom edge turns down into the tab */
+.job-tab::before{content:'';position:absolute;top:0;left:-13px;width:13px;height:13px;background:radial-gradient(circle at 0 100%,transparent 12px,var(--job-line) 12.5px,var(--job-line) 13.2px,var(--surface) 13.8px)}
+.job-tab .btn{width:100%;min-width:0}
 .job.enter{animation:cardIn .36s var(--out) both}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.985)}}
-.job.unseen{border-color:var(--yellow);animation:glow 1.8s ease-in-out infinite alternate}
-.job.unseen.enter{animation:cardIn .36s var(--out) both,glow 1.8s ease-in-out .36s infinite alternate}
-@keyframes glow{from{box-shadow:var(--sh-2),0 0 0 0 rgba(255,209,0,0)}to{box-shadow:var(--sh-2),0 0 0 3px rgba(255,209,0,.2),0 0 26px rgba(255,209,0,.22)}}
-.job.overdue{border-color:var(--danger)}
-.job.overdue::before{background:var(--danger)}
+.job.unseen{--job-line:var(--yellow);animation:jobGlow 1.8s ease-in-out infinite alternate}
+.job.unseen.enter{animation:cardIn .36s var(--out) both,jobGlow 1.8s ease-in-out .36s infinite alternate}
+@keyframes jobGlow{from{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 0 rgba(255,209,0,0))}to{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 9px rgba(255,209,0,.5))}}
+.job.overdue{--job-line:var(--danger)}
+.job.overdue .job-top::before{background:var(--danger)}
 .job-head{display:flex;align-items:center;gap:8px;min-width:0;margin-right:-4px}
 .req-no{font-stretch:75%;font-weight:800;font-size:17px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .job .req-no{background:var(--yellow);color:#000;border-radius:var(--r-xs);padding:1px 7px;line-height:1.25;box-shadow:0 3px 10px -4px rgba(255,209,0,.6)}
@@ -285,11 +292,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
 .text-edit.edited textarea{border-color:var(--yellow-lo);background:linear-gradient(0deg,var(--warn-bg),var(--warn-bg)),var(--field)}
-.job-actions{display:flex;gap:6px}
 .job-actions .btn{font-stretch:87.5%;font-size:14.5px;padding:0 12px}
-.job-actions .btn-primary{flex:1 1 auto;min-width:0;order:2}
-.job-actions .btn-secondary{flex:0 1 auto;min-width:0}
-@media (max-width:359px){.job-actions .btn>.i:not(.caret){display:none}}
+.job-actions .btn-primary{order:2}
 /* Leaving the queue (dispatched or removed): the card slides out and the list closes the gap */
 .job.leaving{pointer-events:none}
 /* Loading placeholders */
@@ -1491,6 +1495,7 @@ function jobCard(id, r) {
   const P = r.pickup || {};
   const D = r.delivery || {};
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
+    <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
       <span class="job-tools">
@@ -1504,7 +1509,8 @@ function jobCard(id, r) {
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
     ${textEditor(id, r, 'card')}
-    <div class="job-actions">${sendButtons(id)}${groupChatButton(id)}</div>
+    </div>
+    <div class="job-actions job-tab">${groupChatButton(id)}${sendButtons(id)}</div>
   </article>`;
 }
 const skeletons = () => '<div class="cards" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
