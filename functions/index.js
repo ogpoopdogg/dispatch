@@ -8,6 +8,7 @@
 'use strict';
 
 const { onValueWritten } = require('firebase-functions/v2/database');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
@@ -28,6 +29,7 @@ const DEAD_TOKEN_CODES = new Set([
 ]);
 
 const { describeChange } = require('./alerts');
+const { reminderFor, TIME_ZONE } = require('./reminders');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -106,4 +108,17 @@ exports.sendTestPush = onValueWritten('/push_tests/{uid}', async (event) => {
     data: { kind: 'test' }
   });
   await admin.database().ref(`push_tests/${uid}`).remove();
+});
+
+// Every 10 minutes during business hours (Settings > Queue reminders, saved in dispatch_settings/reminders):
+// "Jobs waiting in queue: 25 min" while anything has waited 10 minutes or more.
+exports.remindQueue = onSchedule({ schedule: 'every 10 minutes', timeZone: TIME_ZONE }, async () => {
+  const db = admin.database();
+  const [settingsSnap, pendingSnap] = await Promise.all([
+    db.ref('dispatch_settings/reminders').once('value'),
+    db.ref('requests').orderByChild('status').equalTo('new').once('value')
+  ]);
+  const msg = reminderFor(pendingSnap.val(), settingsSnap.val());
+  if (!msg) return;
+  await send(await staffTokens(), { ...msg, tag: 'queue-reminder', data: { kind: 'reminder' } });
 });

@@ -274,6 +274,10 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .stop::before{content:'';position:absolute;left:-17px;top:4px;width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);background:var(--surface-2);box-shadow:0 0 8px rgba(255,209,0,.4)}
 .stop.to::before{border:0;border-radius:2px;background:var(--ink);box-shadow:none;width:9px;height:9px;left:-16.5px;top:4.5px}
 .stop b{flex:0 1 auto;max-width:62%;min-width:0;font-weight:700;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Pickup stands out: bigger name, slow pulse on its dot */
+.stop:not(.to) b{font-size:16.5px;font-weight:800}
+.stop:not(.to)::before{top:5px;animation:pickPulse 2.4s ease-in-out infinite}
+@keyframes pickPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 6px rgba(255,209,0,.35);transform:scale(1)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 12px rgba(255,209,0,.75);transform:scale(1.15)}}
 .stop span{flex:1 1 0;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
@@ -392,6 +396,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .kv:first-of-type{border-top:0}
 .kv span:first-child{color:var(--ink-2);font-size:13px}
 .kv span:last-child{text-align:right;overflow-wrap:anywhere;font-weight:600}
+.rem-hours{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.rem-hours label{display:grid;gap:3px;font-size:12px;font-weight:650;color:var(--ink-2)}
+.rem-hours input{min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;color:var(--ink);color-scheme:inherit}
+.rem-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding-top:2px}
+.rem-days .chip-btn{padding:0;font-size:12.5px}
+.rem-days .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:800}
 .setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
 .setting:first-child,.card>h2+.setting{border-top:0}
 .setting .grow{flex:1;font-weight:650;font-size:14.5px;line-height:1.25}
@@ -456,6 +466,22 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* While a sheet is up, toasts drop from the top so they never cover its buttons */
 body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}}
+
+/* Small success check at the top */
+.tick{position:fixed;left:50%;top:calc(var(--safe-t) + 8px);z-index:96;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:4px 12px 4px 4px;border-radius:99px;background:var(--surface);color:var(--ink);border:1px solid rgba(63,207,120,.5);box-shadow:var(--shadow),0 0 18px rgba(63,207,120,.25);font-size:13px;font-weight:700;line-height:1.2;pointer-events:none;transform:translateX(-50%);animation:tickIn .42s var(--spring) both,tickOut .3s ease-in 2.25s forwards}
+.tick-msg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tick-ring{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 4px 12px -4px rgba(63,207,120,.8);overflow:visible}
+.tick-ring::after{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);background-size:250% 100%;background-position:120% 0;animation:tickShine .55s .5s ease-out forwards}
+.tick-ring .i{width:18px;height:18px;stroke:#fff;stroke-width:3.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tick-ring path{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .38s .12s var(--ease) forwards}
+.tick-star{position:absolute;top:-6px;right:-7px;width:13px;height:13px;background:#fff6b3;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 3px rgba(255,214,0,.9));opacity:0;transform:scale(0) rotate(-45deg);animation:tickStar .7s .48s var(--out) forwards}
+.tick-star.s2{top:auto;bottom:-3px;right:auto;left:-5px;width:8px;height:8px;animation-delay:.6s}
+@keyframes tickIn{from{opacity:0;transform:translate(-50%,-12px) scale(.9)}}
+@keyframes tickOut{to{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
+@keyframes tickShine{to{background-position:-120% 0}}
+@keyframes tickStar{0%{opacity:0;transform:scale(0) rotate(-45deg)}45%{opacity:1;transform:scale(1.25) rotate(20deg)}100%{opacity:0;transform:scale(.6) rotate(60deg)}}
+.chip.posted{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.chip.posted .i{width:12px;height:12px}
 
 /* Big "Sent" check */
 .sent{position:fixed;inset:0;z-index:95;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(63,207,120,.22),transparent 60%);animation:sentFade 1.15s var(--ease) forwards}
@@ -724,6 +750,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    alerts with sound + visuals, and copies the dispatch text.
    ========================================================= */
 const REPEAT_ALARM_MS = 20000;
+const REMINDER_DEFAULTS = { enabled: true, start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }; // same as functions/reminders.js
 // New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
 const FORM_FIELDS = [
   { key: 'items', label: 'Pieces and count', hint: 'e.g. 2 boxes' },
@@ -1168,6 +1195,7 @@ function updateSoundUi() {
    Toasts and sheet
    ========================================================= */
 function toast(message, type = 'info', ms = 4000, action) {
+  if (type === 'ok') { tick(message); return; } // success: the small green check at the top, out of the way
   const el = document.createElement('div');
   el.className = `toast ${type}${action ? ' timed' : ''}`;
   if (action) el.style.setProperty('--toast-ms', `${ms}ms`);
@@ -1178,6 +1206,17 @@ function toast(message, type = 'info', ms = 4000, action) {
   const t = setTimeout(remove, ms);
   if (action) $('button', el).addEventListener('click', () => { clearTimeout(t); remove(); action.run(); });
   else el.addEventListener('click', () => { clearTimeout(t); remove(); });
+}
+
+// Small green check at the top: draws itself, then a little star glints
+function tick(message) {
+  $$('.tick').forEach((t) => t.remove());
+  const el = document.createElement('div');
+  el.className = 'tick';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="tick-ring"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"/></svg><i class="tick-star"></i><i class="tick-star s2"></i></span><span class="tick-msg">${esc(message)}</span>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
 }
 
 let sheetOpen = false;
@@ -1446,6 +1485,9 @@ function startListening() {
 
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
+  // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
+  listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
+    () => { S.remindersError = true; refreshSettings(); });
   listen(db.ref('dispatch_contacts'), (snap) => {
     const v = snap.val() || {};
     S.contacts = { drivers: v.drivers || {}, groups: v.groups || {} };
@@ -1508,6 +1550,7 @@ function jobCard(id, r) {
     else chips.push(`<span class="chip warn">${icon('calendar')}Today</span>`);
   }
   chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
+  if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted to group</span>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
@@ -1731,7 +1774,10 @@ function dispatch(id) {
   saveAcked();
   // With drivers set up, Group Chat only posts the text: the job stays in the queue until Send to driver
   const markDispatched = hasDrivers()
-    ? () => { toast(`#${r.ref_no} posted. It stays in the queue until you send it to a driver.`, 'info', 5000); }
+    ? () => {
+      toast(`#${r.ref_no} posted to the group`, 'ok');
+      db.ref(`requests/${id}`).update({ posted_at: TS, posted_by_email: S.user.email || null }).catch(() => { /* the tag is only a reminder */ });
+    }
     : (msg) => markRequestDispatched(id, r, null, msg);
   if (canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
@@ -2095,7 +2141,7 @@ function ndRenderItems() {
   box.innerHTML = ND.items.map((it, i) => `<div class="item-row">
       <div class="stepper"><button type="button" data-act="nd-qty" data-i="${i}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="999" data-nd-qty="${i}" value="${esc(it.qty)}" aria-label="How many"><button type="button" data-act="nd-qty" data-i="${i}" data-d="1" aria-label="One more">+</button></div>
       <select data-nd-type="${i}" aria-label="Kind">${ITEM_TYPES.map((t) => `<option value="${t.id}"${t.id === it.type ? ' selected' : ''}>${t.label}</option>`).join('')}</select>
-      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
+      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="next" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
     </div>`).join('');
@@ -2580,6 +2626,13 @@ document.addEventListener('change', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   const t = e.target;
+  // Weight box: the keyboard's Next/Enter goes on to the notes
+  if (t.dataset && t.dataset.ndWt != null && e.key === 'Enter') {
+    e.preventDefault();
+    const go = $('#nd-notes') || $('#nd-po');
+    if (go) { go.focus({ preventScroll: true }); ndReveal(go); } else t.blur();
+    return;
+  }
   if (!t.dataset || !t.dataset.ndName) return;
   const list = $(`#nd-${t.dataset.ndName}-ac`);
   const items = list && !list.hidden ? $$('.ac-item', list) : [];
@@ -2643,6 +2696,27 @@ document.addEventListener('submit', async (e) => {
   }
 });
 
+// Queue reminders: shared by every dispatcher phone (dispatch_settings/reminders)
+function remindersSettings() {
+  const r = Object.assign({}, REMINDER_DEFAULTS, S.reminders || {});
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  return `<section class="card">
+      <h2>${icon('bell')}Queue reminders</h2>
+      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
+      <div class="setting"><span class="grow">Reminders</span><span class="switch"><input type="checkbox" data-rem="enabled"${r.enabled !== false ? ' checked' : ''} aria-label="Queue reminders"><span></span></span></div>
+      <div class="rem-hours"><label>From<input type="time" data-rem="start" value="${esc(r.start)}"></label><label>To<input type="time" data-rem="end" value="${esc(r.end)}"></label></div>
+      <div class="rem-days" role="group" aria-label="Days">${order.map((d) => `<button class="chip-btn" type="button" data-act="rem-day" data-day="${d}" aria-pressed="${(r.days || []).includes(d)}">${days[d]}</button>`).join('')}</div>
+    </section>`;
+}
+async function saveReminders(change) {
+  const next = Object.assign({}, REMINDER_DEFAULTS, S.reminders || {}, change);
+  if (next.start >= next.end) { toast('The end time has to be after the start time.', 'error'); refreshSettings(); return; }
+  S.reminders = next;
+  refreshSettings();
+  try { await db.ref('dispatch_settings/reminders').set(Object.assign(next, { updated_by: meName() })); toast('Reminder hours saved', 'ok'); }
+  catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 10000); }
+}
 function renderSettings() {
   const st = S.settings;
   const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
@@ -2661,6 +2735,7 @@ function renderSettings() {
       <p class="card-note">Fields the Dispatch form shows. Hidden fields stay out of the text. Pickup and delivery names are always there.</p>
       ${FORM_FIELDS.map((f) => `<div class="setting"><span class="grow">${esc(f.label)}${f.hint ? `<small>${esc(f.hint)}</small>` : ''}</span><span class="switch"><input type="checkbox" data-form-field="${f.key}"${st.form[f.key] ? ' checked' : ''} aria-label="Show ${esc(f.label)}"><span></span></span></div>`).join('')}
     </section>
+    ${remindersSettings()}
     <section class="card">
       <h2>${icon('bell')}Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
@@ -2685,6 +2760,7 @@ function renderSettings() {
       <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>
     </section>`;
   $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
+  $$('[data-rem]', body).forEach((x) => x.addEventListener('change', () => saveReminders({ [x.dataset.rem]: x.type === 'checkbox' ? x.checked : x.value })));
   $$('[data-form-field]', body).forEach((x) => x.addEventListener('change', () => { S.settings.form[x.dataset.formField] = x.checked; saveSettings(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
     const key = x.dataset.setting;
@@ -2754,6 +2830,12 @@ document.addEventListener('click', async (e) => {
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'remove': askRemove(id); break;
+    case 'rem-day': {
+      const d = +el.dataset.day;
+      const cur = ((S.reminders && S.reminders.days) || REMINDER_DEFAULTS.days).slice();
+      saveReminders({ days: cur.includes(d) ? cur.filter((x) => x !== d) : cur.concat(d).sort() });
+      break;
+    }
     case 'schedule-later': askSchedule(id); break;
     case 'sched-pick': $('#sched-date').value = el.dataset.day; schedUpdate(); break;
     case 'sched-go': scheduleFor(el.dataset.id, $('#sched-date').value); break;

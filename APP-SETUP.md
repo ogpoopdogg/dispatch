@@ -117,12 +117,16 @@ way, with nothing to install, is **Google Cloud Shell**:
    cd dispatch/functions
    npm install
    npx firebase-tools login --no-localhost
-   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush --project eandccourier-36fcc
+   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush,functions:remindQueue --project eandccourier-36fcc
    ```
 
    If `login` says you're already signed in, carry on.
 
-   Deploy only these two functions, as above. The project also has other
+   `remindQueue` sends the 10-minute "Jobs waiting in queue" reminders during
+   the hours set in the app (Settings > Queue reminders). The first time it
+   deploys, Firebase may ask to turn on Cloud Scheduler: answer **Yes**.
+
+   Deploy only these three functions, as above. The project also has other
    functions (`fleetHuntHistory`, `pajApi`, `pollNow`) that live outside this
    repo. A plain `--only functions` deploy offers to delete them: always
    answer **No** if you see that question.
