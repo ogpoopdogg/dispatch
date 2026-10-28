@@ -210,6 +210,10 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .tab[aria-current=page]{color:var(--ink)}
 .tab[aria-current=page] .ti{background:var(--yellow);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(255,209,0,.6)}
 .tab[aria-current=page] .i{stroke-width:2.3}
+/* Queue tab glows while requests are waiting */
+.tab.has-jobs .ti{animation:tabGlow 1.6s ease-in-out infinite}
+.tab.has-jobs:not([aria-current=page]) .ti{color:var(--accent-ink);background:var(--yellow-soft)}
+@keyframes tabGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 0 rgba(255,209,0,0)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 16px rgba(255,209,0,.75)}}
 .tab .dot{position:absolute;top:4px;left:calc(50% + 10px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface);animation:pop var(--t-slow) var(--spring)}
 .tab .dot.quiet{background:var(--surface-3);color:var(--ink);box-shadow:0 0 0 2px var(--surface),inset 0 0 0 1px var(--line-strong)}
 @keyframes pop{from{transform:scale(0)}}
@@ -413,7 +417,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .overlay.open .sheet{transform:none}
 .sheet.dragging{transition:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 6px 14px;border-bottom:1px solid var(--line);touch-action:none}
-.sheet-head h2{font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-head h2{flex:1;font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheet-body{overflow-y:auto;padding:10px 12px 14px;overscroll-behavior:contain}
 .sheet-body p.muted{font-size:14px;margin-bottom:12px}
 .grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:6px auto 2px;touch-action:none}
@@ -469,14 +473,14 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-ok .i{width:12px;height:12px;stroke-width:2.8}
 /* Saved customer suggestions under a name box */
 .ac{position:relative}
-.ac-list{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:5;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow);padding:3px;animation:riseIn var(--t) var(--out)}
+.ac-list{position:fixed;z-index:70;display:flex;flex-direction:column-reverse;max-height:260px;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow);padding:3px;animation:riseIn var(--t) var(--out)}
 .ac-item{display:block;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;line-height:1.25;-webkit-tap-highlight-color:transparent}
 .ac-item b{display:block;font-size:15px;font-weight:700}
 .ac-item b mark{background:none;color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
 .ac-item small{display:block;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ac-item:hover,.ac-item.on{background:var(--surface-3)}
 .ac-item:active{background:var(--yellow-soft)}
-.ac-new{font-size:12.5px;color:var(--ink-2);padding:6px 10px 4px;border-top:1px solid var(--line);margin-top:2px}
+.ac-new{font-size:12.5px;color:var(--ink-2);padding:6px 10px 4px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .ac-new b{color:var(--ink)}
 .tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
 .tag.saved{background:var(--ok-bg);color:var(--ok)}
@@ -502,8 +506,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @media (max-width:719px){
   .sheet{position:relative}
   .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height var(--t) var(--out)}
-  .sheet.tall.mid:has(:is(input:not([type=radio]):not([type=checkbox]),textarea):focus){height:92dvh}
+  .sheet.mid{will-change:auto}
+  /* Keyboard up: just the part being filled sits right on top of it, suggestions get the room above */
+  .sheet.tall.mid.kb{height:var(--nd-kb-h,240px)}
+  /* Fills the gap under the sheet while it glides to a new spot */
+  .sheet.mid::after{content:'';position:absolute;left:-1px;right:-1px;top:100%;height:60vh;background:var(--surface);pointer-events:none}
 }
+#sheet{padding-bottom:var(--kb,0px)}
+.sheet.moving .ac-list{visibility:hidden}
+.head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.head-link:active{background:var(--yellow-soft)}
 .nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
 .nd-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t) ease}
 .nd-pop.open .nd-scrim{background:rgba(0,0,0,.45)}
@@ -664,7 +676,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
     <div class="nd-pop" id="nd-pop" hidden><div class="nd-scrim" data-act="nd-pop-close"></div><div class="nd-pop-card" role="dialog" aria-label="Send to which driver"><div class="nd-pop-head"><b>Send to</b><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div><div class="nd-pop-list" id="nd-pop-list"></div></div></div>
   </div>
@@ -1153,6 +1165,7 @@ function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
+  $('#sheet-reset').hidden = tall !== 'mid';
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-body').innerHTML = html;
@@ -1616,6 +1629,7 @@ function renderCounts() {
   const dq = $('#dot-queue');
   const ds = $('#dot-scheduled');
   dq.textContent = q; dq.hidden = !q;
+  dq.parentNode.classList.toggle('has-jobs', !!q);
   ds.textContent = s; ds.hidden = !s;
 }
 function renderAll() {
@@ -1982,7 +1996,7 @@ function openNewDispatch() {
       <div class="text-preview"><span>Text to send</span><b id="nd-text"></b></div>
       <div id="nd-actions"></div>
     </div>
-    <p class="pick-note">Show or hide fields in Settings › New dispatch. <button class="link-btn" type="button" data-act="nd-clear" style="padding:0">Start over</button></p>
+    <p class="pick-note">Show or hide fields in Settings › New dispatch.</p>
   </form>`;
   openSheet('New dispatch', html, (body) => {
     ndFillAll(body);
@@ -2138,7 +2152,22 @@ function ndSuggest(k) {
     const c = S.lookup[name] || {};
     return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
   }).join('') + (S.lookup[lookupKey(q)] ? '' : `<div class="ac-new">Not on the list? Keep typing: <b>${esc(q.trim())}</b> is saved as a new customer when you send.</div>`);
+  const was = list.hidden;
   list.hidden = false;
+  ndPlaceSuggest(k);
+  if (was) list.scrollTop = list.scrollHeight;
+}
+// The list sits above the name box (best match nearest the thumb) and can use the dimmed space up top
+function ndPlaceSuggest(k) {
+  const list = $(`#nd-${k}-ac`);
+  const input = $(`#nd-${k}-name`);
+  if (!list || list.hidden || !input) return;
+  const r = input.getBoundingClientRect();
+  const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-t')) || 0;
+  list.style.left = `${r.left}px`;
+  list.style.width = `${r.width}px`;
+  list.style.bottom = `${document.documentElement.clientHeight - r.top + 4}px`;
+  list.style.maxHeight = `${Math.max(120, r.top - top - 10)}px`;
 }
 function ndHideSuggest(k) { const list = $(`#nd-${k}-ac`); if (list) { list.hidden = true; list.innerHTML = ''; } }
 function ndPick(k, name) {
@@ -2149,8 +2178,8 @@ function ndPick(k, name) {
   ndUpdate();
   // Straight on to the next thing to fill in, keyboard stays up
   const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-notes') || $('#nd-po');
-  if (!c.address) $(`#nd-${k}-address`).focus();
-  else if (next) next.focus();
+  const go = !c.address ? $(`#nd-${k}-address`) : next;
+  if (go) { go.focus({ preventScroll: true }); ndReveal(go); }
 }
 
 /* ---------- Google address boxes ---------- */
@@ -2353,6 +2382,81 @@ async function ndSave(btn) {
   } finally { ndSaving = false; }
 }
 
+/* ---------- Keeping the box being filled in reach ---------- */
+// Quick ease-out scroll of the form (the browser's own jump is instant)
+let ndScrollAnim = 0;
+function ndScrollTo(body, y) {
+  cancelAnimationFrame(ndScrollAnim);
+  y = Math.max(0, Math.min(y, body.scrollHeight - body.clientHeight));
+  const y0 = body.scrollTop, d = y - y0;
+  if (Math.abs(d) < 2 || reduceMotion()) { body.scrollTop = y; return; }
+  const t0 = performance.now(), ms = 220;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / ms);
+    body.scrollTop = y0 + d * (1 - Math.pow(1 - p, 3));
+    if (p < 1) ndScrollAnim = requestAnimationFrame(step);
+    else ['pickup', 'delivery'].forEach(ndPlaceSuggest);
+  };
+  ndScrollAnim = requestAnimationFrame(step);
+}
+// Brings a box (with the rest of its pickup/delivery card) into view. With the keyboard up,
+// the card's bottom sits right on the keyboard so the suggestions have the room above.
+function ndReveal(el) {
+  const body = $('#sheet-body');
+  if (!el || !body || !ndOpen()) return;
+  const group = el.closest('.nd-leg') || el.closest('.field') || el;
+  const b = body.getBoundingClientRect(), g = group.getBoundingClientRect();
+  const onKb = $('#sheet .sheet').classList.contains('kb') && !!el.closest('.nd-leg');
+  let dy = 0;
+  if (onKb || g.bottom > b.bottom - 6) dy = g.bottom - (b.bottom - 6);
+  else if (g.top < b.top + 4) dy = g.top - (b.top + 4);
+  if (!onKb && g.top - dy < b.top + 4) dy = g.top - (b.top + 4); // never push its top out of sight
+  if (Math.abs(dy) > 1) ndScrollTo(body, body.scrollTop + dy);
+}
+// Keyboard up or down: the form glides to its new spot instead of jumping
+let fullH = window.innerHeight;
+let ndLastTop = null;
+function ndKeyboard() {
+  const sheet = $('#sheet .sheet');
+  const vv = window.visualViewport;
+  fullH = Math.max(fullH, window.innerHeight);
+  const inset = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0; // keyboard drawn over the page
+  document.documentElement.style.setProperty('--kb', `${inset > 80 ? inset : 0}px`);
+  if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
+  const a = document.activeElement;
+  const typing = !!(a && a.closest && a.closest('[data-nd]') && a.matches('input:not([type=radio]):not([type=checkbox]),textarea'));
+  const up = typing && (fullH - window.innerHeight > 120 || inset > 120);
+  if (up) {
+    const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
+    const leg = $('#sheet-body .nd-leg');
+    sheet.style.setProperty('--nd-kb-h', `${Math.round(head + (leg ? leg.offsetHeight : 180) + 20)}px`);
+  }
+  const before = ndLastTop;
+  sheet.classList.toggle('kb', up);
+  const now = sheet.getBoundingClientRect().top;
+  ndLastTop = now;
+  if (before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
+    sheet.classList.add('moving');
+    const anim = sheet.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    anim.onfinish = anim.oncancel = () => { sheet.classList.remove('moving'); ['pickup', 'delivery'].forEach(ndPlaceSuggest); };
+  }
+  if (up) ndReveal(a);
+  ['pickup', 'delivery'].forEach(ndPlaceSuggest);
+}
+window.addEventListener('resize', ndKeyboard);
+if (window.visualViewport) visualViewport.addEventListener('resize', ndKeyboard);
+// Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
+function ndReset() {
+  clearDraft();
+  ndMode = '';
+  openNewDispatch();
+  const body = $('#sheet-body');
+  if (body) body.scrollTop = 0;
+  const name = $('#nd-pickup-name');
+  if (name) name.focus({ preventScroll: true });
+  ndKeyboard();
+}
+
 /* ---------- Typing in the form ---------- */
 document.addEventListener('input', (e) => {
   const t = e.target;
@@ -2397,9 +2501,13 @@ document.addEventListener('focusout', (e) => {
   if (k) setTimeout(() => { if (document.activeElement !== e.target) ndHideSuggest(k); }, 120);
 });
 document.addEventListener('focusin', (e) => {
+  if (!e.target.closest || !e.target.closest('[data-nd]')) return;
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
+  ndKeyboard();
+  setTimeout(() => ndReveal(e.target), 30);
 });
+document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'sheet-body') ['pickup', 'delivery'].forEach(ndPlaceSuggest); }, true);
 
 /* =========================================================
    Settings
@@ -2570,7 +2678,7 @@ document.addEventListener('click', async (e) => {
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
     case 'nd-save': ndSave(el); break;
-    case 'nd-clear': if (await confirmSheet('Start over?', 'This clears everything typed in the new dispatch.', 'Clear it', true)) { clearDraft(); openNewDispatch(); } break;
+    case 'nd-reset': ndReset(); break;
     case 'del-driver': {
       const d = S.contacts.drivers[el.dataset.driver];
       if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());
