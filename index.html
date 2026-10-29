@@ -1277,7 +1277,27 @@ function _hideSheet() {
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
 window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
-$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
+/* A tap on the dimmed area closes the sheet, but only if the finger went down there too:
+   the form can slide down under the finger while the keyboard closes. */
+let sheetDownOnBack = false;
+$('#sheet').addEventListener('pointerdown', (e) => { sheetDownOnBack = e.target.id === 'sheet'; });
+$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet' && sheetDownOnBack) closeSheet(); sheetDownOnBack = false; });
+// Done acts as soon as it's touched, before the keyboard closing moves anything
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest && e.target.closest('[data-act="nd-done"]');
+  if (!b) return;
+  e.preventDefault();
+  doneTouched = Date.now();
+  ndDone();
+});
+// ...and the click that follows is dropped, so it can't land on whatever slid under the finger
+let doneTouched = 0;
+document.addEventListener('click', (e) => {
+  if (!doneTouched) return;
+  const fresh = Date.now() - doneTouched < 1000;
+  doneTouched = 0;
+  if (fresh) { e.preventDefault(); e.stopPropagation(); }
+}, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen) closePop(); else closeSheet(); } });
 function confirmSheet(title, body, ok, danger) {
   return new Promise((resolve) => {
@@ -2199,10 +2219,11 @@ function ndDone() {
   const show = () => {
     const body = $('#sheet-body'), send = $('#sheet-body .nd-send');
     if (!body || !send || !ndOpen()) return;
-    ndScrollTo(body, body.scrollTop + send.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8);
+    ndScrollTo(body, body.scrollHeight); // all the way down: Group Chat and Send to driver
   };
   setTimeout(show, 60);
   setTimeout(show, 340); // again once the keyboard has finished closing
+  setTimeout(show, 650);
 }
 
 /* What gets saved: a request in the same shape Request Pickup writes */
@@ -2929,7 +2950,7 @@ document.addEventListener('click', async (e) => {
       ndUpdate();
       break;
     }
-    case 'nd-done': ndDone(); break;
+    case 'nd-done': break; // handled on touch (pointerdown)
     case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
     case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
