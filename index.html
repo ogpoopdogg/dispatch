@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="icon-512.png">
-<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='light'?'light':'dark';}catch(e){}</script>
+<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='dark'?'dark':'light';}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -187,7 +187,7 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 .group-head:first-child{margin-top:0}
 
 /* Queue summary: four live numbers in one strip */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-2);overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px -4px rgba(0,0,0,.16);overflow:hidden}
 .kpi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:7px 8px 8px 10px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
 .kpi+.kpi{border-left:1px solid var(--line)}
 button.kpi{cursor:pointer}
@@ -210,6 +210,15 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .tab[aria-current=page]{color:var(--ink)}
 .tab[aria-current=page] .ti{background:var(--yellow);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(255,209,0,.6)}
 .tab[aria-current=page] .i{stroke-width:2.3}
+/* Queue is only yellow while jobs are waiting; empty, it looks like the others */
+.tab[data-tab=queue][aria-current=page]:not(.has-jobs) .ti{background:none;box-shadow:none;transform:none}
+/* Queue tab glows while requests are waiting */
+.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
+.tab.has-jobs .i{animation:tabNudge 1.3s ease-in-out infinite}
+.tab.has-jobs:not([aria-current=page]) .ti{color:#000;background:var(--yellow)}
+.tab.has-jobs:not([aria-current=page]){color:var(--ink)}
+@keyframes tabGlow{0%{box-shadow:0 0 0 0 rgba(255,190,0,.85),0 0 4px rgba(255,190,0,.4);transform:scale(1)}50%{box-shadow:0 0 0 9px rgba(255,190,0,0),0 0 26px 4px rgba(255,190,0,.95);transform:scale(1.1)}100%{box-shadow:0 0 0 0 rgba(255,190,0,0),0 0 4px rgba(255,190,0,.4);transform:scale(1)}}
+@keyframes tabNudge{50%{transform:translateY(-1px)}}
 .tab .dot{position:absolute;top:4px;left:calc(50% + 10px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface);animation:pop var(--t-slow) var(--spring)}
 .tab .dot.quiet{background:var(--surface-3);color:var(--ink);box-shadow:0 0 0 2px var(--surface),inset 0 0 0 1px var(--line-strong)}
 @keyframes pop{from{transform:scale(0)}}
@@ -229,21 +238,30 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Job cards ---------- */
 .cards{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
-.job{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 10px 13px;box-shadow:var(--sh-2);overflow:hidden;transition:border-color var(--t) ease,box-shadow var(--t) ease}
-.job::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--yellow)}
+/* A request card: the top part, and a tab under its right side holding the two buttons.
+   The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
+.job{position:relative;--job-line:var(--yellow);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
+.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
+.job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,var(--tab-w));margin:-1px 0 0 auto;padding:0 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
+/* Rounded inside corner where the text's bottom edge turns down into the tab */
+.job-tab::before{content:'';position:absolute;top:0;left:-13px;width:13px;height:13px;background:radial-gradient(circle at 0 100%,transparent 12px,var(--job-line) 12.5px,var(--job-line) 13.2px,var(--surface) 13.8px)}
+.job-tab .btn{width:100%;min-width:0}
 .job.enter{animation:cardIn .36s var(--out) both}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.985)}}
-.job.unseen{border-color:var(--yellow);animation:glow 1.8s ease-in-out infinite alternate}
-.job.unseen.enter{animation:cardIn .36s var(--out) both,glow 1.8s ease-in-out .36s infinite alternate}
-@keyframes glow{from{box-shadow:var(--sh-2),0 0 0 0 rgba(255,209,0,0)}to{box-shadow:var(--sh-2),0 0 0 3px rgba(255,209,0,.2),0 0 26px rgba(255,209,0,.22)}}
-.job.overdue{border-color:var(--danger)}
-.job.overdue::before{background:var(--danger)}
+.job.unseen{--job-line:var(--yellow);animation:jobGlow 1.8s ease-in-out infinite alternate}
+.job.unseen.enter{animation:cardIn .36s var(--out) both,jobGlow 1.8s ease-in-out .36s infinite alternate}
+@keyframes jobGlow{from{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 0 rgba(255,209,0,0))}to{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 9px rgba(255,209,0,.5))}}
+.job.overdue{--job-line:var(--danger)}
 .job-head{display:flex;align-items:center;gap:8px;min-width:0;margin-right:-4px}
 .req-no{font-stretch:75%;font-weight:800;font-size:17px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .job .req-no{background:var(--yellow);color:#000;border-radius:var(--r-xs);padding:1px 7px;line-height:1.25;box-shadow:0 3px 10px -4px rgba(255,209,0,.6)}
 .job.overdue .req-no{background:var(--danger);color:#fff;box-shadow:none}
 .job-co{flex:1;min-width:0;font-weight:750;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job-tools{display:flex;flex:none;margin:-4px 0}
+/* Schedule for later / Send to queue, left of Group Chat (same column as the tab below) */
+.job-row{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--tab-w) - 21px);gap:6px;margin-bottom:6px}
+.job-row>.job-move:only-child{grid-column:1}
+.job-row .btn.job-move{white-space:normal;line-height:1.1;padding:0 8px;color:var(--ink)}
 .job-meta{display:flex;align-items:center;gap:4px;margin:4px 0 6px;min-width:0}
 .job-meta .chips{flex:1;min-width:0}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -258,6 +276,10 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .stop::before{content:'';position:absolute;left:-17px;top:4px;width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);background:var(--surface-2);box-shadow:0 0 8px rgba(255,209,0,.4)}
 .stop.to::before{border:0;border-radius:2px;background:var(--ink);box-shadow:none;width:9px;height:9px;left:-16.5px;top:4.5px}
 .stop b{flex:0 1 auto;max-width:62%;min-width:0;font-weight:700;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Pickup stands out: bigger name, slow pulse on its dot */
+.stop:not(.to) b{font-size:16.5px;font-weight:800}
+.stop:not(.to)::before{top:5px;animation:pickPulse 2.4s ease-in-out infinite}
+@keyframes pickPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 6px rgba(255,209,0,.35);transform:scale(1)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 12px rgba(255,209,0,.75);transform:scale(1.15)}}
 .stop span{flex:1 1 0;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
@@ -281,11 +303,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
 .text-edit.edited textarea{border-color:var(--yellow-lo);background:linear-gradient(0deg,var(--warn-bg),var(--warn-bg)),var(--field)}
-.job-actions{display:flex;gap:6px}
 .job-actions .btn{font-stretch:87.5%;font-size:14.5px;padding:0 12px}
-.job-actions .btn-primary{flex:1 1 auto;min-width:0;order:2}
-.job-actions .btn-secondary{flex:0 1 auto;min-width:0}
-@media (max-width:359px){.job-actions .btn>.i:not(.caret){display:none}}
+.job-actions .btn-primary{order:2}
 /* Leaving the queue (dispatched or removed): the card slides out and the list closes the gap */
 .job.leaving{pointer-events:none}
 /* Loading placeholders */
@@ -331,7 +350,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .range-row .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000}
 .list-summary{font-size:12px;font-weight:650;color:var(--ink-2);margin:4px 2px 0}
 .list-summary:empty{display:none}
-.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
+.list{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
 @media (min-width:760px){.list{display:grid;grid-template-columns:1fr 1fr}.list>.row:nth-child(2){border-top:0}.list>.row:nth-child(odd){border-right:1px solid var(--line)}}
 .row{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:7px 10px 7px 14px;cursor:pointer;color:var(--ink);font-size:14px;line-height:1.3;transition:background-color var(--t-fast) ease;-webkit-tap-highlight-color:transparent}
 .row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ok)}
@@ -369,7 +388,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Settings ---------- */
 #settings-body{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start}
 @media (min-width:760px){#settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}#settings-body>.card:first-child{grid-row:span 3}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
+.card{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
 .card>h2{display:flex;align-items:center;gap:8px;font-size:12px;font-stretch:100%;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
 .card>h2 .i{width:22px;height:22px;padding:4px;border-radius:var(--r-xs);background:var(--yellow);color:#000;stroke-width:2.4}
 .card>h2 em{margin-left:auto;font-style:normal;font-weight:700;letter-spacing:.04em;color:var(--ink-3)}
@@ -379,6 +398,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .kv:first-of-type{border-top:0}
 .kv span:first-child{color:var(--ink-2);font-size:13px}
 .kv span:last-child{text-align:right;overflow-wrap:anywhere;font-weight:600}
+.rem-hours{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.rem-hours label{display:grid;gap:3px;font-size:12px;font-weight:650;color:var(--ink-2)}
+.rem-hours input{min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;color:var(--ink);color-scheme:inherit}
+.rem-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding-top:2px}
+.rem-days .chip-btn{padding:0;font-size:12.5px}
+.rem-days .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:800}
 .setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
 .setting:first-child,.card>h2+.setting{border-top:0}
 .setting .grow{flex:1;font-weight:650;font-size:14.5px;line-height:1.25}
@@ -405,15 +430,23 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .sheet-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:10px}
 .sheet-actions>.btn:first-child:last-child,.sheet-actions>.btn.full{grid-column:1/-1}
 .sheet-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
+.sched-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.sched-days .chip-btn{flex-direction:column;gap:1px;min-height:48px;font-size:14px;font-weight:750;color:var(--ink)}
+.sched-days .chip-btn small{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.sched-days .chip-btn.on{background:var(--yellow);border-color:var(--yellow);color:#000}
+.sched-days .chip-btn.on small{color:#000}
+#sched-date{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;color-scheme:inherit}
 
 /* ---------- Sheet ---------- */
 .overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background-color var(--t-slow) ease}
 .overlay.open{background:rgba(0,0,0,.55)}
 .sheet{width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--glass-line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow),0 -1px 0 rgba(255,209,0,.3);transform:translateY(100%);transition:transform var(--t-slow) var(--out);will-change:transform;padding-bottom:var(--safe-b)}
 .overlay.open .sheet{transform:none}
+.overlay.hold .sheet,.overlay.open.hold .sheet{transform:translateY(calc(100% + var(--kb,0px) + 24px));transition:none}
+.overlay.lift .sheet{transition:transform .26s var(--out)}
 .sheet.dragging{transition:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 6px 14px;border-bottom:1px solid var(--line);touch-action:none}
-.sheet-head h2{font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-head h2{flex:1;font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheet-body{overflow-y:auto;padding:10px 12px 14px;overscroll-behavior:contain}
 .sheet-body p.muted{font-size:14px;margin-bottom:12px}
 .grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:6px auto 2px;touch-action:none}
@@ -438,8 +471,24 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}}
 
+/* Small success check at the top */
+.tick{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--safe-t) + 8px);z-index:96;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:4px 12px 4px 4px;border-radius:99px;background:var(--surface);color:var(--ink);border:1px solid rgba(63,207,120,.5);box-shadow:var(--shadow),0 0 18px rgba(63,207,120,.25);font-size:13px;font-weight:700;line-height:1.2;pointer-events:none;animation:tickIn .42s var(--spring) both,tickOut .3s ease-in 2.25s forwards}
+.tick-msg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tick-ring{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 4px 12px -4px rgba(63,207,120,.8);overflow:visible}
+.tick-ring::after{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);background-size:250% 100%;background-position:120% 0;animation:tickShine .55s .5s ease-out forwards}
+.tick-ring .i{width:18px;height:18px;stroke:#fff;stroke-width:3.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tick-ring path{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .38s .12s var(--ease) forwards}
+.tick-star{position:absolute;top:-6px;right:-7px;width:13px;height:13px;background:#fff6b3;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 3px rgba(255,214,0,.9));opacity:0;transform:scale(0) rotate(-45deg);animation:tickStar .7s .48s var(--out) forwards}
+.tick-star.s2{top:auto;bottom:-3px;right:auto;left:-5px;width:8px;height:8px;animation-delay:.6s}
+@keyframes tickIn{from{opacity:0;transform:translateY(-12px) scale(.9)}}
+@keyframes tickOut{to{opacity:0;transform:translateY(-10px) scale(.96)}}
+@keyframes tickShine{to{background-position:-120% 0}}
+@keyframes tickStar{0%{opacity:0;transform:scale(0) rotate(-45deg)}45%{opacity:1;transform:scale(1.25) rotate(20deg)}100%{opacity:0;transform:scale(.6) rotate(60deg)}}
+.chip.posted{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.chip.posted .i{width:12px;height:12px}
+
 /* Big "Sent" check */
-.sent{position:fixed;inset:0;z-index:95;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(63,207,120,.22),transparent 60%);animation:sentFade 1.15s var(--ease) forwards}
+.sent{position:fixed;left:0;right:0;top:0;height:var(--full-h,100%);z-index:95;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(63,207,120,.22),transparent 60%);animation:sentFade 1.15s var(--ease) forwards}
 .sent>div{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid rgba(63,207,120,.55);color:var(--ink);border-radius:20px;padding:22px 32px 18px;box-shadow:var(--shadow),0 0 50px rgba(63,207,120,.3);font-stretch:75%;font-weight:800;font-size:24px;text-align:center;animation:sentPop .45s var(--spring)}
 .sent-ring{position:relative;display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 8px 24px -6px rgba(63,207,120,.8);animation:ringPop .45s var(--spring)}
 .sent-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(63,207,120,.7);animation:ringOut .8s .1s var(--out) forwards;opacity:0}
@@ -452,7 +501,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes sentFade{0%{opacity:0}10%{opacity:1}78%{opacity:1}100%{opacity:0}}
 /* ---------- New dispatch form ---------- */
 .sheet.tall{height:92vh;height:92dvh;max-height:none}
-.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
 .nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:11px;font-stretch:100%;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
@@ -469,22 +518,33 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-ok .i{width:12px;height:12px;stroke-width:2.8}
 /* Saved customer suggestions under a name box */
 .ac{position:relative}
-.ac-list{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:5;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow);padding:3px;animation:riseIn var(--t) var(--out)}
+.ac-list{position:fixed;z-index:70;display:flex;flex-direction:column-reverse;max-height:260px;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow);padding:3px;animation:riseIn var(--t) var(--out)}
 .ac-item{display:block;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;line-height:1.25;-webkit-tap-highlight-color:transparent}
 .ac-item b{display:block;font-size:15px;font-weight:700}
 .ac-item b mark{background:none;color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
 .ac-item small{display:block;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ac-item:hover,.ac-item.on{background:var(--surface-3)}
 .ac-item:active{background:var(--yellow-soft)}
-.ac-new{font-size:12.5px;color:var(--ink-2);padding:6px 10px 4px;border-top:1px solid var(--line);margin-top:2px}
+.ac-new{font-size:12.5px;color:var(--ink-2);padding:6px 10px 4px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .ac-new b{color:var(--ink)}
 .tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
 .tag.saved{background:var(--ok-bg);color:var(--ok)}
-.nd-block{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
-.item-row{display:grid;grid-template-columns:128px minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+.nd-block{background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.item-row{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;margin-bottom:6px}
+.wt{position:relative;display:block}
+.wt input{width:100%;min-height:var(--ctl);padding:0 34px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;font-weight:600;outline:none;-moz-appearance:textfield}
+.wt input::-webkit-outer-spin-button,.wt input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.wt input:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.wt span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--ink-3);pointer-events:none}
 .item-row .icon-btn{width:var(--ctl-sm)}
+/* Same columns as the lines above, so Done sits right under the weight */
+.item-foot{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;align-items:start}
+.item-foot .link-btn{grid-column:1/3;justify-self:start}
+.item-foot .del-ph{width:var(--ctl-sm)}
+.nd-done{justify-self:stretch;height:26px;margin-top:1px;padding:0 8px;border:0;border-radius:99px;background:var(--yellow);color:#000;font:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px -4px rgba(255,209,0,.8);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.nd-done:active{transform:scale(.94);background:var(--yellow-hi)}
 .stepper{display:flex;align-items:center;height:var(--ctl);border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);overflow:hidden}
-.stepper button{width:40px;height:100%;border:0;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stepper button{width:36px;height:100%;border:0;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stepper button:active{background:var(--yellow);color:#000}
 .stepper input{flex:1;width:36px;min-width:0;height:100%;border:0;background:none;text-align:center;font-weight:800;font-size:16px;padding:0;outline:none;-moz-appearance:textfield}
 .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -501,9 +561,17 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    While typing (keyboard up) it grows to full height like before. */
 @media (max-width:719px){
   .sheet{position:relative}
-  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height var(--t) var(--out)}
-  .sheet.tall.mid:has(:is(input:not([type=radio]):not([type=checkbox]),textarea):focus){height:92dvh}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px))}
+  .sheet.mid{will-change:auto}
+  /* Keyboard up: just the part being filled sits right on top of it, suggestions get the room above */
+  .sheet.tall.mid.kb{height:var(--nd-kb-h,240px)}
+  /* Fills the gap under the sheet while it glides to a new spot */
+  .sheet.mid::after{content:'';position:absolute;left:-1px;right:-1px;top:100%;height:60vh;background:var(--surface);pointer-events:none}
 }
+#sheet{padding-bottom:var(--kb,0px)}
+.sheet.moving .ac-list{visibility:hidden}
+.head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.head-link:active{background:var(--yellow-soft)}
 .nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
 .nd-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t) ease}
 .nd-pop.open .nd-scrim{background:rgba(0,0,0,.45)}
@@ -664,7 +732,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
     <div class="nd-pop" id="nd-pop" hidden><div class="nd-scrim" data-act="nd-pop-close"></div><div class="nd-pop-card" role="dialog" aria-label="Send to which driver"><div class="nd-pop-head"><b>Send to</b><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div><div class="nd-pop-list" id="nd-pop-list"></div></div></div>
   </div>
@@ -692,6 +760,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    alerts with sound + visuals, and copies the dispatch text.
    ========================================================= */
 const REPEAT_ALARM_MS = 20000;
+const REMINDER_DEFAULTS = { enabled: true, start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }; // same as functions/reminders.js
 // New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
 const FORM_FIELDS = [
   { key: 'items', label: 'Pieces and count', hint: 'e.g. 2 boxes' },
@@ -729,6 +798,7 @@ const CAP = window.Capacitor && window.Capacitor.registerPlugin && window.Capaci
 const Push = CAP ? CAP.registerPlugin('PushNotifications') : null;
 const NativeShare = CAP ? CAP.registerPlugin('Share') : null;
 const SmsSender = CAP ? CAP.registerPlugin('SmsSender') : null; // android/.../SmsSenderPlugin.java
+const Keyboard = CAP ? CAP.registerPlugin('Keyboard') : null; // @capacitor/keyboard: opens it for New dispatch
 
 /* ---------------- State ---------------- */
 const S = {
@@ -754,7 +824,7 @@ const S = {
   settings: loadSettings()
 };
 function loadSettings() {
-  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'dark' };
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'light' };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
   st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
@@ -1135,16 +1205,29 @@ function updateSoundUi() {
    Toasts and sheet
    ========================================================= */
 function toast(message, type = 'info', ms = 4000, action) {
+  if (type === 'ok') { tick(message); return () => {}; } // success: the small green check at the top, out of the way
   const el = document.createElement('div');
   el.className = `toast ${type}${action ? ' timed' : ''}`;
   if (action) el.style.setProperty('--toast-ms', `${ms}ms`);
   el.setAttribute('role', type === 'error' ? 'alert' : 'status');
   el.innerHTML = `${icon(type === 'ok' ? 'check' : type === 'error' ? 'alert' : 'bell')}<span class="grow">${esc(message)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
   $('#toasts').appendChild(el);
-  const remove = () => { el.style.opacity = '0'; el.style.transform = 'translateY(10px) scale(.97)'; setTimeout(() => el.remove(), 220); };
+  const remove = () => { clearTimeout(t); if (!el.isConnected) return; el.style.opacity = '0'; el.style.transform = 'translateY(10px) scale(.97)'; setTimeout(() => el.remove(), 220); };
   const t = setTimeout(remove, ms);
-  if (action) $('button', el).addEventListener('click', () => { clearTimeout(t); remove(); action.run(); });
-  else el.addEventListener('click', () => { clearTimeout(t); remove(); });
+  if (action) $('button', el).addEventListener('click', () => { remove(); action.run(); });
+  else el.addEventListener('click', remove);
+  return remove;
+}
+
+// Small green check at the top: draws itself, then a little star glints
+function tick(message) {
+  $$('.tick').forEach((t) => t.remove());
+  const el = document.createElement('div');
+  el.className = 'tick';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="tick-ring"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"/></svg><i class="tick-star"></i><i class="tick-star s2"></i></span><span class="tick-msg">${esc(message)}</span>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
 }
 
 let sheetOpen = false;
@@ -1153,6 +1236,8 @@ function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
+  if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
+  $('#sheet-reset').hidden = tall !== 'mid';
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-body').innerHTML = html;
@@ -1160,11 +1245,24 @@ function openSheet(title, html, onMount, tall) {
     sheetOpen = true;
     history.pushState({ sheet: true }, '');
     const el = $('#sheet');
+    el.classList.remove('lift');
+    // New dispatch on a phone: keyboard first, then the form slides up onto it
+    el.classList.toggle('hold', tall === 'mid' && window.matchMedia && matchMedia('(max-width:719px)').matches && !reduceMotion());
     el.hidden = false;
     document.body.classList.add('no-scroll');
     requestAnimationFrame(() => el.classList.add('open'));
   }
   if (onMount) onMount($('#sheet-body'));
+}
+let liftTimer = 0;
+function sheetLift() {
+  clearTimeout(liftTimer);
+  const el = $('#sheet');
+  if (!el.classList.contains('hold')) return;
+  ndLastTop = $('#sheet .sheet').offsetTop; // it slides from below, not from its old spot
+  el.classList.add('lift');
+  el.classList.remove('hold');
+  setTimeout(() => el.classList.remove('lift'), 300);
 }
 function _hideSheet() {
   if (!sheetOpen) return;
@@ -1172,13 +1270,34 @@ function _hideSheet() {
   _hidePop();
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   const el = $('#sheet');
-  el.classList.remove('open');
+  clearTimeout(liftTimer);
+  el.classList.remove('open', 'hold', 'lift');
   document.body.classList.remove('no-scroll');
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
 window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
-$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
+/* A tap on the dimmed area closes the sheet, but only if the finger went down there too:
+   the form can slide down under the finger while the keyboard closes. */
+let sheetDownOnBack = false;
+$('#sheet').addEventListener('pointerdown', (e) => { sheetDownOnBack = e.target.id === 'sheet'; });
+$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet' && sheetDownOnBack) closeSheet(); sheetDownOnBack = false; });
+// Done acts as soon as it's touched, before the keyboard closing moves anything
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest && e.target.closest('[data-act="nd-done"]');
+  if (!b) return;
+  e.preventDefault();
+  doneTouched = Date.now();
+  ndDone();
+});
+// ...and the click that follows is dropped, so it can't land on whatever slid under the finger
+let doneTouched = 0;
+document.addEventListener('click', (e) => {
+  if (!doneTouched) return;
+  const fresh = Date.now() - doneTouched < 1000;
+  doneTouched = 0;
+  if (fresh) { e.preventDefault(); e.stopPropagation(); }
+}, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen) closePop(); else closeSheet(); } });
 function confirmSheet(title, body, ok, danger) {
   return new Promise((resolve) => {
@@ -1411,6 +1530,9 @@ function startListening() {
 
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
+  // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
+  listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
+    () => { S.remindersError = true; refreshSettings(); });
   listen(db.ref('dispatch_contacts'), (snap) => {
     const v = snap.val() || {};
     S.contacts = { drivers: v.drivers || {}, groups: v.groups || {} };
@@ -1473,9 +1595,11 @@ function jobCard(id, r) {
     else chips.push(`<span class="chip warn">${icon('calendar')}Today</span>`);
   }
   chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
+  if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted to group</span>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
+    <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
       <span class="job-tools">
@@ -1489,7 +1613,11 @@ function jobCard(id, r) {
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
     ${textEditor(id, r, 'card')}
-    <div class="job-actions">${sendButtons(id)}${groupChatButton(id)}</div>
+    <div class="job-actions job-row">${isFuture(r)
+      ? `<button class="btn btn-secondary job-move" type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox', 'sm')}Send to queue</button>`
+      : `<button class="btn btn-secondary job-move" type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar', 'sm')}Schedule for later</button>`}${groupChatButton(id)}</div>
+    </div>
+    <div class="job-actions job-tab">${sendButtons(id)}</div>
   </article>`;
 }
 const skeletons = () => '<div class="cards" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
@@ -1616,6 +1744,7 @@ function renderCounts() {
   const dq = $('#dot-queue');
   const ds = $('#dot-scheduled');
   dq.textContent = q; dq.hidden = !q;
+  dq.parentNode.classList.toggle('has-jobs', !!q);
   ds.textContent = s; ds.hidden = !s;
 }
 function renderAll() {
@@ -1688,15 +1817,20 @@ function dispatch(id) {
   // Doesn't touch the clipboard: a copied text can reappear in the message box after sending
   acked.add(alertKey(id, r));
   saveAcked();
-  const markDispatched = (msg) => markRequestDispatched(id, r, null, msg);
+  // With drivers set up, Group Chat only posts the text: the job stays in the queue until Send to driver
+  const markDispatched = hasDrivers()
+    ? () => {
+      toast(`#${r.ref_no} posted to the group`, 'ok');
+      db.ref(`requests/${id}`).update({ posted_at: TS, posted_by_email: S.user.email || null }).catch(() => { /* the tag is only a reminder */ });
+    }
+    : (msg) => markRequestDispatched(id, r, null, msg);
   if (canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
     sharing = true;
     shareText(text)
       .then(() => markDispatched(`#${r.ref_no} sent to the share menu and marked dispatched.`))
       .catch((err) => {
-        if (isShareCancel(err)) toast(`#${r.ref_no} wasn\u2019t sent. It\u2019s still in the queue.`, 'info', 6000);
-        else toast('The share menu didn\u2019t open.', 'error', 10000,
+        if (!isShareCancel(err)) toast('The share menu didn\u2019t open.', 'error', 10000,
           { label: 'Start a text', run: () => { launch(`sms:?body=${encodeURIComponent(text)}`); markDispatched(`#${r.ref_no} marked dispatched.`); } });
       })
       .finally(() => { sharing = false; });
@@ -1705,15 +1839,22 @@ function dispatch(id) {
   markDispatched(`#${r.ref_no} sent and marked dispatched.`);
   launch(`sms:?body=${encodeURIComponent(text)}`);
 }
-function markRequestDispatched(id, r, to, msg) {
+// Resolves once the database has it (true), or false if it couldn't be saved
+function markRequestDispatched(id, r, to) {
   acked.add(alertKey(id, r));
   saveAcked();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
-  leaveCard(id).then(() => {
-    db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
-      .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); });
-    toast(msg, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) });
-  });
+  return leaveCard(id).then(() => db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
+    .then(() => true)
+    .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); return false; }));
+}
+// The text didn't go: quietly put it back in the queue
+function backToQueue(id, r) {
+  if (r) acked.add(alertKey(id, Object.assign({}, r, { status: 'new' })));
+  shownCards.delete(id);
+  if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
+  return db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null })
+    .catch((err) => toast(`#${(r && r.ref_no) || ''} couldn\u2019t go back to the queue: ${friendlyError(err)}`, 'error', 10000));
 }
 /* A card leaving the queue slides out and the cards below close the gap.
    Resolves when it's done, so the database write (which redraws the list) comes after. */
@@ -1737,6 +1878,45 @@ function leaveCard(id) {
     setTimeout(resolve, 500); // never hold up the write
   });
 }
+/* Schedule for later (queue card) and Send to queue (scheduled card): changes the request's day.
+   The alert for its new state is marked seen first, so the dispatcher's own move doesn't sound the alarm. */
+async function moveRequest(id, change, msg) {
+  const r = readyToSend(id);
+  if (!r) return;
+  const was = { when: r.when || 'asap', scheduled_for: r.scheduled_for || null };
+  acked.add(alertKey(id, Object.assign({}, r, change))); // kept once the list updates (saveAcked drops keys not in it yet)
+  shownCards.delete(id);
+  try {
+    await db.ref(`requests/${id}`).update(change);
+    toast(msg(r.ref_no), 'ok', 8000, { label: 'Undo', run: () => { acked.add(alertKey(id, Object.assign({}, r, was))); db.ref(`requests/${id}`).update(was).catch((err) => toast(friendlyError(err), 'error')); } });
+  } catch (err) { toast(`Couldn’t move it: ${friendlyError(err)}`, 'error', 10000); }
+}
+function askSchedule(id) {
+  const r = readyToSend(id);
+  if (!r) return;
+  const days = [];
+  for (let i = 1; i <= 6; i++) { const d = new Date(); d.setDate(d.getDate() + i); days.push(localDateStr(d)); }
+  const first = days[0];
+  openSheet(`Schedule #${r.ref_no} for later`, `<div class="sched-days">${days.map((d, i) => { const [wd, md] = fmtDay(d).split(', '); return `<button class="chip-btn" type="button" data-act="sched-pick" data-day="${d}">${i === 0 ? 'Tomorrow' : esc(wd)}<small>${esc(md || '')}</small></button>`; }).join('')}</div>
+    <div class="field"><label for="sched-date">Or pick a date</label><input type="date" id="sched-date" min="${first}" value="${first}"></div>
+    <div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="sched-go" data-id="${esc(id)}" id="sched-go">${icon('calendar', 'sm')}Schedule</button></div>`, () => {
+    $('#sched-date').addEventListener('input', schedUpdate);
+    schedUpdate();
+  });
+}
+function schedUpdate() {
+  const v = $('#sched-date') && $('#sched-date').value;
+  const ok = !!v && v > todayStr();
+  $$('.sched-days .chip-btn').forEach((b) => b.classList.toggle('on', b.dataset.day === v));
+  const go = $('#sched-go');
+  if (go) { go.disabled = !ok; go.lastChild.textContent = ok ? `Schedule for ${fmtDay(v)}` : 'Pick a day after today'; }
+}
+function scheduleFor(id, day) {
+  if (!day || day <= todayStr()) return;
+  closeSheet();
+  moveRequest(id, { when: 'scheduled', scheduled_for: day }, (n) => `#${n} scheduled for ${fmtDay(day)}.`);
+}
+
 /* Remove from queue: for duplicates, requests handled by phone, or anything that won't be dispatched.
    The request keeps its record (status "removed") and can be moved back from Done > Removed. */
 async function askRemove(id) {
@@ -1756,7 +1936,6 @@ function removeFromQueue(id) {
         const denied = /permission[_ ]denied/i.test(String((err && (err.code || err.message)) || ''));
         toast(denied ? `#${r.ref_no} couldn\u2019t be removed: the Firebase rules don\u2019t allow it yet. Publish the updated rules, then try again.` : `#${r.ref_no} couldn\u2019t be removed: ${friendlyError(err)}`, 'error', 12000);
       });
-    toast(`#${r.ref_no} removed from the queue.`, 'info', 8000, { label: 'Undo', run: () => restoreRemoved(id, r) });
   });
 }
 async function restoreRemoved(id, known) {
@@ -1765,7 +1944,6 @@ async function restoreRemoved(id, known) {
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', removed_at: null, removed_by: null, removed_by_email: null });
     if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
-    toast('Moved back to the queue.', 'info');
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
 function readyToSend(id) {
@@ -1781,30 +1959,47 @@ function pickDriver(id) {
   openSheet(`Send #${r.ref_no} to`, `<div class="pick-grid">${rows}</div><p class="pick-note">Tap a driver: the text sends straight from this phone. Add or change drivers in Settings.</p>`);
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
-let driverSending = false;
+const sendingIds = new Set(); // jobs whose text is on its way
+// Texts straight from the phone. If the phone never reports back, stop waiting after 25 s
+// so the Send buttons don't stay locked.
+function smsSend(to, body) {
+  return Promise.race([
+    SmsSender.send({ to, body }),
+    new Promise((_, no) => setTimeout(() => no(new Error('The phone didn’t confirm the text. Check Messages to see if it went.')), 25000))
+  ]);
+}
+/* The job is marked sent the moment it's tapped, while the text goes out in the background.
+   If the phone says the text failed, it goes back in the queue with the reason. */
 async function sendToDriver(id, did) {
+  if (sendingIds.has(id)) return;
   const r = readyToSend(id);
   const d = S.contacts.drivers[did];
-  if (!r || !d || driverSending) return;
+  if (!r || !d) return;
   const text = textFor(id, r);
-  if (!SmsSender) {
-    launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-    markRequestDispatched(id, r, d.name, `#${r.ref_no} opened in Messages for ${d.name} and marked dispatched.`);
-    return;
-  }
-  driverSending = true;
-  toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 4000);
-  try {
-    await SmsSender.send({ to: cleanPhone(d.phone), body: text });
-    markRequestDispatched(id, r, d.name, `#${r.ref_no} texted to ${d.name} and marked dispatched.`);
-  } catch (err) {
-    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''} It\u2019s still in the queue.`, 'error', 10000);
-  } finally { driverSending = false; }
+  const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+  if (!SmsSender) { inMessages(); markRequestDispatched(id, r, d.name); return; }
+  sendingIds.add(id);
+  const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
+  const sms = smsSend(cleanPhone(d.phone), text);
+  const saved = markRequestDispatched(id, r, d.name);
+  try { await sms; }
+  catch (err) {
+    if (await saved) await backToQueue(id, r);
+    // Backup: the phone's Messages app with the text typed in; it's dispatched once that opens
+    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}, so it\u2019s back in the queue. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      const again = S.pending[id];
+      inMessages();
+      if (again) markRequestDispatched(id, again, d.name);
+    } });
+  } finally { sendingIds.delete(id); done(); }
 }
 // Big green check for about a second, so it's obvious the dispatch worked
 let sentTimer = null;
 function showSent(label) {
   const el = $('#sent');
+  const a = document.activeElement;
+  if (a && a.blur && a !== document.body) a.blur(); // keyboard away now, not after the check is up
+  document.documentElement.style.setProperty('--full-h', `${Math.max(fullH, window.innerHeight)}px`);
   $('#sent-text').textContent = label;
   el.hidden = true;
   void el.offsetWidth; // restart the animation
@@ -1819,7 +2014,6 @@ async function undoDispatch(id) {
   try {
     await db.ref(`requests/${id}`).update({ status: 'new', dispatched_at: null, dispatched_to: null, dispatched_by: null, dispatched_by_email: null });
     if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
-    toast('Moved back to the queue.', 'info');
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
 function recopy(id) {
@@ -1903,7 +2097,9 @@ const ITEM_TYPES = [
 function itemLabel(it) {
   const t = ITEM_TYPES.find((x) => x.id === it.type) || ITEM_TYPES[0];
   const qty = Number(it.qty) || 0;
-  return it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
+  const base = it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
+  const lbs = Number(it.weight) || 0;
+  return lbs > 0 ? `${base} (${lbs} ${lbs === 1 ? 'lb' : 'lbs'})` : base;
 }
 const itemsText = (items) => (items || []).filter((it) => Number(it.qty) > 0).map(itemLabel).join(', ');
 const clampText = (s, max) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
@@ -1945,7 +2141,7 @@ function placeParts(comps, formatted) {
 
 /* ---------- Draft (kept if the form is closed by mistake) ---------- */
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
+const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '', weight: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
@@ -1968,7 +2164,7 @@ function openNewDispatch() {
     ${leg('pickup', 'Pickup')}
     ${leg('delivery', 'Delivery')}
     ${f.items || f.notes ? `<section class="nd-block">
-      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button></div>` : ''}
+      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div></div>` : ''}
       ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>` : ''}
     </section>` : ''}
     ${f.payment || f.po || f.when ? `<section class="nd-block">
@@ -1982,13 +2178,13 @@ function openNewDispatch() {
       <div class="text-preview"><span>Text to send</span><b id="nd-text"></b></div>
       <div id="nd-actions"></div>
     </div>
-    <p class="pick-note">Show or hide fields in Settings › New dispatch. <button class="link-btn" type="button" data-act="nd-clear" style="padding:0">Start over</button></p>
+    <p class="pick-note">Show or hide fields in Settings › New dispatch.</p>
   </form>`;
   openSheet('New dispatch', html, (body) => {
     ndFillAll(body);
     ndAttachPlaces();
     ndUpdate(true);
-    if (!ND.pickup.name && window.matchMedia('(pointer:fine)').matches) $('#nd-pickup-name').focus();
+    ndTypeNow();
   }, 'mid');
 }
 function ndFillLeg(k) {
@@ -2010,9 +2206,24 @@ function ndRenderItems() {
   box.innerHTML = ND.items.map((it, i) => `<div class="item-row">
       <div class="stepper"><button type="button" data-act="nd-qty" data-i="${i}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="999" data-nd-qty="${i}" value="${esc(it.qty)}" aria-label="How many"><button type="button" data-act="nd-qty" data-i="${i}" data-d="1" aria-label="One more">+</button></div>
       <select data-nd-type="${i}" aria-label="Kind">${ITEM_TYPES.map((t) => `<option value="${t.id}"${t.id === it.type ? ' selected' : ''}>${t.label}</option>`).join('')}</select>
+      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="next" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
-    </div>`).join('');
+    </div>`).join('') + `<div class="item-foot"><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button><button class="nd-done" type="button" data-act="nd-done">Done</button>${ND.items.length > 1 ? '<span class="del-ph"></span>' : '<span></span>'}</div>`;
+}
+// Done (under the weight): keyboard away, then the send buttons slide into view
+function ndDone() {
+  const a = document.activeElement;
+  if (a && a.blur) a.blur();
+  if (Keyboard) Keyboard.hide().catch(() => {});
+  const show = () => {
+    const body = $('#sheet-body'), send = $('#sheet-body .nd-send');
+    if (!body || !send || !ndOpen()) return;
+    ndScrollTo(body, body.scrollHeight); // all the way down: Group Chat and Send to driver
+  };
+  setTimeout(show, 60);
+  setTimeout(show, 340); // again once the keyboard has finished closing
+  setTimeout(show, 650);
 }
 
 /* What gets saved: a request in the same shape Request Pickup writes */
@@ -2138,7 +2349,22 @@ function ndSuggest(k) {
     const c = S.lookup[name] || {};
     return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
   }).join('') + (S.lookup[lookupKey(q)] ? '' : `<div class="ac-new">Not on the list? Keep typing: <b>${esc(q.trim())}</b> is saved as a new customer when you send.</div>`);
+  const was = list.hidden;
   list.hidden = false;
+  ndPlaceSuggest(k);
+  if (was) list.scrollTop = list.scrollHeight;
+}
+// The list sits above the name box (best match nearest the thumb) and can use the dimmed space up top
+function ndPlaceSuggest(k) {
+  const list = $(`#nd-${k}-ac`);
+  const input = $(`#nd-${k}-name`);
+  if (!list || list.hidden || !input) return;
+  const r = input.getBoundingClientRect();
+  const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-t')) || 0;
+  list.style.left = `${r.left}px`;
+  list.style.width = `${r.width}px`;
+  list.style.bottom = `${document.documentElement.clientHeight - r.top + 4}px`;
+  list.style.maxHeight = `${Math.max(120, r.top - top - 10)}px`;
 }
 function ndHideSuggest(k) { const list = $(`#nd-${k}-ac`); if (list) { list.hidden = true; list.innerHTML = ''; } }
 function ndPick(k, name) {
@@ -2149,8 +2375,8 @@ function ndPick(k, name) {
   ndUpdate();
   // Straight on to the next thing to fill in, keyboard stays up
   const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-notes') || $('#nd-po');
-  if (!c.address) $(`#nd-${k}-address`).focus();
-  else if (next) next.focus();
+  const go = !c.address ? $(`#nd-${k}-address`) : next;
+  if (go) { go.focus({ preventScroll: true }); ndReveal(go); }
 }
 
 /* ---------- Google address boxes ---------- */
@@ -2267,15 +2493,14 @@ async function ndCommit(r, status, to) {
   return { id: ref.key, ref_no: rec.ref_no };
 }
 const deniedMsg = (err) => (/permission[_ ]denied/i.test(String((err && (err.code || err.message)) || '')) ? 'the Firebase rules don’t allow it yet. Publish the updated rules.' : friendlyError(err));
-// After the text has gone out: close the form, celebrate, then file it under Done
+// Close the form, celebrate, and file it under Done. Resolves with the saved job, or null.
 function ndSent(r, to) {
   if (popOpen && history.state && history.state.pop) { _hidePop(); history.go(-2); } else closeSheet();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
   clearDraft();
   const file = () => ndCommit(r, 'dispatched', to)
-    .then(({ id, ref_no: n }) => toast(`#${n} ${to ? `texted to ${to}` : 'sent'} and saved in Done.`, 'ok', 8000, { label: 'Undo', run: () => undoDispatch(id) }))
-    .catch((err) => toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }));
-  file();
+    .catch((err) => { toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }); return null; });
+  return file();
 }
 // Group Chat only shares the text. It's dispatched (and filed in Done) once it's sent to a driver.
 function ndSendGroup() {
@@ -2283,7 +2508,7 @@ function ndSendGroup() {
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
-  const shared = () => toast('Shared. Tap Send to driver once it’s assigned.', 'info', 6000);
+  const shared = () => {};
   if (canShare()) {
     sharing = true;
     shareText(text)
@@ -2318,18 +2543,28 @@ function _hidePop() {
   setTimeout(() => { if (!popOpen) el.hidden = true; }, 180);
 }
 function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
+// Same as the queue: sent and filed straight away, back in the queue if the text fails
 async function ndSendDriver(did) {
   const d = S.contacts.drivers[did];
-  if (!d || driverSending) return;
+  if (!d) return;
   const r = ndValid();
   if (!r) return;
   const text = dispatchText(r);
-  if (!SmsSender) { launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`); ndSent(r, d.name); return; }
-  driverSending = true;
-  toast(`Sending to ${d.name}…`, 'info', 4000);
-  try { await SmsSender.send({ to: cleanPhone(d.phone), body: text }); ndSent(r, d.name); }
-  catch (err) { toast(`Not sent to ${d.name}. ${(err && err.message) || ''} Your dispatch is still here.`, 'error', 10000); }
-  finally { driverSending = false; }
+  const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+  if (!SmsSender) { inMessages(); ndSent(r, d.name); return; }
+  const done = toast(`Sending to ${d.name}…`, 'info', 25000);
+  const sms = smsSend(cleanPhone(d.phone), text);
+  const saved = ndSent(r, d.name);
+  try { await sms; }
+  catch (err) {
+    const job = await saved;
+    if (job) await backToQueue(job.id, null);
+    toast(`${job ? `#${job.ref_no} ` : ''}wasn’t sent to ${d.name}${job ? ', so it’s in the queue' : ''}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+      inMessages();
+      const again = job && S.pending[job.id];
+      if (again) markRequestDispatched(job.id, again, d.name);
+    } });
+  } finally { done(); }
 }
 // Save to queue, or schedule it for a later day
 let ndSaving = false;
@@ -2353,6 +2588,106 @@ async function ndSave(btn) {
   } finally { ndSaving = false; }
 }
 
+/* ---------- Keeping the box being filled in reach ---------- */
+// Quick ease-out scroll of the form (the browser's own jump is instant)
+let ndScrollAnim = 0;
+function ndScrollTo(body, y) {
+  cancelAnimationFrame(ndScrollAnim);
+  y = Math.max(0, Math.min(y, body.scrollHeight - body.clientHeight));
+  const y0 = body.scrollTop, d = y - y0;
+  if (Math.abs(d) < 2 || reduceMotion()) { body.scrollTop = y; return; }
+  const t0 = performance.now(), ms = 220;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / ms);
+    body.scrollTop = y0 + d * (1 - Math.pow(1 - p, 3));
+    if (p < 1) ndScrollAnim = requestAnimationFrame(step);
+    else ['pickup', 'delivery'].forEach(ndPlaceSuggest);
+  };
+  ndScrollAnim = requestAnimationFrame(step);
+}
+// Brings a box (with the rest of its pickup/delivery card) into view. With the keyboard up,
+// the card's bottom sits right on the keyboard so the suggestions have the room above.
+function ndReveal(el) {
+  const body = $('#sheet-body');
+  if (!el || !body || !ndOpen()) return;
+  const group = el.closest('.nd-leg') || el.closest('.field') || el;
+  const b = body.getBoundingClientRect(), g = group.getBoundingClientRect();
+  const onKb = $('#sheet .sheet').classList.contains('kb') && !!el.closest('.nd-leg');
+  let dy = 0;
+  if (onKb || g.bottom > b.bottom - 6) dy = g.bottom - (b.bottom - 6);
+  else if (g.top < b.top + 4) dy = g.top - (b.top + 4);
+  if (!onKb && g.top - dy < b.top + 4) dy = g.top - (b.top + 4); // never push its top out of sight
+  if (Math.abs(dy) > 1) ndScrollTo(body, body.scrollTop + dy);
+}
+// Keyboard up or down: the form glides to its new spot instead of jumping
+let fullH = window.innerHeight;
+let ndLastTop = null;
+let kbKnown = 0;   // keyboard height from the last time it opened
+try { kbKnown = +localStorage.getItem('ecd_kbh') || 0; } catch (e) { kbKnown = 0; }
+let expectKb = 0;  // when the keyboard was asked for and hasn't shown yet
+function ndKeyboard() {
+  const sheet = $('#sheet .sheet');
+  const vv = window.visualViewport;
+  fullH = Math.max(fullH, window.innerHeight);
+  const inset = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0; // keyboard drawn over the page
+  const shown = Math.max(fullH - window.innerHeight, inset);
+  if (shown > 120) {
+    expectKb = 0;
+    if (Math.abs(shown - kbKnown) > 2) { kbKnown = shown; try { localStorage.setItem('ecd_kbh', String(shown)); } catch (e) { /* ignore */ } }
+  }
+  const a = document.activeElement;
+  const typing = !!(a && a.closest && a.closest('[data-nd]') && a.matches('input:not([type=radio]):not([type=checkbox]),textarea'));
+  // Keyboard on its way: leave room for it now so the card doesn't move when it lands
+  const waiting = !!(expectKb && typing && shown <= 120 && ndOpen());
+  if (!typing) expectKb = 0;
+  document.documentElement.style.setProperty('--kb', `${waiting ? kbKnown : inset > 80 ? inset : 0}px`);
+  if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
+  const up = typing && (shown > 120 || waiting);
+  if (up) {
+    const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
+    const leg = $('#sheet-body .nd-leg');
+    sheet.style.setProperty('--nd-kb-h', `${Math.round(head + (leg ? leg.offsetHeight : 180) + 20)}px`);
+  }
+  const before = ndLastTop;
+  sheet.classList.toggle('kb', up);
+  const now = sheet.offsetTop; // layout spot, ignoring any slide that's still running
+  ndLastTop = now;
+  const held = $('#sheet').classList.contains('hold');
+  if (held && shown > 120) requestAnimationFrame(sheetLift);
+  if (!held && before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
+    sheet.classList.add('moving');
+    const anim = sheet.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    anim.onfinish = anim.oncancel = () => { sheet.classList.remove('moving'); ['pickup', 'delivery'].forEach(ndPlaceSuggest); };
+  }
+  if (up) ndReveal(a);
+  ['pickup', 'delivery'].forEach(ndPlaceSuggest);
+}
+window.addEventListener('resize', ndKeyboard);
+if (window.visualViewport) visualViewport.addEventListener('resize', ndKeyboard);
+// Cursor in Pickup with the keyboard up, ready to type. Once the keyboard's height is known,
+// the card is put straight where it'll sit on the keyboard, so nothing bounces.
+function ndTypeNow() {
+  const name = $('#nd-pickup-name');
+  const body = $('#sheet-body');
+  if (!name) return;
+  if (body) body.scrollTop = 0;
+  if (kbKnown && fullH - window.innerHeight < 120) {
+    expectKb = Date.now();
+    setTimeout(() => { if (expectKb && Date.now() - expectKb >= 1400) { expectKb = 0; ndKeyboard(); } }, 1500);
+  }
+  name.focus({ preventScroll: true });
+  if (Keyboard) Keyboard.show().catch(() => {});
+  ndKeyboard();
+  // Slides up when the keyboard lands, or soon anyway if the phone doesn't say
+  if ($('#sheet').classList.contains('hold')) liftTimer = setTimeout(sheetLift, kbKnown ? 320 : 650);
+}
+// Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
+function ndReset() {
+  clearDraft();
+  ndMode = '';
+  openNewDispatch();
+}
+
 /* ---------- Typing in the form ---------- */
 document.addEventListener('input', (e) => {
   const t = e.target;
@@ -2363,6 +2698,7 @@ document.addEventListener('input', (e) => {
   else if (t.dataset.ndF) { ND[t.dataset.ndF] = t.value; t.classList.remove('invalid'); }
   else if (t.dataset.ndQty) ND.items[+t.dataset.ndQty].qty = Math.max(0, Math.min(999, parseInt(t.value, 10) || 0));
   else if (t.dataset.ndOther) ND.items[+t.dataset.ndOther].other = t.value;
+  else if (t.dataset.ndWt) ND.items[+t.dataset.ndWt].weight = t.value.trim();
   else if (t.name === 'nd-pay') ND.payment = t.value;
   else if (t.name === 'nd-when') { ND.when = t.value; if (t.value === 'later' && !ND.date) { ND.date = tomorrowStr(); $('#nd-date').value = ND.date; } }
   ndUpdate();
@@ -2370,11 +2706,25 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
-  if (t.dataset.ndType) { ND.items[+t.dataset.ndType].type = t.value; ndRenderItems(); if (t.value === 'other') { const o = $(`[data-nd-other="${t.dataset.ndType}"]`); if (o) o.focus(); } ndUpdate(); }
+  if (t.dataset.ndType) {
+    ND.items[+t.dataset.ndType].type = t.value;
+    ndRenderItems();
+    // Straight on to the weight (number pad), or "What is it?" for Other
+    const next = t.value === 'other' ? $(`[data-nd-other="${t.dataset.ndType}"]`) : $(`[data-nd-wt="${t.dataset.ndType}"]`);
+    if (next) { next.focus({ preventScroll: true }); if (next.select) next.select(); ndReveal(next); }
+    ndUpdate();
+  }
   else if (t.name === 'nd-pay' || t.name === 'nd-when') t.dispatchEvent(new Event('input', { bubbles: true }));
 });
 document.addEventListener('keydown', (e) => {
   const t = e.target;
+  // Weight box: the keyboard's Next/Enter goes on to the notes
+  if (t.dataset && t.dataset.ndWt != null && e.key === 'Enter') {
+    e.preventDefault();
+    const go = $('#nd-notes') || $('#nd-po');
+    if (go) { go.focus({ preventScroll: true }); ndReveal(go); } else t.blur();
+    return;
+  }
   if (!t.dataset || !t.dataset.ndName) return;
   const list = $(`#nd-${t.dataset.ndName}-ac`);
   const items = list && !list.hidden ? $$('.ac-item', list) : [];
@@ -2397,9 +2747,13 @@ document.addEventListener('focusout', (e) => {
   if (k) setTimeout(() => { if (document.activeElement !== e.target) ndHideSuggest(k); }, 120);
 });
 document.addEventListener('focusin', (e) => {
+  if (!e.target.closest || !e.target.closest('[data-nd]')) return;
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
+  ndKeyboard();
+  setTimeout(() => ndReveal(e.target), 30);
 });
+document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'sheet-body') ['pickup', 'delivery'].forEach(ndPlaceSuggest); }, true);
 
 /* =========================================================
    Settings
@@ -2434,6 +2788,27 @@ document.addEventListener('submit', async (e) => {
   }
 });
 
+// Queue reminders: shared by every dispatcher phone (dispatch_settings/reminders)
+function remindersSettings() {
+  const r = Object.assign({}, REMINDER_DEFAULTS, S.reminders || {});
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  return `<section class="card">
+      <h2>${icon('bell')}Queue reminders</h2>
+      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
+      <div class="setting"><span class="grow">Reminders</span><span class="switch"><input type="checkbox" data-rem="enabled"${r.enabled !== false ? ' checked' : ''} aria-label="Queue reminders"><span></span></span></div>
+      <div class="rem-hours"><label>From<input type="time" data-rem="start" value="${esc(r.start)}"></label><label>To<input type="time" data-rem="end" value="${esc(r.end)}"></label></div>
+      <div class="rem-days" role="group" aria-label="Days">${order.map((d) => `<button class="chip-btn" type="button" data-act="rem-day" data-day="${d}" aria-pressed="${(r.days || []).includes(d)}">${days[d]}</button>`).join('')}</div>
+    </section>`;
+}
+async function saveReminders(change) {
+  const next = Object.assign({}, REMINDER_DEFAULTS, S.reminders || {}, change);
+  if (next.start >= next.end) { toast('The end time has to be after the start time.', 'error'); refreshSettings(); return; }
+  S.reminders = next;
+  refreshSettings();
+  try { await db.ref('dispatch_settings/reminders').set(Object.assign(next, { updated_by: meName() })); toast('Reminder hours saved', 'ok'); }
+  catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 10000); }
+}
 function renderSettings() {
   const st = S.settings;
   const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
@@ -2452,6 +2827,7 @@ function renderSettings() {
       <p class="card-note">Fields the Dispatch form shows. Hidden fields stay out of the text. Pickup and delivery names are always there.</p>
       ${FORM_FIELDS.map((f) => `<div class="setting"><span class="grow">${esc(f.label)}${f.hint ? `<small>${esc(f.hint)}</small>` : ''}</span><span class="switch"><input type="checkbox" data-form-field="${f.key}"${st.form[f.key] ? ' checked' : ''} aria-label="Show ${esc(f.label)}"><span></span></span></div>`).join('')}
     </section>
+    ${remindersSettings()}
     <section class="card">
       <h2>${icon('bell')}Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
@@ -2476,6 +2852,7 @@ function renderSettings() {
       <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>
     </section>`;
   $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
+  $$('[data-rem]', body).forEach((x) => x.addEventListener('change', () => saveReminders({ [x.dataset.rem]: x.type === 'checkbox' ? x.checked : x.value })));
   $$('[data-form-field]', body).forEach((x) => x.addEventListener('change', () => { S.settings.form[x.dataset.formField] = x.checked; saveSettings(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
     const key = x.dataset.setting;
@@ -2527,7 +2904,7 @@ document.addEventListener('click', async (e) => {
     case 'recheck': handleUser(auth.currentUser); break;
     case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
     case 'unlock-sound': unlockAudio(); setTimeout(() => { if (audioReady()) toast('Alert sounds are on.', 'ok'); }, 150); break;
-    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); toast(S.settings.sound ? 'Alert sound on.' : 'Alert sound muted. The banner still flashes.', 'info'); break;
+    case 'toggle-sound': S.settings.sound = !S.settings.sound; saveSettings(); unlockAudio(); updateSoundUi(); refreshSettings(); break;
     case 'settings': switchTab('settings'); break;
     case 'done-filter':
       S.doneFilter = el.dataset.f;
@@ -2545,6 +2922,16 @@ document.addEventListener('click', async (e) => {
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'remove': askRemove(id); break;
+    case 'rem-day': {
+      const d = +el.dataset.day;
+      const cur = ((S.reminders && S.reminders.days) || REMINDER_DEFAULTS.days).slice();
+      saveReminders({ days: cur.includes(d) ? cur.filter((x) => x !== d) : cur.concat(d).sort() });
+      break;
+    }
+    case 'schedule-later': askSchedule(id); break;
+    case 'sched-pick': $('#sched-date').value = el.dataset.day; schedUpdate(); break;
+    case 'sched-go': scheduleFor(el.dataset.id, $('#sched-date').value); break;
+    case 'to-queue': moveRequest(id, { when: 'asap', scheduled_for: null }, (n) => `#${n} moved to the queue.`); break;
     case 'restore': if (sheetOpen) _hideSheet(); restoreRemoved(id); break;
     case 'undo': if (await confirmSheet('Move back to the queue?', 'Use this if it was sent by mistake. The customer was already told it was dispatched.', 'Move back')) undoDispatch(id); break;
     case 'test-alert': testAlert(); break;
@@ -2563,14 +2950,15 @@ document.addEventListener('click', async (e) => {
       ndUpdate();
       break;
     }
-    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '' }); ndRenderItems(); ndUpdate(); break;
+    case 'nd-done': break; // handled on touch (pointerdown)
+    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
     case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
     case 'nd-group': ndSendGroup(); break;
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
     case 'nd-save': ndSave(el); break;
-    case 'nd-clear': if (await confirmSheet('Start over?', 'This clears everything typed in the new dispatch.', 'Clear it', true)) { clearDraft(); openNewDispatch(); } break;
+    case 'nd-reset': ndReset(); break;
     case 'del-driver': {
       const d = S.contacts.drivers[el.dataset.driver];
       if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());

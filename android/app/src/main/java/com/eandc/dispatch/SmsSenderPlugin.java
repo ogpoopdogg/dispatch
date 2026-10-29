@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.PermissionState;
@@ -34,7 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SmsSenderPlugin extends Plugin {
 
     private static final String ACTION_SENT = "com.eandc.dispatch.SMS_SENT.";
-    private static final AtomicInteger nextId = new AtomicInteger();
+    // Unique per send, also across app restarts, so a result can never be matched to an older text
+    private static final AtomicInteger nextId = new AtomicInteger((int) (System.currentTimeMillis() & 0xFFFFF) * 16);
 
     @PluginMethod
     public void send(PluginCall call) {
@@ -61,7 +63,7 @@ public class SmsSenderPlugin extends Plugin {
         Context ctx = getContext();
         SmsManager sms;
         try {
-            sms = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? ctx.getSystemService(SmsManager.class) : SmsManager.getDefault();
+            sms = smsManager(ctx);
         } catch (Exception e) {
             sms = null;
         }
@@ -71,14 +73,17 @@ public class SmsSenderPlugin extends Plugin {
         }
 
         ArrayList<String> parts = sms.divideMessage(body);
-        String action = ACTION_SENT + nextId.incrementAndGet();
+        int id = nextId.incrementAndGet();
+        String action = ACTION_SENT + id;
         AtomicInteger left = new AtomicInteger(parts.size());
         AtomicBoolean failed = new AtomicBoolean(false);
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent intent) {
-                if (getResultCode() != Activity.RESULT_OK && failed.compareAndSet(false, true)) {
-                    call.reject("The text didn’t send. Check the phone has signal and try again.", "SEND_FAILED");
+                int code = getResultCode();
+                if (code != Activity.RESULT_OK && failed.compareAndSet(false, true)) {
+                    int detail = intent.getIntExtra("errorCode", -1);
+                    call.reject("The phone’s texting service said no (" + reason(code) + (detail != -1 ? ", " + detail : "") + ").", "SEND_FAILED_" + code);
                 }
                 if (left.decrementAndGet() == 0) {
                     try { ctx.unregisterReceiver(this); } catch (Exception ignored) { }
@@ -91,7 +96,7 @@ public class SmsSenderPlugin extends Plugin {
         ArrayList<PendingIntent> sent = new ArrayList<>();
         for (int i = 0; i < parts.size(); i++) {
             Intent intent = new Intent(action).setPackage(ctx.getPackageName());
-            sent.add(PendingIntent.getBroadcast(ctx, i, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT));
+            sent.add(PendingIntent.getBroadcast(ctx, id * 8 + i, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT));
         }
         try {
             if (parts.size() == 1) sms.sendTextMessage(to.trim(), null, body, sent.get(0), null);
@@ -99,6 +104,46 @@ public class SmsSenderPlugin extends Plugin {
         } catch (Exception e) {
             try { ctx.unregisterReceiver(receiver); } catch (Exception ignored) { }
             call.reject("The text didn’t send: " + e.getMessage(), "SEND_FAILED");
+        }
+    }
+
+    /**
+     * The SmsManager for the SIM that's set for texts. On phones with two SIMs (or a SIM and an eSIM)
+     * the plain default manager can fail when no SIM is picked for texts, so pick one explicitly.
+     */
+    private static SmsManager smsManager(Context ctx) {
+        int sub = SubscriptionManager.getDefaultSmsSubscriptionId();
+        if (sub == SubscriptionManager.INVALID_SUBSCRIPTION_ID) sub = SubscriptionManager.getDefaultSubscriptionId();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SmsManager base = ctx.getSystemService(SmsManager.class);
+            if (base != null && sub != SubscriptionManager.INVALID_SUBSCRIPTION_ID) return base.createForSubscriptionId(sub);
+            return base;
+        }
+        return sub != SubscriptionManager.INVALID_SUBSCRIPTION_ID ? SmsManager.getSmsManagerForSubscriptionId(sub) : SmsManager.getDefault();
+    }
+
+    /** Android's reason for a failed text, in words (SmsManager.RESULT_* codes). */
+    private static String reason(int code) {
+        switch (code) {
+            case SmsManager.RESULT_ERROR_GENERIC_FAILURE: return "general failure, code 1";
+            case SmsManager.RESULT_ERROR_RADIO_OFF: return "radio off / airplane mode";
+            case SmsManager.RESULT_ERROR_NULL_PDU: return "no message data";
+            case SmsManager.RESULT_ERROR_NO_SERVICE: return "no service";
+            case SmsManager.RESULT_ERROR_LIMIT_EXCEEDED: return "too many texts, limit reached";
+            case SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE: return "fixed dialing blocked it";
+            case SmsManager.RESULT_ERROR_SHORT_CODE_NOT_ALLOWED:
+            case SmsManager.RESULT_ERROR_SHORT_CODE_NEVER_ALLOWED: return "short code not allowed";
+            case SmsManager.RESULT_RADIO_NOT_AVAILABLE: return "radio not available";
+            case SmsManager.RESULT_NETWORK_REJECT: return "network rejected it";
+            case SmsManager.RESULT_INVALID_ARGUMENTS: return "invalid number or text";
+            case SmsManager.RESULT_INVALID_STATE: return "phone not ready";
+            case SmsManager.RESULT_INVALID_SMS_FORMAT: return "invalid text format";
+            case SmsManager.RESULT_NETWORK_ERROR: return "network error";
+            case SmsManager.RESULT_ENCODING_ERROR: return "text encoding error";
+            case SmsManager.RESULT_INVALID_SMSC_ADDRESS: return "carrier message centre address invalid";
+            case SmsManager.RESULT_OPERATION_NOT_ALLOWED: return "not allowed";
+            case SmsManager.RESULT_NO_DEFAULT_SMS_APP: return "no default texting app set";
+            default: return "code " + code;
         }
     }
 
