@@ -210,6 +210,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .tab[aria-current=page]{color:var(--ink)}
 .tab[aria-current=page] .ti{background:var(--yellow);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(255,209,0,.6)}
 .tab[aria-current=page] .i{stroke-width:2.3}
+/* Queue is only yellow while jobs are waiting; empty, it looks like the others */
+.tab[data-tab=queue][aria-current=page]:not(.has-jobs) .ti{background:none;box-shadow:none;transform:none}
 /* Queue tab glows while requests are waiting */
 .tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
 .tab.has-jobs .i{animation:tabNudge 1.3s ease-in-out infinite}
@@ -535,6 +537,12 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .wt input:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
 .wt span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--ink-3);pointer-events:none}
 .item-row .icon-btn{width:var(--ctl-sm)}
+/* Same columns as the lines above, so Done sits right under the weight */
+.item-foot{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;align-items:start}
+.item-foot .link-btn{grid-column:1/3;justify-self:start}
+.item-foot .del-ph{width:var(--ctl-sm)}
+.nd-done{justify-self:stretch;height:26px;margin-top:1px;padding:0 8px;border:0;border-radius:99px;background:var(--yellow);color:#000;font:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px -4px rgba(255,209,0,.8);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.nd-done:active{transform:scale(.94);background:var(--yellow-hi)}
 .stepper{display:flex;align-items:center;height:var(--ctl);border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);overflow:hidden}
 .stepper button{width:36px;height:100%;border:0;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stepper button:active{background:var(--yellow);color:#000}
@@ -2136,7 +2144,7 @@ function openNewDispatch() {
     ${leg('pickup', 'Pickup')}
     ${leg('delivery', 'Delivery')}
     ${f.items || f.notes ? `<section class="nd-block">
-      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button></div>` : ''}
+      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div></div>` : ''}
       ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>` : ''}
     </section>` : ''}
     ${f.payment || f.po || f.when ? `<section class="nd-block">
@@ -2181,7 +2189,20 @@ function ndRenderItems() {
       <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="next" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
-    </div>`).join('');
+    </div>`).join('') + `<div class="item-foot"><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button><button class="nd-done" type="button" data-act="nd-done">Done</button>${ND.items.length > 1 ? '<span class="del-ph"></span>' : '<span></span>'}</div>`;
+}
+// Done (under the weight): keyboard away, then the send buttons slide into view
+function ndDone() {
+  const a = document.activeElement;
+  if (a && a.blur) a.blur();
+  if (Keyboard) Keyboard.hide().catch(() => {});
+  const show = () => {
+    const body = $('#sheet-body'), send = $('#sheet-body .nd-send');
+    if (!body || !send || !ndOpen()) return;
+    ndScrollTo(body, body.scrollTop + send.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8);
+  };
+  setTimeout(show, 60);
+  setTimeout(show, 340); // again once the keyboard has finished closing
 }
 
 /* What gets saved: a request in the same shape Request Pickup writes */
@@ -2908,6 +2929,7 @@ document.addEventListener('click', async (e) => {
       ndUpdate();
       break;
     }
+    case 'nd-done': ndDone(); break;
     case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
     case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
