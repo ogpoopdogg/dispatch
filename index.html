@@ -863,7 +863,7 @@ const S = {
   settings: loadSettings()
 };
 function loadSettings() {
-  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mapType: 'roadmap', vanZoom: 65 };
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mapType: 'roadmap', vanZoom: 65, mapTraffic: false };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
   st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
@@ -1570,6 +1570,10 @@ function startListening() {
 
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
+  // Vehicles for the Send to driver map, kept up to date so the panel opens instantly
+  listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); }, () => {});
+  listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); }, () => {});
+  setTimeout(() => { loadMaps(); spMapReady(); }, 1200);
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
     () => { S.remindersError = true; refreshSettings(); });
@@ -1999,7 +2003,7 @@ function pickDriver(id) {
   // From the details sheet: the panel takes the sheet's place (and its Back step)
   const swap = sheetOpen && history.state && history.state.sheet;
   if (sheetOpen) _hideSheet();
-  openSendPanel(`Send #${r.ref_no} to`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap);
+  openSendPanel(`Send #${r.ref_no} to`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id);
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
 const sendingIds = new Set(); // jobs whose text is on its way
@@ -2578,10 +2582,10 @@ function ndPickDriver() {
 const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
 const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
-const sp = { got: {}, onSend: null, pickup: null, at: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, fitted: false, offs: [], poll: 0, order: '' };
-function openSendPanel(title, pickup, onSend, swap) {
+const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
+function openSendPanel(title, pickup, onSend, swap, jobId) {
   const known = pickup && pickup.lat != null && pickup.lng != null && isFinite(+pickup.lat);
-  Object.assign(sp, { onSend, pickup, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : null, fitted: false, order: '' });
+  Object.assign(sp, { onSend, pickup, jobId: jobId || null, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : geoCached(pickup), fitted: false, order: '', focus: '' });
   if (sp.pin) sp.pin.setMap(null);
   spMsg('');
   $('#sp-title').textContent = title;
@@ -2598,6 +2602,7 @@ function openSendPanel(title, pickup, onSend, swap) {
   spRender();
   loadMaps();
   spMapReady();
+  if (sp.at) spPickupPin();
 }
 function _hidePop() {
   const el = $('#nd-pop');
@@ -2608,14 +2613,10 @@ function _hidePop() {
   el.classList.remove('open');
   setTimeout(() => { if (!popOpen) el.hidden = true; }, 260);
 }
-// Live vehicles while the panel is open, plus a fresh GPS poll every 15 s
+// The vehicles are listened to from sign-in (startListening); while the panel is open, a fresh GPS poll every 15 s
 function spListen() {
   spStop();
   if (!db || !S.user) return;
-  const on = (path, cb) => { const ref = db.ref(`${GPS_ROOT}/${path}`); const h = ref.on('value', cb, () => spMsg('The vehicles couldn’t load.')); sp.offs.push(() => ref.off('value', h)); };
-  sp.got = {};
-  on('drivers', (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); });
-  on('driver_nicknames', (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); });
   const poll = async () => {
     if (!popOpen || document.hidden || !auth || !auth.currentUser) return;
     try { const t = await auth.currentUser.getIdToken(); await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } }); } catch (e) { /* next tick tries again */ }
@@ -2623,7 +2624,7 @@ function spListen() {
   poll();
   sp.poll = setInterval(poll, 15000);
 }
-function spStop() { sp.offs.forEach((off) => off()); sp.offs = []; clearInterval(sp.poll); sp.poll = 0; }
+function spStop() { clearInterval(sp.poll); sp.poll = 0; }
 function spMsg(text) { const m = $('#sp-msg'); if (m) { m.textContent = text || ''; m.hidden = !text; } }
 const spNick = (id) => { const n = sp.nicks && sp.nicks[id]; return typeof n === 'string' && n.trim() ? n.trim() : ''; };
 const kmBetween = (a, b) => {
@@ -2633,6 +2634,8 @@ const kmBetween = (a, b) => {
   return 2 * R * Math.asin(Math.sqrt(h));
 };
 const fmtKm = (km) => (km < 1 ? `${Math.round(km * 1000 / 50) * 50 || 50} m` : km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`);
+// Rough drive time from the straight-line distance: roads run about a third longer; town ~40 km/h, highway ~85 km/h
+const fmtDrive = (km) => { const road = km * 1.3; const min = road < 8 ? road / 40 * 60 : (8 / 40 + (road - 8) / 85) * 60; return `~${Math.max(1, Math.round(min))} min`; };
 // Every vehicle with a position. A nickname means a driver picked it in Timeclock today: only those can be "closest".
 function spList() {
   const at = sp.at;
@@ -2641,7 +2644,7 @@ function spList() {
     if (!L || !isFinite(+L.lat) || !isFinite(+L.lng)) return null;
     const pos = { lat: +L.lat, lng: +L.lng };
     const nick = spNick(id);
-    return { id, pos, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', km: at ? kmBetween(at, pos) : null };
+    return { id, pos, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', heading: headingOf(v.heading), km: at ? kmBetween(at, pos) : null };
   }).filter(Boolean);
   const byKm = (a, b) => (a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km) || a.label.localeCompare(b.label);
   const used = list.filter((v) => v.nick).sort(byKm);
@@ -2650,7 +2653,7 @@ function spList() {
   return used.concat(idle);
 }
 function spRender() {
-  if (!popOpen) return;
+  if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
   const list = spList();
   const box = $('#sp-vans');
   // Chips are kept and updated in place, so their pulse doesn't restart on every GPS update
@@ -2663,8 +2666,8 @@ function spRender() {
     b.className = `van${v.nick ? '' : ' idle'}${v.rank ? ` c${v.rank}` : ''}`;
     b.style.setProperty('--c', v.color);
     b.children[1].textContent = v.label;
-    b.children[2].textContent = v.km == null ? '' : fmtKm(v.km);
-    b.setAttribute('aria-label', `${v.label}${v.km == null ? '' : `, ${fmtKm(v.km)} from the pickup`}${v.rank === 1 ? ', closest' : ''}`);
+    b.children[2].textContent = v.km == null ? '' : `${fmtKm(v.km)} · ${fmtDrive(v.km)}`;
+    b.setAttribute('aria-label', `${v.label}${v.km == null ? '' : `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup`}${v.rank === 1 ? ', closest' : ''}`);
     delete have[v.id];
     if (order !== sp.order) box.appendChild(b);
   });
@@ -2685,13 +2688,14 @@ const MAP_STYLE = [
 let spMapWait = 0;
 function spMapReady() {
   clearTimeout(spMapWait);
-  if (!popOpen) return;
-  if (maps === 'failed') { spMsg('The map isn’t available in this app yet (Google Maps key). Distances still show above.'); return; }
-  if (!mapsUsable()) { spMapWait = setTimeout(spMapReady, 150); return; }
-  spMsg('');
+  if (maps === 'failed') { if (popOpen) spMsg('The map isn’t available in this app yet (Google Maps key). Distances still show above.'); return; }
+  if (!mapsUsable()) { if (maps !== 'idle') spMapWait = setTimeout(spMapReady, 150); return; }
   if (!sp.map) {
     sp.map = new google.maps.Map($('#sp-canvas'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, gestureHandling: 'greedy', clickableIcons: false, keyboardShortcuts: false });
+    spStyleMap();
   }
+  if (!popOpen) return;
+  spMsg('');
   spStyleMap();
   if (sp.at) { sp.map.setCenter(sp.at); sp.map.setZoom(13); } // until the vehicles arrive
   spPickup();
@@ -2700,57 +2704,122 @@ function spMapReady() {
 function spStyleMap() {
   const type = MAP_TYPES.some(([v]) => v === S.settings.mapType) ? S.settings.mapType : 'roadmap';
   sp.map.setOptions({ mapTypeId: type, styles: type === 'roadmap' ? MAP_STYLE : null });
+  // Live traffic, if it's on in Settings
+  if (S.settings.mapTraffic && !sp.traffic) sp.traffic = new google.maps.TrafficLayer();
+  if (sp.traffic) sp.traffic.setMap(S.settings.mapTraffic ? sp.map : null);
 }
-// Where the pickup is: from the request, or looked up from its address
-const geoCache = {};
+/* Where the pickup is: from the request, a saved customer, or looked up once from its address.
+   A looked-up spot is kept (on this phone, on the customer and on the request) so it's never looked up, or paid for, again. */
+const geoQuery = (L) => [L && L.address, L && L.city].filter(Boolean).join(', ').trim().toLowerCase();
+let geoCache = {};
+try { geoCache = JSON.parse(localStorage.getItem('ecd_geo') || '{}') || {}; } catch (e) { geoCache = {}; }
+function geoCached(L) {
+  if (!L) return null;
+  const c = S.lookup && S.lookup[lookupKey(L.name)];
+  if (c && c.lat != null && isFinite(+c.lat) && (c.address || '') === (L.address || '')) return { lat: +c.lat, lng: +c.lng };
+  return geoCache[geoQuery(L)] || null;
+}
+function geoRemember(L, at) {
+  const q = geoQuery(L);
+  geoCache[q] = at;
+  try { localStorage.setItem('ecd_geo', JSON.stringify(geoCache)); } catch (e) { /* ignore */ }
+  if (!db || !S.user) return;
+  const pos = { lat: +at.lat.toFixed(6), lng: +at.lng.toFixed(6) };
+  const key = lookupKey(L.name), c = S.lookup && S.lookup[key];
+  if (key && c && (c.address || '') === (L.address || '')) db.ref(`address_lookup/${key}`).update(pos).catch(() => {});
+  if (sp.jobId && S.pending[sp.jobId]) db.ref(`requests/${sp.jobId}/pickup`).update(pos).catch(() => {});
+  if (ND && L === ND.pickup) Object.assign(ND.pickup, pos); // a new dispatch saves it with the job
+}
 function spPickup() {
   const L = sp.pickup || {};
   const done = (at) => { if (sp.pickup !== L) return; sp.at = at; spPickupPin(); spRender(); };
   if (L.lat != null && L.lng != null && isFinite(+L.lat)) { done({ lat: +L.lat, lng: +L.lng }); return; }
+  const known = geoCached(L);
+  if (known) { done(known); return; }
   const q = [L.address, L.city].filter(Boolean).join(', ');
   if (!q) { spMsg('No pickup address, so no distances.'); return; }
-  if (geoCache[q]) { done(geoCache[q]); return; }
   new google.maps.Geocoder().geocode({ address: q, bounds: REGION_BOUNDS, region: 'ca' }, (res, status) => {
-    if (status === 'OK' && res[0]) { const g = res[0].geometry.location; geoCache[q] = { lat: g.lat(), lng: g.lng() }; done(geoCache[q]); }
+    if (status === 'OK' && res[0]) { const g = res[0].geometry.location; const at = { lat: g.lat(), lng: g.lng() }; geoRemember(L, at); done(at); }
     else spMsg('The pickup address couldn’t be found on the map, so no distances.');
   });
 }
 const svgUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+// Heading rounded to 15°, or null when the GPS doesn't say (RouteWatcher does the same)
+const headingOf = (h) => (h === null || h === undefined || h === '' || !isFinite(+h) ? null : (Math.round((((+h % 360) + 360) % 360) / 15) * 15) % 360);
 function vanIcon(v) {
   const w = Math.max(44, Math.min(200, v.label.length * 7.4 + 26));
   const green = v.rank === 1;
   const fill = green ? '#26a356' : v.nick ? '#ffffff' : '#f4f4f4';
   const ink = green ? '#ffffff' : v.nick ? '#111111' : '#777777';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="38"><path d="M${w / 2 - 6} 27 L${w / 2} 35 L${w / 2 + 6} 27 Z" fill="${fill}" stroke="rgba(0,0,0,.25)"/><rect x="1" y="1" width="${w - 2}" height="26" rx="13" fill="${fill}" stroke="rgba(0,0,0,.25)"/><circle cx="14" cy="14" r="5" fill="${esc(v.color)}" stroke="#fff" stroke-width="1.5"/><text x="24" y="18.5" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text></svg>`;
-  return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, 38), anchor: new google.maps.Point(w / 2, 35) };
+  // Pill with the name, and under it a dot with a small arrow pointing the way the van is heading
+  const cx = w / 2, cy = 40;
+  const arrow = v.heading == null ? '' : `<path d="M${cx} ${cy - 13} l5 7 h-10 z" fill="${esc(v.color)}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" transform="rotate(${v.heading} ${cx} ${cy})"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="54"><rect x="1" y="1" width="${w - 2}" height="24" rx="12" fill="${fill}" stroke="rgba(0,0,0,.25)"/><text x="${cx}" y="17.5" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text>${arrow}<circle cx="${cx}" cy="${cy}" r="6.5" fill="${esc(v.color)}" stroke="#fff" stroke-width="2.5"/></svg>`;
+  return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, 54), anchor: new google.maps.Point(cx, cy) };
+}
+// A van slides to its new spot over about a second instead of jumping
+function glide(m, to) {
+  const from = m.getPosition();
+  cancelAnimationFrame(m._glide);
+  const f = from && { lat: typeof from.lat === 'function' ? from.lat() : from.lat, lng: typeof from.lng === 'function' ? from.lng() : from.lng };
+  if (!f || reduceMotion() || (Math.abs(f.lat - to.lat) < 1e-7 && Math.abs(f.lng - to.lng) < 1e-7) || kmBetween(f, to) > 5) { m.setPosition(to); return; }
+  const t0 = performance.now(), ms = 1000;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / ms), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    m.setPosition({ lat: f.lat + (to.lat - f.lat) * e, lng: f.lng + (to.lng - f.lng) * e });
+    if (p < 1) m._glide = requestAnimationFrame(step);
+  };
+  m._glide = requestAnimationFrame(step);
 }
 function spMarkers(list) {
   if (!sp.map) return;
   const live = new Set();
   list.forEach((v) => {
     live.add(v.id);
-    const key = `${v.label}|${v.rank || 0}|${v.nick ? 1 : 0}|${v.color}`;
+    const key = `${v.label}|${v.rank || 0}|${v.nick ? 1 : 0}|${v.color}|${v.heading}`;
     let m = sp.markers[v.id];
     if (!m) {
       m = new google.maps.Marker({ map: sp.map, position: v.pos, optimized: false });
       m.addListener('click', () => spZoomTo(v.id));
       sp.markers[v.id] = m;
-    } else m.setPosition(v.pos);
+    } else if (popOpen) glide(m, v.pos); else m.setPosition(v.pos);
     if (m._key !== key) { m.setIcon(vanIcon(v)); m._key = key; m.setZIndex(v.rank === 1 ? 30 : v.rank === 2 ? 20 : v.nick ? 10 : 1); }
   });
   Object.keys(sp.markers).forEach((id) => { if (!live.has(id)) { sp.markers[id].setMap(null); delete sp.markers[id]; } });
+  spDots();
   // First view: the pickup and the vehicles in use
-  if (!sp.fitted && list.length && sp.got && sp.got.vans && sp.got.nicks) {
-    const b = new google.maps.LatLngBounds();
-    const used = list.filter((v) => v.nick);
-    (used.length ? used : list).forEach((v) => b.extend(v.pos));
-    if (sp.at) b.extend(sp.at);
-    if (!b.isEmpty()) {
-      sp.fitted = true;
-      sp.map.fitBounds(b, 36);
-      google.maps.event.addListenerOnce(sp.map, 'idle', () => { if (sp.map.getZoom() > 15) sp.map.setZoom(15); });
-    }
+  if (popOpen && !sp.fitted && list.length && sp.got && sp.got.vans && sp.got.nicks) { sp.fitted = true; spFitAll(list); }
+}
+function spFitAll(list) {
+  const b = new google.maps.LatLngBounds();
+  const used = list.filter((v) => v.nick);
+  (used.length ? used : list).forEach((v) => b.extend(v.pos));
+  if (sp.at) b.extend(sp.at);
+  if (b.isEmpty()) return;
+  sp.map.fitBounds(b, 36);
+  google.maps.event.addListenerOnce(sp.map, 'idle', () => { if (sp.map.getZoom() > 15) sp.map.setZoom(15); });
+}
+// The other jobs waiting in the queue, as small faded dots, to spot a van that could take two
+function spDots() {
+  const today = todayStr();
+  const live = new Set();
+  if (popOpen) {
+    Object.entries(S.pending || {}).forEach(([id, r]) => {
+      if (id === sp.jobId || !r || !r.pickup || (r.when === 'scheduled' && r.scheduled_for && r.scheduled_for > today)) return;
+      const L = r.pickup;
+      const at = L.lat != null && isFinite(+L.lat) ? { lat: +L.lat, lng: +L.lng } : geoCached(L);
+      if (!at) return;
+      live.add(id);
+      let d = sp.dots[id];
+      if (!d) {
+        d = new google.maps.Marker({ map: sp.map, clickable: false, zIndex: 5, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: '#FFD100', fillOpacity: 0.55, strokeColor: '#000', strokeOpacity: 0.45, strokeWeight: 1.5 } });
+        sp.dots[id] = d;
+      }
+      d.setPosition(at);
+      d.setTitle(`#${r.ref_no} ${L.name || ''}`);
+    });
   }
+  Object.keys(sp.dots).forEach((id) => { if (!live.has(id)) { sp.dots[id].setMap(null); delete sp.dots[id]; } });
 }
 function spPickupPin() {
   if (!sp.map) return;
@@ -2758,13 +2827,17 @@ function spPickupPin() {
   sp.pin.setMap(sp.at ? sp.map : null);
   if (sp.at) sp.pin.setPosition(sp.at);
 }
-// Tapping a vehicle (chip or map) only zooms to it; the zoom level is in Settings
+// Tapping a vehicle (chip or map) only zooms to it (zoom level in Settings), with a little bounce.
+// Tapping the same one again zooms back out to everyone.
 function spZoomTo(id) {
   const m = sp.markers[id];
   if (!sp.map || !m) return;
+  if (sp.focus === id) { sp.focus = ''; spFitAll(spList()); return; }
+  sp.focus = id;
   const pct = Math.max(30, Math.min(100, +S.settings.vanZoom || 65));
   sp.map.panTo(m.getPosition());
   sp.map.setZoom(Math.round(3 + pct / 100 * 18));
+  if (google.maps.Animation) { m.setAnimation(google.maps.Animation.BOUNCE); setTimeout(() => m.setAnimation(null), 720); }
 }
 /* ---------- Hold to send ---------- */
 const HOLD_MS = 600;
@@ -3126,6 +3199,7 @@ function renderSettings() {
       <div class="seg" role="radiogroup" aria-label="Map type">
         ${MAP_TYPES.map(([v, l]) => `<label><input type="radio" name="map-type" value="${v}"${st.mapType === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}
       </div>
+      <div class="setting"><span class="grow">Live traffic<small>Shows traffic on the map. Free.</small></span><span class="switch"><input type="checkbox" data-map-traffic${st.mapTraffic ? ' checked' : ''} aria-label="Live traffic"><span></span></span></div>
       <div class="setting range"><span class="grow">Zoom when you tap a vehicle<small>${esc(st.vanZoom)}%</small></span><input type="range" min="30" max="100" step="5" value="${esc(st.vanZoom)}" data-van-zoom aria-label="Zoom when you tap a vehicle"></div>
     </section>
     <section class="card">
@@ -3134,6 +3208,8 @@ function renderSettings() {
       <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>
     </section>`;
   $$('input[name=map-type]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mapType = x.value; saveSettings(); if (sp.map) spStyleMap(); }));
+  const tr = $('[data-map-traffic]', body);
+  if (tr) tr.addEventListener('change', () => { S.settings.mapTraffic = tr.checked; saveSettings(); if (sp.map) spStyleMap(); });
   const zr = $('[data-van-zoom]', body);
   if (zr) {
     zr.addEventListener('input', () => { zr.previousElementSibling.querySelector('small').textContent = `${zr.value}%`; });
