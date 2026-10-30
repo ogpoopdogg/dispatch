@@ -7,7 +7,6 @@
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="icon-512.png">
-<script>try{var s=JSON.parse(localStorage.getItem('ecd_settings')||'{}');document.documentElement.dataset.theme=s.theme==='dark'?'dark':'light';}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -573,13 +572,44 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .head-link:active{background:var(--yellow-soft)}
 .nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
-.nd-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t) ease}
-.nd-pop.open .nd-scrim{background:rgba(0,0,0,.45)}
-.nd-pop-card{position:relative;max-height:85%;display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--line-strong);border-radius:14px 14px 0 0;box-shadow:var(--shadow);padding:0 12px calc(12px + var(--safe-b));transform:translateY(100%);transition:transform var(--t) var(--out)}
-.nd-pop.open .nd-pop-card{transform:none}
-.nd-pop-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 6px 2px;font-size:11px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.12em}
-.nd-pop-list{overflow-y:auto;overscroll-behavior:contain}
-.nd-pop-list .pick{min-height:50px;animation:none}
+/* ---------- Send to driver panel ---------- */
+.sp{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end}
+.sp-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t-slow) ease}
+.sp.open .sp-scrim{background:rgba(0,0,0,.5)}
+.sp-card{position:relative;display:flex;flex-direction:column;height:calc(100dvh - var(--safe-t) - 10px);max-width:680px;width:100%;margin:0 auto;background:var(--surface);border:1px solid var(--yellow);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow);padding:0 10px calc(10px + var(--safe-b));transform:translateY(100%);transition:transform .26s var(--out);overflow:hidden}
+.sp.open .sp-card{transform:none}
+.sp-head{flex:none;display:flex;align-items:center;gap:8px;min-height:44px;padding:2px 0 2px 4px}
+.sp-head b{font-stretch:80%;font-size:19px;font-weight:800;white-space:nowrap}
+.sp-to{flex:1;min-width:0;font-size:12.5px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The vehicles: a soft strip of chips, centred, wrapping when there are many */
+.sp-vans{flex:none;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;padding:7px;margin-bottom:7px;border-radius:14px;background:linear-gradient(180deg,#fffdf3,#fff8dc);border:1px solid rgba(230,188,0,.35);box-shadow:inset 0 1px 0 #fff,0 2px 8px -4px rgba(150,110,0,.25)}
+.sp-vans:empty{display:none}
+.van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.van:active{transform:scale(.95)}
+.van i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.12)}
+.van small{font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.van.idle{opacity:.55;box-shadow:none;background:rgba(255,255,255,.6)}
+/* Closest vehicle in use: green pulse and glow. Second closest: the same pulse, no colour */
+.van.c1{border-color:#26a356;background:linear-gradient(160deg,#eafff2,#d3f8e2);color:#0b5f2c;animation:vanPulse 1.6s ease-in-out infinite}
+.van.c1 small{color:#11803c}
+.van.c1::after{content:'Closest';position:absolute;top:-7px;right:6px;padding:0 5px;border-radius:6px;background:#26a356;color:#fff;font-size:9px;font-weight:800;line-height:13px;letter-spacing:.04em;text-transform:uppercase}
+.van.c2{border-color:rgba(0,0,0,.28);animation:vanPulse2 1.6s ease-in-out .2s infinite}
+@keyframes vanPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(38,163,86,.55),0 2px 10px -2px rgba(38,163,86,.5)}50%{transform:scale(1.06);box-shadow:0 0 0 7px rgba(38,163,86,0),0 4px 18px 0 rgba(38,163,86,.6)}}
+@keyframes vanPulse2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,0,0,.18)}50%{transform:scale(1.04);box-shadow:0 0 0 6px rgba(0,0,0,0)}}
+.sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
+.sp-canvas{position:absolute;inset:0}
+.sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
+.sp-drivers{flex:none}
+.sp-drivers .pick{min-height:48px;animation:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.sp-drivers .pick-note{margin-top:6px;text-align:center}
+/* Hold to send: a green ring runs clockwise round the button */
+.hold-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.hold-ring path{fill:none;stroke:#26a356;stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 3px rgba(63,207,120,.8))}
+.pick.unwind .hold-ring path{transition:stroke-dashoffset .25s var(--ease)}
+.pick.holding{border-color:rgba(38,163,86,.5);background:var(--ok-bg);transform:scale(.985)}
+.pick.held{border-color:#26a356;background:rgba(63,207,120,.22)}
+.setting.range{flex-wrap:wrap}
+.setting.range input[type=range]{width:100%;accent-color:var(--yellow-lo)}
 .nd-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
 .nd-actions .full{grid-column:1/-1}
@@ -734,7 +764,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheet-title"></h2><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
-    <div class="nd-pop" id="nd-pop" hidden><div class="nd-scrim" data-act="nd-pop-close"></div><div class="nd-pop-card" role="dialog" aria-label="Send to which driver"><div class="nd-pop-head"><b>Send to</b><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div><div class="nd-pop-list" id="nd-pop-list"></div></div></div>
+  </div>
+</div>
+<!-- Send to driver: vehicles and their distance to the pickup, the live map, then the drivers (hold to send) -->
+<div class="sp" id="nd-pop" hidden>
+  <div class="sp-scrim" data-act="nd-pop-close"></div>
+  <div class="sp-card" role="dialog" aria-modal="true" aria-labelledby="sp-title">
+    <div class="sp-head"><b id="sp-title">Send to</b><span class="sp-to" id="sp-to"></span><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sp-vans" id="sp-vans" aria-label="Vehicles, closest to the pickup first"></div>
+    <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p></div>
+    <div class="sp-drivers" id="nd-pop-list"></div>
   </div>
 </div>
 <!-- Map picker for a new dispatch's address (same idea as Route Planner's) -->
@@ -824,11 +863,12 @@ const S = {
   settings: loadSettings()
 };
 function loadSettings() {
-  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, theme: 'light' };
+  const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mapType: 'roadmap', vanZoom: 65, mapTraffic: false };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
   st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
   delete st.mode; // one Dispatch button now; the old main-button choice was removed
+  delete st.theme; // light only
   Object.assign(st, { repeat: true, vibrate: true, wake: true }); // always on; no longer in Settings
   return st;
 }
@@ -1530,6 +1570,10 @@ function startListening() {
 
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
+  // Vehicles for the Send to driver map, kept up to date so the panel opens instantly
+  listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); }, () => {});
+  listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); }, () => {});
+  setTimeout(() => { loadMaps(); spMapReady(); }, 1200);
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
     () => { S.remindersError = true; refreshSettings(); });
@@ -1540,6 +1584,7 @@ function startListening() {
     try { localStorage.setItem('ecd_contacts', JSON.stringify(S.contacts)); } catch (e) { /* ignore */ }
     renderAll();
     refreshSettings();
+    refreshDriversEditor();
     ndUpdate();
   }, (err) => { S.contactsError = friendlyError(err); refreshSettings(); });
 }
@@ -1955,8 +2000,10 @@ function readyToSend(id) {
 function pickDriver(id) {
   const r = S.pending[id];
   if (!r) return;
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-act="send-driver" data-id="${esc(id)}" data-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
-  openSheet(`Send #${r.ref_no} to`, `<div class="pick-grid">${rows}</div><p class="pick-note">Tap a driver: the text sends straight from this phone. Add or change drivers in Settings.</p>`);
+  // From the details sheet: the panel takes the sheet's place (and its Back step)
+  const swap = sheetOpen && history.state && history.state.sheet;
+  if (sheetOpen) _hideSheet();
+  openSendPanel(`Send #${r.ref_no} to`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id);
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
 const sendingIds = new Set(); // jobs whose text is on its way
@@ -2523,25 +2570,327 @@ function ndSendGroup() {
   launch(`sms:?body=${encodeURIComponent(text)}`);
   shared();
 }
-/* Send to driver: the list of drivers slides up over the form */
+/* ---------- Send to driver panel ----------
+   Vehicles (closest to the pickup first) over a live map, then the drivers. The map only shows
+   where everyone is: a text goes out only by holding a driver's button until its ring fills. */
 let popOpen = false;
 function ndPickDriver() {
-  if (!ndValid()) return;
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-act="nd-send-driver" data-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
-  $('#nd-pop-list').innerHTML = rows ? `<div class="pick-grid">${rows}</div>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
+  const r = ndValid();
+  if (!r) return;
+  openSendPanel('Send to', ND.pickup, (did) => ndSendDriver(did));
+}
+const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
+const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
+const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
+const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
+function openSendPanel(title, pickup, onSend, swap, jobId) {
+  const known = pickup && pickup.lat != null && pickup.lng != null && isFinite(+pickup.lat);
+  Object.assign(sp, { onSend, pickup, jobId: jobId || null, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : geoCached(pickup), fitted: false, order: '', focus: '' });
+  if (sp.pin) sp.pin.setMap(null);
+  spMsg('');
+  $('#sp-title').textContent = title;
+  $('#sp-to').textContent = pickup && pickup.name ? `Pickup: ${pickup.name}` : '';
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-hold-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
+  $('#nd-pop-list').innerHTML = rows ? `<div class="pick-grid">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
+  $('#sp-vans').innerHTML = '';
   const el = $('#nd-pop');
   el.hidden = false;
   popOpen = true;
-  history.pushState({ pop: true }, '');
+  if (swap) history.replaceState({ pop: true }, ''); else history.pushState({ pop: true }, '');
   requestAnimationFrame(() => el.classList.add('open'));
+  spListen();
+  spRender();
+  loadMaps();
+  spMapReady();
+  if (sp.at) spPickupPin();
 }
 function _hidePop() {
   const el = $('#nd-pop');
   if (!el || !popOpen) return;
   popOpen = false;
+  holdCancel();
+  spStop();
   el.classList.remove('open');
-  setTimeout(() => { if (!popOpen) el.hidden = true; }, 180);
+  setTimeout(() => { if (!popOpen) el.hidden = true; }, 260);
 }
+// The vehicles are listened to from sign-in (startListening); while the panel is open, a fresh GPS poll every 15 s
+function spListen() {
+  spStop();
+  if (!db || !S.user) return;
+  const poll = async () => {
+    if (!popOpen || document.hidden || !auth || !auth.currentUser) return;
+    try { const t = await auth.currentUser.getIdToken(); await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } }); } catch (e) { /* next tick tries again */ }
+  };
+  poll();
+  sp.poll = setInterval(poll, 15000);
+}
+function spStop() { clearInterval(sp.poll); sp.poll = 0; }
+function spMsg(text) { const m = $('#sp-msg'); if (m) { m.textContent = text || ''; m.hidden = !text; } }
+const spNick = (id) => { const n = sp.nicks && sp.nicks[id]; return typeof n === 'string' && n.trim() ? n.trim() : ''; };
+const kmBetween = (a, b) => {
+  const R = 6371, r = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+const fmtKm = (km) => (km < 1 ? `${Math.round(km * 1000 / 50) * 50 || 50} m` : km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`);
+// Rough drive time from the straight-line distance: roads run about a third longer; town ~40 km/h, highway ~85 km/h
+const fmtDrive = (km) => { const road = km * 1.3; const min = road < 8 ? road / 40 * 60 : (8 / 40 + (road - 8) / 85) * 60; return `~${Math.max(1, Math.round(min))} min`; };
+// Every vehicle with a position. A nickname means a driver picked it in Timeclock today: only those can be "closest".
+function spList() {
+  const at = sp.at;
+  const list = Object.entries(sp.vans || {}).map(([id, v]) => {
+    const L = v && v.lastLocation;
+    if (!L || !isFinite(+L.lat) || !isFinite(+L.lng)) return null;
+    const pos = { lat: +L.lat, lng: +L.lng };
+    const nick = spNick(id);
+    return { id, pos, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', heading: headingOf(v.heading), km: at ? kmBetween(at, pos) : null };
+  }).filter(Boolean);
+  const byKm = (a, b) => (a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km) || a.label.localeCompare(b.label);
+  const used = list.filter((v) => v.nick).sort(byKm);
+  const idle = list.filter((v) => !v.nick).sort(byKm);
+  if (at) { if (used[0]) used[0].rank = 1; if (used[1]) used[1].rank = 2; }
+  return used.concat(idle);
+}
+function spRender() {
+  if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
+  const list = spList();
+  const box = $('#sp-vans');
+  // Chips are kept and updated in place, so their pulse doesn't restart on every GPS update
+  const have = {};
+  $$('.van', box).forEach((b) => { have[b.dataset.van] = b; });
+  const order = list.map((v) => v.id).join('|');
+  list.forEach((v) => {
+    let b = have[v.id];
+    if (!b) { b = document.createElement('button'); b.type = 'button'; b.dataset.act = 'sp-van'; b.dataset.van = v.id; b.innerHTML = '<i></i><b></b><small></small>'; }
+    b.className = `van${v.nick ? '' : ' idle'}${v.rank ? ` c${v.rank}` : ''}`;
+    b.style.setProperty('--c', v.color);
+    b.children[1].textContent = v.label;
+    b.children[2].textContent = v.km == null ? '' : `${fmtKm(v.km)} · ${fmtDrive(v.km)}`;
+    b.setAttribute('aria-label', `${v.label}${v.km == null ? '' : `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup`}${v.rank === 1 ? ', closest' : ''}`);
+    delete have[v.id];
+    if (order !== sp.order) box.appendChild(b);
+  });
+  Object.values(have).forEach((b) => b.remove());
+  sp.order = order;
+  spMarkers(list);
+}
+/* ---------- The map ---------- */
+const MAP_STYLE = [
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'landscape', stylers: [{ color: '#f2f0ea' }] },
+  { featureType: 'water', stylers: [{ color: '#bcd9ec' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffe48a' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#ffffff' }] }
+];
+let spMapWait = 0;
+function spMapReady() {
+  clearTimeout(spMapWait);
+  if (maps === 'failed') { if (popOpen) spMsg('The map isn’t available in this app yet (Google Maps key). Distances still show above.'); return; }
+  if (!mapsUsable()) { if (maps !== 'idle') spMapWait = setTimeout(spMapReady, 150); return; }
+  if (!sp.map) {
+    sp.map = new google.maps.Map($('#sp-canvas'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, gestureHandling: 'greedy', clickableIcons: false, keyboardShortcuts: false });
+    spStyleMap();
+  }
+  if (!popOpen) return;
+  spMsg('');
+  spStyleMap();
+  if (sp.at) { sp.map.setCenter(sp.at); sp.map.setZoom(13); } // until the vehicles arrive
+  spPickup();
+  spRender();
+}
+function spStyleMap() {
+  const type = MAP_TYPES.some(([v]) => v === S.settings.mapType) ? S.settings.mapType : 'roadmap';
+  sp.map.setOptions({ mapTypeId: type, styles: type === 'roadmap' ? MAP_STYLE : null });
+  // Live traffic, if it's on in Settings
+  if (S.settings.mapTraffic && !sp.traffic) sp.traffic = new google.maps.TrafficLayer();
+  if (sp.traffic) sp.traffic.setMap(S.settings.mapTraffic ? sp.map : null);
+}
+/* Where the pickup is: from the request, a saved customer, or looked up once from its address.
+   A looked-up spot is kept (on this phone, on the customer and on the request) so it's never looked up, or paid for, again. */
+const geoQuery = (L) => [L && L.address, L && L.city].filter(Boolean).join(', ').trim().toLowerCase();
+let geoCache = {};
+try { geoCache = JSON.parse(localStorage.getItem('ecd_geo') || '{}') || {}; } catch (e) { geoCache = {}; }
+function geoCached(L) {
+  if (!L) return null;
+  const c = S.lookup && S.lookup[lookupKey(L.name)];
+  if (c && c.lat != null && isFinite(+c.lat) && (c.address || '') === (L.address || '')) return { lat: +c.lat, lng: +c.lng };
+  return geoCache[geoQuery(L)] || null;
+}
+function geoRemember(L, at) {
+  const q = geoQuery(L);
+  geoCache[q] = at;
+  try { localStorage.setItem('ecd_geo', JSON.stringify(geoCache)); } catch (e) { /* ignore */ }
+  if (!db || !S.user) return;
+  const pos = { lat: +at.lat.toFixed(6), lng: +at.lng.toFixed(6) };
+  const key = lookupKey(L.name), c = S.lookup && S.lookup[key];
+  if (key && c && (c.address || '') === (L.address || '')) db.ref(`address_lookup/${key}`).update(pos).catch(() => {});
+  if (sp.jobId && S.pending[sp.jobId]) db.ref(`requests/${sp.jobId}/pickup`).update(pos).catch(() => {});
+  if (ND && L === ND.pickup) Object.assign(ND.pickup, pos); // a new dispatch saves it with the job
+}
+function spPickup() {
+  const L = sp.pickup || {};
+  const done = (at) => { if (sp.pickup !== L) return; sp.at = at; spPickupPin(); spRender(); };
+  if (L.lat != null && L.lng != null && isFinite(+L.lat)) { done({ lat: +L.lat, lng: +L.lng }); return; }
+  const known = geoCached(L);
+  if (known) { done(known); return; }
+  const q = [L.address, L.city].filter(Boolean).join(', ');
+  if (!q) { spMsg('No pickup address, so no distances.'); return; }
+  new google.maps.Geocoder().geocode({ address: q, bounds: REGION_BOUNDS, region: 'ca' }, (res, status) => {
+    if (status === 'OK' && res[0]) { const g = res[0].geometry.location; const at = { lat: g.lat(), lng: g.lng() }; geoRemember(L, at); done(at); }
+    else spMsg('The pickup address couldn’t be found on the map, so no distances.');
+  });
+}
+const svgUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+// Heading rounded to 15°, or null when the GPS doesn't say (RouteWatcher does the same)
+const headingOf = (h) => (h === null || h === undefined || h === '' || !isFinite(+h) ? null : (Math.round((((+h % 360) + 360) % 360) / 15) * 15) % 360);
+function vanIcon(v) {
+  const w = Math.max(44, Math.min(200, v.label.length * 7.4 + 26));
+  const green = v.rank === 1;
+  const fill = green ? '#26a356' : v.nick ? '#ffffff' : '#f4f4f4';
+  const ink = green ? '#ffffff' : v.nick ? '#111111' : '#777777';
+  // Pill with the name, and under it a dot with a small arrow pointing the way the van is heading
+  const cx = w / 2, cy = 40;
+  const arrow = v.heading == null ? '' : `<path d="M${cx} ${cy - 13} l5 7 h-10 z" fill="${esc(v.color)}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" transform="rotate(${v.heading} ${cx} ${cy})"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="54"><rect x="1" y="1" width="${w - 2}" height="24" rx="12" fill="${fill}" stroke="rgba(0,0,0,.25)"/><text x="${cx}" y="17.5" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text>${arrow}<circle cx="${cx}" cy="${cy}" r="6.5" fill="${esc(v.color)}" stroke="#fff" stroke-width="2.5"/></svg>`;
+  return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, 54), anchor: new google.maps.Point(cx, cy) };
+}
+// A van slides to its new spot over about a second instead of jumping
+function glide(m, to) {
+  const from = m.getPosition();
+  cancelAnimationFrame(m._glide);
+  const f = from && { lat: typeof from.lat === 'function' ? from.lat() : from.lat, lng: typeof from.lng === 'function' ? from.lng() : from.lng };
+  if (!f || reduceMotion() || (Math.abs(f.lat - to.lat) < 1e-7 && Math.abs(f.lng - to.lng) < 1e-7) || kmBetween(f, to) > 5) { m.setPosition(to); return; }
+  const t0 = performance.now(), ms = 1000;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / ms), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    m.setPosition({ lat: f.lat + (to.lat - f.lat) * e, lng: f.lng + (to.lng - f.lng) * e });
+    if (p < 1) m._glide = requestAnimationFrame(step);
+  };
+  m._glide = requestAnimationFrame(step);
+}
+function spMarkers(list) {
+  if (!sp.map) return;
+  const live = new Set();
+  list.forEach((v) => {
+    live.add(v.id);
+    const key = `${v.label}|${v.rank || 0}|${v.nick ? 1 : 0}|${v.color}|${v.heading}`;
+    let m = sp.markers[v.id];
+    if (!m) {
+      m = new google.maps.Marker({ map: sp.map, position: v.pos, optimized: false });
+      m.addListener('click', () => spZoomTo(v.id));
+      sp.markers[v.id] = m;
+    } else if (popOpen) glide(m, v.pos); else m.setPosition(v.pos);
+    if (m._key !== key) { m.setIcon(vanIcon(v)); m._key = key; m.setZIndex(v.rank === 1 ? 30 : v.rank === 2 ? 20 : v.nick ? 10 : 1); }
+  });
+  Object.keys(sp.markers).forEach((id) => { if (!live.has(id)) { sp.markers[id].setMap(null); delete sp.markers[id]; } });
+  spDots();
+  // First view: the pickup and the vehicles in use
+  if (popOpen && !sp.fitted && list.length && sp.got && sp.got.vans && sp.got.nicks) { sp.fitted = true; spFitAll(list); }
+}
+function spFitAll(list) {
+  const b = new google.maps.LatLngBounds();
+  const used = list.filter((v) => v.nick);
+  (used.length ? used : list).forEach((v) => b.extend(v.pos));
+  if (sp.at) b.extend(sp.at);
+  if (b.isEmpty()) return;
+  sp.map.fitBounds(b, 36);
+  google.maps.event.addListenerOnce(sp.map, 'idle', () => { if (sp.map.getZoom() > 15) sp.map.setZoom(15); });
+}
+// The other jobs waiting in the queue, as small faded dots, to spot a van that could take two
+function spDots() {
+  const today = todayStr();
+  const live = new Set();
+  if (popOpen) {
+    Object.entries(S.pending || {}).forEach(([id, r]) => {
+      if (id === sp.jobId || !r || !r.pickup || (r.when === 'scheduled' && r.scheduled_for && r.scheduled_for > today)) return;
+      const L = r.pickup;
+      const at = L.lat != null && isFinite(+L.lat) ? { lat: +L.lat, lng: +L.lng } : geoCached(L);
+      if (!at) return;
+      live.add(id);
+      let d = sp.dots[id];
+      if (!d) {
+        d = new google.maps.Marker({ map: sp.map, clickable: false, zIndex: 5, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: '#FFD100', fillOpacity: 0.55, strokeColor: '#000', strokeOpacity: 0.45, strokeWeight: 1.5 } });
+        sp.dots[id] = d;
+      }
+      d.setPosition(at);
+      d.setTitle(`#${r.ref_no} ${L.name || ''}`);
+    });
+  }
+  Object.keys(sp.dots).forEach((id) => { if (!live.has(id)) { sp.dots[id].setMap(null); delete sp.dots[id]; } });
+}
+function spPickupPin() {
+  if (!sp.map) return;
+  if (!sp.pin) sp.pin = new google.maps.Marker({ map: sp.map, zIndex: 40, icon: { url: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40"><path d="M15 39C15 39 2 23 2 14.5A13 13 0 0 1 28 14.5C28 23 15 39 15 39Z" fill="#FFD100" stroke="#000" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#000"/></svg>'), scaledSize: new google.maps.Size(30, 40), anchor: new google.maps.Point(15, 39) } });
+  sp.pin.setMap(sp.at ? sp.map : null);
+  if (sp.at) sp.pin.setPosition(sp.at);
+}
+// Tapping a vehicle (chip or map) only zooms to it (zoom level in Settings), with a little bounce.
+// Tapping the same one again zooms back out to everyone.
+function spZoomTo(id) {
+  const m = sp.markers[id];
+  if (!sp.map || !m) return;
+  if (sp.focus === id) { sp.focus = ''; spFitAll(spList()); return; }
+  sp.focus = id;
+  const pct = Math.max(30, Math.min(100, +S.settings.vanZoom || 65));
+  sp.map.panTo(m.getPosition());
+  sp.map.setZoom(Math.round(3 + pct / 100 * 18));
+  if (google.maps.Animation) { m.setAnimation(google.maps.Animation.BOUNCE); setTimeout(() => m.setAnimation(null), 720); }
+}
+/* ---------- Hold to send ---------- */
+const HOLD_MS = 600;
+const hold = { el: null, raf: 0, t0: 0, path: null };
+function ringPath(w, h, r) {
+  const s = 1.5, x0 = s, y0 = s, x1 = w - s, y1 = h - s;
+  r = Math.max(0, Math.min(r - s, (h - 2 * s) / 2));
+  return `M${w / 2} ${y0}H${x1 - r}A${r} ${r} 0 0 1 ${x1} ${y0 + r}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`;
+}
+function holdStart(el) {
+  holdCancel();
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let svg = $('.hold-ring', el);
+  if (!svg) { el.insertAdjacentHTML('beforeend', '<svg class="hold-ring" aria-hidden="true"><path pathLength="1"/></svg>'); svg = $('.hold-ring', el); }
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const path = $('path', svg);
+  path.setAttribute('d', ringPath(w, h, parseFloat(getComputedStyle(el).borderTopLeftRadius) || 10));
+  el.classList.remove('unwind', 'held');
+  el.classList.add('holding');
+  Object.assign(hold, { el, path, t0: performance.now() });
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) { /* ignore */ }
+  const step = (t) => {
+    const p = Math.min(1, (t - hold.t0) / HOLD_MS);
+    path.style.strokeDashoffset = String(1 - p);
+    if (p < 1) { hold.raf = requestAnimationFrame(step); return; }
+    hold.el = null;
+    el.classList.remove('holding');
+    el.classList.add('held');
+    if (navigator.vibrate) try { navigator.vibrate(18); } catch (e) { /* ignore */ }
+    const did = el.dataset.holdDriver, go = sp.onSend;
+    setTimeout(() => { el.classList.remove('held'); path.style.strokeDashoffset = '1'; if (go && popOpen) go(did); }, 90);
+  };
+  hold.raf = requestAnimationFrame(step);
+}
+function holdCancel() {
+  cancelAnimationFrame(hold.raf);
+  const el = hold.el;
+  hold.el = null;
+  if (!el) return;
+  el.classList.remove('holding');
+  el.classList.add('unwind');
+  if (hold.path) hold.path.style.strokeDashoffset = '1';
+  setTimeout(() => el.classList.remove('unwind'), 260);
+}
+$('#nd-pop-list').addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('[data-hold-driver]');
+  if (!b || (e.button != null && e.button > 0)) return;
+  e.preventDefault();
+  try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  holdStart(b);
+});
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
+$('#nd-pop-list').addEventListener('contextmenu', (e) => e.preventDefault());
 function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
 // Same as the queue: sent and filed straight away, back in the queue if the text fails
 async function ndSendDriver(did) {
@@ -2760,16 +3109,21 @@ document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'sh
    ========================================================= */
 function contactsSettings() {
   const err = S.contactsError ? `<p class="small" style="color:var(--danger);margin-bottom:10px">Couldn\u2019t load drivers: ${esc(S.contactsError)} The database rule for dispatch_contacts may be missing (APP-SETUP.md, step 3).</p>` : '';
-  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(d.phone)}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
   const n = Object.keys(S.contacts.drivers || {}).length;
   return `<section class="card">
       <h2>${icon('phone')}Drivers${n ? `<em>${n}</em>` : ''}</h2>
       ${err}
       <p class="card-note">\u201cSend to driver\u201d texts the driver you pick, straight from this phone. Shared with every dispatcher.</p>
-      ${drivers || '<p class="card-note">No drivers yet.</p>'}
-      <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary" type="submit">Add</button></form>
+      <button class="btn btn-secondary block" type="button" data-act="edit-drivers">${icon('phone', 'sm')}Edit drivers</button>
     </section>`;
 }
+// The driver list, in its own sheet so Settings stays short
+function driversEditor() {
+  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(d.phone)}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
+  return `<div id="drivers-edit">${drivers || '<p class="card-note">No drivers yet.</p>'}
+    <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary" type="submit">Add</button></form></div>`;
+}
+const refreshDriversEditor = () => { const el = $('#drivers-edit'); if (el) el.outerHTML = driversEditor(); };
 async function saveContact(fn) {
   if (!db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return false; }
   try { await fn(db.ref('dispatch_contacts')); return true; }
@@ -2840,18 +3194,27 @@ function renderSettings() {
       <button class="btn btn-secondary block" type="button" data-act="test-push">${icon('send', 'sm')}Send a test alert to this phone</button>
     </section>` : ''}
     <section class="card">
-      <h2>${icon('gear')}Display</h2>
-      <div class="seg" role="radiogroup" aria-label="Theme">
-        <label><input type="radio" name="theme" value="dark"${st.theme === 'dark' ? ' checked' : ''}><span>Dark</span></label>
-        <label><input type="radio" name="theme" value="light"${st.theme === 'light' ? ' checked' : ''}><span>Light</span></label>
+      <h2>${icon('pin')}Driver map</h2>
+      <p class="card-note">The map above the drivers when you Send to driver.</p>
+      <div class="seg" role="radiogroup" aria-label="Map type">
+        ${MAP_TYPES.map(([v, l]) => `<label><input type="radio" name="map-type" value="${v}"${st.mapType === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}
       </div>
+      <div class="setting"><span class="grow">Live traffic<small>Shows traffic on the map. Free.</small></span><span class="switch"><input type="checkbox" data-map-traffic${st.mapTraffic ? ' checked' : ''} aria-label="Live traffic"><span></span></span></div>
+      <div class="setting range"><span class="grow">Zoom when you tap a vehicle<small>${esc(st.vanZoom)}%</small></span><input type="range" min="30" max="100" step="5" value="${esc(st.vanZoom)}" data-van-zoom aria-label="Zoom when you tap a vehicle"></div>
     </section>
     <section class="card">
       <h2>${icon('check')}Account</h2>
       <div class="kv"><span>Signed in as</span><span>${esc(S.user && S.user.email)}</span></div>
       <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>
     </section>`;
-  $$('input[name=theme]', body).forEach((x) => x.addEventListener('change', () => { S.settings.theme = x.value; saveSettings(); applyTheme(); }));
+  $$('input[name=map-type]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mapType = x.value; saveSettings(); if (sp.map) spStyleMap(); }));
+  const tr = $('[data-map-traffic]', body);
+  if (tr) tr.addEventListener('change', () => { S.settings.mapTraffic = tr.checked; saveSettings(); if (sp.map) spStyleMap(); });
+  const zr = $('[data-van-zoom]', body);
+  if (zr) {
+    zr.addEventListener('input', () => { zr.previousElementSibling.querySelector('small').textContent = `${zr.value}%`; });
+    zr.addEventListener('change', () => { S.settings.vanZoom = +zr.value; saveSettings(); });
+  }
   $$('[data-rem]', body).forEach((x) => x.addEventListener('change', () => saveReminders({ [x.dataset.rem]: x.type === 'checkbox' ? x.checked : x.value })));
   $$('[data-form-field]', body).forEach((x) => x.addEventListener('change', () => { S.settings.form[x.dataset.formField] = x.checked; saveSettings(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
@@ -2869,9 +3232,7 @@ function renderSettings() {
   }));
 }
 const refreshSettings = () => { if (S.tab === 'settings' && !$('#view-app').hidden) renderSettings(); };
-function applyTheme() {
-  document.documentElement.dataset.theme = S.settings.theme === 'light' ? 'light' : 'dark';
-}
+function applyTheme() { document.documentElement.dataset.theme = 'light'; } // light only
 function testAlert() {
   unlockAudio();
   setTimeout(() => {
@@ -2917,7 +3278,6 @@ document.addEventListener('click', async (e) => {
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
     case 'pick-driver': pickDriver(id); break;
-    case 'send-driver': if (sheetOpen) _hideSheet(); sendToDriver(id, el.dataset.driver); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
@@ -2953,7 +3313,6 @@ document.addEventListener('click', async (e) => {
     case 'nd-done': break; // handled on touch (pointerdown)
     case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
-    case 'nd-send-driver': ndSendDriver(el.dataset.driver); break;
     case 'nd-group': ndSendGroup(); break;
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
@@ -2961,9 +3320,12 @@ document.addEventListener('click', async (e) => {
     case 'nd-reset': ndReset(); break;
     case 'del-driver': {
       const d = S.contacts.drivers[el.dataset.driver];
-      if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());
+      if (d && await confirmSheet(`Remove ${d.name}?`, 'They\u2019ll be removed from the driver list on every dispatcher phone.', 'Remove', true)) await saveContact((ref) => ref.child(`drivers/${el.dataset.driver}`).remove());
+      if (d) openSheet('Drivers', driversEditor());
       break;
     }
+    case 'edit-drivers': openSheet('Drivers', driversEditor()); break;
+    case 'sp-van': spZoomTo(el.dataset.van); break;
     default: break;
   }
 });
