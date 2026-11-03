@@ -9,6 +9,7 @@
 
 const { onValueWritten } = require('firebase-functions/v2/database');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onRequest } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
@@ -29,7 +30,7 @@ const DEAD_TOKEN_CODES = new Set([
 ]);
 
 const { describeChange } = require('./alerts');
-const { reminderFor, TIME_ZONE } = require('./reminders');
+const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -114,11 +115,23 @@ exports.sendTestPush = onValueWritten('/push_tests/{uid}', async (event) => {
 // "Jobs waiting in queue: 25 min" while anything has waited 10 minutes or more.
 exports.remindQueue = onSchedule({ schedule: 'every 10 minutes', timeZone: TIME_ZONE }, async () => {
   const db = admin.database();
-  const [settingsSnap, pendingSnap] = await Promise.all([
-    db.ref('dispatch_settings/reminders').once('value'),
-    db.ref('requests').orderByChild('status').equalTo('new').once('value')
-  ]);
-  const msg = reminderFor(pendingSnap.val(), settingsSnap.val());
+  // Outside business hours, stop before reading the queue (this runs around the clock)
+  const settings = (await db.ref('dispatch_settings/reminders').once('value')).val();
+  if (!inHours(settings, Date.now())) return;
+  const pendingSnap = await db.ref('requests').orderByChild('status').equalTo('new').once('value');
+  const msg = reminderFor(pendingSnap.val(), settings);
   if (!msg) return;
   await send(await staffTokens(), { ...msg, tag: 'queue-reminder', data: { kind: 'reminder' } });
+});
+
+// Settings > Alerts in the app: how many staff phones get push alerts. A phone can only read its
+// own push token, so this counts them here. Staff only (checked from the sign-in token).
+exports.alertCheck = onRequest({ cors: true }, async (req, res) => {
+  const m = /^Bearer (.+)$/.exec(req.get('Authorization') || '');
+  if (!m) { res.status(401).json({ error: 'Sign in first' }); return; }
+  let uid;
+  try { uid = (await admin.auth().verifyIdToken(m[1])).uid; } catch (e) { res.status(401).json({ error: 'Sign in again' }); return; }
+  if ((await admin.database().ref(`staff/${uid}`).once('value')).val() !== true) { res.status(403).json({ error: 'Staff only' }); return; }
+  const targets = await staffTokens();
+  res.json({ phones: targets.length, people: new Set(targets.map((t) => t.path.split('/')[1])).size });
 });
