@@ -143,7 +143,7 @@ p{margin:0}
 .topbar-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:8px}
 .topbar-in>div:not(.spacer){min-width:0}
 .topbar .wordmark{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar .sub{font-size:11.5px;font-weight:600;color:var(--ink-2);line-height:1.2;margin-top:2px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .sub{font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.2;margin-top:2px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .spacer{flex:1}
 .topbar .icon-btn{width:var(--ctl-sm);height:var(--ctl-sm);color:var(--ink)}
 .live{flex:none;display:inline-flex;align-items:center;gap:6px;height:26px;font-size:12px;font-weight:750;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:99px;padding:0 10px;white-space:nowrap;transition:background-color var(--t-slow),color var(--t-slow)}
@@ -179,7 +179,7 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 .page-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 8px;min-height:28px;flex-wrap:wrap}
 .page-head h1{font-size:24px;letter-spacing:-.02em}
 .page-head p{font-size:12.5px;color:var(--ink-2);min-width:0}
-.group-head{position:sticky;top:var(--head-h);z-index:5;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.12em;margin:8px -12px 0;padding:6px 14px;background:var(--bg)}
+.group-head{position:sticky;top:var(--head-h);z-index:5;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.12em;margin:8px -12px 0;padding:6px 14px;background:var(--bg)}
 .group-head::after{content:'';flex:1;height:1px;background:var(--line);order:1}
 .group-head span:first-child{color:var(--ink)}
 .group-head span:last-child{order:2;font-variant-numeric:tabular-nums}
@@ -202,7 +202,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Bottom navigation ---------- */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--glass);-webkit-backdrop-filter:saturate(170%) blur(16px);backdrop-filter:saturate(170%) blur(16px);border-top:1px solid var(--glass-line);padding-bottom:var(--safe-b)}
 .tabbar-in{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.15fr);height:var(--nav-h);padding:0 4px}
-.tab{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--ink-3);font-size:11px;font-weight:700;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color var(--t-fast) ease}
+.tab{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--ink-3);font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color var(--t-fast) ease}
 .tab .ti{display:grid;place-items:center;width:48px;height:28px;border-radius:99px;transition:background-color var(--t) var(--ease),color var(--t-fast) ease,transform var(--t-slow) var(--spring)}
 .tab .i{width:19px;height:19px}
 .tab:hover .ti{background:var(--surface-3)}
@@ -263,6 +263,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .job-row .btn.job-move{white-space:normal;line-height:1.1;padding:0 8px;color:var(--ink)}
 .job-meta{display:flex;align-items:center;gap:4px;margin:4px 0 6px;min-width:0}
 .job-meta .chips{flex:1;min-width:0}
+.job-changed{margin:-2px 0 6px;padding:5px 8px;border-radius:var(--r-sm);background:var(--warn-bg);border-left:3px solid var(--yellow);font-size:13px;line-height:1.35;color:var(--ink)}
+.job-changed b{font-weight:800}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .job-age::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
 .job.unseen .job-age::before{background:var(--yellow);animation:blink 1s steps(2,jump-none) infinite}
@@ -281,7 +283,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @keyframes pickPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 6px rgba(255,209,0,.35);transform:scale(1)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 12px rgba(255,209,0,.75);transform:scale(1.15)}}
 .stop span{flex:1 1 0;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
+.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
 .chip .i{width:11px;height:11px;stroke-width:2.8}
 .chip.new{position:relative;overflow:hidden;background:var(--yellow);border-color:var(--yellow);color:#000;letter-spacing:.08em}
 .chip.new::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);transform:translateX(-100%);animation:shine 2.4s ease-in-out infinite}
@@ -291,13 +293,13 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .chip.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .chip.gone{background:var(--muted-bg);border-color:transparent;color:var(--ink-2)}
 .text-preview{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:7px 10px;font-size:14px;line-height:1.4;margin-bottom:10px;overflow-wrap:anywhere}
-.text-preview span{display:block;font-size:10.5px;font-weight:800;color:var(--ink-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.1em}
+.text-preview span{display:block;font-size:11.5px;font-weight:800;color:var(--ink-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.1em}
 .text-edit{display:block;margin-bottom:8px}
 .text-edit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px;margin-bottom:3px}
-.text-edit-head span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em}
+.text-edit-head span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em}
 .text-edit-head span::before{content:'';width:11px;height:11px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
 .text-edit.edited .text-edit-head span{color:var(--accent-ink)}
-.text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:11.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
+.text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
 .text-edit textarea{display:block;width:100%;min-height:44px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:14px;line-height:1.4;color:var(--ink);outline:none;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -332,6 +334,13 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 
 /* ---------- Done list ---------- */
 .done-tools{display:grid;gap:6px;margin-bottom:6px}
+.queue-tools{display:grid;gap:6px;margin-bottom:8px}
+.pw-row{position:relative}
+.pw-row input{padding-right:48px}
+.pw-row .icon-btn{position:absolute;right:2px;top:50%;transform:translateY(-50%)}
+.reach{font-size:13px;line-height:1.4;color:var(--ink-2);margin:4px 0 10px;padding:7px 9px;border-radius:var(--r-sm);background:var(--surface-2)}
+.reach.ok{color:var(--ok);background:var(--ok-bg)}
+.reach.bad{color:var(--danger);background:var(--danger-bg);font-weight:700}
 .searchbox{position:relative}
 .searchbox .i{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
 .searchbox:focus-within .i{color:var(--ink)}
@@ -419,7 +428,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .dl{display:grid;grid-template-columns:84px 1fr;gap:0;margin:0;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--surface);font-size:14px}
 .dl dt,.dl dd{padding:6px 10px;border-top:1px solid var(--line)}
 .dl dt:first-of-type,.dl dt:first-of-type+dd{border-top:0}
-.dl dt{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--surface-2);padding-top:9px}
+.dl dt{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--surface-2);padding-top:9px}
 .dl dd{margin:0;overflow-wrap:anywhere;line-height:1.35}
 .dl dd small{display:block;color:var(--ink-2);font-size:12.5px}
 .dl dd a{font-weight:700}
@@ -431,7 +440,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .sheet-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
 .sched-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
 .sched-days .chip-btn{flex-direction:column;gap:1px;min-height:48px;font-size:14px;font-weight:750;color:var(--ink)}
-.sched-days .chip-btn small{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.sched-days .chip-btn small{font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .sched-days .chip-btn.on{background:var(--yellow);border-color:var(--yellow);color:#000}
 .sched-days .chip-btn.on small{color:#000}
 #sched-date{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;color-scheme:inherit}
@@ -501,7 +510,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 /* ---------- New dispatch form ---------- */
 .sheet.tall{height:92vh;height:92dvh;max-height:none}
 .nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
-.nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:11px;font-stretch:100%;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:6px}
+.nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
 .nd-leg h3 .tag{margin-left:auto;letter-spacing:.04em}
@@ -512,7 +521,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-err{color:var(--danger);font-size:12px;font-weight:650;margin-top:3px}
 .addr-row{display:grid;grid-template-columns:minmax(0,1fr) 104px var(--ctl);gap:6px}
 .addr-row .icon-btn{border:1px solid var(--line-strong);background:var(--field);color:var(--ink)}
-.addr-ok{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:650;color:var(--ink-3);margin-top:3px;min-height:15px}
+.addr-ok{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:650;color:var(--ink-3);margin-top:3px;min-height:15px}
 .addr-ok.ok{color:var(--ok)}
 .addr-ok .i{width:12px;height:12px;stroke-width:2.8}
 /* Saved customer suggestions under a name box */
@@ -524,10 +533,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .ac-item small{display:block;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ac-item:hover,.ac-item.on{background:var(--surface-3)}
 .ac-item:active{background:var(--yellow-soft)}
-.ac-new{font-size:12.5px;color:var(--ink-2);padding:6px 10px 4px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.ac-new{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2);padding:6px 6px 6px 10px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.ac-new .grow{flex:1;min-width:0}
+.ac-new small{display:block;font-size:12px;color:var(--ink-3)}
 .ac-new b{color:var(--ink)}
-.tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
 .tag.saved{background:var(--ok-bg);color:var(--ok)}
+.tag-add{flex:none;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border:0;border-radius:99px;background:var(--ink);color:var(--bg);font:inherit;font-size:13px;font-weight:800;letter-spacing:.02em;text-transform:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:pop var(--t-slow) var(--spring)}
+.tag-add:active{transform:scale(.96)}
+.nd-leg h3 .tag-add{margin:-6px 0 -6px 2px}
+.ac-new .tag-add{min-height:36px}
 .nd-block{background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
 .item-row{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;margin-bottom:6px}
 .wt{position:relative;display:block}
@@ -587,7 +602,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
 .van:active{transform:scale(.95)}
 .van i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.12)}
-.van small{font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.van small{font-size:12.5px;font-weight:700;color:var(--ink-2)}
 .van.idle{opacity:.55;box-shadow:none;background:rgba(255,255,255,.6)}
 /* Closest vehicle in use: green pulse and glow. Second closest: the same pulse, no colour */
 .van.c1{border-color:#26a356;background:linear-gradient(160deg,#eafff2,#d3f8e2);color:#0b5f2c;animation:vanPulse 1.6s ease-in-out infinite}
@@ -651,6 +666,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
   <symbol id="i-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></symbol>
 </svg>
 
@@ -663,7 +680,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <p class="lead">For E&amp;C Courier staff. Customer requests arrive here live.</p>
     <form id="auth-form" novalidate>
       <div class="field"><label for="auth-email">Email</label><input id="auth-email" type="email" autocomplete="username" inputmode="email"></div>
-      <div class="field"><label for="auth-password">Password</label><input id="auth-password" type="password" autocomplete="current-password"></div>
+      <div class="field"><label for="auth-password">Password</label><div class="pw-row"><input id="auth-password" type="password" autocomplete="current-password"><button class="icon-btn" type="button" data-act="toggle-pw" aria-label="Show password" aria-pressed="false"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
       <button class="btn btn-primary block" type="submit" id="auth-submit">Sign in</button>
     </form>
     <button class="btn btn-secondary block" type="button" data-act="google" style="margin-top:10px">Sign in with Google</button>
@@ -698,12 +715,22 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <section id="panel-queue">
       <div class="page-head"><h1>Queue</h1><p id="queue-sub"></p></div>
       <div class="kpis" id="queue-kpis" aria-live="polite"></div>
+      <div class="queue-tools" id="queue-tools" hidden>
+        <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="queue-q" type="search" placeholder="Search company, name or request #" aria-label="Search the queue" autocomplete="off"></div>
+        <div class="filter-row" role="group" aria-label="Show">
+          <button class="chip-btn" type="button" data-act="queue-filter" data-f="all" aria-pressed="true">All</button>
+          <button class="chip-btn" type="button" data-act="queue-filter" data-f="collect" aria-pressed="false">Collect</button>
+          <button class="chip-btn" type="button" data-act="queue-filter" data-f="overdue" aria-pressed="false">Overdue</button>
+          <button class="chip-btn" type="button" data-act="queue-filter" data-f="changed" aria-pressed="false">Changed</button>
+        </div>
+      </div>
       <div id="queue-list"></div>
     </section>
 
     <!-- Scheduled -->
     <section id="panel-scheduled" hidden>
       <div class="page-head"><h1>Scheduled</h1><p>Each moves to the Queue on its day.</p></div>
+      <div class="queue-tools" id="scheduled-tools" hidden><div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="scheduled-q" type="search" placeholder="Search company, name or request #" aria-label="Search scheduled requests" autocomplete="off"></div></div>
       <div id="scheduled-list"></div>
     </section>
 
@@ -798,7 +825,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    E&C Dispatch – receives customer pickup requests live,
    alerts with sound + visuals, and copies the dispatch text.
    ========================================================= */
-const REPEAT_ALARM_MS = 20000;
+const REPEAT_ALARM_MS = 20000;   // how often the alarm repeats until someone taps "Got it"
 const REMINDER_DEFAULTS = { enabled: true, start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }; // same as functions/reminders.js
 // New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
 const FORM_FIELDS = [
@@ -807,7 +834,7 @@ const FORM_FIELDS = [
   { key: 'po', label: 'PO number' },
   { key: 'notes', label: 'Notes for the driver' },
   { key: 'when', label: 'Scheduled date', hint: 'Book it for a later day' }
-];   // how often the alarm repeats until someone taps "Got it"
+];
 const DONE_DAYS = 2;             // Done tab shows today and yesterday
 
 // Firebase loads in the background (deferred scripts) so the app can draw instantly from the last saved queue.
@@ -852,6 +879,9 @@ const S = {
   listeners: [],
   tab: 'queue',
   doneQ: '',          // Done tab search
+  queueQ: '',         // Queue tab search
+  queueFilter: 'all', // all | collect | overdue | changed
+  schedQ: '',         // Scheduled tab search
   doneFilter: 'all',  // all | done | cancelled | removed
   doneRange: 'recent', // recent (today and yesterday) | today | yesterday | 3 | 7 | 30
   more: null,         // { items, before, busy, end }: older requests added with "Load 20 more"
@@ -1043,6 +1073,39 @@ document.addEventListener('input', (e) => {
   if (ta) setEdit(ta.dataset.edit, ta.value);
 });
 
+/* ---------------- What a customer changed ----------------
+   When a waiting request is edited, the fields that differ from the copy this phone last saw
+   are kept here (on this phone, for DONE_DAYS), keyed to the request's new version. */
+const CHANGE_FIELDS = [
+  ['Pickup', (r) => r.pickup && r.pickup.name], ['Pickup address', (r) => r.pickup && r.pickup.address],
+  ['Delivery', (r) => r.delivery && r.delivery.name], ['Delivery address', (r) => r.delivery && r.delivery.address],
+  ['Items', (r) => r.items_text], ['Description', (r) => r.item_details],
+  ['Payment', (r) => (r.payment === 'collect' ? 'Collect' : 'Prepaid')],
+  ['When', (r) => (r.when === 'scheduled' && r.scheduled_for ? fmtDay(r.scheduled_for) : 'As soon as possible')],
+  ['PO', (r) => r.po], ['Notes', (r) => r.notes]
+];
+let changes = {};
+try { changes = JSON.parse(localStorage.getItem('ecd_changes') || '{}') || {}; } catch (e) { changes = {}; }
+function noteChanges(prev, next) {
+  let any = false;
+  Object.entries(next || {}).forEach(([id, n]) => {
+    const p = prev && prev[id];
+    if (!p || !n || !n.updated_at || n.updated_at === p.updated_at) return;
+    const list = CHANGE_FIELDS.map(([label, get]) => [label, oneLine(get(p)), oneLine(get(n))]).filter(([, a, b]) => a !== b).map(([label, a]) => [label, a]);
+    if (list.length) { changes[editKey(id, n)] = { t: Date.now(), list }; any = true; }
+  });
+  if (!any) return;
+  const cutoff = Date.now() - DONE_DAYS * 86400000;
+  Object.keys(changes).forEach((k) => { if (!changes[k] || changes[k].t < cutoff) delete changes[k]; });
+  try { localStorage.setItem('ecd_changes', JSON.stringify(changes)); } catch (e) { /* ignore */ }
+}
+// "Pickup address (was 12 Main St), Items (was 2 boxes)", or '' when this phone didn't see the old version
+function changedText(id, r) {
+  const c = changes[editKey(id, r)];
+  if (!c) return '';
+  return c.list.map(([label, was]) => `${label} (was ${was || 'blank'})`).join(', ');
+}
+
 /* ---------------- Saved queue, so the app opens instantly ---------------- */
 function saveCache() {
   if (!S.user) return;
@@ -1220,10 +1283,9 @@ function refreshAlarm() {
     systemNotify(list.length === 1 ? `New request #${first.ref_no}` : `${list.length} new requests`,
       list.length === 1 ? `${first.company_name || ''}: ${first.pickup && first.pickup.name} for ${first.delivery && first.delivery.name}` : 'Open E&C Dispatch to see them.');
   }
-  if (!alarmTimer && S.settings.repeat) {
+  if (!alarmTimer) { // repeats are always on (loadSettings)
     alarmTimer = setInterval(() => { if (unacked().length) { playChime('new'); buzz([300, 150, 300]); } }, REPEAT_ALARM_MS);
   }
-  if (!S.settings.repeat && alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
   if (!titleTimer) {
     let on = false;
     titleTimer = setInterval(() => { on = !on; document.title = on ? `(${unacked().length}) New request` : 'E&C Dispatch'; }, 1000);
@@ -1272,6 +1334,20 @@ function tick(message) {
 
 let sheetOpen = false;
 let sheetResolver = null;
+/* Whatever is on top (map, Send panel or sheet) is the only thing Tab and screen readers can reach.
+   Toasts stay reachable so their Undo buttons work. */
+let layerReturn = null;
+function syncLayers() {
+  const app = $('#view-app'), sheet = $('#sheet'), pop = $('#nd-pop'), map = $('#map-overlay');
+  const top = mapOpen ? map : popOpen ? pop : sheetOpen ? sheet : null;
+  [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
+  if (top && !top.contains(document.activeElement)) {
+    if (!layerReturn) layerReturn = document.activeElement;
+    const f = $('.icon-btn', top) || $('button', top);
+    if (f) setTimeout(() => { if (!top.contains(document.activeElement)) f.focus({ preventScroll: true }); }, 60);
+  }
+  if (!top) { const back = layerReturn; layerReturn = null; if (back && back.isConnected && back.focus) back.focus({ preventScroll: true }); }
+}
 function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
@@ -1293,6 +1369,7 @@ function openSheet(title, html, onMount, tall) {
     requestAnimationFrame(() => el.classList.add('open'));
   }
   if (onMount) onMount($('#sheet-body'));
+  syncLayers();
 }
 let liftTimer = 0;
 function sheetLift() {
@@ -1313,6 +1390,7 @@ function _hideSheet() {
   clearTimeout(liftTimer);
   el.classList.remove('open', 'hold', 'lift');
   document.body.classList.remove('no-scroll');
+  syncLayers();
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
@@ -1521,7 +1599,9 @@ function startListening() {
   const sinceTs = since.getTime();
 
   listen(db.ref('requests').orderByChild('status').equalTo('new'), (snap) => {
-    S.pending = snap.val() || {};
+    const next = snap.val() || {};
+    noteChanges(S.pending, next);
+    S.pending = next;
     S.loaded = true;
     S.fromCache = false;
     ackQuiet();
@@ -1606,6 +1686,13 @@ document.addEventListener('visibilitychange', () => {
 /* =========================================================
    Rendering
    ========================================================= */
+// Search box match: request #, company, pickup, delivery, PO
+const matchesQ = (r, q) => {
+  q = String(q || '').trim().toLowerCase().replace(/^#/, '');
+  return !q || [r.ref_no, r.company_name, r.pickup && r.pickup.name, r.delivery && r.delivery.name, r.pickup && r.pickup.address, r.delivery && r.delivery.address, r.po]
+    .some((v) => String(v == null ? '' : v).toLowerCase().includes(q));
+};
+const queueFilterOk = (r) => S.queueFilter === 'all' || (S.queueFilter === 'collect' ? r.payment === 'collect' : S.queueFilter === 'overdue' ? isOverdue(r) : !!r.updated_at);
 function queueList() {
   return Object.entries(S.pending).filter(([, r]) => !isFuture(r))
     .sort((a, b) => (isOverdue(b[1]) - isOverdue(a[1])) || ((a[1].created_at || 0) - (b[1].created_at || 0)));
@@ -1653,6 +1740,7 @@ function jobCard(id, r) {
       </span>
     </div>
     <div class="job-meta"><span class="chips">${chips.join('')}</span><span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span></div>
+    ${r.updated_at && changedText(id, r) ? `<p class="job-changed"><b>Changed:</b> ${esc(changedText(id, r))}</p>` : ''}
     <button class="route" type="button" data-act="details" data-id="${esc(id)}" aria-label="Pickup ${esc(P.name)}, delivery ${esc(D.name)}. Details">
       <span class="stop"><b>${esc(P.name)}</b><span>${esc(P.address)}</span></span>
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
@@ -1692,13 +1780,17 @@ function renderKpis() {
 }
 function renderQueue() {
   enterIdx = 0;
-  const list = queueList();
+  const all = queueList();
+  const filtering = !!S.queueQ.trim() || S.queueFilter !== 'all';
+  $('#queue-tools').hidden = !filtering && all.length < 2;
+  const list = filtering ? all.filter(([, r]) => matchesQ(r, S.queueQ) && queueFilterOk(r)) : all;
   $('#queue-sub').textContent = !S.loaded ? 'Connecting…' : S.fromCache ? 'Saved copy · connecting…' : '';
   renderKpis();
   const stick = S.tab === 'queue' && (queueStick || nearBottom());
   queueStick = false;
   // Most urgent last, so it sits right above the bottom bar under the thumb
   $('#queue-list').innerHTML = list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
+    : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? `<div class="empty"><span class="empty-ic">${icon('inbox')}</span><h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner. Tap <b>Dispatch</b> to make your own.</p></div>` : skeletons());
   if (stick) scrollToBottom();
 }
@@ -1708,7 +1800,10 @@ const nearBottom = () => window.innerHeight + window.scrollY >= document.documen
 const scrollToBottom = () => requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
 function renderScheduled() {
   enterIdx = 0;
-  const list = scheduledList();
+  const all = scheduledList();
+  $('#scheduled-tools').hidden = !S.schedQ.trim() && all.length < 2;
+  const list = S.schedQ.trim() ? all.filter(([, r]) => matchesQ(r, S.schedQ)) : all;
+  if (!list.length && all.length) { $('#scheduled-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try another name or request number.</p></div>`; return; }
   if (!list.length) { $('#scheduled-list').innerHTML = S.loaded ? `<div class="empty"><span class="empty-ic">${icon('calendar')}</span><h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>` : skeletons(); return; }
   let html = '';
   let day = '';
@@ -2106,7 +2201,7 @@ function openDetails(id, refresh) {
       ${kind === 'done' ? `<dt>Status</dt><dd><span class="chip ok">Dispatched</span><small>${esc(fmtDateTime(r.dispatched_at))}${r.dispatched_to ? ` to ${esc(r.dispatched_to)}` : ''}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email)}` : ''}</small></dd>` : ''}
       ${kind === 'cancelled' ? `<dt>Status</dt><dd><span class="chip bad">Cancelled</span><small>By the customer ${esc(fmtDateTime(r.cancelled_at))}</small></dd>` : ''}
       ${kind === 'removed' ? `<dt>Status</dt><dd><span class="chip gone">Removed</span><small>From the queue ${esc(fmtDateTime(r.removed_at))}${r.removed_by_email ? ` by ${esc(r.removed_by_email)}` : ''}. Not dispatched.</small></dd>` : ''}
-      <dt>Submitted</dt><dd>${esc(fmtDateTime(r.created_at))}${r.updated_at ? `<small>Changed ${esc(fmtDateTime(r.updated_at))}</small>` : ''}</dd>
+      <dt>Submitted</dt><dd>${esc(fmtDateTime(r.created_at))}${r.updated_at ? `<small>Changed ${esc(fmtDateTime(r.updated_at))}${changedText(id, r) ? `: ${esc(changedText(id, r))}` : ''}</small>` : ''}</dd>
       <dt>When</dt><dd>${r.when === 'scheduled' && r.scheduled_for ? esc(fmtDay(r.scheduled_for)) : 'As soon as possible'} \u00b7 ${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</dd>
       <dt>Pickup</dt><dd>${leg(r.pickup)}</dd>
       <dt>Delivery</dt><dd>${leg(r.delivery)}</dd>
@@ -2144,9 +2239,13 @@ const ITEM_TYPES = [
 function itemLabel(it) {
   const t = ITEM_TYPES.find((x) => x.id === it.type) || ITEM_TYPES[0];
   const qty = Number(it.qty) || 0;
-  const base = it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
-  const lbs = Number(it.weight) || 0;
-  return lbs > 0 ? `${base} (${lbs} ${lbs === 1 ? 'lb' : 'lbs'})` : base;
+  // Kept word for word the same as itemLabel in requestpickup/index.html, so driver texts read the same
+  let s = it.type === 'other' && String(it.other || '').trim() ? `${qty} ${String(it.other).trim()}` : `${qty} ${qty === 1 ? t.one : t.many}`;
+  const w = Number(it.weight);
+  if (it.weight !== '' && it.weight != null && w > 0) s += ` ${+w.toFixed(1)} ${w === 1 ? 'lb' : 'lbs'}`;
+  const dims = String(it.dims || '').trim();
+  if (dims) s += ` (${dims})`;
+  return s;
 }
 const itemsText = (items) => (items || []).filter((it) => Number(it.qty) > 0).map(itemLabel).join(', ');
 const clampText = (s, max) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
@@ -2203,8 +2302,8 @@ function openNewDispatch() {
   loadMaps();
   const f = S.settings.form;
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
-      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span></h3>
-      <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
+      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden></button></h3>
+      <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nd-${k}-ac" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
       <div class="field"><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
@@ -2364,14 +2463,65 @@ function ndRefreshTags() {
   if (!ndOpen() || !ND) return;
   ['pickup', 'delivery'].forEach((k) => {
     const tag = $(`#nd-${k}-tag`);
-    const name = lookupKey(ND[k].name);
+    const add = $(`#nd-${k}-add`);
+    const L = ND[k];
+    const name = lookupKey(L.name);
     if (!tag) return;
     tag.hidden = !name;
-    const saved = !!S.lookup[name];
-    tag.className = `tag${saved ? ' saved' : ''}`;
-    tag.textContent = saved ? 'Saved' : 'New customer';
+    const c = S.lookup[name];
+    tag.className = `tag${c ? ' saved' : ''}`;
+    tag.textContent = c ? 'Saved' : L.addPending ? 'Pick the address' : 'New customer';
+    if (!add) return;
+    const act = customerAction(k);
+    add.hidden = !act;
+    add.textContent = act === 'update' ? 'Update address' : 'Add +';
+    add.setAttribute('aria-label', act === 'update' ? `Update the saved address for ${L.name.trim()}` : `Add ${L.name.trim()} as a new customer`);
   });
 }
+/* What the button next to the tag offers: "add" a new customer, "update" a saved customer's
+   address (only when the dispatcher asks: a one-off job to another dock must not change it), or nothing. */
+function customerAction(k) {
+  const L = ND && ND[k];
+  if (!L) return '';
+  const key = lookupKey(L.name);
+  if (!key) return '';
+  const c = S.lookup[key];
+  if (!c) return L.addPending ? '' : 'add';
+  const addr = L.address.trim();
+  if (!addr || !c.address || L.from === 'saved') return '';
+  return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
+}
+// Address good enough to save: picked from Google or the map, or typed when Google isn't available
+const legAddrReady = (L) => !!L.address.trim() && (L.ok || !mapsUsable());
+function saveCustomerNow(k) {
+  const L = ND[k];
+  const key = lookupKey(L.name);
+  if (!key || !db || !S.user) return;
+  const was = S.lookup[key];
+  const rec = { address: L.address.trim(), city: L.city.trim(), last_edit_by: meName() };
+  if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; } else if (was) { rec.lat = null; rec.lng = null; }
+  L.addPending = false;
+  // Shown as saved straight away; the live list confirms it a moment later
+  S.lookup = Object.assign({}, S.lookup, { [key]: Object.assign({}, was || {}, rec) });
+  ndUpdate();
+  db.ref('address_lookup').child(key).update(rec)
+    .then(() => toast(was ? `${L.name.trim()}’s address updated.` : `${L.name.trim()} added as a customer.`, 'ok'))
+    .catch((err) => toast(`${L.name.trim()} couldn’t be saved: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
+}
+// Add + (or Update address): saves now if the address is ready, otherwise as soon as it's picked
+function ndAddCustomer(k) {
+  if (!ND || !ND[k]) return;
+  const L = ND[k];
+  if (!lookupKey(L.name)) return;
+  ndHideSuggest(k);
+  if (legAddrReady(L)) { saveCustomerNow(k); return; }
+  L.addPending = true;
+  ndUpdate();
+  const a = $(`#nd-${k}-address`);
+  if (a) { a.focus({ preventScroll: true }); ndReveal(a); }
+}
+// Called whenever a leg's address becomes ready (Google, the map or a saved customer)
+function ndAddressReady(k) { if (ND && ND[k] && ND[k].addPending && legAddrReady(ND[k])) saveCustomerNow(k); }
 
 /* ---------- Name suggestions from the saved customers ---------- */
 function ndMatches(q) {
@@ -2387,17 +2537,19 @@ function ndSuggest(k) {
   if (!list) return;
   const q = ND[k].name;
   const found = ndMatches(q);
-  if (!found.length) { list.hidden = true; list.innerHTML = ''; return; }
+  const isNew = !!lookupKey(q) && !S.lookup[lookupKey(q)];
+  if (!found.length && !(isNew && q.trim().length >= 2)) { list.hidden = true; list.innerHTML = ''; return; }
   const hl = (name) => {
     const i = name.toLowerCase().indexOf(q.trim().toLowerCase());
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
   };
   list.innerHTML = found.map((name, i) => {
     const c = S.lookup[name] || {};
-    return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
-  }).join('') + (S.lookup[lookupKey(q)] ? '' : `<div class="ac-new">Not on the list? Keep typing: <b>${esc(q.trim())}</b> is saved as a new customer when you send.</div>`);
+    return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
+  }).join('') + (isNew ? `<div class="ac-new"><span class="grow">New customer: <b>${esc(q.trim())}</b><small>Added when you send, or now with Add +</small></span><button class="tag-add" type="button" data-act="nd-add-customer" data-leg="${k}" aria-label="Add ${esc(q.trim())} as a new customer">Add +</button></div>` : '');
   const was = list.hidden;
   list.hidden = false;
+  comboState(k);
   ndPlaceSuggest(k);
   if (was) list.scrollTop = list.scrollHeight;
 }
@@ -2413,7 +2565,16 @@ function ndPlaceSuggest(k) {
   list.style.bottom = `${document.documentElement.clientHeight - r.top + 4}px`;
   list.style.maxHeight = `${Math.max(120, r.top - top - 10)}px`;
 }
-function ndHideSuggest(k) { const list = $(`#nd-${k}-ac`); if (list) { list.hidden = true; list.innerHTML = ''; } }
+function ndHideSuggest(k) { const list = $(`#nd-${k}-ac`); if (list) { list.hidden = true; list.innerHTML = ''; } comboState(k); }
+// Tells screen readers whether the list is open and which suggestion Enter would pick
+function comboState(k) {
+  const input = $(`#nd-${k}-name`), list = $(`#nd-${k}-ac`);
+  if (!input) return;
+  const open = !!list && !list.hidden;
+  const on = open ? $('.ac-item.on', list) : null;
+  input.setAttribute('aria-expanded', String(open));
+  if (on) input.setAttribute('aria-activedescendant', on.id); else input.removeAttribute('aria-activedescendant');
+}
 function ndPick(k, name) {
   const c = S.lookup[name] || {};
   ND[k] = { name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
@@ -2449,6 +2610,7 @@ function ndAttachPlaces() {
       if (business && !L.name.trim()) L.name = p.name;
       ndFillLeg(k);
       ndUpdate();
+      ndAddressReady(k);
     });
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); }); // Enter picks a suggestion
   });
@@ -2464,6 +2626,7 @@ function ndOpenMap(k) {
   el.hidden = false;
   mapOpen = true;
   history.pushState({ map: true }, '');
+  syncLayers();
   if (!mapPick) {
     const center = { lat: 49.8485, lng: -99.9501 }; // Brandon
     const map = new google.maps.Map($('#map-canvas'), { center, zoom: 13, gestureHandling: 'greedy', mapTypeControl: false, streetViewControl: false, fullscreenControl: false, clickableIcons: false });
@@ -2508,9 +2671,9 @@ function mapUse() {
   const k = mapPick.leg;
   Object.assign(ND[k], mapPick.loc, { ok: true, from: 'google' });
   closeMap();
-  if (ndOpen()) { ndFillLeg(k); ndUpdate(); }
+  if (ndOpen()) { ndFillLeg(k); ndUpdate(); ndAddressReady(k); }
 }
-function _hideMap() { mapOpen = false; $('#map-overlay').hidden = true; }
+function _hideMap() { mapOpen = false; $('#map-overlay').hidden = true; syncLayers(); }
 function closeMap() { if (!mapOpen) return; if (history.state && history.state.map) history.back(); else _hideMap(); }
 
 /* ---------- Saving and sending ---------- */
@@ -2519,14 +2682,18 @@ async function nextRefNo() {
   if (!res.committed) throw new Error('Couldn’t reserve a request number. Try again.');
   return res.snapshot.val();
 }
-// New customers (and changed addresses) go into the shared list, like Route Planner does
+/* New customers go into the shared list when the job is saved, like Route Planner does.
+   A saved customer's address is never changed here: a one-off job to another address would
+   otherwise change it for everyone. "Update address" in the form does that on purpose. */
 function saveCustomers(r) {
   [r.pickup, r.delivery].forEach((L) => {
     const key = lookupKey(L.name);
     if (!key || !L.address) return;
-    const was = S.lookup[key] || {};
-    if (was.address === L.address && (was.city || '') === (L.city || '')) return;
-    db.ref('address_lookup').child(key).update({ address: L.address, city: L.city || '', last_edit_by: meName() })
+    const was = S.lookup[key];
+    if (was && was.address) return;
+    const rec = { address: L.address, city: L.city || '', last_edit_by: meName() };
+    if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; }
+    db.ref('address_lookup').child(key).update(rec)
       .catch((err) => toast(`${L.name} couldn’t be saved as a customer: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
   });
 }
@@ -2581,6 +2748,7 @@ function ndPickDriver() {
 }
 const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
+const ALERT_CHECK_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/alertCheck'; // functions/index.js
 const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
 const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
 function openSendPanel(title, pickup, onSend, swap, jobId) {
@@ -2598,6 +2766,7 @@ function openSendPanel(title, pickup, onSend, swap, jobId) {
   popOpen = true;
   if (swap) history.replaceState({ pop: true }, ''); else history.pushState({ pop: true }, '');
   requestAnimationFrame(() => el.classList.add('open'));
+  syncLayers();
   spListen();
   spRender();
   loadMaps();
@@ -2611,6 +2780,7 @@ function _hidePop() {
   holdCancel();
   spStop();
   el.classList.remove('open');
+  syncLayers();
   setTimeout(() => { if (!popOpen) el.hidden = true; }, 260);
 }
 // The vehicles are listened to from sign-in (startListening); while the panel is open, a fresh GPS poll every 15 s
@@ -3041,7 +3211,7 @@ function ndReset() {
 document.addEventListener('input', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
-  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; if (ND[k].from === 'saved') { ND[k].from = ''; } t.classList.remove('invalid'); ndSuggest(k); }
+  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; ND[k].addPending = false; if (ND[k].from === 'saved') { ND[k].from = ''; } t.classList.remove('invalid'); ndSuggest(k); }
   else if (t.dataset.ndAddr) { const L = ND[t.dataset.ndAddr]; L.address = t.value; L.ok = false; L.from = ''; L.lat = null; L.lng = null; t.classList.remove('invalid'); }
   else if (t.dataset.ndCity) ND[t.dataset.ndCity].city = t.value;
   else if (t.dataset.ndF) { ND[t.dataset.ndF] = t.value; t.classList.remove('invalid'); }
@@ -3064,6 +3234,8 @@ document.addEventListener('change', (e) => {
     ndUpdate();
   }
   else if (t.name === 'nd-pay' || t.name === 'nd-when') t.dispatchEvent(new Event('input', { bubbles: true }));
+  // Typed, when Google isn't available: saved once the city is in (or with the job when it's sent)
+  else if (t.dataset.ndCity || (t.dataset.ndAddr && ND[t.dataset.ndAddr].city.trim())) ndAddressReady(t.dataset.ndAddr || t.dataset.ndCity);
 });
 document.addEventListener('keydown', (e) => {
   const t = e.target;
@@ -3086,11 +3258,12 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     let i = items.findIndex((b) => b.classList.contains('on'));
     i = (i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-    items.forEach((b, j) => b.classList.toggle('on', j === i));
+    items.forEach((b, j) => { b.classList.toggle('on', j === i); b.setAttribute('aria-selected', String(j === i)); });
+    comboState(t.dataset.ndName);
   } else if (e.key === 'Escape' && items.length) { e.stopPropagation(); ndHideSuggest(t.dataset.ndName); }
 }, true);
 // A tap on a suggestion must not blur the name box first (that would hide the list)
-document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.ac-list')) e.preventDefault(); });
+document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.ac-list, .tag-add')) e.preventDefault(); });
 document.addEventListener('focusout', (e) => {
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k) setTimeout(() => { if (document.activeElement !== e.target) ndHideSuggest(k); }, 120);
@@ -3163,7 +3336,28 @@ async function saveReminders(change) {
   try { await db.ref('dispatch_settings/reminders').set(Object.assign(next, { updated_by: meName() })); toast('Reminder hours saved', 'ok'); }
   catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 10000); }
 }
+/* How many staff phones get push alerts, from the alertCheck function (it can read every
+   push token; a phone can only read its own). Checked when Settings opens, at most once a minute. */
+let reach = { text: 'Checking which phones get alerts\u2026', cls: '', at: 0 };
+async function checkReach(force) {
+  if (!auth || !auth.currentUser || (!force && Date.now() - reach.at < 60000)) return;
+  reach.at = Date.now();
+  try {
+    const t = await auth.currentUser.getIdToken();
+    const res = await fetch(ALERT_CHECK_URL, { headers: { Authorization: `Bearer ${t}` } });
+    if (!res.ok) throw new Error(String(res.status));
+    const { phones, people } = await res.json();
+    reach = phones
+      ? { text: `${phones} ${phones === 1 ? 'phone' : 'phones'} (${people} ${people === 1 ? 'person' : 'people'}) get an alert when a request arrives, even with the app closed.`, cls: 'ok', at: reach.at }
+      : { text: 'No phone gets alerts when the app is closed. New requests will only show while someone has the app open. Install the app and allow notifications.', cls: 'bad', at: reach.at };
+  } catch (e) {
+    reach = { text: 'Couldn\u2019t check which phones get alerts. If this keeps happening, the alertCheck function may need deploying (APP-SETUP.md).', cls: '', at: reach.at };
+  }
+  const el = $('#alert-reach');
+  if (el) { el.className = `reach ${reach.cls}`; el.textContent = reach.text; }
+}
 function renderSettings() {
+  checkReach();
   const st = S.settings;
   const sw = (key, label, hint) => `<div class="setting"><span class="grow">${label}${hint ? `<small>${hint}</small>` : ''}</span><span class="switch"><input type="checkbox" data-setting="${key}"${st[key] ? ' checked' : ''} aria-label="${esc(label)}"><span></span></span></div>`;
   const notifSupported = !CAP && 'Notification' in window;
@@ -3186,6 +3380,7 @@ function renderSettings() {
       <h2>${icon('bell')}Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
       ${notifSupported ? sw('notify', 'Phone notifications', 'Shows an alert while you’re in another app, as long as this page is still open.') : ''}
+      <p class="reach ${reach.cls}" id="alert-reach">${esc(reach.text)}</p>
       <button class="btn btn-secondary block" type="button" data-act="test-alert">${icon('bell', 'sm')}Test the alert</button>
     </section>
     ${CAP ? `<section class="card">
@@ -3226,9 +3421,7 @@ function renderSettings() {
     }
     S.settings[key] = x.checked;
     saveSettings();
-    if (key === 'wake') applyWakeLock();
     if (key === 'sound') updateSoundUi();
-    if (key === 'repeat') { clearInterval(alarmTimer); alarmTimer = null; refreshAlarm(); }
   }));
 }
 const refreshSettings = () => { if (S.tab === 'settings' && !$('#view-app').hidden) renderSettings(); };
@@ -3260,6 +3453,15 @@ document.addEventListener('click', async (e) => {
   const id = el.dataset.id;
   switch (el.dataset.act) {
     case 'google': googleSignIn(); break;
+    case 'toggle-pw': {
+      const input = $('#auth-password');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      el.setAttribute('aria-pressed', String(show));
+      el.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      el.innerHTML = icon(show ? 'eye-off' : 'eye');
+      break;
+    }
     case 'signout': signOut(); break;
     case 'signout-ask': if (await confirmSheet('Sign out?', 'New requests won\u2019t alert on this phone while you\u2019re signed out.', 'Sign out', true)) signOut(); break;
     case 'recheck': handleUser(auth.currentUser); break;
@@ -3273,6 +3475,16 @@ document.addEventListener('click', async (e) => {
       renderDone();
       break;
     case 'done-range': setDoneRange(el.dataset.r); break;
+    case 'queue-filter':
+      S.queueFilter = el.dataset.f;
+      $$('[data-act=queue-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
+      renderQueue();
+      break;
+    case 'queue-clear':
+      S.queueQ = ''; S.queueFilter = 'all'; $('#queue-q').value = '';
+      $$('[data-act=queue-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === 'all')));
+      renderQueue();
+      break;
     case 'load-more': loadMore(); break;
     case 'sheet-close': closeSheet(); break;
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
@@ -3298,6 +3510,7 @@ document.addEventListener('click', async (e) => {
     case 'test-push': sendTestPush(); break;
     case 'new-dispatch': openNewDispatch(); break;
     case 'nd-pick': ndPick(el.dataset.leg, el.dataset.name); break;
+    case 'nd-add-customer': ndAddCustomer(el.dataset.leg); break;
     case 'nd-map': ndOpenMap(el.dataset.leg); break;
     case 'map-close': closeMap(); break;
     case 'map-use': mapUse(); break;
@@ -3343,7 +3556,10 @@ document.addEventListener('pointerdown', (e) => {
   setTimeout(() => rp.remove(), 600);
 }, { passive: true });
 
-$('#done-q').addEventListener('input', (e) => { S.doneQ = e.target.value; renderDone(); });
+const debounce = (fn, ms) => { let t = 0; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+$('#done-q').addEventListener('input', debounce((e) => { S.doneQ = e.target.value; renderDone(); }, 120));
+$('#queue-q').addEventListener('input', debounce((e) => { S.queueQ = e.target.value; renderQueue(); }, 120));
+$('#scheduled-q').addEventListener('input', debounce((e) => { S.schedQ = e.target.value; renderScheduled(); }, 120));
 
 // Day headers stick just under the top bar and banners, whatever their height
 const appHead = $('.app-head');
