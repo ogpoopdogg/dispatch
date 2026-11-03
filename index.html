@@ -300,6 +300,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit-head span::before{content:'';width:11px;height:11px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
 .text-edit.edited .text-edit-head span{color:var(--accent-ink)}
 .text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
+.addr-ticks{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px}
+.addr-tick{flex:1 1 140px;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 10px;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.addr-tick input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--yellow-lo);cursor:pointer}
+.addr-tick:has(input:checked){border-color:var(--yellow-lo);background:var(--yellow-soft);color:var(--accent-ink)}
+.addr-tick:has(input:focus-visible){box-shadow:0 0 0 3px var(--yellow-ring)}
+.addr-tick.off{opacity:.45;cursor:default}
 .text-edit textarea{display:block;width:100%;min-height:44px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:14px;line-height:1.4;color:var(--ink);outline:none;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -999,8 +1005,14 @@ function friendlyError(err) {
    Order details: items, item description, Prepaid/Collect, PO, driver notes.
    Never included: addresses, phone numbers, emails, scheduled date. */
 function oneLine(s) { return String(s || '').replace(/\s*[\r\n]+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
-function dispatchText(r) {
-  const head = `${oneLine(r.pickup && r.pickup.name)} for ${oneLine(r.delivery && r.delivery.name)}`;
+// with = { pickup: true, delivery: true } adds that leg's address after its name: "Acme (12 Main St)"
+const legName = (r, leg, with_) => {
+  const name = oneLine(r[leg] && r[leg].name);
+  const addr = oneLine(r[leg] && r[leg].address);
+  return with_ && with_[leg] && addr ? `${name} (${addr})` : name;
+};
+function dispatchText(r, with_) {
+  const head = `${legName(r, 'pickup', with_)} for ${legName(r, 'delivery', with_)}`;
   const hide = r.text_hide || {}; // fields a dispatcher left out of a dispatch they made
   const details = [
     r.items_text,
@@ -1044,11 +1056,38 @@ function saveEdits() {
   Object.keys(edits).forEach((k) => { if (!edits[k] || edits[k].t < cutoff) delete edits[k]; });
   try { localStorage.setItem('ecd_edits', JSON.stringify(edits)); } catch (e) { /* ignore */ }
 }
-function textFor(id, r) { const e = edits[editKey(id, r)]; return e ? e.text : dispatchText(r); }
+/* Pickup address / Delivery address ticks above the text. Only on this screen until the app
+   is closed, so they always start unticked. */
+const addrTicks = {};
+const baseText = (id, r) => dispatchText(r, addrTicks[id]);
+function textFor(id, r) { const e = edits[editKey(id, r)]; return e ? e.text : baseText(id, r); }
+function setAddrTick(id, leg, on) {
+  const r = S.pending[id] || doneReq(id);
+  if (!r) return;
+  const before = { ...(addrTicks[id] || {}) };
+  addrTicks[id] = { ...before, [leg]: on };
+  const k = editKey(id, r);
+  if (edits[k]) {
+    // Already edited by hand: put the address in (or take it out) right after the name in that text
+    const plain = legName(r, leg, null);
+    const withAddr = legName(r, leg, { [leg]: true });
+    let t = edits[k].text;
+    if (on && plain && !t.includes(withAddr)) t = t.includes(plain) ? t.replace(plain, withAddr) : t;
+    if (!on) t = t.replace(withAddr, plain);
+    setEdit(id, t);
+  } else setEdit(id, null);
+  $$('[data-addr-tick]').filter((c) => c.dataset.id === id && c.dataset.addrTick === leg).forEach((c) => { c.checked = on; });
+}
 function textEditor(id, r, where) {
   const edited = !!edits[editKey(id, r)];
+  const tick = (leg, label) => {
+    const has = !!oneLine(r[leg] && r[leg].address);
+    const on = !!(addrTicks[id] && addrTicks[id][leg]);
+    return `<label class="addr-tick${has ? '' : ' off'}"${has ? '' : ` title="No ${label.toLowerCase()} on this request"`}><input type="checkbox" data-addr-tick="${leg}" data-id="${esc(id)}"${on ? ' checked' : ''}${has ? '' : ' disabled'}><span>${label}</span></label>`;
+  };
   return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
     <div class="text-edit-head"><span>Text to send \u00b7 tap to edit</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
+    <div class="addr-ticks">${tick('pickup', 'Pickup address')}${tick('delivery', 'Delivery address')}</div>
     <textarea data-edit="${esc(id)}" data-where="${where}" rows="${where === 'card' ? 2 : 3}" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
   </div>`;
 }
@@ -1056,7 +1095,7 @@ function setEdit(id, text) {
   const r = S.pending[id] || doneReq(id);
   if (!r) return;
   const k = editKey(id, r);
-  if (text == null || text.trim() === dispatchText(r)) delete edits[k];
+  if (text == null || text.trim() === baseText(id, r)) delete edits[k];
   else edits[k] = { text, t: Date.now() };
   saveEdits();
   const edited = !!edits[k];
@@ -1064,13 +1103,17 @@ function setEdit(id, text) {
     b.classList.toggle('edited', edited);
     $('[data-act=reset-edit]', b).hidden = !edited;
     const ta = $('textarea', b);
-    if (text == null) ta.value = dispatchText(r);
+    if (text == null) ta.value = baseText(id, r);
     else if (ta !== document.activeElement) ta.value = text;
   });
 }
 document.addEventListener('input', (e) => {
   const ta = e.target.closest && e.target.closest('textarea[data-edit]');
   if (ta) setEdit(ta.dataset.edit, ta.value);
+});
+document.addEventListener('change', (e) => {
+  const c = e.target.closest && e.target.closest('input[data-addr-tick]');
+  if (c) setAddrTick(c.dataset.id, c.dataset.addrTick, c.checked);
 });
 
 /* ---------------- What a customer changed ----------------
@@ -3445,7 +3488,7 @@ document.addEventListener('click', async (e) => {
   if (tab) { switchTab(tab.dataset.tab); return; }
   const el = e.target.closest('[data-act]');
   if (!el) {
-    if (e.target.closest('textarea, a')) return;
+    if (e.target.closest('textarea, a, .addr-ticks')) return;
     const card = e.target.closest('.job.unseen');
     if (card) ack(card.dataset.id);
     return;
