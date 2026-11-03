@@ -235,11 +235,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
 
 /* ---------- Job cards ---------- */
-.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+/* A strong, soft shadow under each card so cards stand apart from each other and the page */
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;--job-sh:drop-shadow(0 2px 3px rgba(0,0,0,.25)) drop-shadow(0 12px 20px rgba(0,0,0,.34))}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
 /* A request card: the top part, and a tab under its right side holding the two buttons.
    The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
-.job{position:relative;--job-line:var(--yellow);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2))}
+.job{position:relative;--job-line:var(--yellow);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2)))}
 .job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
 .job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,var(--tab-w));margin:-1px 0 0 auto;padding:0 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
 /* Rounded inside corner where the text's bottom edge turns down into the tab */
@@ -249,7 +250,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.985)}}
 .job.unseen{--job-line:var(--yellow);animation:jobGlow 1.8s ease-in-out infinite alternate}
 .job.unseen.enter{animation:cardIn .36s var(--out) both,jobGlow 1.8s ease-in-out .36s infinite alternate}
-@keyframes jobGlow{from{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 0 rgba(255,209,0,0))}to{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.2)) drop-shadow(0 0 9px rgba(255,209,0,.5))}}
+@keyframes jobGlow{from{filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2))) drop-shadow(0 0 0 rgba(255,209,0,0))}to{filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2))) drop-shadow(0 0 9px rgba(255,209,0,.5))}}
 .job.overdue{--job-line:var(--danger)}
 .job-head{display:flex;align-items:center;gap:8px;min-width:0;margin-right:-4px}
 .req-no{font-stretch:75%;font-weight:800;font-size:17px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
