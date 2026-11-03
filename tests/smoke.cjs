@@ -120,6 +120,24 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.click(`${card} [data-act=reset-edit]`);
       await page.uncheck(pick);
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 ,/);
+      // Map link: a Google Maps directions link after each ticked address, or after both names
+      const map = `${card} input[data-addr-tick=map]`;
+      const link = (q) => `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=driving`;
+      assert.ok(!(await page.isChecked(map)), 'Map link starts unticked');
+      await page.check(map);
+      assert.ok((await page.inputValue(ta)).startsWith(`Prairie Parts ${link('9%20Rosser%20Ave')} for Dock 4 ${link('1%20Industrial%20Rd')} ,`));
+      await page.check(pick);
+      assert.ok((await page.inputValue(ta)).startsWith(`Prairie Parts (9 Rosser Ave) ${link('9%20Rosser%20Ave')} for Dock 4 ,`));
+      await shot(page, 'map-link');
+      // Hand-edited text keeps up too
+      await page.fill(ta, `${await page.inputValue(ta)} call ahead`);
+      await page.uncheck(map);
+      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 ,.* call ahead$/);
+      await page.click(`${card} [data-act=reset-edit]`);
+      await page.uncheck(pick);
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 ,/);
+      assert.strictEqual(await page.evaluate(() => readableAddr('Manitoba 45')), 'Hwy 45', 'Google highway names read as Hwy');
+      assert.strictEqual(await page.evaluate(() => legName({ p: { name: 'AAA Bobcat', address: 'Manitoba 45', city: 'Brandon', lat: 49.84, lng: -99.95 } }, 'p', { p: true, map: true })), `AAA Bobcat (Hwy 45, Brandon) ${link('49.84,-99.95')}`);
     }
     // 3.3 an open sheet is the only thing reachable
     await page.click('#queue-list .job [data-act=details] >> nth=0');
