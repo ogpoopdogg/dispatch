@@ -93,6 +93,34 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.job-changed'), /Pickup address \(was 12 Main St\)/);
     await page.click('[data-act=ack-all]').catch(() => {});
     await shot(page, 'queue');
+    // Pickup address / Delivery address ticks add the address after the name in the text
+    {
+      const card = '#queue-list .job[data-id=r2]';
+      const ta = `${card} textarea[data-edit]`;
+      const pick = `${card} input[data-addr-tick=pickup]`;
+      const del = `${card} input[data-addr-tick=delivery]`;
+      assert.ok(!(await page.isChecked(pick)) && !(await page.isChecked(del)), 'ticks start unticked');
+      const box = await page.locator(`${card} .addr-tick >> nth=0`).boundingBox();
+      assert.ok(box.height >= 44, 'ticks are big enough for a thumb');
+      await page.check(pick);
+      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 ,/);
+      await page.check(del);
+      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 \(1 Industrial Rd\) ,/);
+      assert.ok(await page.isHidden(`${card} [data-act=reset-edit]`), 'ticking alone is not a hand edit');
+      await shot(page, 'addr-ticks');
+      await page.uncheck(pick);
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 \(1 Industrial Rd\) ,/);
+      // A hand-edited text gets the address put in after the name too
+      await page.fill(ta, 'Prairie Parts for Dock 4 (1 Industrial Rd), call ahead');
+      await page.check(pick);
+      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts (9 Rosser Ave) for Dock 4 (1 Industrial Rd), call ahead');
+      await page.uncheck(del);
+      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts (9 Rosser Ave) for Dock 4, call ahead');
+      assert.strictEqual(await page.evaluate(() => textFor('r2', S.pending.r2)), 'Prairie Parts (9 Rosser Ave) for Dock 4, call ahead', 'what gets sent matches the box');
+      await page.click(`${card} [data-act=reset-edit]`);
+      await page.uncheck(pick);
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 ,/);
+    }
     // 3.3 an open sheet is the only thing reachable
     await page.click('#queue-list .job [data-act=details] >> nth=0');
     await page.waitForSelector('#sheet:not([hidden])');
