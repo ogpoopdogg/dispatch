@@ -117,7 +117,7 @@ way, with nothing to install, is **Google Cloud Shell**:
    cd dispatch/functions
    npm install
    npx firebase-tools login --no-localhost
-   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush,functions:remindQueue,functions:alertCheck --project eandccourier-36fcc
+   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush,functions:remindQueue,functions:alertCheck,functions:stampHistoryKey,functions:fillHistoryKeys --project eandccourier-36fcc
    ```
 
    If `login` says you're already signed in, carry on.
@@ -129,7 +129,15 @@ way, with nothing to install, is **Google Cloud Shell**:
    `alertCheck` tells Settings > Alerts how many staff phones get push alerts.
    Until it's deployed, that line says it couldn't check.
 
-   Deploy only these four functions, as above. The project also has other
+   `stampHistoryKey` and `fillHistoryKeys` keep the key the pickup app's
+   History uses (`company_created` on each request). `fillHistoryKeys` fills
+   it in on older requests within 30 minutes of deploying, then sets
+   `config/history_keys_ready`; until then the pickup app loads History the
+   old way. It also needs the updated database rules (they let the app read
+   that flag and run the new History query), so the order you do the two in
+   doesn't matter.
+
+   Deploy only these six functions, as above. The project also has other
    functions (`fleetHuntHistory`, `pajApi`, `pollNow`) that live outside this
    repo. A plain `--only functions` deploy offers to delete them: always
    answer **No** if you see that question.

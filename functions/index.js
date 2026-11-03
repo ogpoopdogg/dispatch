@@ -31,6 +31,7 @@ const DEAD_TOKEN_CODES = new Set([
 
 const { describeChange } = require('./alerts');
 const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
+const { historyKey, missingKeys } = require('./history');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -134,4 +135,34 @@ exports.alertCheck = onRequest({ cors: true }, async (req, res) => {
   if ((await admin.database().ref(`staff/${uid}`).once('value')).val() !== true) { res.status(403).json({ error: 'Staff only' }); return; }
   const targets = await staffTokens();
   res.json({ phones: targets.length, people: new Set(targets.map((t) => t.path.split('/')[1])).size });
+});
+
+// Customer History: keep requests/<id>/company_created in step with company_id and the server's
+// created_at (see history.js). The pickup app writes it too, from the phone's clock; this corrects it.
+exports.stampHistoryKey = onValueWritten('/requests/{id}', async (event) => {
+  const after = event.data.after.val();
+  const key = historyKey(after);
+  if (!key || after.company_created === key) return;
+  await event.data.after.ref.transaction((cur) => {
+    if (cur === null) return null; // deleted meanwhile (or not loaded yet; the transaction then retries)
+    const k = historyKey(cur);
+    if (!k || cur.company_created === k) return undefined; // nothing to do
+    cur.company_created = k;
+    return cur;
+  });
+});
+
+// One-time fill of company_created on requests made before stampHistoryKey existed. When it's done
+// it sets config/history_keys_ready, and the pickup app then loads History one period at a time.
+// After that each run is one small read.
+exports.fillHistoryKeys = onSchedule({ schedule: 'every 30 minutes', timeZone: TIME_ZONE }, async () => {
+  const db = admin.database();
+  if ((await db.ref('config/history_keys_ready').once('value')).val() === true) return;
+  const up = missingKeys((await db.ref('requests').once('value')).val());
+  const paths = Object.keys(up);
+  for (let i = 0; i < paths.length; i += 500) {
+    await db.ref('requests').update(Object.fromEntries(paths.slice(i, i + 500).map((p) => [p, up[p]])));
+  }
+  await db.ref('config/history_keys_ready').set(true);
+  logger.info(`History keys filled in on ${paths.length} requests`);
 });
