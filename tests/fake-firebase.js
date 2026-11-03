@@ -1,5 +1,5 @@
 /* A tiny in-memory stand-in for the Firebase compat SDK (app, auth, database), used only by
-   tests/smoke.mjs so the app can be opened in a test browser without the real database.
+   tests/smoke.cjs so the app can be opened in a test browser without the real database.
    Set window.__FAKE = { user, data } before the page loads. Only what the app uses is here. */
 (function () {
   'use strict';
