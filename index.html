@@ -307,6 +307,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .addr-tick:has(input:checked){border-color:var(--yellow-lo);background:var(--yellow-soft);color:var(--accent-ink)}
 .addr-tick:has(input:focus-visible){box-shadow:0 0 0 3px var(--yellow-ring)}
 .addr-tick.off{opacity:.45;cursor:default}
+.addr-tick .i{width:18px;height:18px;flex:none;margin-left:-2px}
 .text-edit textarea{display:block;width:100%;min-height:44px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:14px;line-height:1.4;color:var(--ink);outline:none;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -1004,13 +1005,46 @@ function friendlyError(err) {
 /* ---------------- The dispatch text ----------------
    Format: "<pickup name> for <delivery name> , <order details separated by commas>"
    Order details: items, item description, Prepaid/Collect, PO, driver notes.
-   Never included: addresses, phone numbers, emails, scheduled date. */
+   Addresses and map links only when the Pickup address / Delivery address / Map link ticks are on.
+   Never included: phone numbers, emails, scheduled date. */
 function oneLine(s) { return String(s || '').replace(/\s*[\r\n]+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
-// with = { pickup: true, delivery: true } adds that leg's address after its name: "Acme (12 Main St)"
+/* Google names rural highways in ways drivers don't say ("Manitoba 45", "MB-45"):
+   in the text they read "Hwy 45". The saved address isn't changed. */
+function readableAddr(s) {
+  return oneLine(s)
+    .replace(/\b(?:Manitoba|MB)[\s-]+(?:Highway\s+|Hwy\s+)?(\d{1,3})\b/gi, 'Hwy $1')
+    .replace(/\bProvincial Trunk Highway\s+(\d{1,3})\b/gi, 'Hwy $1')
+    .replace(/\bPTH\s*(\d{1,3})\b/g, 'Hwy $1')
+    .replace(/\bProvincial Road\s+(\d{1,3})\b/gi, 'PR $1');
+}
+// The address as the driver reads it, with the town added when the address doesn't name it
+function withCity(addr, city) {
+  city = oneLine(city);
+  return addr && city && !addr.toLowerCase().includes(city.toLowerCase()) ? `${addr}, ${city}` : addr;
+}
+const legAddr = (L) => (L ? withCity(readableAddr(L.address), L.city) : '');
+// Google Maps directions to the leg: opens the Google Maps app on Android, and on iPhone when it's installed
+function legMapLink(L) {
+  if (!L) return '';
+  const lat = Number(L.lat);
+  const lng = Number(L.lng);
+  const dest = L.lat != null && L.lng != null && isFinite(lat) && isFinite(lng) ? `${lat},${lng}` : withCity(oneLine(L.address), L.city);
+  return dest ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest).replace(/%2C/g, ',')}&travelmode=driving` : '';
+}
+/* with = { pickup, delivery, map }: pickup/delivery add that leg's address after its name,
+   "Acme (12 Main St, Brandon)"; map adds a Google Maps link after each address shown,
+   or after both names when no address is ticked. */
 const legName = (r, leg, with_) => {
-  const name = oneLine(r[leg] && r[leg].name);
-  const addr = oneLine(r[leg] && r[leg].address);
-  return with_ && with_[leg] && addr ? `${name} (${addr})` : name;
+  const L = r[leg];
+  const name = oneLine(L && L.name);
+  const w = with_ || {};
+  const addr = w[leg] ? legAddr(L) : '';
+  let out = addr ? `${name} (${addr})` : name;
+  if (w.map && (w[leg] || (!w.pickup && !w.delivery))) {
+    const link = legMapLink(L);
+    if (link) out += ` ${link}`;
+  }
+  return out;
 };
 function dispatchText(r, with_) {
   const head = `${legName(r, 'pickup', with_)} for ${legName(r, 'delivery', with_)}`;
@@ -1062,22 +1096,29 @@ function saveEdits() {
 const addrTicks = {};
 const baseText = (id, r) => dispatchText(r, addrTicks[id]);
 function textFor(id, r) { const e = edits[editKey(id, r)]; return e ? e.text : baseText(id, r); }
-function setAddrTick(id, leg, on) {
+function setAddrTick(id, which, on) {
   const r = S.pending[id] || doneReq(id);
   if (!r) return;
   const before = { ...(addrTicks[id] || {}) };
-  addrTicks[id] = { ...before, [leg]: on };
+  const after = { ...before, [which]: on };
+  addrTicks[id] = after;
   const k = editKey(id, r);
   if (edits[k]) {
-    // Already edited by hand: put the address in (or take it out) right after the name in that text
-    const plain = legName(r, leg, null);
-    const withAddr = legName(r, leg, { [leg]: true });
+    // Already edited by hand: swap each name's old address/link part for the new one in that text
     let t = edits[k].text;
-    if (on && plain && !t.includes(withAddr)) t = t.includes(plain) ? t.replace(plain, withAddr) : t;
-    if (!on) t = t.replace(withAddr, plain);
+    const swap = (leg, from) => {
+      const was = legName(r, leg, before);
+      const now = legName(r, leg, after);
+      if (!was || was === now) return;
+      const at = t.indexOf(was, from);
+      if (at >= 0) t = t.slice(0, at) + now + t.slice(at + was.length);
+    };
+    swap('pickup', 0);
+    const forAt = t.indexOf(' for ');
+    swap('delivery', forAt >= 0 ? forAt : 0);
     setEdit(id, t);
   } else setEdit(id, null);
-  $$('[data-addr-tick]').filter((c) => c.dataset.id === id && c.dataset.addrTick === leg).forEach((c) => { c.checked = on; });
+  $$('[data-addr-tick]').filter((c) => c.dataset.id === id && c.dataset.addrTick === which).forEach((c) => { c.checked = on; });
 }
 function textEditor(id, r, where) {
   const edited = !!edits[editKey(id, r)];
@@ -1086,9 +1127,12 @@ function textEditor(id, r, where) {
     const on = !!(addrTicks[id] && addrTicks[id][leg]);
     return `<label class="addr-tick${has ? '' : ' off'}"${has ? '' : ` title="No ${label.toLowerCase()} on this request"`}><input type="checkbox" data-addr-tick="${leg}" data-id="${esc(id)}"${on ? ' checked' : ''}${has ? '' : ' disabled'}><span>${label}</span></label>`;
   };
+  const mapOn = !!(addrTicks[id] && addrTicks[id].map);
+  const mapHas = !!(legMapLink(r.pickup) || legMapLink(r.delivery));
+  const mapTick = `<label class="addr-tick map${mapHas ? '' : ' off'}"${mapHas ? '' : ' title="No address to link on this request"'}><input type="checkbox" data-addr-tick="map" data-id="${esc(id)}"${mapOn ? ' checked' : ''}${mapHas ? '' : ' disabled'}>${icon('pin')}<span>Map link</span></label>`;
   return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
     <div class="text-edit-head"><span>Text to send \u00b7 tap to edit</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
-    <div class="addr-ticks">${tick('pickup', 'Pickup address')}${tick('delivery', 'Delivery address')}</div>
+    <div class="addr-ticks">${tick('pickup', 'Pickup address')}${tick('delivery', 'Delivery address')}${mapTick}</div>
     <textarea data-edit="${esc(id)}" data-where="${where}" rows="${where === 'card' ? 2 : 3}" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
   </div>`;
 }
