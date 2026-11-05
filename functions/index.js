@@ -18,7 +18,10 @@ admin.initializeApp();
 
 // The default Realtime Database (…-default-rtdb.firebaseio.com) lives in us-central1;
 // database triggers have to run in the same region as the database.
-setGlobalOptions({ region: 'us-central1', maxInstances: 5 });
+// They run as their own Google account (database and phone notifications only), shared with the
+// time clock functions, instead of the project's default account, which has Editor on everything.
+// usage/scripts/setup-robot-keys.sh makes it. Added 2026-11-05.
+setGlobalOptions({ region: 'us-central1', maxInstances: 5, serviceAccount: 'ec-apps@eandccourier-36fcc.iam.gserviceaccount.com' });
 
 // Must match ALERT_CHANNEL_ID in android/app/src/main/java/com/eandc/dispatch/MainActivity.java
 const ANDROID_CHANNEL_ID = 'dispatch_alerts_v1';
