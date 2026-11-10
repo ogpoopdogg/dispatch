@@ -79,7 +79,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForSelector('#view-app:not([hidden]) .job');
     assert.strictEqual(await page.locator('#queue-list .job').count(), 2, 'two jobs waiting today');
     // 2.6 search and filter
-    assert.ok(await page.isVisible('#queue-tools'), 'queue search shows with 2 or more jobs');
+    assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
+    await page.click('[data-act=queue-search]');
+    assert.ok(await page.isVisible('#queue-tools'), 'the magnifier opens search and filters');
     await page.fill('#queue-q', 'prairie');
     await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
     await page.fill('#queue-q', '');
@@ -93,33 +95,67 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.job-changed'), /Pickup address \(was 12 Main St\)/);
     await page.click('[data-act=ack-all]').catch(() => {});
     await shot(page, 'queue');
-    // Pickup address / Delivery address ticks add the address after the name in the text
+    // Small cards: no text box until Text is tapped
     {
       const card = '#queue-list .job[data-id=r2]';
       const ta = `${card} textarea[data-edit]`;
-      const pick = `${card} input[data-addr-tick=pickup]`;
-      const del = `${card} input[data-addr-tick=delivery]`;
-      assert.ok(!(await page.isChecked(pick)) && !(await page.isChecked(del)), 'ticks start unticked');
-      const box = await page.locator(`${card} .addr-tick >> nth=0`).boundingBox();
-      assert.ok(box.height >= 44, 'ticks are big enough for a thumb');
-      await page.check(pick);
-      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 ,/);
-      await page.check(del);
-      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 \(1 Industrial Rd\) ,/);
-      assert.ok(await page.isHidden(`${card} [data-act=reset-edit]`), 'ticking alone is not a hand edit');
-      await shot(page, 'addr-ticks');
-      await page.uncheck(pick);
-      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 \(1 Industrial Rd\) ,/);
-      // A hand-edited text gets the address put in after the name too
-      await page.fill(ta, 'Prairie Parts for Dock 4 (1 Industrial Rd), call ahead');
-      await page.check(pick);
-      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts (9 Rosser Ave) for Dock 4 (1 Industrial Rd), call ahead');
-      await page.uncheck(del);
-      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts (9 Rosser Ave) for Dock 4, call ahead');
-      assert.strictEqual(await page.evaluate(() => textFor('r2', S.pending.r2)), 'Prairie Parts (9 Rosser Ave) for Dock 4, call ahead', 'what gets sent matches the box');
+      assert.strictEqual(await page.locator(ta).count(), 0, 'the text is hidden on a small card');
+      const send = await page.locator(`${card} [data-act=pick-driver]`).boundingBox();
+      assert.ok(send.height >= 44, 'Send to driver is big enough for a thumb');
+      await page.click(`${card} [data-act=job-text]`);
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4, 1 pallet 400 lbs, Collect$/, 'no space before the comma');
+      // Address switch: None / Pickup / Delivery / Both, and Map link (pickup only)
+      const mode = (m) => page.click(`${card} [data-act=addr-mode][data-mode=${m}]`);
+      const seg = await page.locator(`${card} [data-act=addr-mode] >> nth=0`).boundingBox();
+      assert.ok(seg.height >= 38, 'address switch is easy to hit');
+      await mode('pickup');
+      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4,/);
+      await mode('delivery');
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 \(1 Industrial Rd\),/);
+      await mode('both');
+      assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 \(1 Industrial Rd\),/);
+      await page.click(`${card} [data-act=addr-map]`);
+      assert.match(await page.inputValue(ta), /, https:\/\/maps\.google\.com\/\?q=9\+Rosser\+Ave$/, 'map link for the pickup at the end');
+      assert.ok(await page.isHidden(`${card} [data-act=reset-edit]`), 'the switch alone is not a hand edit');
+      // Remembered for the customer (shared with every dispatcher)
+      await page.waitForFunction(() => { const p = window.__fakeDb.get('dispatch_settings/addr_prefs/c_c2'); return p && p.addr === 'both' && p.map === true; });
+      await shot(page, 'card-open');
+      // A hand-edited text gets the address and link taken out too
+      await page.fill(ta, 'Prairie Parts (9 Rosser Ave) for Dock 4 (1 Industrial Rd), call ahead, https://maps.google.com/?q=9+Rosser+Ave');
+      await mode('delivery');
+      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts for Dock 4 (1 Industrial Rd), call ahead, https://maps.google.com/?q=9+Rosser+Ave');
+      await page.click(`${card} [data-act=addr-map]`);
+      assert.strictEqual(await page.inputValue(ta), 'Prairie Parts for Dock 4 (1 Industrial Rd), call ahead');
+      assert.strictEqual(await page.evaluate(() => textFor('r2', S.pending.r2)), 'Prairie Parts for Dock 4 (1 Industrial Rd), call ahead', 'what gets sent matches the box');
       await page.click(`${card} [data-act=reset-edit]`);
-      await page.uncheck(pick);
-      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 ,/);
+      await mode('off');
+      assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4,/);
+      await page.click(`${card} [data-act=job-text]`);
+      assert.strictEqual(await page.locator(ta).count(), 0, 'Text closes again');
+      // Opening it marks it seen for the customer
+      await page.waitForFunction(() => !!window.__fakeDb.get('requests/r2/seen_at'));
+      // ⋯ menu: Details, Schedule for later and Remove
+      await page.click(`${card} [data-act=job-menu]`);
+      await page.waitForSelector('#sheet:not([hidden]) .menu-list');
+      assert.ok(await page.isVisible('.menu-list [data-act=schedule-later]'));
+      assert.ok(await page.isVisible('.menu-list [data-act=remove]'));
+      await shot(page, 'menu');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+    }
+    // Messages: a customer's message shows on the card, and a quick reply answers it
+    {
+      await page.evaluate(() => window.__fakeDb.put('messages/m1', { rid: 'r1', company_id: 'c1', from: 'customer', text: 'Can you add a box?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
+      await page.waitForSelector('#queue-list .job[data-id=r1] .chip.msg');
+      await page.click('#queue-list .job[data-id=r1] .chip.msg');
+      await page.waitForSelector('#sheet .msgs .msg.them');
+      await page.click('#sheet .quick .chip-btn >> nth=1');
+      await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.from === 'dispatch' && m.rid === 'r1'));
+      await page.waitForSelector('#sheet .msgs .msg.me');
+      await shot(page, 'messages');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
     }
     // 3.3 an open sheet is the only thing reachable
     await page.click('#queue-list .job [data-act=details] >> nth=0');
@@ -159,7 +195,17 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Settings: alert check
     await page.click('.tab[data-tab=settings]');
     await page.waitForFunction(() => /2 phones/.test((document.getElementById('alert-reach') || {}).textContent || ''));
+    assert.ok(await page.isVisible('[data-act=edit-quick]'), 'quick replies in Settings');
     await shot(page, 'settings');
+    // Done: no "Load 20 more" when there's nothing older, and the day summary
+    await page.click('.tab[data-tab=done]');
+    await page.waitForSelector('#done-list .row');
+    await page.waitForFunction(() => !document.querySelector('[data-act=load-more]'));
+    await page.click('#panel-done [data-act=day-board]');
+    await page.waitForSelector('#board .board-group');
+    assert.match(await page.textContent('#board .board-head'), /Mike/);
+    await shot(page, 'board');
+    await page.keyboard.press('Escape');
     assert.deepStrictEqual(errors, [], 'no script errors');
     console.log('dispatch smoke test passed');
   } finally {
