@@ -354,10 +354,40 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .msgs{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .msgs h3{display:flex;align-items:center;gap:6px;font-size:15px;font-stretch:100%;margin-bottom:8px}
 .msgs-empty{font-size:13px;color:var(--ink-2);margin-bottom:8px}
-.msg{max-width:85%;margin:0 0 6px;padding:7px 10px;border-radius:14px;font-size:14.5px;line-height:1.35;overflow-wrap:anywhere}
-.msg small{display:block;font-size:11.5px;opacity:.7;margin-top:2px}
-.msg.them{background:var(--surface-3);border-bottom-left-radius:4px}
-.msg.me{margin-left:auto;background:var(--yellow);color:#000;border-bottom-right-radius:4px}
+.msgs h3 .grow{flex:1;min-width:0}
+.msgs h3 .link-btn{font-size:13px;white-space:nowrap}
+.msg{max-width:88%;margin:0 0 8px;padding:8px 12px 9px;border-radius:16px;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.msg p{margin:0;font-weight:500}
+.msg-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-bottom:3px;font-size:12.5px;line-height:1.2}
+.msg-head b{font-weight:800}
+.msg-head span{color:var(--ink-2)}
+.msg.them{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-bottom-left-radius:5px;box-shadow:var(--sh-1, 0 1px 2px rgba(0,0,0,.06))}
+.msg.me{margin-left:auto;background:var(--yellow);color:#000;border-bottom-right-radius:5px}
+.msg.me .msg-head span{color:rgba(0,0,0,.66)}
+.msg-ref{min-height:24px;padding:0 8px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.msg.me .msg-ref{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.2);color:#000}
+.msg-top .badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--danger);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center;box-shadow:0 0 0 2px var(--surface)}
+.msg-top{overflow:visible}
+.banner-msg{background:#0b4fb3;color:#fff;box-shadow:0 8px 24px -10px rgba(11,79,179,.8)}
+.banner-msg .i{animation:ring 1s ease-in-out infinite}
+.banner-msg .banner-pill{background:#fff;color:#0b4fb3}
+.msg-cos .msg-co{display:flex;align-items:center;gap:10px;width:100%;padding:10px 4px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.msg-cos .msg-co:first-child{border-top:0}
+.msg-co .avatar{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--surface-2);font-weight:800;font-size:14px}
+.msg-co .grow{flex:1;min-width:0}
+.msg-co-top{display:flex;align-items:baseline;gap:8px}
+.msg-co-top b{flex:1;min-width:0;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-co-top small{flex:none;color:var(--ink-2);font-size:12.5px}
+.msg-co-last{display:block;color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-co.unread .msg-co-last{color:var(--ink);font-weight:650}
+.msg-count{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--danger);color:#fff;font-size:12px;font-weight:800;line-height:22px;text-align:center}
+.msg-back{margin:0 0 10px;font-size:14px}
+.msg-list{padding-bottom:6px}
+.msg-compose{position:sticky;bottom:-14px;margin:6px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface)}
+.msg-about{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.msg-about select{flex:1;min-width:0;min-height:38px;padding:0 8px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:14.5px;font-weight:650}
+.msg-compose .quick{margin:6px 0}
+.notice-err{color:var(--danger);font-size:13.5px;margin:0 0 10px}
 .quick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .quick .chip-btn{min-height:40px;color:var(--ink);white-space:normal;text-align:left}
 .msg-form{display:grid;grid-template-columns:minmax(0,1fr) 52px;gap:6px}
@@ -667,7 +697,31 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 /* The bar at the bottom: the text that gets sent, the big button, and ⋯ */
 .nd-send{position:sticky;bottom:-14px;z-index:3;margin:8px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface);box-shadow:0 -10px 18px -14px rgba(0,0,0,.45)}
 .sheet.kb .nd-send{position:static;box-shadow:none}
-.nd-preview{margin:0 0 8px;font-size:13.5px;line-height:1.35;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.nd-text-box{position:relative;margin:0 0 8px}
+#nd-text.nd-preview{resize:none}
+.nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
+.nd-preview::placeholder{color:var(--ink-3);font-weight:500}
+.nd-preview:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.nd-pen{position:absolute;right:10px;top:12px;display:flex;color:var(--ink-2);pointer-events:none}
+.nd-pen .i{width:16px;height:16px}
+.nd-text-box:focus-within .nd-pen,.nd-text-box.edited .nd-pen{display:none}
+.nd-text-box.edited .nd-preview{border-color:var(--yellow-lo)}
+.nd-text-reset{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);cursor:pointer}
+.nd-text-reset:active{background:var(--surface-2)}
+.nd-cal-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px;margin-bottom:4px}
+.nd-cal-top .btn{min-height:42px;gap:6px}
+.nd-cal-top small{font-weight:600;opacity:.75;margin-left:2px}
+.nd-cal-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 4px}
+.nd-cal-head b{font-size:14.5px}
+.nd-cal-head button{width:44px;height:32px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.nd-cal-head button:disabled{opacity:.3;cursor:default}
+.nd-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding-bottom:6px}
+.nd-cal-grid .wd{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-3);padding:2px 0}
+.nd-cal-grid button{height:34px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font:inherit;font-size:14.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-cal-grid button:disabled{color:var(--ink-3);opacity:.5;cursor:default}
+.nd-cal-grid button.today{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.nd-cal-grid button.on{background:var(--yellow);color:#000}
+.nd-cal-grid button:not(:disabled):active{background:var(--yellow-soft)}
 .nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
 .nd-go>span{display:block}
 .nd-big{width:100%;min-height:52px;font-size:16.5px}
@@ -827,6 +881,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
         <div><div class="wordmark">E&amp;C <b>Dispatch</b></div><div class="sub" id="hdr-sub"></div></div>
         <div class="spacer"></div>
         <span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span>
+        <button class="icon-btn msg-top" type="button" data-act="open-msgs" id="msg-btn" aria-label="Messages"><svg class="i"><use href="#i-chat"/></svg><span class="badge" id="msg-badge" hidden></span></button>
         <button class="icon-btn" type="button" data-act="toggle-sound" id="sound-btn" aria-label="Alert sound on"><svg class="i"><use href="#i-sound"/></svg></button>
       </div>
     </header>
@@ -894,6 +949,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <div class="dock" id="dock">
     <button class="banner banner-sound" type="button" id="sound-banner" data-act="unlock-sound" hidden>
       <svg class="i"><use href="#i-mute"/></svg><span class="grow">Sound is off until you tap here<small>Phones block sound until the screen is tapped once</small></span>
+    </button>
+    <button class="banner banner-msg" type="button" id="msg-banner" data-act="msg-banner" hidden>
+      <svg class="i"><use href="#i-chat"/></svg><span class="grow" id="msg-banner-text"></span><span class="banner-pill">Open</span>
     </button>
     <button class="banner banner-alert" type="button" id="alert-banner" data-act="ack-all" hidden>
       <svg class="i"><use href="#i-bell"/></svg><span class="grow" id="alert-text"></span><span class="banner-pill">Got it</span>
@@ -1385,10 +1443,10 @@ async function registerSw() {
   try { swReg = await navigator.serviceWorker.register('sw.js', { scope: './' }); } catch (e) { swReg = null; }
   return swReg;
 }
-async function systemNotify(title, body) {
+async function systemNotify(title, body, tag) {
   if (!S.settings.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
   if (document.visibilityState === 'visible') return; // the in-page alert covers it
-  const opts = { body, tag: 'ec-dispatch', renotify: true, requireInteraction: true, vibrate: [300, 150, 300, 150, 300], icon: 'icon-512.png', badge: 'icon-512.png' };
+  const opts = { body, tag: tag || 'ec-dispatch', renotify: true, requireInteraction: true, vibrate: [300, 150, 300, 150, 300], icon: 'icon-512.png', badge: 'icon-512.png' };
   try {
     const reg = swReg || (await registerSw());
     if (reg) { await reg.showNotification(title, opts); return; }
@@ -1424,7 +1482,12 @@ function initPushListeners() {
     toast('Phone alerts couldn\u2019t start: ' + ((err && err.error) || 'unknown error'), 'error', 9000);
   });
   // Tapped a notification: show the queue
-  Push.addListener('pushNotificationActionPerformed', () => { if (!$('#view-app').hidden) switchTab('queue'); });
+  Push.addListener('pushNotificationActionPerformed', (a) => {
+    if ($('#view-app').hidden) return;
+    const d = (a && a.notification && a.notification.data) || {};
+    if (d.kind === 'message' && d.companyId) openMessages(d.companyId, d.requestId || '');
+    else switchTab('queue');
+  });
 }
 async function setupPush() {
   if (!Push) return;
@@ -1883,9 +1946,9 @@ function startListening() {
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
-  // Messages from customers (Request Pickup), the last 7 days
+  // Messages from customers (Request Pickup), the last 30 days
   firstMsgs = true;
-  listen(db.ref('messages').orderByChild('at').startAt(Date.now() - 7 * 86400000), onMessages, () => {});
+  listen(db.ref('messages').orderByChild('at').startAt(Date.now() - MSG_DAYS * 86400000), onMessages, (err) => { S.msgsError = deniedMsg(err); refreshMsgs(); });
   listen(db.ref('dispatch_contacts'), (snap) => {
     const v = snap.val() || {};
     S.contacts = { drivers: v.drivers || {}, groups: v.groups || {} };
@@ -1962,7 +2025,7 @@ function jobCard(id, r) {
   chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
   const unread = unreadMsgs(id);
-  if (unread) chips.push(`<button class="chip msg" type="button" data-act="details" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
+  if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
@@ -2543,6 +2606,7 @@ function markMsgsSeen(rid) {
   Object.keys(msgSeen).forEach((k) => { if (msgSeen[k] < cutoff) delete msgSeen[k]; });
   try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
   renderCounts();
+  renderMsgUi();
 }
 const QUICK_DEFAULTS = ['Got it, thanks!', 'A driver is on the way.', 'Running a little late. Sorry!'];
 const quickList = () => {
@@ -2553,9 +2617,9 @@ const quickList = () => {
 function msgThread(rid, r) {
   if (!r || r.source === 'dispatcher') return '';
   const list = msgsFor(rid);
-  const bubbles = list.map(([, m]) => `<div class="msg ${m.from === 'dispatch' ? 'me' : 'them'}"><p>${esc(m.text)}</p><small>${m.from === 'dispatch' ? `${esc(m.by_name || 'Dispatch')} · ` : `${esc(m.by_name || r.company_name || 'Customer')} · `}${esc(fmtDateTime(m.at))}</small></div>`).join('');
+  const bubbles = list.map(([, m]) => msgBubble(m, r.company_name, false)).join('');
   return `<section class="msgs" data-msgs="${esc(rid)}">
-      <h3>${icon('chat', 'sm')}Messages with ${esc(r.company_name || 'the customer')}</h3>
+      <h3>${icon('chat', 'sm')}<span class="grow">Messages about #${esc(r.ref_no)}</span>${r.company_id ? `<button class="link-btn" type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(rid)}">All with ${esc(clampText(r.company_name || 'customer', 20))}</button>` : ''}</h3>
       ${bubbles || '<p class="msgs-empty">No messages yet. They show in the customer’s app.</p>'}
       <div class="quick">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="${esc(rid)}" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>
       <form class="msg-form" data-msg-form="${esc(rid)}"><input name="text" maxlength="500" placeholder="Write to the customer" aria-label="Message to the customer" autocomplete="off" enterkeyhint="send"><button class="btn btn-primary" type="submit" aria-label="Send message">${icon('send', 'sm')}</button></form>
@@ -2563,11 +2627,13 @@ function msgThread(rid, r) {
 }
 async function sendMsg(rid, text) {
   const f = findReq(rid);
+  const m0 = (msgsFor(rid)[0] || [])[1];
   text = String(text || '').trim().slice(0, 500);
-  if (!f || !text) return false;
+  const cid = (f && f.r.company_id) || (m0 && m0.company_id) || '';
+  if (!rid || !cid || !text) { if (text && !rid) toast('Pick which pickup it’s about first.', 'info'); return false; }
   if (!db || !S.user || S.fromCache) { toast('Still connecting. Try again in a moment.', 'info'); return false; }
   try {
-    await db.ref('messages').push({ rid, company_id: f.r.company_id || '', ref_no: f.r.ref_no || null, from: 'dispatch', text, at: TS, by_uid: S.user.uid, by_name: meName() });
+    await db.ref('messages').push({ rid, company_id: cid, ref_no: (f && f.r.ref_no) || (m0 && m0.ref_no) || null, from: 'dispatch', text, at: TS, by_uid: S.user.uid, by_name: meName() });
     toast('Message sent', 'ok');
     return true;
   } catch (err) { toast(`The message didn’t send: ${deniedMsg(err)}`, 'error', 9000); return false; }
@@ -2576,27 +2642,163 @@ let firstMsgs = true;
 function onMessages(snap) {
   const before = S.msgs || {};
   S.msgs = snap.val() || {};
+  S.msgsError = '';
   if (!firstMsgs) {
-    Object.entries(S.msgs).forEach(([mid, m]) => {
-      if (before[mid] || !m || m.from !== 'customer') return;
-      const f = findReq(m.rid);
-      playChime('new'); buzz([200, 100, 200]);
-      toast(`Message${f ? ` on #${f.r.ref_no} from ${f.r.company_name || 'the customer'}` : ''}: ${m.text}`, 'info', 12000, f ? { label: 'Open', run: () => openDetails(m.rid) } : null);
-    });
+    const fresh = Object.entries(S.msgs).filter(([mid, m]) => !before[mid] && m && m.from === 'customer').map(([, m]) => m).sort((a, b) => (a.at || 0) - (b.at || 0));
+    const m = fresh[fresh.length - 1];
+    if (m && !(msgView === m.company_id && msgSheetOpen())) {
+      msgAlert = { cid: m.company_id, rid: m.rid };
+      const who = coName(m.company_id), ref = msgRef(m) ? ` about #${msgRef(m)}` : '';
+      playChime('new'); buzz([400, 150, 400]);
+      systemNotify(`Message from ${who}${ref}`, m.text, 'ec-msg');
+    }
   }
   firstMsgs = false;
+  if (msgSheetOpen() && msgView && msgView !== 'list') markCoSeen(msgView);
   renderAll();
+  renderMsgUi();
+  refreshMsgs();
 }
 document.addEventListener('submit', async (e) => {
   const f = e.target.closest && e.target.closest('form[data-msg-form]');
   if (!f) return;
   e.preventDefault();
   const input = f.elements.text;
-  const btn = $('button', f);
+  const btn = $('button[type=submit]', f);
   btn.disabled = true;
-  if (await sendMsg(f.dataset.msgForm, input.value)) input.value = '';
+  if (await sendMsg(f.dataset.msgForm || msgAboutVal(), input.value)) input.value = '';
   btn.disabled = false;
 });
+
+/* ---------- Messages: one conversation per customer account ----------
+   Every message still belongs to one pickup (rid), shown as #number on the bubble,
+   but a customer's messages about all their pickups read as one thread. */
+const MSG_DAYS = 30;
+let msgView = null; // 'list', or the company id of the open conversation
+let msgAbout = '';  // the pickup the next reply is about
+let msgAlert = null; // { cid, rid } of the newest message nobody has opened yet
+// The pickup number on a message (older messages may not carry it)
+const msgRef = (m) => { if (m.ref_no) return m.ref_no; const f = findReq(m.rid); return f ? f.r.ref_no : ''; };
+const msgSheetOpen = () => !!(sheetOpen && $('#sheet-body [data-msgs-view]'));
+function coName(cid) {
+  if (coBooks.names && coBooks.names[cid]) return coBooks.names[cid];
+  const r = Object.values(S.pending || {}).find((x) => x && x.company_id === cid && x.company_name);
+  if (r) return r.company_name;
+  for (const [, m] of Object.entries(S.msgs || {})) { if (m && m.company_id === cid) { const f = findReq(m.rid); if (f && f.r.company_name) return f.r.company_name; } }
+  return 'Customer';
+}
+const coMsgs = (cid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.company_id === cid).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
+const coUnread = (cid) => coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[m.rid] || 0)).length;
+function msgCompanies() {
+  const by = {};
+  Object.values(S.msgs || {}).forEach((m) => { if (m && m.company_id) (by[m.company_id] = by[m.company_id] || []).push(m); });
+  return Object.entries(by).map(([cid, list]) => {
+    list.sort((a, b) => (a.at || 0) - (b.at || 0));
+    return { cid, last: list[list.length - 1], unread: coUnread(cid) };
+  }).sort((a, b) => (b.last.at || 0) - (a.last.at || 0));
+}
+const msgUnreadTotal = () => msgCompanies().reduce((n, c) => n + c.unread, 0);
+function markCoSeen(cid) {
+  let any = false;
+  coMsgs(cid).forEach(([, m]) => { if (m.from === 'customer' && (m.at || 0) > (msgSeen[m.rid] || 0)) { msgSeen[m.rid] = Date.now(); any = true; } });
+  if (msgAlert && msgAlert.cid === cid) msgAlert = null;
+  if (!any) { renderMsgUi(); return; }
+  try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
+  renderMsgUi();
+  renderAll();
+}
+// The count on the top-bar button and the banner over the bottom bar
+function renderMsgUi() {
+  const n = msgUnreadTotal();
+  const badge = $('#msg-badge');
+  if (badge) { badge.hidden = !n; badge.textContent = n > 9 ? '9+' : String(n); }
+  const btn = $('#msg-btn');
+  if (btn) btn.setAttribute('aria-label', n ? `Messages, ${n} new` : 'Messages');
+  const banner = $('#msg-banner');
+  if (!banner) return;
+  if (msgAlert && !coUnread(msgAlert.cid)) msgAlert = null;
+  banner.hidden = !msgAlert;
+  if (!msgAlert) return;
+  const last = coMsgs(msgAlert.cid).filter(([, m]) => m.from === 'customer').pop();
+  const m = last ? last[1] : { rid: '' };
+  $('#msg-banner-text').innerHTML = `${esc(n > 1 ? `${n} new messages` : `Message from ${coName(msgAlert.cid)}`)}${msgRef(m) ? ` about #${esc(msgRef(m))}` : ''}<small>${esc(m.text || '')}</small>`;
+}
+function msgBubble(m, coLabel, withRef) {
+  const me = m.from === 'dispatch';
+  const who = me ? (m.by_name || 'Dispatch') : (m.by_name || coLabel || 'Customer');
+  const n = withRef ? msgRef(m) : '';
+  const ref = n ? `<button class="msg-ref" type="button" data-act="details" data-id="${esc(m.rid)}" aria-label="Open pickup #${esc(n)}">#${esc(n)}</button>` : '';
+  return `<div class="msg ${me ? 'me' : 'them'}"><div class="msg-head">${ref}<b>${esc(who)}</b><span>${esc(fmtDateTime(m.at))}</span></div><p>${esc(m.text)}</p></div>`;
+}
+// Pickups a reply can be about: the ones in this conversation, then this customer's waiting ones
+function msgAboutList(cid) {
+  const out = [], seen = new Set();
+  const add = (rid, r, refNo) => {
+    if (!rid || seen.has(rid)) return;
+    seen.add(rid);
+    const label = r ? `#${r.ref_no} · ${clampText(`${(r.pickup && r.pickup.name) || '?'} for ${(r.delivery && r.delivery.name) || '?'}`, 34)}` : `#${refNo || '?'}`;
+    out.push({ rid, label });
+  };
+  coMsgs(cid).slice().reverse().forEach(([, m]) => { const f = findReq(m.rid); add(m.rid, f && f.r, msgRef(m)); });
+  Object.entries(S.pending || {}).filter(([, r]) => r && r.company_id === cid).sort((a, b) => (b[1].created_at || 0) - (a[1].created_at || 0)).forEach(([id, r]) => add(id, r));
+  return out;
+}
+const msgAboutVal = () => { const sel = $('#msg-about'); return sel ? sel.value : ''; };
+function msgsHtml() {
+  if (msgView === 'list' || !msgView) {
+    const cos = msgCompanies();
+    const err = S.msgsError ? `<p class="notice-err">Messages couldn’t load: ${esc(S.msgsError)}</p>` : '';
+    if (!cos.length) return `<div data-msgs-view="list">${err}<div class="empty"><h3>No messages yet</h3><p>When a customer writes from Request Pickup, it shows here and on their card. The last ${MSG_DAYS} days are kept here.</p></div></div>`;
+    return `<div data-msgs-view="list">${err}<div class="list msg-cos">${cos.map((c) => {
+      const name = coName(c.cid), m = c.last;
+      return `<button class="row msg-co${c.unread ? ' unread' : ''}" type="button" data-act="msg-co" data-cid="${esc(c.cid)}">
+        <span class="avatar" aria-hidden="true">${esc(initials(name) || '?')}</span>
+        <span class="grow"><span class="msg-co-top"><b>${esc(name)}</b><small>${esc(fmtTime(m.at))}</small></span>
+        <span class="msg-co-last">${m.from === 'dispatch' ? 'You: ' : ''}${msgRef(m) ? `#${esc(msgRef(m))} · ` : ''}${esc(m.text)}</span></span>
+        ${c.unread ? `<span class="msg-count" aria-label="${c.unread} new">${c.unread}</span>` : ''}</button>`;
+    }).join('')}</div></div>`;
+  }
+  const cid = msgView, name = coName(cid);
+  const list = coMsgs(cid);
+  const about = msgAboutList(cid);
+  if (!about.some((a) => a.rid === msgAbout)) {
+    const lastCust = list.filter(([, m]) => m.from === 'customer').pop();
+    msgAbout = lastCust ? lastCust[1].rid : (about[0] && about[0].rid) || '';
+  }
+  return `<div data-msgs-view="thread" data-cid="${esc(cid)}">
+    <button class="link-btn msg-back" type="button" data-act="msg-list">‹ All customers</button>
+    <div class="msg-list" id="msg-list">${list.length ? list.map(([, m]) => msgBubble(m, name, true)).join('') : '<p class="msgs-empty">No messages yet.</p>'}</div>
+    ${about.length ? `<div class="msg-compose">
+      <label class="msg-about"><span>About</span><select id="msg-about" aria-label="Which pickup the reply is about">${about.map((a) => `<option value="${esc(a.rid)}"${a.rid === msgAbout ? ' selected' : ''}>${esc(a.label)}</option>`).join('')}</select></label>
+      <div class="quick">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>
+      <form class="msg-form" data-msg-form=""><input name="text" maxlength="500" placeholder="Write to ${esc(name)}" aria-label="Message to ${esc(name)}" autocomplete="off" enterkeyhint="send"><button class="btn btn-primary" type="submit" aria-label="Send message">${icon('send', 'sm')}</button></form>
+    </div>` : ''}
+  </div>`;
+}
+function msgScrollEnd() { const b = $('#sheet-body'); if (b) b.scrollTop = b.scrollHeight; }
+function openMessages(cid, rid) {
+  loadCompanyBooks();
+  msgView = cid || 'list';
+  if (rid) msgAbout = rid;
+  openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); }, true);
+  if (cid) markCoSeen(cid);
+}
+// Redraws the open Messages screen, keeping a half-typed reply and the scroll spot
+function refreshMsgs() {
+  if (!msgSheetOpen()) return;
+  const body = $('#sheet-body');
+  const input = $('#sheet-body form[data-msg-form] input');
+  const draft = input ? input.value : '', typing = !!input && input === document.activeElement;
+  const sel = $('#msg-about'); if (sel) msgAbout = sel.value;
+  const atEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 40, top = body.scrollTop;
+  $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : coName(msgView);
+  body.innerHTML = msgsHtml();
+  if (atEnd && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
+  const again = $('#sheet-body form[data-msg-form] input');
+  if (again && draft) again.value = draft;
+  if (again && typing) again.focus({ preventScroll: true });
+}
+document.addEventListener('change', (e) => { if (e.target.id === 'msg-about') msgAbout = e.target.value; });
 // Quick replies are shared by every dispatcher phone (dispatch_settings/quick_replies) and edited in Settings
 function quickEditor() {
   const rows = quickList().map((q) => `<div class="contact"><span class="grow"><b>${esc(q.text)}</b></span>${S.quick ? `<button class="icon-btn sm del" type="button" data-act="del-quick" data-q="${esc(q.id)}" aria-label="Remove ${esc(q.text)}">${icon('trash')}</button>` : ''}</div>`).join('');
@@ -2788,7 +2990,7 @@ function placeParts(comps, formatted) {
 // Settings › New dispatch picks how each one starts (payment and the usual kind of piece)
 const ndDefaults = () => Object.assign({ payment: 'prepaid', type: 'box' }, S.settings.nd);
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => { const d = ndDefaults(); return { pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: d.type, other: '', weight: '' }], payment: d.payment, po: '', notes: '', when: 'asap', date: '' }; };
+const blankDraft = () => { const d = ndDefaults(); return { pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: d.type, other: '', weight: '' }], payment: d.payment, po: '', notes: '', when: 'asap', date: '', text: null }; };
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
@@ -2819,12 +3021,12 @@ function openNewDispatch() {
     ${leg('delivery', 'Delivery')}
     <div class="nd-chips" id="nd-chips" role="group" aria-label="Pieces, payment, when, note and PO"></div>
     <div class="field nd-x" id="nd-x-items" hidden><div id="nd-items"></div></div>
-    <div class="field nd-x" id="nd-x-when" hidden><label for="nd-date">Book it for</label><div class="nd-when"><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}"><button class="btn btn-secondary" type="button" data-act="nd-now">Now instead</button></div></div>
+    <div class="field nd-x" id="nd-x-when" hidden><div id="nd-cal"></div></div>
     <div class="field nd-x" id="nd-x-notes" hidden><label for="nd-notes">Note for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>
     <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
     <div class="nd-send">
       <div class="nd-more" id="nd-more" hidden></div>
-      <p class="nd-preview" id="nd-text"></p>
+      <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button></div>
       <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, Group Chat, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
     </div>
   </form>`;
@@ -2868,20 +3070,78 @@ function ndChips() {
   box.innerHTML = [
     chip('items', `${icon('box', 'sm')}<span>${esc(clampText(it || 'Pieces?', 24))}</span>`, !!it, `Pieces: ${it || 'none yet'}. Tap to change`),
     `<button type="button" class="nd-chip${ND.payment === 'collect' ? ' set' : ''}" data-act="nd-pay" aria-label="Payment: ${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}. Tap to switch">${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}</button>`,
-    chip('when', `${icon('clock', 'sm')}<span>${later && ND.date ? esc(fmtDay(ND.date)) : later ? 'Pick a day' : 'Now'}</span>`, later, later ? `Booked for ${ND.date ? fmtDay(ND.date) : 'a later day'}. Tap to change` : 'Now. Tap to book it for a later day'),
+    chip('when', `${icon(later ? 'calendar' : 'clock', 'sm')}<span>${later && ND.date ? esc(fmtDay(ND.date)) : 'Now'}</span>`, later, later ? `Booked for ${ND.date ? fmtDay(ND.date) : 'a later day'}. Tap to go back to Now` : 'Now. Tap to pick a day'),
     chip('notes', note ? `${icon('edit', 'sm')}<span>${esc(clampText(note, 18))}</span>` : '+ Note', !!note, note ? `Note: ${note}` : 'Add a note for the driver'),
     chip('po', po ? `<span>PO ${esc(clampText(po, 12))}</span>` : '+ PO', !!po, po ? `PO ${po}` : 'Add a PO number')
   ].join('');
 }
 // Opens one extra (or closes it when it's tapped again)
+// The clock button: Now opens the calendar; a booked day goes back to Now.
 function ndOpenX(x) {
-  if (x === 'when' && !ndLater()) { ND.when = 'later'; if (!ND.date) ND.date = tomorrowStr(); const d = $('#nd-date'); if (d) d.value = ND.date; ndX = 'when'; }
-  else ndX = ndX === x ? '' : x;
+  if (x === 'when' && ndLater()) { ND.when = 'asap'; ND.date = ''; ndX = ''; }
+  else {
+    ndX = ndX === x ? '' : x;
+    if (ndX === 'when') ndCalMonth = (ND.date || tomorrowStr()).slice(0, 7);
+  }
   ndUpdate();
   const go = { notes: '#nd-notes', po: '#nd-po' }[ndX];
   const panel = ndX && ndX !== 'more' ? $(`#nd-x-${ndX}`) : null;
   if (go) { const el = $(go); el.focus({ preventScroll: true }); if (Keyboard) Keyboard.show().catch(() => {}); ndReveal(el); }
-  else if (panel) { const a = document.activeElement; if (a && a.closest && a.closest('[data-nd]') && a.blur) a.blur(); setTimeout(() => ndReveal(panel), 30); }
+  else if (panel) {
+    const a = document.activeElement;
+    if (a && a.closest && a.closest('[data-nd]') && a.blur) a.blur();
+    // Only scrolls if the box that opened is out of sight; again once the keyboard has gone
+    [30, 340, 650].forEach((ms) => setTimeout(() => { if (ndX && $(`#nd-x-${ndX}`) === panel) ndReveal(panel); }, ms));
+  }
+}
+/* A small month calendar, with Tomorrow and Now on top */
+let ndCalMonth = '';
+function ndCalRender() {
+  const box = $('#nd-cal');
+  if (!box || !ND) return;
+  const tmr = tomorrowStr();
+  if (!ndCalMonth) ndCalMonth = (ND.date || tmr).slice(0, 7);
+  const [y, m] = ndCalMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const n = new Date(y, m, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push('<span></span>');
+  for (let d = 1; d <= n; d++) {
+    const ds = localDateStr(new Date(y, m - 1, d));
+    const on = ndLater() && ND.date === ds;
+    cells.push(`<button type="button" data-act="nd-cal-day" data-day="${ds}" class="${on ? 'on' : ''}${ds === todayStr() ? ' today' : ''}" aria-label="${esc(fmtDay(ds))}"${on ? ' aria-pressed="true"' : ''}${ds < tmr ? ' disabled' : ''}>${d}</button>`);
+  }
+  const month = first.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+  box.innerHTML = `<div class="nd-cal-top"><button class="btn btn-primary" type="button" data-act="nd-cal-day" data-day="${tmr}">${icon('calendar', 'sm')}Tomorrow<small>${esc(fmtDay(tmr))}</small></button><button class="btn btn-secondary" type="button" data-act="nd-now">${icon('clock', 'sm')}Now</button></div>
+    <div class="nd-cal-head"><button type="button" data-act="nd-cal-mon" data-d="-1" aria-label="Last month"${ndCalMonth <= todayStr().slice(0, 7) ? ' disabled' : ''}>‹</button><b>${esc(month)}</b><button type="button" data-act="nd-cal-mon" data-d="1" aria-label="Next month">›</button></div>
+    <div class="nd-cal-grid" role="group" aria-label="Pick a day">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((w) => `<span class="wd" aria-hidden="true">${w}</span>`).join('')}${cells.join('')}</div>`;
+}
+function ndCalMove(d) {
+  const [y, m] = ndCalMonth.split('-').map(Number);
+  ndCalMonth = localDateStr(new Date(y, m - 1 + d, 1)).slice(0, 7);
+  ndCalRender();
+}
+// The text that goes out: what the dispatcher typed, or the one made from the form
+const ndAutoText = () => {
+  const r = ndRecord();
+  const shown = Object.assign({}, r, { pickup: Object.assign({}, r.pickup, { name: r.pickup.name || '…' }), delivery: Object.assign({}, r.delivery, { name: r.delivery.name || '…' }) });
+  return r.pickup.name || r.delivery.name ? ndText(shown) : '';
+};
+const ndEdited = () => !!(ND && typeof ND.text === 'string' && ND.text.trim());
+const ndFinal = (r) => (ndEdited() ? ND.text.trim() : ndText(r));
+function ndGrow(ta) {
+  if (!ta || !ta.offsetParent) return;
+  ta.style.height = 'auto';
+  ta.style.height = `${Math.min(ta.scrollHeight + 2, 112)}px`;
+}
+function ndTextUi() {
+  const ta = $('#nd-text');
+  if (!ta) return;
+  if (!ndEdited()) { const auto = ndAutoText(); if (ta.value !== auto && document.activeElement !== ta) ta.value = auto; }
+  const box = ta.parentNode;
+  box.classList.toggle('edited', ndEdited());
+  $('[data-act=nd-text-reset]', box).hidden = !ndEdited();
+  ndGrow(ta);
 }
 // Done (under the weight), or both places picked: keyboard away, Send in reach
 function ndDone() {
@@ -2968,7 +3228,7 @@ function ndValid() {
     else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
   });
   if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
-  if (ndLater() && !(ND.date && ND.date > todayStr())) { ndX = 'when'; bad.push('#nd-date'); }
+  if (ndLater() && !(ND.date && ND.date > todayStr())) { ndX = 'when'; bad.push('[data-x=when]'); }
   if (!bad.length) return ndRecord();
   ndUpdate();
   bad.forEach((sel) => {
@@ -3005,9 +3265,8 @@ function ndUpdate(force) {
   if (!more.hidden) more.innerHTML = ndMoreMenu();
   $('[data-act=nd-more]').setAttribute('aria-expanded', String(ndX === 'more'));
   $('[data-act=nd-more]').classList.toggle('on', ndX === 'more');
-  const r = ndRecord();
-  const shown = Object.assign({}, r, { pickup: Object.assign({}, r.pickup, { name: r.pickup.name || '…' }), delivery: Object.assign({}, r.delivery, { name: r.delivery.name || '…' }) });
-  $('#nd-text').textContent = r.pickup.name || r.delivery.name ? ndText(shown) : 'Type the pickup and delivery names.';
+  if (ndX === 'when') ndCalRender();
+  ndTextUi();
   if (moved) ndKeyboard();
   const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}`;
   if (mode === ndMode && !force) return;
@@ -3111,9 +3370,11 @@ function loadCompanyBooks() {
   coBooks.at = Date.now();
   db.ref('companies').once('value').then((snap) => {
     const list = [];
-    Object.values(snap.val() || {}).forEach((v) => {
+    coBooks.names = {};
+    Object.entries(snap.val() || {}).forEach(([cid, v]) => {
       v = v || {};
       const company = String(v.name || '').trim();
+      if (company) coBooks.names[cid] = company;
       Object.values(v.address_book || {}).forEach((e) => {
         if (!e || !String(e.name || '').trim() || !String(e.address || '').trim()) return;
         list.push({ name: String(e.name).trim(), address: String(e.address).trim(), city: String(e.city || '').trim(), lat: typeof e.lat === 'number' ? e.lat : null, lng: typeof e.lng === 'number' ? e.lng : null, company });
@@ -3121,6 +3382,8 @@ function loadCompanyBooks() {
     });
     coBooks.list = list;
     ['pickup', 'delivery'].forEach((k) => { if (ND && document.activeElement === $(`#nd-${k}-name`)) ndSuggest(k); });
+    renderMsgUi();
+    refreshMsgs();
   }).catch(() => { coBooks.at = 0; });
 }
 /* ---------- Name suggestions: saved customers first, then customers' own contacts ---------- */
@@ -3309,22 +3572,30 @@ function saveCustomers(r) {
       .catch((err) => toast(`${L.name} couldn’t be saved as a customer: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
   });
 }
-async function ndCommit(r, status, to) {
+async function ndCommit(r, status, to, text) {
   const ref = db.ref('requests').push();
   const rec = Object.assign({}, r, { status, created_at: TS });
   if (status === 'dispatched') Object.assign(rec, { dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null });
   saveCustomers(r);
   rec.ref_no = await nextRefNo();
   await ref.set(rec);
+  // Text typed over in the form: kept on this phone like an edit made on a card
+  if (text) ref.once('value').then((snap) => {
+    const v = snap.val();
+    if (!v) return;
+    edits[editKey(ref.key, v)] = { text, t: Date.now() };
+    saveEdits();
+    if (S.pending[ref.key]) renderQueue();
+  }).catch(() => { /* the text was still used */ });
   return { id: ref.key, ref_no: rec.ref_no };
 }
 const deniedMsg = (err) => (/permission[_ ]denied/i.test(String((err && (err.code || err.message)) || '')) ? 'the Firebase rules don’t allow it yet. Publish the updated rules.' : friendlyError(err));
 // Close the form, celebrate, and file it under Done. Resolves with the saved job, or null.
-function ndSent(r, to) {
+function ndSent(r, to, text) {
   if (popOpen && history.state && history.state.pop) { _hidePop(); history.go(-2); } else closeSheet();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
   clearDraft();
-  const file = () => ndCommit(r, 'dispatched', to)
+  const file = () => ndCommit(r, 'dispatched', to, text)
     .catch((err) => { toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }); return null; });
   return file();
 }
@@ -3333,7 +3604,7 @@ function ndSendGroup() {
   if (sharing) return;
   const r = ndValid();
   if (!r) return;
-  const text = ndText(r);
+  const text = ndFinal(r);
   const shared = () => {};
   if (canShare()) {
     sharing = true;
@@ -3681,12 +3952,13 @@ async function ndSendDriver(did) {
   if (!d) return;
   const r = ndValid();
   if (!r) return;
-  const text = ndText(r);
+  const text = ndFinal(r);
+  const custom = ndEdited() ? text : null;
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-  if (!SmsSender) { inMessages(); ndSent(r, d.name); return; }
+  if (!SmsSender) { inMessages(); ndSent(r, d.name, custom); return; }
   const done = toast(`Sending to ${d.name}…`, 'info', 25000);
   const sms = smsSend(cleanPhone(d.phone), text);
-  const saved = ndSent(r, d.name);
+  const saved = ndSent(r, d.name, custom);
   try { await sms; }
   catch (err) {
     const job = await saved;
@@ -3710,7 +3982,7 @@ async function ndSave(btn) {
   btn.disabled = true;
   btn.textContent = 'Saving…';
   try {
-    const { ref_no: n } = await ndCommit(r, 'new');
+    const { ref_no: n } = await ndCommit(r, 'new', null, ndEdited() ? ND.text.trim() : null);
     clearDraft();
     closeSheet();
     toast(r.when === 'scheduled' ? `#${n} scheduled for ${fmtDay(r.scheduled_for)}.` : `#${n} saved to the queue.`, 'ok', 6000);
@@ -3741,12 +4013,15 @@ function ndScrollTo(body, y) {
 // the card's bottom sits right on the keyboard so the suggestions have the room above.
 function ndReveal(el) {
   const body = $('#sheet-body');
-  if (!el || !body || !ndOpen()) return;
+  if (!el || !el.isConnected || el.hidden || !body || !ndOpen()) return;
   const group = el.closest('.nd-leg') || el.closest('.field') || el;
   const b = body.getBoundingClientRect(), g = group.getBoundingClientRect();
   const onKb = $('#sheet .sheet').classList.contains('kb') && !!el.closest('.nd-leg');
+  // The Send bar sticks to the bottom and covers that part of the form
+  const send = $('#sheet-body .nd-send');
+  const cover = send && !el.closest('.nd-send') && getComputedStyle(send).position === 'sticky' ? send.offsetHeight : 0;
   let dy = 0;
-  if (onKb || g.bottom > b.bottom - 6) dy = g.bottom - (b.bottom - 6);
+  if (onKb || g.bottom > b.bottom - cover - 6) dy = g.bottom - (b.bottom - cover - 6);
   else if (g.top < b.top + 4) dy = g.top - (b.top + 4);
   if (!onKb && g.top - dy < b.top + 4) dy = g.top - (b.top + 4); // never push its top out of sight
   if (Math.abs(dy) > 1) ndScrollTo(body, body.scrollTop + dy);
@@ -3831,8 +4106,12 @@ document.addEventListener('input', (e) => {
   else if (t.dataset.ndQty) ND.items[+t.dataset.ndQty].qty = Math.max(0, Math.min(999, parseInt(t.value, 10) || 0));
   else if (t.dataset.ndOther) ND.items[+t.dataset.ndOther].other = t.value;
   else if (t.dataset.ndWt) ND.items[+t.dataset.ndWt].weight = t.value.trim();
+  else if (t.id === 'nd-text') { ND.text = t.value.trim() && t.value.trim() !== ndAutoText().trim() ? t.value : null; saveDraft(); ndTextUi(); return; }
   ndUpdate();
 });
+// Enter in the text is "done", not a new line; an emptied text goes back to the automatic one
+document.addEventListener('keydown', (e) => { if (e.target.id === 'nd-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.blur(); } });
+document.addEventListener('focusout', (e) => { if (e.target.id === 'nd-text' && ND && !ndEdited()) { ND.text = null; ndTextUi(); } });
 document.addEventListener('change', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
@@ -3873,13 +4152,16 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'Escape' && items.length) { e.stopPropagation(); ndHideSuggest(t.dataset.ndName); }
 }, true);
 // A tap on a suggestion must not blur the name box first (that would hide the list)
-document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.ac-list, .tag-add')) e.preventDefault(); });
+// Buttons in the form don't take the focus either, so the keyboard doesn't close and slide the form under the finger
+document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.ac-list, .tag-add, [data-nd] button')) e.preventDefault(); });
 document.addEventListener('focusout', (e) => {
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k) setTimeout(() => { if (document.activeElement !== e.target) ndHideSuggest(k); }, 120);
 });
 document.addEventListener('focusin', (e) => {
   if (!e.target.closest || !e.target.closest('[data-nd]')) return;
+  // A button is redrawn when tapped; scrolling to the old one sent the form back to the top
+  if (!e.target.matches('input, textarea, select')) return;
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
   ndKeyboard();
@@ -4114,7 +4396,11 @@ document.addEventListener('click', async (e) => {
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
     case 'addr-map': setAddrMode(id, { map: el.getAttribute('aria-pressed') !== 'true' }); break;
-    case 'quick-reply': sendMsg(id, el.dataset.text); break;
+    case 'quick-reply': sendMsg(id || msgAboutVal(), el.dataset.text); break;
+    case 'open-msgs': openMessages(el.dataset.cid || '', id); break;
+    case 'msg-co': msgView = el.dataset.cid; msgAbout = ''; refreshMsgs(); msgScrollEnd(); markCoSeen(msgView); break;
+    case 'msg-list': msgView = 'list'; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
+    case 'msg-banner': { const a = msgAlert; msgAlert = null; renderMsgUi(); if (a) openMessages(a.cid, a.rid); else openMessages(); break; }
     case 'edit-quick': openSheet('Quick replies', quickEditor()); break;
     case 'del-quick': delQuick(el.dataset.q); break;
     case 'day-board': openDayBoard(); break;
@@ -4145,7 +4431,10 @@ document.addEventListener('click', async (e) => {
     case 'nd-pick': ndPick(el.dataset.leg, +el.dataset.i); break;
     case 'nd-x': ndOpenX(el.dataset.x); break;
     case 'nd-pay': ND.payment = ND.payment === 'collect' ? 'prepaid' : 'collect'; ndUpdate(); break;
-    case 'nd-now': ND.when = 'asap'; ndX = ''; ndUpdate(); break;
+    case 'nd-now': ND.when = 'asap'; ND.date = ''; ndX = ''; ndUpdate(); break;
+    case 'nd-cal-day': ND.when = 'later'; ND.date = el.dataset.day; ndX = ''; ndUpdate(); break;
+    case 'nd-cal-mon': ndCalMove(+el.dataset.d); break;
+    case 'nd-text-reset': { ND.text = null; const ta = $('#nd-text'); if (ta) ta.value = ndAutoText(); ndUpdate(); break; }
     case 'nd-sched': ndOpenX('when'); break;
     case 'nd-more': ndX = ndX === 'more' ? '' : 'more'; ndUpdate(); break;
     case 'nd-addr': ndSetAddr({ addr: el.dataset.mode }); break;
