@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.ec.pastepad'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.ec.pastepad'
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+        versionName '1.' + (System.getenv('VERSION_CODE') ?: '0')
+    }
+    signingConfigs {
+        // Fixed key kept in the repo so every new build installs over the old one.
+        fixed {
+            storeFile file('pastepad.jks')
+            storePassword 'pastepad'
+            keyAlias 'pastepad'
+            keyPassword 'pastepad'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.fixed
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

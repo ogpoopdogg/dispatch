@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Only needed on Android 9 and older to write into Downloads. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <application
+        android:label="PastePad"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:requestLegacyExternalStorage="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Lets you share text from another app straight into PastePad. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <!-- Lets you open .txt / .json files with PastePad. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name=".ShareProvider"
+            android:authorities="com.ec.pastepad.share"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>
