@@ -156,9 +156,10 @@ p{margin:0}
 @keyframes blink{50%{opacity:.2}}
 
 /* Banners */
-.banner{display:flex;align-items:center;gap:10px;width:100%;border:0;text-align:left;padding:8px 12px;cursor:pointer;font-weight:800;font-size:15px;line-height:1.25;animation:slideDown var(--t-slow) var(--out)}
-.banner .grow{flex:1;min-width:0}
-.banner small{display:block;font-weight:550;font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.banner{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;border:0;text-align:left;padding:4px 8px 4px 12px;cursor:pointer;font-weight:800;font-size:14.5px;line-height:1.2;animation:slideDown var(--t-slow) var(--out)}
+.banner .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.banner small{display:inline;font-weight:550;font-size:12.5px;opacity:.8}
+.banner small::before{content:' \00b7 '}
 .banner-alert{position:relative;overflow:hidden;background:var(--yellow);color:#000;animation:slideDown var(--t-slow) var(--out),flash 1s steps(2,jump-none) infinite;box-shadow:0 8px 24px -10px rgba(255,209,0,.8)}
 .banner-alert::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-100%);animation:shine 2.2s ease-in-out infinite;pointer-events:none}
 .banner-alert .i{animation:ring 1s ease-in-out infinite}
@@ -179,20 +180,20 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 .page-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 8px;min-height:28px;flex-wrap:wrap}
 .page-head h1{font-size:24px;letter-spacing:-.02em}
 .page-head p{font-size:12.5px;color:var(--ink-2);min-width:0}
-.group-head{position:sticky;top:var(--head-h);z-index:5;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.12em;margin:8px -12px 0;padding:6px 14px;background:var(--bg)}
+.group-head{position:sticky;top:var(--head-h);z-index:5;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--ink-2);text-transform:none;letter-spacing:0;margin:8px -12px 0;padding:6px 14px;background:var(--bg)}
 .group-head::after{content:'';flex:1;height:1px;background:var(--line);order:1}
 .group-head span:first-child{color:var(--ink)}
 .group-head span:last-child{order:2;font-variant-numeric:tabular-nums}
 .group-head:first-child{margin-top:0}
 
 /* Queue summary: four live numbers in one strip */
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px -4px rgba(0,0,0,.16);overflow:hidden}
-.kpi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:7px 8px 8px 10px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
+.kpis{flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px -4px rgba(0,0,0,.16);overflow:hidden}
+.kpi{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;min-width:0;min-height:44px;padding:4px 6px 4px 9px;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
 .kpi+.kpi{border-left:1px solid var(--line)}
 button.kpi{cursor:pointer}
 button.kpi:hover,button.kpi:active{background:var(--surface-2)}
-.kpi b{font-stretch:75%;font-weight:800;font-size:22px;line-height:1;letter-spacing:-.01em;white-space:nowrap}
-.kpi span{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.kpi b{font-stretch:75%;font-weight:800;font-size:19px;line-height:1;letter-spacing:-.01em;white-space:nowrap}
+.kpi span{font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .kpi.hot b{color:var(--accent-ink)}
 .kpi.hot::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:var(--yellow)}
 .kpi.warn b{color:var(--danger)}
@@ -231,7 +232,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .dock{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:29;display:flex;flex-direction:column}
 .dock .banner{border-top:1px solid var(--glass-line);animation:slideUp var(--t-slow) var(--out)}
 .dock .banner-alert{animation:slideUp var(--t-slow) var(--out),flash 1s steps(2,jump-none) infinite;box-shadow:0 -8px 24px -10px rgba(255,209,0,.8)}
-.dock .banner-pill{padding:9px 16px;font-size:14px}
+.dock .banner-pill{padding:8px 16px;font-size:14px}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
 
 /* ---------- Job cards ---------- */
@@ -240,7 +241,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
 /* A request card: the top part, and a tab under its right side holding the two buttons.
    The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
-.job{position:relative;--job-line:var(--yellow);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2)))}
+.job{position:relative;--job-line:var(--line-strong);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2)))}
 .job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
 .job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,var(--tab-w));margin:-1px 0 0 auto;padding:0 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
 /* Rounded inside corner where the text's bottom edge turns down into the tab */
@@ -260,10 +261,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .job-tools{display:flex;flex:none;margin:-4px 0}
 /* Schedule for later / Send to queue, left of Group Chat (same column as the tab below) */
 .job-row{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--tab-w) - 21px);gap:6px;margin-bottom:6px}
-.job-row>.job-move:only-child{grid-column:1}
-.job-row .btn.job-move{white-space:normal;line-height:1.1;padding:0 8px;color:var(--ink)}
-.job-meta{display:flex;align-items:center;gap:4px;margin:4px 0 6px;min-width:0}
-.job-meta .chips{flex:1;min-width:0}
+.job-row>.job-text:only-child{grid-column:1}
 .job-changed{margin:-2px 0 6px;padding:5px 8px;border-radius:var(--r-sm);background:var(--warn-bg);border-left:3px solid var(--yellow);font-size:13px;line-height:1.35;color:var(--ink)}
 .job-changed b{font-weight:800}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -284,9 +282,9 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @keyframes pickPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.55),0 0 6px rgba(255,209,0,.35);transform:scale(1)}50%{box-shadow:0 0 0 5px rgba(255,209,0,0),0 0 12px rgba(255,209,0,.75);transform:scale(1.15)}}
 .stop span{flex:1 1 0;min-width:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border-radius:var(--r-xs);font-size:12.5px;font-weight:700;letter-spacing:0;text-transform:none;white-space:nowrap;border:1px solid var(--line-strong);color:var(--ink-2);background:var(--surface-2)}
 .chip .i{width:11px;height:11px;stroke-width:2.8}
-.chip.new{position:relative;overflow:hidden;background:var(--yellow);border-color:var(--yellow);color:#000;letter-spacing:.08em}
+.chip.new{position:relative;overflow:hidden;background:var(--yellow);border-color:var(--yellow);color:#000}
 .chip.new::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);transform:translateX(-100%);animation:shine 2.4s ease-in-out infinite}
 @keyframes shine{60%,100%{transform:translateX(100%)}}
 .chip.warn{border-color:var(--yellow-lo);color:var(--accent-ink);background:var(--warn-bg)}
@@ -294,19 +292,21 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .chip.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .chip.gone{background:var(--muted-bg);border-color:transparent;color:var(--ink-2)}
 .text-preview{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:7px 10px;font-size:14px;line-height:1.4;margin-bottom:10px;overflow-wrap:anywhere}
-.text-preview span{display:block;font-size:11.5px;font-weight:800;color:var(--ink-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.1em}
+.text-preview span{display:block;font-size:12.5px;font-weight:650;color:var(--ink-3);margin-bottom:2px;text-transform:none;letter-spacing:0}
 .text-edit{display:block;margin-bottom:8px}
 .text-edit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px;margin-bottom:3px}
-.text-edit-head span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em}
+.text-edit-head span{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:650;color:var(--ink-3);text-transform:none;letter-spacing:0}
 .text-edit-head span::before{content:'';width:11px;height:11px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
 .text-edit.edited .text-edit-head span{color:var(--accent-ink)}
 .text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
-.addr-ticks{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px}
-.addr-tick{flex:1 1 140px;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 10px;margin:0;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
-.addr-tick input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--yellow-lo);cursor:pointer}
-.addr-tick:has(input:checked){border-color:var(--yellow-lo);background:var(--yellow-soft);color:var(--accent-ink)}
-.addr-tick:has(input:focus-visible){box-shadow:0 0 0 3px var(--yellow-ring)}
-.addr-tick.off{opacity:.45;cursor:default}
+.addr-sw{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin:0 0 6px}
+.addr-seg{display:flex;gap:2px;padding:2px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface-3)}
+.addr-seg button{flex:1 1 0;min-width:0;min-height:calc(var(--ctl) - 6px);padding:0 4px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t) var(--ease),color var(--t) ease}
+.addr-seg button[aria-checked=true]{background:var(--yellow);color:#000;font-weight:750;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.addr-seg button:disabled{opacity:.35;cursor:default}
+.map-tog{display:inline-flex;align-items:center;gap:4px;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.map-tog[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:750}
+.map-tog:disabled{opacity:.35;cursor:default}
 .text-edit textarea{display:block;width:100%;min-height:44px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:14px;line-height:1.4;color:var(--ink);outline:none;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -320,6 +320,72 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .skel:nth-child(2){animation-delay:.1s;opacity:.75}.skel:nth-child(3){animation-delay:.2s;opacity:.5}
 @keyframes skel{from{background-position:100% 0}to{background-position:0 0}}
 
+/* Small card: the ⋯ button, tags on one line, Text and Group Chat over the Send tab */
+.job-head .job-age{margin-left:auto}
+.job-more{width:44px;height:40px;margin:-6px -8px -6px -4px;color:var(--ink-2)}
+.job-chips{margin:4px 0 6px}
+.job-chips:empty{display:none}
+.job-more-box{margin-bottom:2px}
+.job-text{color:var(--ink)}
+.job-text .caret{transition:transform var(--t) var(--out)}
+.job.open .job-text .caret{transform:rotate(180deg)}
+.job.open .job-text{background:var(--yellow-soft);border-color:var(--yellow-lo)}
+.chip.msg{cursor:pointer;background:#e8f1ff;border-color:#9cc0ff;color:#0b4fb3;font:inherit;font-size:12.5px;font-weight:750;animation:pop var(--t-slow) var(--spring)}
+/* ⋯ menu */
+.menu-list{display:grid;gap:6px}
+.menu-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font:inherit;font-size:15.5px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.menu-list button:active{background:var(--surface-3);transform:scale(.99)}
+.menu-list button .i{width:22px;height:22px;color:var(--ink-2)}
+.menu-list button small{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:1px}
+.menu-list button.danger,.menu-list button.danger .i{color:var(--danger)}
+/* Queue top: four numbers and the search button in one thin strip */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.qbar{display:flex;gap:6px;align-items:stretch;margin:0 0 8px}
+.qsearch{width:46px;height:auto;min-height:44px;border-radius:var(--r-lg);background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px -4px rgba(0,0,0,.16)}
+.qsearch.on{background:var(--ink);color:var(--bg)}
+.queue-sub{font-size:12.5px;color:var(--ink-2);margin:-4px 2px 6px}
+.queue-sub:empty{display:none}
+.page-head .head-btn{margin-left:auto}
+/* Empty queue */
+.empty.caught{border-style:solid;border-color:var(--line)}
+.caught-ring{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:50%;background:linear-gradient(160deg,#4fe08a,#26a356);box-shadow:0 8px 22px -8px rgba(38,163,86,.8);margin-bottom:8px;animation:ringPop .45s var(--spring)}
+.caught-ring .i{width:30px;height:30px;stroke:#fff;stroke-width:3}
+/* Messages with the customer */
+.msgs{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.msgs h3{display:flex;align-items:center;gap:6px;font-size:15px;font-stretch:100%;margin-bottom:8px}
+.msgs-empty{font-size:13px;color:var(--ink-2);margin-bottom:8px}
+.msg{max-width:85%;margin:0 0 6px;padding:7px 10px;border-radius:14px;font-size:14.5px;line-height:1.35;overflow-wrap:anywhere}
+.msg small{display:block;font-size:11.5px;opacity:.7;margin-top:2px}
+.msg.them{background:var(--surface-3);border-bottom-left-radius:4px}
+.msg.me{margin-left:auto;background:var(--yellow);color:#000;border-bottom-right-radius:4px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.quick .chip-btn{min-height:40px;color:var(--ink);white-space:normal;text-align:left}
+.msg-form{display:grid;grid-template-columns:minmax(0,1fr) 52px;gap:6px}
+.msg-form input{width:100%;min-height:var(--ctl);padding:7px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;outline:none}
+.msg-form input:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.quick-peek{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px}
+.quick-peek span{font-size:12.5px;padding:3px 8px;border-radius:99px;background:var(--surface-3);color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.add-row.one{grid-template-columns:minmax(0,1fr) auto}
+/* Day summary */
+.board-seg{margin-bottom:8px}
+.board-total{font-size:14px;color:var(--ink-2);margin:2px 2px 8px}
+.board-total b{font-size:20px;color:var(--ink);font-stretch:75%}
+.board-group{border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;margin-bottom:8px;background:var(--surface)}
+.board-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);font-size:15px}
+.board-head span{min-width:28px;height:24px;display:grid;place-items:center;border-radius:99px;background:var(--yellow);color:#000;font-weight:800;font-size:13px;padding:0 8px}
+.board-row{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 12px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.board-row .req-no{font-size:15px}
+.board-row .grow{flex:1;min-width:0;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board-row small{display:block;font-weight:500;font-size:12px;color:var(--ink-2)}
+/* Big screens: the map on the right */
+.desk{display:none}
+@media (min-width:1100px){
+  .desk{display:block;position:fixed;top:var(--head-h);right:0;bottom:calc(var(--nav-h) + var(--safe-b));width:44vw;padding:10px 12px 10px 0;z-index:1}
+  .desk-map{width:100%;height:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#e8e6df}
+  main.app-main{margin:0 calc(44vw + 4px) 0 0;max-width:none;padding-left:16px}
+  .dock{right:44vw}
+  .cards{grid-template-columns:minmax(0,1fr)}
+}
 /* ---------- Driver picker ---------- */
 .avatar{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:var(--r-sm);background:var(--yellow);color:#000;font-stretch:75%;font-weight:800;font-size:14px;letter-spacing:.02em}
 .pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
@@ -365,12 +431,9 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .range-row .chip-btn[aria-pressed=true]{background:var(--yellow);border-color:var(--yellow);color:#000}
 .list-summary{font-size:12px;font-weight:650;color:var(--ink-2);margin:4px 2px 0}
 .list-summary:empty{display:none}
-.list{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-2);margin-top:4px}
 @media (min-width:760px){.list{display:grid;grid-template-columns:1fr 1fr}.list>.row:nth-child(2){border-top:0}.list>.row:nth-child(odd){border-right:1px solid var(--line)}}
-.row{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:7px 10px 7px 14px;cursor:pointer;color:var(--ink);font-size:14px;line-height:1.3;transition:background-color var(--t-fast) ease;-webkit-tap-highlight-color:transparent}
-.row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ok)}
-.row.cancelled::before{background:var(--danger)}
-.row.removed::before{background:var(--ink-3)}
+.row{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:7px 10px 7px 12px;min-height:56px;cursor:pointer;color:var(--ink);font-size:14px;line-height:1.3;transition:background-color var(--t-fast) ease;-webkit-tap-highlight-color:transparent}
 .row:first-child{border-top:0}
 .row:hover{background:var(--surface-2)}
 .row:active{background:var(--surface-3)}
@@ -403,8 +466,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* ---------- Settings ---------- */
 #settings-body{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start}
 @media (min-width:760px){#settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}#settings-body>.card:first-child{grid-row:span 3}}
-.card{background:var(--surface);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
-.card>h2{display:flex;align-items:center;gap:8px;font-size:12px;font-stretch:100%;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
+.card>h2{display:flex;align-items:center;gap:8px;font-size:15px;font-stretch:100%;text-transform:none;letter-spacing:0;margin-bottom:6px}
 .card>h2 .i{width:22px;height:22px;padding:4px;border-radius:var(--r-xs);background:var(--yellow);color:#000;stroke-width:2.4}
 .card>h2 em{margin-left:auto;font-style:normal;font-weight:700;letter-spacing:.04em;color:var(--ink-3)}
 .card-note{font-size:12.5px;color:var(--ink-2);line-height:1.4;margin-bottom:6px}
@@ -435,7 +498,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .dl{display:grid;grid-template-columns:84px 1fr;gap:0;margin:0;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--surface);font-size:14px}
 .dl dt,.dl dd{padding:6px 10px;border-top:1px solid var(--line)}
 .dl dt:first-of-type,.dl dt:first-of-type+dd{border-top:0}
-.dl dt{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--surface-2);padding-top:9px}
+.dl dt{font-size:12.5px;font-weight:650;letter-spacing:0;text-transform:none;color:var(--ink-2);background:var(--surface-2);padding-top:9px}
 .dl dd{margin:0;overflow-wrap:anywhere;line-height:1.35}
 .dl dd small{display:block;color:var(--ink-2);font-size:12.5px}
 .dl dd a{font-weight:700}
@@ -516,8 +579,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes sentFade{0%{opacity:0}10%{opacity:1}78%{opacity:1}100%{opacity:0}}
 /* ---------- New dispatch form ---------- */
 .sheet.tall{height:92vh;height:92dvh;max-height:none}
-.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
-.nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-2);margin-bottom:6px}
+.nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
 .nd-leg h3 .tag{margin-left:auto;letter-spacing:.04em}
@@ -544,13 +607,13 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .ac-new .grow{flex:1;min-width:0}
 .ac-new small{display:block;font-size:12px;color:var(--ink-3)}
 .ac-new b{color:var(--ink)}
-.tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:var(--r-xs);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--yellow);color:#000}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:var(--r-xs);font-size:12px;font-weight:750;letter-spacing:0;text-transform:none;background:var(--yellow);color:#000}
 .tag.saved{background:var(--ok-bg);color:var(--ok)}
 .tag-add{flex:none;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border:0;border-radius:99px;background:var(--ink);color:var(--bg);font:inherit;font-size:13px;font-weight:800;letter-spacing:.02em;text-transform:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:pop var(--t-slow) var(--spring)}
 .tag-add:active{transform:scale(.96)}
 .nd-leg h3 .tag-add{margin:-6px 0 -6px 2px}
 .ac-new .tag-add{min-height:36px}
-.nd-block{background:var(--surface-2);border:1px solid var(--yellow);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+.nd-block{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
 .item-row{display:grid;grid-template-columns:112px minmax(0,1fr) 92px auto;gap:6px;margin-bottom:6px}
 .wt{position:relative;display:block}
 .wt input{width:100%;min-height:var(--ctl);padding:0 34px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;font-weight:600;outline:none;-moz-appearance:textfield}
@@ -575,8 +638,55 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-when{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-when input[type=date]{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;outline:none;color-scheme:inherit}
-.nd-send{border-top:1px solid var(--line);margin:4px -12px 0;padding:10px 12px 0}
-.nd-send .text-preview{margin-bottom:8px}
+/* New dispatch: a known address is one grey line; Change opens the boxes */
+.addr-line{display:flex;align-items:center;gap:6px;min-height:36px;margin:-2px 0 6px;font-size:13.5px;color:var(--ink-2)}
+.addr-line .grow{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
+.addr-line .grow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addr-line .grow small{flex:none;font-size:12px;color:var(--ink-3)}
+.addr-line .i{flex:none;width:14px;height:14px;color:var(--ink-3)}
+.addr-line .link-btn{min-height:36px;padding:0 4px 0 10px;font-size:14px}
+.addr-ok.err{color:var(--danger)}
+.addr-diff{display:flex;align-items:center;gap:6px;margin:-2px 0 8px;padding:6px 6px 6px 10px;border-radius:var(--r-sm);background:var(--yellow-soft);font-size:13px;font-weight:650;color:var(--ink)}
+.addr-diff .grow{flex:1;min-width:0}
+.addr-diff button{flex:none;min-width:52px;min-height:38px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
+.addr-diff button[data-v=yes]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ac-item small em{font-style:normal;font-weight:750;color:var(--accent-ink)}
+/* The tap buttons under the two places */
+.nd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+.nd-chip{display:inline-flex;align-items:center;gap:5px;min-height:42px;max-width:100%;padding:0 13px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.nd-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-chip .i{flex:none;width:16px;height:16px;color:var(--ink-2)}
+.nd-chip:active{transform:scale(.96)}
+.nd-chip.set{background:var(--surface-2);border-color:var(--ink-3)}
+.nd-chip.open{background:var(--yellow-soft);border-color:var(--yellow-lo)}
+.nd-chip.invalid{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.nd-x{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 4px;animation:riseIn var(--t) var(--out)}
+.nd-x .item-row:last-of-type{margin-bottom:6px}
+.nd-when{grid-template-columns:minmax(0,1fr) auto}
+.nd-when .btn{min-height:var(--ctl)}
+/* The bar at the bottom: the text that gets sent, the big button, and ⋯ */
+.nd-send{position:sticky;bottom:-14px;z-index:3;margin:8px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface);box-shadow:0 -10px 18px -14px rgba(0,0,0,.45)}
+.sheet.kb .nd-send{position:static;box-shadow:none}
+.nd-preview{margin:0 0 8px;font-size:13.5px;line-height:1.35;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
+.nd-go>span{display:block}
+.nd-big{width:100%;min-height:52px;font-size:16.5px}
+.nd-dots{min-height:52px;padding:0;color:var(--ink)}
+.nd-dots .i{width:24px;height:24px}
+.btn.nd-dots.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.nd-more{margin-bottom:8px;animation:riseIn var(--t) var(--out)}
+.nd-more-list{display:grid;gap:6px;margin-bottom:8px}
+.nd-more-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-more-list button:active{background:var(--surface-3)}
+.nd-more-list button .i{flex:none;width:22px;height:22px;color:var(--ink-2)}
+.nd-more-list small{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:1px}
+.nd-more-note{font-size:12px;color:var(--ink-3);margin:4px 2px 0}
+/* A missing box shakes and turns red */
+.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+.set-seg{flex:none;width:190px}
+.set-select{flex:none;width:150px;min-height:var(--ctl);padding:0 28px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;font:inherit;font-size:16px;font-weight:600;color:var(--ink);-webkit-appearance:none;appearance:none}
 /* The form starts mid-screen (where Pieces and count used to sit), in easy reach of the right thumb;
    the dimmed backdrop fills the top.
    While typing (keyboard up) it grows to full height like before. */
@@ -675,6 +785,11 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></symbol>
 </svg>
 
@@ -720,8 +835,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <main class="app-main">
     <!-- Queue -->
     <section id="panel-queue">
-      <div class="page-head"><h1>Queue</h1><p id="queue-sub"></p></div>
-      <div class="kpis" id="queue-kpis" aria-live="polite"></div>
+      <h1 class="sr-only">Queue</h1>
+      <div class="qbar"><div class="kpis" id="queue-kpis" aria-live="polite"></div><button class="icon-btn qsearch" type="button" data-act="queue-search" aria-label="Search and filter the queue" aria-expanded="false"><svg class="i"><use href="#i-search"/></svg></button></div>
+      <p class="queue-sub" id="queue-sub"></p>
       <div class="queue-tools" id="queue-tools" hidden>
         <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="queue-q" type="search" placeholder="Search company, name or request #" aria-label="Search the queue" autocomplete="off"></div>
         <div class="filter-row" role="group" aria-label="Show">
@@ -743,7 +859,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 
     <!-- Done -->
     <section id="panel-done" hidden>
-      <div class="page-head"><h1>Done</h1><p>Dispatched, cancelled and removed, <span id="done-range-label">today and yesterday</span>.</p></div>
+      <div class="page-head"><h1>Done</h1><p>Dispatched, cancelled and removed, <span id="done-range-label">today and yesterday</span>.</p><button class="btn btn-secondary sm head-btn" type="button" data-act="day-board"><svg class="i sm"><use href="#i-list"/></svg>Day summary</button></div>
       <div class="done-tools">
       <div class="range-row" role="group" aria-label="Date range">
         <button class="chip-btn" type="button" data-act="done-range" data-r="recent" aria-pressed="true">Today &amp; yesterday</button>
@@ -772,10 +888,12 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     </section>
   </main>
 
+  <!-- Big screens: live map of vans and waiting pickups beside the queue -->
+  <aside class="desk" aria-label="Map of vans and waiting pickups"><div class="desk-map" id="desk-map"></div></aside>
   <!-- Alert banners sit just above the bottom bar, where the right thumb already is -->
   <div class="dock" id="dock">
     <button class="banner banner-sound" type="button" id="sound-banner" data-act="unlock-sound" hidden>
-      <svg class="i"><use href="#i-sound"/></svg><span class="grow">Tap here to turn on alert sounds<small>Phones block sound until you tap the page once.</small></span>
+      <svg class="i"><use href="#i-mute"/></svg><span class="grow">Sound is off until you tap here<small>Phones block sound until the screen is tapped once</small></span>
     </button>
     <button class="banner banner-alert" type="button" id="alert-banner" data-act="ack-all" hidden>
       <svg class="i"><use href="#i-bell"/></svg><span class="grow" id="alert-text"></span><span class="banner-pill">Got it</span>
@@ -834,14 +952,6 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    ========================================================= */
 const REPEAT_ALARM_MS = 20000;   // how often the alarm repeats until someone taps "Got it"
 const REMINDER_DEFAULTS = { enabled: true, start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }; // same as functions/reminders.js
-// New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
-const FORM_FIELDS = [
-  { key: 'items', label: 'Pieces and count', hint: 'e.g. 2 boxes' },
-  { key: 'payment', label: 'Prepaid / Collect' },
-  { key: 'po', label: 'PO number' },
-  { key: 'notes', label: 'Notes for the driver' },
-  { key: 'when', label: 'Scheduled date', hint: 'Book it for a later day' }
-];
 const DONE_DAYS = 2;             // Done tab shows today and yesterday
 
 // Firebase loads in the background (deferred scripts) so the app can draw instantly from the last saved queue.
@@ -897,13 +1007,18 @@ const S = {
   sessionToken: 0,
   contacts: readContacts(), // drivers, shared by every dispatcher phone (dispatch_contacts/)
   contactsError: '',
+  msgs: {},         // messages with customers, the last 7 days (messages/)
+  quick: null,      // quick replies (dispatch_settings/quick_replies); null = the starting ones
+  addrPrefs: {},    // address switch per customer (dispatch_settings/addr_prefs)
+  queueSearch: false, // search and filters open on the Queue
   settings: loadSettings()
 };
 function loadSettings() {
   const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mapType: 'roadmap', vanZoom: 65, mapTraffic: false };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
-  st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
+  delete st.form; // the old switches that hid New dispatch fields; the tap buttons hide them now
+  st.nd = Object.assign({ payment: 'prepaid', type: 'box' }, st.nd); // how a New dispatch starts
   delete st.mode; // one Dispatch button now; the old main-button choice was removed
   delete st.theme; // light only
   Object.assign(st, { repeat: true, vibrate: true, wake: true }); // always on; no longer in Settings
@@ -924,6 +1039,16 @@ const fmtDay = (s) => (s ? parseLocalDate(s).toLocaleDateString('en-CA', { weekd
 const fmtTime = (ts) => (ts ? new Date(ts).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : '');
 const fmtDateTime = (ts) => (ts ? new Date(ts).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
 const phoneDigits = (v) => String(v || '').replace(/\D/g, '');
+// (204) 555-0111, the same as Request Pickup
+function formatPhone(v) {
+  const digits = phoneDigits(v);
+  const d = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
+  if (d.length < 10) return String(v || '');
+  if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6, 10)} x${d.slice(10)}`;
+}
+// "Dana" from dana@ec.com, or the account's own name
+const staffName = (email, display) => String(display || '').trim() || String(email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 function ago(ts) {
   if (!ts) return '';
   const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
@@ -1002,16 +1127,24 @@ function friendlyError(err) {
 }
 
 /* ---------------- The dispatch text ----------------
-   Format: "<pickup name> for <delivery name> , <order details separated by commas>"
+   Format: "<pickup name> for <delivery name>, <order details separated by commas>"
    Order details: items, item description, Prepaid/Collect, PO, driver notes.
-   Never included: addresses, phone numbers, emails, scheduled date. */
+   With the address switch: "Acme (12 Main St) for Smith Co (40 Park Ave), ..." and, with Map link,
+   a Google Maps link for the pickup at the end. Never included: phone numbers, emails, scheduled date. */
 function oneLine(s) { return String(s || '').replace(/\s*[\r\n]+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
-// with = { pickup: true, delivery: true } adds that leg's address after its name: "Acme (12 Main St)"
+// with = { pickup: true, delivery: true, map: true } adds that leg's address after its name: "Acme (12 Main St)"
 const legName = (r, leg, with_) => {
   const name = oneLine(r[leg] && r[leg].name);
   const addr = oneLine(r[leg] && r[leg].address);
   return with_ && with_[leg] && addr ? `${name} (${addr})` : name;
 };
+// Short Google Maps link to the pickup, for the driver's text
+function pickupLink(r) {
+  const L = (r && r.pickup) || {};
+  if (L.lat != null && L.lng != null && isFinite(+L.lat)) return `https://maps.google.com/?q=${(+L.lat).toFixed(5)},${(+L.lng).toFixed(5)}`;
+  const q = [L.address, L.city].map(oneLine).filter(Boolean).join(', ');
+  return q ? `https://maps.google.com/?q=${encodeURIComponent(q).replace(/%20/g, '+')}` : '';
+}
 function dispatchText(r, with_) {
   const head = `${legName(r, 'pickup', with_)} for ${legName(r, 'delivery', with_)}`;
   const hide = r.text_hide || {}; // fields a dispatcher left out of a dispatch they made
@@ -1020,10 +1153,17 @@ function dispatchText(r, with_) {
     r.item_details,
     hide.payment ? '' : r.payment === 'collect' ? 'Collect' : 'Prepaid',
     r.po ? `PO ${r.po}` : '',
-    r.notes
+    r.notes,
+    with_ && with_.map ? pickupLink(r) : ''
   ].map(oneLine).filter(Boolean);
-  return details.length ? `${head} , ${details.join(', ')}` : head;
+  return details.length ? `${head}, ${details.join(', ')}` : head;
 }
+
+/* ---------------- Status words ----------------
+   The same list is in requestpickup/index.html, so both apps always say the same thing. */
+const STATUS_WORDS = { new: 'Waiting for dispatch', seen: 'Seen by dispatch', dispatched: 'Dispatched to a driver', cancelled: 'Cancelled', removed: 'Removed by dispatch' };
+const STATUS_SHORT = { new: 'Waiting', seen: 'Seen', dispatched: 'Dispatched', cancelled: 'Cancelled', removed: 'Removed' };
+const statusKey = (r) => (!r ? 'new' : ['dispatched', 'cancelled', 'removed'].includes(r.status) ? r.status : r.seen_at ? 'seen' : 'new');
 
 /* ---------------- Request phase helpers ---------------- */
 const isFuture = (r) => r.when === 'scheduled' && r.scheduled_for && r.scheduled_for > todayStr();
@@ -1044,8 +1184,8 @@ function saveAcked() {
 const isQuiet = (r) => r.source === 'dispatcher' && (r.when !== 'scheduled' || isFuture(r) || r.scheduled_for === localDateStr(new Date(r.created_at || 0)));
 function ackQuiet() { Object.entries(S.pending).forEach(([id, r]) => { if (isQuiet(r)) acked.add(alertKey(id, r)); }); }
 const unacked = () => Object.entries(S.pending).filter(([id, r]) => !acked.has(alertKey(id, r)));
-function ack(id) { const r = S.pending[id]; if (!r || acked.has(alertKey(id, r))) return; acked.add(alertKey(id, r)); saveAcked(); refreshAlarm(); renderAll(); }
-function ackAll() { Object.entries(S.pending).forEach(([id, r]) => acked.add(alertKey(id, r))); saveAcked(); refreshAlarm(); renderAll(); }
+function ack(id) { markSeen(id); const r = S.pending[id]; if (!r || acked.has(alertKey(id, r))) return; acked.add(alertKey(id, r)); saveAcked(); refreshAlarm(); renderAll(); }
+function ackAll() { Object.entries(S.pending).forEach(([id, r]) => { acked.add(alertKey(id, r)); markSeen(id); }); saveAcked(); refreshAlarm(); renderAll(); }
 
 /* ---------------- Edited dispatch text (kept for DONE_DAYS) ----------------
    Keyed to the request's version, so a customer change brings back the fresh text. */
@@ -1057,39 +1197,66 @@ function saveEdits() {
   Object.keys(edits).forEach((k) => { if (!edits[k] || edits[k].t < cutoff) delete edits[k]; });
   try { localStorage.setItem('ecd_edits', JSON.stringify(edits)); } catch (e) { /* ignore */ }
 }
-/* Pickup address / Delivery address ticks above the text. Only on this screen until the app
-   is closed, so they always start unticked. */
-const addrTicks = {};
-const baseText = (id, r) => dispatchText(r, addrTicks[id]);
+/* Address switch above the text: None / Pickup / Delivery / Both, plus Map link (pickup only).
+   Remembered for each customer (dispatch_settings/addr_prefs, shared by every dispatcher phone):
+   a customer's company for their requests, the pickup name for a dispatcher's own jobs. */
+const ADDR_MODES = [['off', 'None'], ['pickup', 'Pickup'], ['delivery', 'Delivery'], ['both', 'Both']];
+const addrPick = {}; // this screen's choice for a job, until the app closes
+const custKey = (r) => {
+  const k = r && r.company_id && r.company_id !== 'dispatcher' ? `c_${r.company_id}` : `n_${lookupKey(r && r.pickup && r.pickup.name).toLowerCase()}`;
+  return k.replace(/[.#$[\]/]/g, '_').slice(0, 200);
+};
+function addrModeOf(id, r) {
+  const m = addrPick[id] || (S.addrPrefs && S.addrPrefs[custKey(r)]) || {};
+  return { addr: ADDR_MODES.some(([v]) => v === m.addr) ? m.addr : 'off', map: !!m.map };
+}
+const modeWith = (m) => ({ pickup: m.addr === 'pickup' || m.addr === 'both', delivery: m.addr === 'delivery' || m.addr === 'both', map: !!m.map });
+const baseText = (id, r) => dispatchText(r, modeWith(addrModeOf(id, r)));
 function textFor(id, r) { const e = edits[editKey(id, r)]; return e ? e.text : baseText(id, r); }
-function setAddrTick(id, leg, on) {
+function setAddrMode(id, change) {
   const r = S.pending[id] || doneReq(id);
   if (!r) return;
-  const before = { ...(addrTicks[id] || {}) };
-  addrTicks[id] = { ...before, [leg]: on };
+  const was = addrModeOf(id, r);
+  const next = Object.assign({}, was, change);
+  addrPick[id] = next;
   const k = editKey(id, r);
   if (edits[k]) {
-    // Already edited by hand: put the address in (or take it out) right after the name in that text
-    const plain = legName(r, leg, null);
-    const withAddr = legName(r, leg, { [leg]: true });
+    // Already edited by hand: put the address in (or take it out) right after the name, and the link at the end
     let t = edits[k].text;
-    if (on && plain && !t.includes(withAddr)) t = t.includes(plain) ? t.replace(plain, withAddr) : t;
-    if (!on) t = t.replace(withAddr, plain);
+    const a = modeWith(was), b = modeWith(next);
+    ['pickup', 'delivery'].forEach((leg) => {
+      if (a[leg] === b[leg]) return;
+      const plain = legName(r, leg, null);
+      const withAddr = legName(r, leg, { [leg]: true });
+      if (b[leg] && plain && !t.includes(withAddr)) t = t.includes(plain) ? t.replace(plain, withAddr) : t;
+      if (!b[leg]) t = t.replace(withAddr, plain);
+    });
+    const link = pickupLink(r);
+    if (link && b.map && !t.includes(link)) t = `${t.trim()}, ${link}`;
+    if (link && !b.map) t = t.replace(`, ${link}`, '').replace(link, '').trim();
     setEdit(id, t);
   } else setEdit(id, null);
-  $$('[data-addr-tick]').filter((c) => c.dataset.id === id && c.dataset.addrTick === leg).forEach((c) => { c.checked = on; });
+  $$('[data-addr-box]').filter((x) => x.dataset.addrBox === id).forEach((x) => { x.outerHTML = addrSwitch(id, r); });
+  // Remembered for this customer next time
+  const key = custKey(r);
+  S.addrPrefs = Object.assign({}, S.addrPrefs, { [key]: { addr: next.addr, map: next.map } });
+  if (db && S.user && !S.fromCache) db.ref(`dispatch_settings/addr_prefs/${key}`).set({ addr: next.addr, map: next.map }).catch(() => { /* kept on this screen anyway */ });
+}
+function addrSwitch(id, r) {
+  const m = addrModeOf(id, r);
+  const has = { pickup: !!oneLine(r.pickup && r.pickup.address), delivery: !!oneLine(r.delivery && r.delivery.address) };
+  const off = (v) => (v === 'pickup' && !has.pickup) || (v === 'delivery' && !has.delivery) || (v === 'both' && !(has.pickup && has.delivery));
+  return `<div class="addr-sw" data-addr-box="${esc(id)}">
+      <div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="addr-mode" data-id="${esc(id)}" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+      <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="addr-map" data-id="${esc(id)}"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button>
+    </div>`;
 }
 function textEditor(id, r, where) {
   const edited = !!edits[editKey(id, r)];
-  const tick = (leg, label) => {
-    const has = !!oneLine(r[leg] && r[leg].address);
-    const on = !!(addrTicks[id] && addrTicks[id][leg]);
-    return `<label class="addr-tick${has ? '' : ' off'}"${has ? '' : ` title="No ${label.toLowerCase()} on this request"`}><input type="checkbox" data-addr-tick="${leg}" data-id="${esc(id)}"${on ? ' checked' : ''}${has ? '' : ' disabled'}><span>${label}</span></label>`;
-  };
   return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
-    <div class="text-edit-head"><span>Text to send \u00b7 tap to edit</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
-    <div class="addr-ticks">${tick('pickup', 'Pickup address')}${tick('delivery', 'Delivery address')}</div>
-    <textarea data-edit="${esc(id)}" data-where="${where}" rows="${where === 'card' ? 2 : 3}" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
+    <div class="text-edit-head"><span>Address in the text</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
+    ${addrSwitch(id, r)}
+    <textarea data-edit="${esc(id)}" data-where="${where}" rows="2" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
   </div>`;
 }
 function setEdit(id, text) {
@@ -1111,10 +1278,6 @@ function setEdit(id, text) {
 document.addEventListener('input', (e) => {
   const ta = e.target.closest && e.target.closest('textarea[data-edit]');
   if (ta) setEdit(ta.dataset.edit, ta.value);
-});
-document.addEventListener('change', (e) => {
-  const c = e.target.closest && e.target.closest('input[data-addr-tick]');
-  if (c) setAddrTick(c.dataset.id, c.dataset.addrTick, c.checked);
 });
 
 /* ---------------- What a customer changed ----------------
@@ -1303,6 +1466,7 @@ function refreshAlarm() {
   const banner = $('#alert-banner');
   if (!list.length) {
     banner.hidden = true;
+    updateSoundUi();
     clearInterval(alarmTimer); alarmTimer = null;
     clearInterval(titleTimer); titleTimer = null;
     document.title = 'E&C Dispatch';
@@ -1314,8 +1478,9 @@ function refreshAlarm() {
   const sched = isFuture(first);
   $('#alert-text').innerHTML = list.length === 1
     ? `${sched ? 'New scheduled request' : first.updated_at ? 'Request updated' : 'New request'} #${esc(first.ref_no)}<small>${esc(first.company_name || '')}: ${esc(first.pickup && first.pickup.name)} for ${esc(first.delivery && first.delivery.name)}${sched ? `, for ${esc(fmtDay(first.scheduled_for))}` : ''}</small>`
-    : `${list.length} requests need attention<small>Tap to mark them seen. They stay in the queue until dispatched.</small>`;
+    : (() => { const now = list.filter(([, r]) => !isFuture(r)).length, later = list.length - now; return `${[now ? `${now} new in the queue` : '', later ? `${later} scheduled` : ''].filter(Boolean).join(' \u00b7 ')}<small>Tap to mark them seen</small>`; })();
   banner.hidden = false;
+  updateSoundUi();
 
   // Fire immediately for anything we haven't alarmed for yet in this session
   const keys = new Set(list.map(([id, r]) => alertKey(id, r)));
@@ -1344,7 +1509,8 @@ function updateSoundUi() {
     btn.style.color = S.settings.sound ? '' : '#f0524f';
   }
   const banner = $('#sound-banner');
-  if (banner) banner.hidden = !(S.settings.sound && !audioReady() && S.user && !$('#view-app').hidden);
+  // One bar at a time: while the alert shows, tapping it turns sound on too
+  if (banner) banner.hidden = !(S.settings.sound && !audioReady() && S.user && !$('#view-app').hidden) || !$('#alert-banner').hidden;
 }
 
 /* =========================================================
@@ -1531,7 +1697,7 @@ async function handleUser(user) {
 }
 function openApp(user) {
   show('app');
-  $('#hdr-sub').textContent = user.email || '';
+  $('#hdr-sub').textContent = staffName(user.email, user.displayName);
   startListening();
   applyWakeLock();
   updateSoundUi();
@@ -1543,7 +1709,7 @@ function openApp(user) {
   if (!cache || !cache.uid) return;
   Object.assign(S, { pending: cache.pending || {}, loaded: true, fromCache: true });
   show('app');
-  $('#hdr-sub').textContent = cache.email || '';
+  $('#hdr-sub').textContent = staffName(cache.email);
 }());
 
 /* =========================================================
@@ -1620,10 +1786,23 @@ async function loadMore() {
     if (S.more === m) renderDone();
   }
 }
+/* Whether anything older than the range exists, so "Load 20 more" only shows when it would find something.
+   Asked once per range. */
+function probeOlder() {
+  const key = S.doneRange;
+  if (S.older && S.older.key === key) return;
+  S.older = { key, any: null };
+  if (!db) { S.older = null; return; }
+  const from = rangeBounds(key).from;
+  Promise.all(Object.values(KINDS).map(([, field]) => db.ref('requests').orderByChild(field).endAt(from - 1).limitToLast(1).once('value').then((snap) => !!snap.val())))
+    .then((found) => { if (S.older && S.older.key === key) { S.older.any = found.some(Boolean); renderDone(); } })
+    .catch(() => { if (S.older && S.older.key === key) { S.older.any = true; renderDone(); } });
+}
 function setDoneRange(key) {
   if (!RANGES[key]) return;
   S.doneRange = key;
   S.more = null;
+  S.older = null;
   $$('[data-act=done-range]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.r === key));
     const row = b.parentElement;
@@ -1701,6 +1880,12 @@ function startListening() {
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
     () => { S.remindersError = true; refreshSettings(); });
+  // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
+  listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
+  listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
+  // Messages from customers (Request Pickup), the last 7 days
+  firstMsgs = true;
+  listen(db.ref('messages').orderByChild('at').startAt(Date.now() - 7 * 86400000), onMessages, () => {});
   listen(db.ref('dispatch_contacts'), (snap) => {
     const v = snap.val() || {};
     S.contacts = { drivers: v.drivers || {}, groups: v.groups || {} };
@@ -1754,14 +1939,17 @@ function sendButtons(id, block) {
 }
 // Group Chat (share menu: pick the group from the top row) next to Send to driver
 const groupChatButton = (id) => (hasDrivers() ? `<button class="btn btn-secondary" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>` : '');
-// Cards slide in the first time they appear, not on every redraw
 const shownCards = new Set();
+const openCards = new Set(); // cards showing their text (tapped "Text")
 let enterIdx = 0;
+/* A small card: number, company, tags, the route and Send to driver. "Text" opens the text and
+   the address switch; the ⋯ button holds Details, Schedule for later and Remove. */
 function jobCard(id, r) {
   const unseen = !acked.has(alertKey(id, r));
   const fresh = !shownCards.has(id);
   shownCards.add(id);
   const enter = fresh ? ` enter" style="animation-delay:${Math.min(enterIdx++, 6) * 45}ms` : '';
+  const open = openCards.has(id);
   const chips = [];
   if (unseen) chips.push('<span class="chip new">New</span>');
   if (r.updated_at) chips.push('<span class="chip warn">Changed</span>');
@@ -1770,32 +1958,63 @@ function jobCard(id, r) {
     else if (isFuture(r)) chips.push(`<span class="chip warn">${icon('calendar')}${esc(fmtDay(r.scheduled_for))}</span>`);
     else chips.push(`<span class="chip warn">${icon('calendar')}Today</span>`);
   }
+  if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
   chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
-  if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted to group</span>`);
+  if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
+  const unread = unreadMsgs(id);
+  if (unread) chips.push(`<button class="chip msg" type="button" data-act="details" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
-  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
+  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
     <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
-      <span class="job-tools">
-        <button class="icon-btn sm" type="button" data-act="details" data-id="${esc(id)}" aria-label="Details for request ${esc(r.ref_no)}" title="Details">${icon('more')}</button>
-        <button class="icon-btn sm del" type="button" data-act="remove" data-id="${esc(id)}" aria-label="Remove request ${esc(r.ref_no)} from the queue" title="Remove from queue">${icon('trash')}</button>
-      </span>
+      <span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span>
+      <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
-    <div class="job-meta"><span class="chips">${chips.join('')}</span><span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span></div>
+    <div class="chips job-chips">${chips.join('')}</div>
     ${r.updated_at && changedText(id, r) ? `<p class="job-changed"><b>Changed:</b> ${esc(changedText(id, r))}</p>` : ''}
     <button class="route" type="button" data-act="details" data-id="${esc(id)}" aria-label="Pickup ${esc(P.name)}, delivery ${esc(D.name)}. Details">
       <span class="stop"><b>${esc(P.name)}</b><span>${esc(P.address)}</span></span>
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
-    ${textEditor(id, r, 'card')}
-    <div class="job-actions job-row">${isFuture(r)
-      ? `<button class="btn btn-secondary job-move" type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox', 'sm')}Send to queue</button>`
-      : `<button class="btn btn-secondary job-move" type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar', 'sm')}Schedule for later</button>`}${groupChatButton(id)}</div>
+    <div class="job-more-box"${open ? '' : ' hidden'}>${open ? textEditor(id, r, 'card') : ''}</div>
+    <div class="job-actions job-row"><button class="btn btn-secondary job-text" type="button" data-act="job-text" data-id="${esc(id)}" aria-expanded="${open}">${icon('edit', 'sm')}Text${icon('caret', 'caret')}</button>${groupChatButton(id)}</div>
     </div>
     <div class="job-actions job-tab">${sendButtons(id)}</div>
   </article>`;
+}
+// Opens or closes a card's text, with the address switch
+function toggleJobText(id) {
+  const r = S.pending[id];
+  const card = $$('.job').find((c) => c.dataset.id === id);
+  if (!r || !card) return;
+  const open = !openCards.has(id);
+  if (open) openCards.add(id); else openCards.delete(id);
+  const box = $('.job-more-box', card);
+  card.classList.toggle('open', open);
+  $('[data-act=job-text]', card).setAttribute('aria-expanded', String(open));
+  if (open) {
+    box.innerHTML = textEditor(id, r, 'card');
+    box.hidden = false;
+    if (box.animate && !reduceMotion()) box.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.16,1,.3,1)' });
+  } else { box.hidden = true; box.innerHTML = ''; }
+  ack(id);
+}
+// The ⋯ menu on a card
+function jobMenu(id) {
+  const r = S.pending[id];
+  if (!r) return;
+  ack(id);
+  const later = isFuture(r);
+  openSheet(`#${r.ref_no} ${r.company_name || ''}`, `<div class="menu-list">
+      <button type="button" data-act="details" data-id="${esc(id)}">${icon('more')}<span>Details<small>Everything on the request${hasMsgs(id) ? ', and messages' : ''}</small></span></button>
+      ${hasDrivers() ? `<button type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users')}<span>Group Chat<small>Share the text. It stays in the queue.</small></span></button>` : ''}
+      ${later
+        ? `<button type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox')}<span>Send to queue<small>Do it today instead</small></span></button>`
+        : `<button type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar')}<span>Schedule for later<small>Pick another day</small></span></button>`}
+      <button type="button" class="danger" data-act="remove" data-id="${esc(id)}">${icon('trash')}<span>Remove from queue<small>It won’t be dispatched. You can bring it back from Done.</small></span></button>
+    </div>`);
 }
 const skeletons = () => '<div class="cards" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
 // Queue summary: waiting, oldest, scheduled, dispatched today
@@ -1814,19 +2033,21 @@ function renderKpis() {
     const bump = lastKpi[key] !== undefined && lastKpi[key] !== String(val) ? ' class="bump"' : '';
     lastKpi[key] = String(val);
     const tag = tab ? 'button' : 'div';
-    return `<${tag} class="kpi${cls ? ' ' + cls : ''}"${tab ? ` type="button" data-tab="${tab}"` : ''}><b${bump}${key === 'oldest' && oldest !== Infinity ? ` data-age-short="${oldest}"` : ''}>${esc(val)}</b><span>${label}</span></${tag}>`;
+    return `<${tag} class="kpi${cls ? ' ' + cls : ''}"${tab === 'board' ? ' type="button" data-act="day-board" aria-label="Day summary"' : tab ? ` type="button" data-tab="${tab}"` : ''}><b${bump}${key === 'oldest' && oldest !== Infinity ? ` data-age-short="${oldest}"` : ''}>${esc(val)}</b><span>${label}</span></${tag}>`;
   };
   box.hidden = false;
-  box.innerHTML = tile('waiting', list.length, 'Waiting', list.length ? 'hot' : '')
-    + tile('oldest', oldest === Infinity ? '–' : shortAgo(oldest), 'Oldest', old ? 'warn' : '')
-    + tile('sched', sched, 'Scheduled', '', 'scheduled')
-    + tile('done', doneToday, 'Sent today', '', 'done');
+  box.innerHTML = tile('waiting', list.length, 'waiting', list.length ? 'hot' : '')
+    + tile('oldest', oldest === Infinity ? '–' : shortAgo(oldest), 'oldest', old ? 'warn' : '')
+    + tile('sched', sched, 'later', '', 'scheduled')
+    + tile('done', doneToday, 'sent today', '', 'board');
 }
 function renderQueue() {
   enterIdx = 0;
   const all = queueList();
   const filtering = !!S.queueQ.trim() || S.queueFilter !== 'all';
-  $('#queue-tools').hidden = !filtering && all.length < 2;
+  $('#queue-tools').hidden = !(S.queueSearch || filtering);
+  const qs = $('[data-act=queue-search]');
+  if (qs) { qs.hidden = !filtering && all.length < 2 && !S.queueSearch; qs.setAttribute('aria-expanded', String(S.queueSearch || filtering)); qs.classList.toggle('on', S.queueSearch || filtering); }
   const list = filtering ? all.filter(([, r]) => matchesQ(r, S.queueQ) && queueFilterOk(r)) : all;
   $('#queue-sub').textContent = !S.loaded ? 'Connecting…' : S.fromCache ? 'Saved copy · connecting…' : '';
   renderKpis();
@@ -1835,8 +2056,15 @@ function renderQueue() {
   // Most urgent last, so it sits right above the bottom bar under the thumb
   $('#queue-list').innerHTML = list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
-    : (S.loaded ? `<div class="empty"><span class="empty-ic">${icon('inbox')}</span><h3>All caught up</h3><p>New requests appear here with a sound and a flashing banner. Tap <b>Dispatch</b> to make your own.</p></div>` : skeletons());
+    : (S.loaded ? caughtUp() : skeletons());
   if (stick) scrollToBottom();
+}
+// Empty queue: a big check, and when the last job went out
+function caughtUp() {
+  const last = Object.values(S.done || {}).reduce((m, r) => ((r.dispatched_at || 0) > (m ? m.dispatched_at || 0 : 0) ? r : m), null);
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const when = last && last.dispatched_at ? `${last.dispatched_at >= t0.getTime() ? 'today' : 'yesterday'} at ${fmtTime(last.dispatched_at)}` : '';
+  return `<div class="empty caught"><span class="caught-ring">${icon('check')}</span><h3>All caught up</h3><p>${last ? `Last job sent ${esc(when)}${last.dispatched_to ? ` to ${esc(last.dispatched_to)}` : ''}.` : 'New requests appear here with a sound and a flashing bar.'} Tap <b>Dispatch</b> to make your own.</p></div>`;
 }
 // The queue stays scrolled to the bottom (like a chat) unless you've scrolled up to look at something
 let queueStick = true;
@@ -1866,8 +2094,8 @@ function doneRow({ id, r, t, kind }) {
   const by = (e) => (e ? ` · ${esc(e.split('@')[0])}` : '');
   const who = kind === 'done'
     ? `<b>Dispatched</b>${r.dispatched_to ? ` to ${esc(r.dispatched_to)}` : ''}${by(r.dispatched_by_email)}`
-    : kind === 'removed' ? `<b>Removed</b> from the queue${by(r.removed_by_email)}`
-      : '<b>Cancelled</b> by the customer';
+    : kind === 'removed' ? `<b>${STATUS_WORDS.removed}</b>${by(r.removed_by_email)}`
+      : `<b>${STATUS_WORDS.cancelled}</b> by the customer`;
   return `<button class="row ${kind}" type="button" data-act="details" data-id="${esc(id)}">
     <span class="grow">
       <span class="row-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="row-co">${esc(r.company_name || '')}</span><span class="row-time">${esc(fmtTime(t))}</span></span>
@@ -1899,10 +2127,12 @@ function renderDone() {
   $$('[data-act=done-filter]').forEach((b) => { b.innerHTML = `${esc(b.dataset.label || (b.dataset.label = b.textContent))}${all.length ? `<b>${n[b.dataset.f]}</b>` : ''}`; });
   $('#done-summary').textContent = all.length && rows.length !== all.length ? `Showing ${rows.length} of ${all.length}` : '';
   const m = S.more;
-  const more = m && m.end
+  probeOlder();
+  const noOlder = !!(S.older && S.older.key === S.doneRange && S.older.any === false) && !(m && Object.keys(m.items).length);
+  const more = noOlder ? '' : m && m.end
     ? `<p class="list-end">${Object.keys(m.items).length ? 'That\u2019s everything. No older requests.' : 'No older requests.'}</p>`
     : `<button class="btn btn-secondary block load-more" type="button" data-act="load-more"${m && m.busy ? ' disabled' : ''}>${m && m.busy ? 'Loading\u2026' : `${icon('chevron', 'sm')}Load ${MORE_STEP} more`}</button>`;
-  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing in ${esc(RANGES[S.doneRange].label)}</h3><p>Tap \u201cLoad ${MORE_STEP} more\u201d to see older requests.</p></div>${more}`; return; }
+  if (!all.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('check')}</span><h3>Nothing in ${esc(RANGES[S.doneRange].label)}</h3><p>${noOlder ? 'No older requests either.' : `Tap \u201cLoad ${MORE_STEP} more\u201d to see older requests.`}</p></div>${more}`; return; }
   if (!rows.length) { $('#done-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try a different name or request number, or load older requests.</p></div>${more}`; return; }
   let html = '';
   let day = '';
@@ -1941,6 +2171,7 @@ function renderAll() {
   if (S.tab === 'queue') renderQueue();
   if (S.tab === 'scheduled') renderScheduled();
   if (S.tab === 'done') renderDone();
+  deskRender();
   if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
     if (findReq(openDetailId)) openDetails(openDetailId, true); else closeSheet();
   }
@@ -2233,7 +2464,7 @@ function openDetails(id, refresh) {
     L = L || {};
     const links = [];
     if (L.address) links.push(`<a href="${esc(mapsLink(L))}" target="_blank" rel="noopener">Open in Maps</a>`);
-    if (L.phone) links.push(`<a href="tel:${esc(phoneDigits(L.phone))}">${esc(L.phone)}</a>`);
+    if (L.phone) links.push(`<a href="tel:${esc(phoneDigits(L.phone))}">${esc(formatPhone(L.phone))}</a>`);
     if (L.email) links.push(`<a href="mailto:${esc(L.email)}">${esc(L.email)}</a>`);
     return `<b>${esc(L.name)}</b><small>${esc(L.address)}${L.city && !String(L.address || '').includes(L.city) ? `, ${esc(L.city)}` : ''}</small>${links.length ? `<span class="dl-links">${links.join('')}</span>` : ''}`;
   };
@@ -2241,12 +2472,13 @@ function openDetails(id, refresh) {
   const html = `<div data-detail>
     ${kind === 'cancelled' || kind === 'removed' ? `<div class="text-preview"><span>Text that would have been sent</span>${esc(textFor(id, r))}</div>` : textEditor(id, r, 'sheet')}
     <dl class="dl">
-      <dt>Customer</dt><dd><b>${esc(r.company_name)}</b>${rb.name ? `<small>${esc(rb.name)}</small>` : ''}${rb.phone || rb.email ? `<span class="dl-links">${rb.phone ? `<a href="tel:${esc(phoneDigits(rb.phone))}">${esc(rb.phone)}</a>` : ''}${rb.email ? `<a href="mailto:${esc(rb.email)}">${esc(rb.email)}</a>` : ''}</span>` : ''}</dd>
+      <dt>Customer</dt><dd><b>${esc(r.company_name)}</b>${rb.name ? `<small>${esc(rb.name)}</small>` : ''}${rb.phone || rb.email ? `<span class="dl-links">${rb.phone ? `<a href="tel:${esc(phoneDigits(rb.phone))}">${esc(formatPhone(rb.phone))}</a>` : ''}${rb.email ? `<a href="mailto:${esc(rb.email)}">${esc(rb.email)}</a>` : ''}</span>` : ''}</dd>
+      ${kind === 'pending' ? `<dt>Status</dt><dd><span class="chip${r.seen_at ? ' ok' : ''}">${esc(STATUS_WORDS[statusKey(r)])}</span>${r.source === 'dispatcher' ? '<small>Made in this app</small>' : `<small>${r.seen_at ? `The customer sees \u201cSeen by dispatch\u201d since ${esc(fmtTime(r.seen_at))}` : 'The customer sees \u201cWaiting for dispatch\u201d'}</small>`}</dd>` : ''}
       ${kind === 'done' ? `<dt>Status</dt><dd><span class="chip ok">Dispatched</span><small>${esc(fmtDateTime(r.dispatched_at))}${r.dispatched_to ? ` to ${esc(r.dispatched_to)}` : ''}${r.dispatched_by_email ? ` by ${esc(r.dispatched_by_email)}` : ''}</small></dd>` : ''}
       ${kind === 'cancelled' ? `<dt>Status</dt><dd><span class="chip bad">Cancelled</span><small>By the customer ${esc(fmtDateTime(r.cancelled_at))}</small></dd>` : ''}
       ${kind === 'removed' ? `<dt>Status</dt><dd><span class="chip gone">Removed</span><small>From the queue ${esc(fmtDateTime(r.removed_at))}${r.removed_by_email ? ` by ${esc(r.removed_by_email)}` : ''}. Not dispatched.</small></dd>` : ''}
       <dt>Submitted</dt><dd>${esc(fmtDateTime(r.created_at))}${r.updated_at ? `<small>Changed ${esc(fmtDateTime(r.updated_at))}${changedText(id, r) ? `: ${esc(changedText(id, r))}` : ''}</small>` : ''}</dd>
-      <dt>When</dt><dd>${r.when === 'scheduled' && r.scheduled_for ? esc(fmtDay(r.scheduled_for)) : 'As soon as possible'} \u00b7 ${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</dd>
+      <dt>When</dt><dd>${r.when === 'scheduled' && r.scheduled_for ? esc(fmtDay(r.scheduled_for)) : 'As soon as possible'} \u00b7 ${r.payment === 'collect' ? 'Collect' : 'Prepaid'}${windowText(r) ? `<small>${esc(windowText(r))}</small>` : ''}</dd>
       <dt>Pickup</dt><dd>${leg(r.pickup)}</dd>
       <dt>Delivery</dt><dd>${leg(r.delivery)}</dd>
       <dt>Items</dt><dd>${[r.items_text, r.item_details].filter(Boolean).map(esc).join('<br>')}</dd>
@@ -2259,10 +2491,233 @@ function openDetails(id, refresh) {
       <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('send', 'sm')}Send again</button>
       <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
     </div>` : ''}
-    ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}</div>`;
-  if (refresh) { $('#sheet-title').textContent = `Request #${r.ref_no}`; $('#sheet-body').innerHTML = html; }
-  else openSheet(`Request #${r.ref_no}`, html);
+    ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
+    ${msgThread(id, r)}</div>`;
+  if (refresh) {
+    // Keep a half-typed message and the scroll spot when the request or its messages update
+    const input = $('#sheet-body form[data-msg-form] input');
+    const draft = input ? input.value : '', typing = input && input === document.activeElement;
+    const body = $('#sheet-body'), top = body.scrollTop;
+    $('#sheet-title').textContent = `Request #${r.ref_no}`;
+    body.innerHTML = html;
+    body.scrollTop = top;
+    const again = $('#sheet-body form[data-msg-form] input');
+    if (again && draft) again.value = draft;
+    if (again && typing) again.focus({ preventScroll: true });
+  } else openSheet(`Request #${r.ref_no}`, html);
+  markMsgsSeen(id);
 }
+
+/* =========================================================
+   Seen by dispatch, pickup time window, messages with the customer
+   ========================================================= */
+// "Seen by dispatch" in Request Pickup: saved the first time a dispatcher acknowledges or opens a request
+const seenSent = new Set();
+function markSeen(id) {
+  const r = S.pending[id];
+  if (!r || r.seen_at || r.source === 'dispatcher' || seenSent.has(id) || !db || !S.user || S.fromCache) return;
+  seenSent.add(id);
+  db.ref(`requests/${id}/seen_at`).set(TS).catch(() => { seenSent.delete(id); });
+}
+// "14:00" -> "2:00 pm"
+const fmtHM = (hm) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(hm || ''));
+  if (!m) return '';
+  const h = +m[1];
+  return `${h % 12 || 12}:${m[2]} ${h < 12 ? 'am' : 'pm'}`;
+};
+// Pickup time window from the customer: "Ready 2:00 pm · Closes 4:00 pm"
+const windowText = (r) => [r.ready_after ? `Ready ${fmtHM(r.ready_after)}` : '', r.closes_at ? `Closes ${fmtHM(r.closes_at)}` : ''].filter(Boolean).join(' · ');
+
+/* Messages (messages/): a customer can write from a request in Request Pickup, and dispatch answers
+   here, with a quick reply or typed. Unread is kept on this phone. */
+let msgSeen = {};
+try { msgSeen = JSON.parse(localStorage.getItem('ecd_msgseen') || '{}') || {}; } catch (e) { msgSeen = {}; }
+const msgsFor = (rid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.rid === rid).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
+const hasMsgs = (rid) => msgsFor(rid).length > 0;
+const unreadMsgs = (rid) => msgsFor(rid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[rid] || 0)).length;
+function markMsgsSeen(rid) {
+  if (!unreadMsgs(rid)) return;
+  msgSeen[rid] = Date.now();
+  const cutoff = Date.now() - 14 * 86400000;
+  Object.keys(msgSeen).forEach((k) => { if (msgSeen[k] < cutoff) delete msgSeen[k]; });
+  try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
+  renderCounts();
+}
+const QUICK_DEFAULTS = ['Got it, thanks!', 'A driver is on the way.', 'Running a little late. Sorry!'];
+const quickList = () => {
+  const q = S.quick;
+  if (!q) return QUICK_DEFAULTS.map((text, i) => ({ id: `d${i}`, text }));
+  return Object.entries(q).map(([id, v]) => ({ id, text: String((v && v.text) || ''), order: (v && v.order) || 0 })).filter((x) => x.text).sort((a, b) => a.order - b.order || a.text.localeCompare(b.text));
+};
+function msgThread(rid, r) {
+  if (!r || r.source === 'dispatcher') return '';
+  const list = msgsFor(rid);
+  const bubbles = list.map(([, m]) => `<div class="msg ${m.from === 'dispatch' ? 'me' : 'them'}"><p>${esc(m.text)}</p><small>${m.from === 'dispatch' ? `${esc(m.by_name || 'Dispatch')} · ` : `${esc(m.by_name || r.company_name || 'Customer')} · `}${esc(fmtDateTime(m.at))}</small></div>`).join('');
+  return `<section class="msgs" data-msgs="${esc(rid)}">
+      <h3>${icon('chat', 'sm')}Messages with ${esc(r.company_name || 'the customer')}</h3>
+      ${bubbles || '<p class="msgs-empty">No messages yet. They show in the customer’s app.</p>'}
+      <div class="quick">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="${esc(rid)}" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>
+      <form class="msg-form" data-msg-form="${esc(rid)}"><input name="text" maxlength="500" placeholder="Write to the customer" aria-label="Message to the customer" autocomplete="off" enterkeyhint="send"><button class="btn btn-primary" type="submit" aria-label="Send message">${icon('send', 'sm')}</button></form>
+    </section>`;
+}
+async function sendMsg(rid, text) {
+  const f = findReq(rid);
+  text = String(text || '').trim().slice(0, 500);
+  if (!f || !text) return false;
+  if (!db || !S.user || S.fromCache) { toast('Still connecting. Try again in a moment.', 'info'); return false; }
+  try {
+    await db.ref('messages').push({ rid, company_id: f.r.company_id || '', ref_no: f.r.ref_no || null, from: 'dispatch', text, at: TS, by_uid: S.user.uid, by_name: meName() });
+    toast('Message sent', 'ok');
+    return true;
+  } catch (err) { toast(`The message didn’t send: ${deniedMsg(err)}`, 'error', 9000); return false; }
+}
+let firstMsgs = true;
+function onMessages(snap) {
+  const before = S.msgs || {};
+  S.msgs = snap.val() || {};
+  if (!firstMsgs) {
+    Object.entries(S.msgs).forEach(([mid, m]) => {
+      if (before[mid] || !m || m.from !== 'customer') return;
+      const f = findReq(m.rid);
+      playChime('new'); buzz([200, 100, 200]);
+      toast(`Message${f ? ` on #${f.r.ref_no} from ${f.r.company_name || 'the customer'}` : ''}: ${m.text}`, 'info', 12000, f ? { label: 'Open', run: () => openDetails(m.rid) } : null);
+    });
+  }
+  firstMsgs = false;
+  renderAll();
+}
+document.addEventListener('submit', async (e) => {
+  const f = e.target.closest && e.target.closest('form[data-msg-form]');
+  if (!f) return;
+  e.preventDefault();
+  const input = f.elements.text;
+  const btn = $('button', f);
+  btn.disabled = true;
+  if (await sendMsg(f.dataset.msgForm, input.value)) input.value = '';
+  btn.disabled = false;
+});
+// Quick replies are shared by every dispatcher phone (dispatch_settings/quick_replies) and edited in Settings
+function quickEditor() {
+  const rows = quickList().map((q) => `<div class="contact"><span class="grow"><b>${esc(q.text)}</b></span>${S.quick ? `<button class="icon-btn sm del" type="button" data-act="del-quick" data-q="${esc(q.id)}" aria-label="Remove ${esc(q.text)}">${icon('trash')}</button>` : ''}</div>`).join('');
+  return `<div id="quick-edit">${S.quick ? '' : '<p class="card-note">These are the starting replies. Add your own and they replace them.</p>'}${rows}
+    <form class="add-row one" data-form="add-quick"><input name="text" maxlength="200" placeholder="New quick reply" aria-label="New quick reply" autocomplete="off"><button class="btn btn-secondary" type="submit">Add</button></form></div>`;
+}
+const refreshQuickEditor = () => { const el = $('#quick-edit'); if (el) el.outerHTML = quickEditor(); };
+async function addQuick(text) {
+  text = String(text || '').trim().slice(0, 200);
+  if (!text || !db) return;
+  try {
+    const ref = db.ref('dispatch_settings/quick_replies');
+    if (!S.quick) { const seed = {}; QUICK_DEFAULTS.forEach((t, i) => { seed[ref.push().key] = { text: t, order: i }; }); await ref.update(seed); }
+    await ref.push({ text, order: Date.now() });
+  } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 9000); }
+}
+async function delQuick(id) {
+  try { await db.ref(`dispatch_settings/quick_replies/${id}`).remove(); } catch (err) { toast(`Couldn’t remove: ${deniedMsg(err)}`, 'error', 9000); }
+}
+
+/* =========================================================
+   Day summary: which driver had which jobs, and jobs per customer (for billing)
+   ========================================================= */
+let boardDay = 'today';
+let boardView = 'driver';
+function boardRows() {
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const from = boardDay === 'today' ? t0.getTime() : t0.getTime() - 86400000;
+  const to = boardDay === 'today' ? Infinity : t0.getTime();
+  return Object.entries(S.done || {}).filter(([, r]) => (r.dispatched_at || 0) >= from && (r.dispatched_at || 0) < to)
+    .sort((a, b) => (a[1].dispatched_at || 0) - (b[1].dispatched_at || 0));
+}
+const customerOf = (r) => (r.source === 'dispatcher' || r.company_id === 'dispatcher' ? `${oneLine(r.pickup && r.pickup.name) || 'Dispatcher'} (dispatcher job)` : r.company_name || 'Unknown customer');
+function boardGroups() {
+  const by = {};
+  boardRows().forEach(([id, r]) => {
+    const k = boardView === 'driver' ? (r.dispatched_to || 'No driver named (Group Chat)') : customerOf(r);
+    (by[k] = by[k] || []).push([id, r]);
+  });
+  return Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+}
+function boardHtml() {
+  const groups = boardGroups();
+  const total = groups.reduce((n, [, l]) => n + l.length, 0);
+  const label = boardDay === 'today' ? 'today' : 'yesterday';
+  return `<div class="board" id="board">
+      <div class="seg board-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="board-day" value="today"${boardDay === 'today' ? ' checked' : ''}><span>Today</span></label><label><input type="radio" name="board-day" value="yesterday"${boardDay === 'yesterday' ? ' checked' : ''}><span>Yesterday</span></label></div>
+      <div class="seg board-seg" role="radiogroup" aria-label="Group by"><label><input type="radio" name="board-view" value="driver"${boardView === 'driver' ? ' checked' : ''}><span>By driver</span></label><label><input type="radio" name="board-view" value="customer"${boardView === 'customer' ? ' checked' : ''}><span>By customer</span></label></div>
+      <p class="board-total"><b>${total}</b> ${total === 1 ? 'job' : 'jobs'} dispatched ${label}</p>
+      ${groups.length ? groups.map(([k, list]) => `<div class="board-group"><div class="board-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.map(([id, r]) => `<button class="board-row" type="button" data-act="details" data-id="${esc(id)}"><span class="req-no">#${esc(r.ref_no)}</span><span class="grow">${esc(r.pickup && r.pickup.name)} → ${esc(r.delivery && r.delivery.name)}<small>${esc(fmtTime(r.dispatched_at))}${boardView === 'driver' ? ` · ${esc(customerOf(r))}` : r.dispatched_to ? ` · ${esc(r.dispatched_to)}` : ''}</small></span></button>`).join('')}</div>`).join('')
+        : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing dispatched ${label}</h3><p>Jobs show here once they’re sent to a driver.</p></div>`}
+      ${total ? `<div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="board-copy">${icon('copy', 'sm')}Copy the counts</button></div>` : ''}
+    </div>`;
+}
+function openDayBoard() {
+  openSheet('Day summary', boardHtml(), (body) => {
+    body.addEventListener('change', (e) => {
+      if (e.target.name === 'board-day') boardDay = e.target.value;
+      else if (e.target.name === 'board-view') boardView = e.target.value;
+      else return;
+      $('#board').outerHTML = boardHtml();
+    });
+  }, true);
+}
+function boardCopy() {
+  const day = new Date(); if (boardDay === 'yesterday') day.setDate(day.getDate() - 1);
+  const rows = boardRows();
+  const count = (keyOf) => { const m = {}; rows.forEach(([, r]) => { const k = keyOf(r); m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}: ${n}`).join('\n'); };
+  const text = `E&C dispatched jobs, ${day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}\nTotal: ${rows.length}\n\nBy driver\n${count((r) => r.dispatched_to || 'No driver named')}\n\nBy customer\n${count(customerOf)}`;
+  const ok = copySync(text);
+  toast(ok ? 'Counts copied. Paste them anywhere.' : 'Couldn’t copy on this phone.', ok ? 'ok' : 'error');
+}
+
+/* =========================================================
+   Big screens (tablet or computer): the queue on the left, a live map of vans and waiting pickups on the right
+   ========================================================= */
+const desk = { map: null, vans: {}, pins: {} };
+const deskOn = () => !!(window.matchMedia && matchMedia('(min-width:1100px)').matches) && !$('#view-app').hidden;
+function deskRender() {
+  if (!deskOn() || !mapsUsable()) return;
+  if (!desk.map) {
+    desk.map = new google.maps.Map($('#desk-map'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy', clickableIcons: false, styles: MAP_STYLE });
+    desk.fitted = false;
+  }
+  const b = new google.maps.LatLngBounds();
+  const live = new Set();
+  Object.entries(sp.vans || {}).forEach(([id, v]) => {
+    const L = v && v.lastLocation;
+    if (!L || !isFinite(+L.lat) || !isFinite(+L.lng)) return;
+    const nick = spNick(id);
+    const van = { id, pos: { lat: +L.lat, lng: +L.lng }, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', heading: headingOf(v.heading) };
+    live.add(id);
+    let m = desk.vans[id];
+    if (!m) { m = desk.vans[id] = new google.maps.Marker({ map: desk.map, position: van.pos, optimized: false }); }
+    else glide(m, van.pos);
+    const key = `${van.label}|${van.nick ? 1 : 0}|${van.color}|${van.heading}`;
+    if (m._key !== key) { m.setIcon(vanIcon(van)); m._key = key; m.setZIndex(van.nick ? 10 : 1); }
+    if (nick) b.extend(van.pos);
+  });
+  Object.keys(desk.vans).forEach((id) => { if (!live.has(id)) { desk.vans[id].setMap(null); delete desk.vans[id]; } });
+  const pins = new Set();
+  queueList().forEach(([id, r]) => {
+    const L = r.pickup || {};
+    const at = L.lat != null && isFinite(+L.lat) ? { lat: +L.lat, lng: +L.lng } : geoCached(L);
+    if (!at) return;
+    pins.add(id);
+    let p = desk.pins[id];
+    if (!p) {
+      p = desk.pins[id] = new google.maps.Marker({ map: desk.map, zIndex: 40 });
+      p.addListener('click', () => openDetails(id));
+    }
+    p.setPosition(at);
+    p.setLabel({ text: `#${r.ref_no}`, fontWeight: '800', fontSize: '11px', color: '#000' });
+    p.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 15, fillColor: isOverdue(r) ? '#ff6461' : '#FFD100', fillOpacity: 1, strokeColor: '#000', strokeWeight: 1.5 });
+    p.setTitle(`#${r.ref_no} ${L.name || ''}`);
+    b.extend(at);
+  });
+  Object.keys(desk.pins).forEach((id) => { if (!pins.has(id)) { desk.pins[id].setMap(null); delete desk.pins[id]; } });
+  if (!desk.fitted && !b.isEmpty()) { desk.fitted = true; desk.map.fitBounds(b, 48); google.maps.event.addListenerOnce(desk.map, 'idle', () => { if (desk.map.getZoom() > 14) desk.map.setZoom(14); }); }
+}
+if (window.matchMedia) matchMedia('(min-width:1100px)').addEventListener('change', () => { loadMaps(); deskRender(); });
 
 /* =========================================================
    New dispatch: the dispatcher makes a pickup or delivery themselves.
@@ -2304,7 +2759,7 @@ const mapsUsable = () => maps === 'ready';
 function loadMaps() {
   if (maps !== 'idle') return;
   maps = 'loading';
-  window.ecMapsReady = () => { maps = window.google && google.maps && google.maps.places ? 'ready' : 'failed'; ndAttachPlaces(); ndUpdate(); };
+  window.ecMapsReady = () => { maps = window.google && google.maps && google.maps.places ? 'ready' : 'failed'; ndAttachPlaces(); ndUpdate(); deskRender(); };
   window.gm_authFailure = () => {
     maps = 'failed';
     ndUpdate();
@@ -2330,45 +2785,48 @@ function placeParts(comps, formatted) {
 }
 
 /* ---------- Draft (kept if the form is closed by mistake) ---------- */
+// Settings › New dispatch picks how each one starts (payment and the usual kind of piece)
+const ndDefaults = () => Object.assign({ payment: 'prepaid', type: 'box' }, S.settings.nd);
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '', weight: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
+const blankDraft = () => { const d = ndDefaults(); return { pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: d.type, other: '', weight: '' }], payment: d.payment, po: '', notes: '', when: 'asap', date: '' }; };
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
-const clearDraft = () => { ND = null; try { localStorage.removeItem('ecd_nd'); } catch (e) { /* ignore */ } };
+const clearDraft = () => { ND = null; ndAddrPick = null; try { localStorage.removeItem('ecd_nd'); } catch (e) { /* ignore */ } };
 const ndOpen = () => !!(sheetOpen && $('#sheet-body [data-nd]'));
 const tomorrowStr = () => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); };
-const ndLater = () => S.settings.form.when && ND.when === 'later';
+const ndLater = () => ND.when === 'later';
+let ndX = ''; // the one extra that's open under the tap buttons: items | when | notes | po | more
+let ndAddrPick = null; // address choice made in this form; otherwise the one remembered for the customer
 
+/* The "two names and go" form: Pickup and Delivery names (a saved customer's address is one grey
+   line), a row of tap buttons that start on the usual answers, and the Send button in a bar at the bottom. */
 function openNewDispatch() {
   if (!S.user || $('#view-app').hidden) return;
   if (!ND) ND = blankDraft();
+  ndX = '';
   loadMaps();
-  const f = S.settings.form;
+  loadCompanyBooks();
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
-      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden></button></h3>
+      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden>Add +</button></h3>
       <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nd-${k}-ac" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
-      <div class="field"><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
+      <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
+      <div class="field addr-box" id="nd-${k}-box" hidden><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
+      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
     ${leg('pickup', 'Pickup')}
     ${leg('delivery', 'Delivery')}
-    ${f.items || f.notes ? `<section class="nd-block">
-      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div></div>` : ''}
-      ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>` : ''}
-    </section>` : ''}
-    ${f.payment || f.po || f.when ? `<section class="nd-block">
-      ${f.payment || f.po ? `<div class="${f.payment && f.po ? 'two' : ''}">
-        ${f.payment ? `<div class="field"><label>Payment</label><div class="seg" role="radiogroup" aria-label="Payment"><label><input type="radio" name="nd-pay" value="prepaid"><span>Prepaid</span></label><label><input type="radio" name="nd-pay" value="collect"><span>Collect</span></label></div></div>` : ''}
-        ${f.po ? `<div class="field"><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" placeholder="Optional" autocomplete="off"></div>` : ''}
-      </div>` : ''}
-      ${f.when ? `<div class="field"><label>When</label><div class="nd-when"><div class="seg" role="radiogroup" aria-label="When"><label><input type="radio" name="nd-when" value="asap"><span>Now</span></label><label><input type="radio" name="nd-when" value="later"><span>Later</span></label></div><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}" aria-label="Date" hidden></div></div>` : ''}
-    </section>` : ''}
+    <div class="nd-chips" id="nd-chips" role="group" aria-label="Pieces, payment, when, note and PO"></div>
+    <div class="field nd-x" id="nd-x-items" hidden><div id="nd-items"></div></div>
+    <div class="field nd-x" id="nd-x-when" hidden><label for="nd-date">Book it for</label><div class="nd-when"><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}"><button class="btn btn-secondary" type="button" data-act="nd-now">Now instead</button></div></div>
+    <div class="field nd-x" id="nd-x-notes" hidden><label for="nd-notes">Note for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>
+    <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
     <div class="nd-send">
-      <div class="text-preview"><span>Text to send</span><b id="nd-text"></b></div>
-      <div id="nd-actions"></div>
+      <div class="nd-more" id="nd-more" hidden></div>
+      <p class="nd-preview" id="nd-text"></p>
+      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, Group Chat, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
     </div>
-    <p class="pick-note">Show or hide fields in Settings › New dispatch.</p>
   </form>`;
   openSheet('New dispatch', html, (body) => {
     ndFillAll(body);
@@ -2386,8 +2844,6 @@ function ndFillLeg(k) {
 function ndFillAll(body) {
   ndFillLeg('pickup'); ndFillLeg('delivery');
   ['po', 'notes', 'date'].forEach((k) => { const el = $(`[data-nd-f="${k}"]`, body); if (el) el.value = ND[k] || ''; });
-  $$('input[name=nd-pay]', body).forEach((x) => { x.checked = x.value === ND.payment; });
-  $$('input[name=nd-when]', body).forEach((x) => { x.checked = x.value === ND.when; });
   ndRenderItems();
 }
 function ndRenderItems() {
@@ -2396,13 +2852,40 @@ function ndRenderItems() {
   box.innerHTML = ND.items.map((it, i) => `<div class="item-row">
       <div class="stepper"><button type="button" data-act="nd-qty" data-i="${i}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="999" data-nd-qty="${i}" value="${esc(it.qty)}" aria-label="How many"><button type="button" data-act="nd-qty" data-i="${i}" data-d="1" aria-label="One more">+</button></div>
       <select data-nd-type="${i}" aria-label="Kind">${ITEM_TYPES.map((t) => `<option value="${t.id}"${t.id === it.type ? ' selected' : ''}>${t.label}</option>`).join('')}</select>
-      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="next" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
+      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="done" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
     </div>`).join('') + `<div class="item-foot"><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button><button class="nd-done" type="button" data-act="nd-done">Done</button>${ND.items.length > 1 ? '<span class="del-ph"></span>' : '<span></span>'}</div>`;
 }
-// Done (under the weight): keyboard away, then the send buttons slide into view
+/* The tap buttons: each starts on the usual answer. Only the one tapped opens up. */
+function ndChips() {
+  const box = $('#nd-chips');
+  if (!box) return;
+  const it = itemsText(ND.items);
+  const later = ndLater();
+  const chip = (x, label, set, aria) => `<button type="button" class="nd-chip${set ? ' set' : ''}${ndX === x ? ' open' : ''}" data-act="nd-x" data-x="${x}" aria-expanded="${ndX === x}" aria-label="${esc(aria)}">${label}</button>`;
+  const note = oneLine(ND.notes), po = ND.po.trim();
+  box.innerHTML = [
+    chip('items', `${icon('box', 'sm')}<span>${esc(clampText(it || 'Pieces?', 24))}</span>`, !!it, `Pieces: ${it || 'none yet'}. Tap to change`),
+    `<button type="button" class="nd-chip${ND.payment === 'collect' ? ' set' : ''}" data-act="nd-pay" aria-label="Payment: ${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}. Tap to switch">${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}</button>`,
+    chip('when', `${icon('clock', 'sm')}<span>${later && ND.date ? esc(fmtDay(ND.date)) : later ? 'Pick a day' : 'Now'}</span>`, later, later ? `Booked for ${ND.date ? fmtDay(ND.date) : 'a later day'}. Tap to change` : 'Now. Tap to book it for a later day'),
+    chip('notes', note ? `${icon('edit', 'sm')}<span>${esc(clampText(note, 18))}</span>` : '+ Note', !!note, note ? `Note: ${note}` : 'Add a note for the driver'),
+    chip('po', po ? `<span>PO ${esc(clampText(po, 12))}</span>` : '+ PO', !!po, po ? `PO ${po}` : 'Add a PO number')
+  ].join('');
+}
+// Opens one extra (or closes it when it's tapped again)
+function ndOpenX(x) {
+  if (x === 'when' && !ndLater()) { ND.when = 'later'; if (!ND.date) ND.date = tomorrowStr(); const d = $('#nd-date'); if (d) d.value = ND.date; ndX = 'when'; }
+  else ndX = ndX === x ? '' : x;
+  ndUpdate();
+  const go = { notes: '#nd-notes', po: '#nd-po' }[ndX];
+  const panel = ndX && ndX !== 'more' ? $(`#nd-x-${ndX}`) : null;
+  if (go) { const el = $(go); el.focus({ preventScroll: true }); if (Keyboard) Keyboard.show().catch(() => {}); ndReveal(el); }
+  else if (panel) { const a = document.activeElement; if (a && a.closest && a.closest('[data-nd]') && a.blur) a.blur(); setTimeout(() => ndReveal(panel), 30); }
+}
+// Done (under the weight), or both places picked: keyboard away, Send in reach
 function ndDone() {
+  if (ndX === 'items') { ndX = ''; ndUpdate(); }
   const a = document.activeElement;
   if (a && a.blur) a.blur();
   if (Keyboard) Keyboard.hide().catch(() => {});
@@ -2418,14 +2901,13 @@ function ndDone() {
 
 /* What gets saved: a request in the same shape Request Pickup writes */
 function ndRecord() {
-  const f = S.settings.form;
   const leg = (L) => {
     const o = { name: L.name.trim(), address: L.address.trim() };
     if (L.city.trim()) o.city = L.city.trim();
     if (L.lat != null) { o.lat = L.lat; o.lng = L.lng; }
     return o;
   };
-  const items = f.items ? clampText(itemsText(ND.items), 500) : '';
+  const items = clampText(itemsText(ND.items), 500);
   const later = ndLater() && ND.date;
   return {
     source: 'dispatcher',
@@ -2437,72 +2919,124 @@ function ndRecord() {
     delivery: leg(ND.delivery),
     items_text: items || null,
     item_details: items ? null : '', // the rules need one of the two, even if empty
-    payment: f.payment ? ND.payment : 'prepaid',
-    text_hide: f.payment ? null : { payment: true },
-    po: (f.po && ND.po.trim()) || null,
-    notes: (f.notes && ND.notes.trim()) || null,
+    payment: ND.payment === 'collect' ? 'collect' : 'prepaid',
+    po: ND.po.trim() || null,
+    notes: ND.notes.trim() || null,
     when: later ? 'scheduled' : 'asap',
     scheduled_for: later ? ND.date : null
   };
 }
-// Checks the form. Returns the request, or null after pointing at what's missing.
+// Address in the text: the choice made here, or the one remembered for this pickup customer
+function ndAddrMode(r) {
+  const m = ndAddrPick || (S.addrPrefs && S.addrPrefs[custKey(r)]) || {};
+  return { addr: ADDR_MODES.some(([v]) => v === m.addr) ? m.addr : 'off', map: !!m.map };
+}
+const ndText = (r) => dispatchText(r, modeWith(ndAddrMode(r)));
+function ndSetAddr(change) {
+  const r = ndRecord();
+  ndAddrPick = Object.assign(ndAddrMode(r), change);
+  if (lookupKey(r.pickup.name)) {
+    const key = custKey(r);
+    S.addrPrefs = Object.assign({}, S.addrPrefs, { [key]: { addr: ndAddrPick.addr, map: ndAddrPick.map } });
+    if (db && S.user && !S.fromCache) db.ref(`dispatch_settings/addr_prefs/${key}`).set({ addr: ndAddrPick.addr, map: ndAddrPick.map }).catch(() => { /* kept in this form anyway */ });
+  }
+  ndUpdate();
+}
+// ⋯ next to Send: the rarer choices
+function ndMoreMenu() {
+  const r = ndRecord();
+  const m = ndAddrMode(r);
+  const has = { pickup: !!r.pickup.address, delivery: !!r.delivery.address };
+  const off = (v) => (v === 'pickup' && !has.pickup) || (v === 'delivery' && !has.delivery) || (v === 'both' && !(has.pickup && has.delivery));
+  const later = ndLater();
+  return `<div class="nd-more-list">
+      ${later ? `<button type="button" data-act="nd-now">${icon('send')}<span>Send now instead<small>Not booked for a later day</small></span></button>` : `<button type="button" data-act="nd-save">${icon('inbox')}<span>Save to queue<small>Send it from the Queue later</small></span></button>`}
+      <button type="button" data-act="nd-group">${icon('users')}<span>Group Chat<small>Share the text. It counts as sent once it goes to a driver.</small></span></button>
+      ${later ? '' : `<button type="button" data-act="nd-sched">${icon('calendar')}<span>Schedule for later<small>Book it for another day</small></span></button>`}
+    </div>
+    <div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+      <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="nd-map-link"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button></div>
+    <p class="nd-more-note">Address in the text. Remembered for ${esc(r.pickup.name || 'this customer')}.</p>`;
+}
+// Checks the form. Returns the request, or null after the missing boxes shake and turn red.
 function ndValid() {
-  const errs = [];
-  const mark = (el, bad) => { if (el) el.classList.toggle('invalid', bad); };
+  const bad = []; // selectors of the boxes to shake
   ['pickup', 'delivery'].forEach((k) => {
     const L = ND[k];
-    const label = k === 'pickup' ? 'pickup' : 'delivery';
-    const badName = !L.name.trim();
-    const badAddr = !L.address.trim() || (mapsUsable() && !L.ok);
-    mark($(`#nd-${k}-name`), badName);
-    mark($(`#nd-${k}-address`), badAddr);
-    if (badName) errs.push([`#nd-${k}-name`, `Type the ${label} contact name.`]);
-    else if (!L.address.trim()) errs.push([`#nd-${k}-address`, `Add the ${label} address.`]);
-    else if (badAddr) errs.push([`#nd-${k}-address`, `Pick the ${label} address from Google’s list or the map.`]);
+    L.bad = false;
+    if (!L.name.trim()) bad.push(`#nd-${k}-name`);
+    else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
   });
-  const f = S.settings.form;
-  if (f.items && !itemsText(ND.items)) errs.push(['[data-nd-qty]', 'Add how many pieces.']);
-  if (ndLater() && !(ND.date && ND.date > todayStr())) { mark($('#nd-date'), true); errs.push(['#nd-date', 'Pick the date it’s booked for.']); } else mark($('#nd-date'), false);
-  if (!errs.length) return ndRecord();
-  const el = $(errs[0][0]);
-  if (el) { el.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' }); }
-  toast(errs[0][1], 'error', 5000);
+  if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
+  if (ndLater() && !(ND.date && ND.date > todayStr())) { ndX = 'when'; bad.push('#nd-date'); }
+  if (!bad.length) return ndRecord();
+  ndUpdate();
+  bad.forEach((sel) => {
+    const el = $(sel);
+    if (!el) return;
+    el.classList.add('invalid');
+    el.classList.remove('shake');
+    void el.offsetWidth; // so the shake plays again on every try
+    el.classList.add('shake');
+    el.setAttribute('aria-invalid', 'true');
+  });
+  if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
+  const first = $(bad[0]);
+  if (first) {
+    first.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });
+    if (first.matches('input')) first.focus({ preventScroll: true });
+  }
   return null;
 }
+document.addEventListener('animationend', (e) => { if (e.target.classList && e.target.classList.contains('shake')) e.target.classList.remove('shake'); });
 
-/* Redraws the checks, tags, text preview and send buttons */
+/* Redraws the address lines, tags, tap buttons, text preview and Send button */
 let ndMode = '';
 function ndUpdate(force) {
   if (!ndOpen() || !ND) return;
   saveDraft();
-  ['pickup', 'delivery'].forEach((k) => {
-    const L = ND[k];
-    const ok = $(`#nd-${k}-ok`);
-    if (!ok) return;
-    if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${L.from === 'saved' ? 'Saved customer' : 'Checked with Google'}`; }
-    else if (L.address.trim() && mapsUsable()) { ok.className = 'addr-ok'; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
-    else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
-  });
+  let moved = false;
+  ['pickup', 'delivery'].forEach((k) => { if (ndLegUi(k)) moved = true; });
   ndRefreshTags();
+  ndChips();
+  ['items', 'when', 'notes', 'po'].forEach((x) => { const el = $(`#nd-x-${x}`); if (el && el.hidden !== (ndX !== x)) { el.hidden = ndX !== x; moved = true; } });
+  const more = $('#nd-more');
+  more.hidden = ndX !== 'more';
+  if (!more.hidden) more.innerHTML = ndMoreMenu();
+  $('[data-act=nd-more]').setAttribute('aria-expanded', String(ndX === 'more'));
+  $('[data-act=nd-more]').classList.toggle('on', ndX === 'more');
   const r = ndRecord();
-  $('#nd-text').textContent = r.pickup.name || r.delivery.name ? dispatchText(r) : 'Fill in the pickup and delivery names.';
-  const date = $('#nd-date');
-  if (date) date.hidden = !ndLater();
-  const mode = `${ndLater() ? 'later' : 'now'}|${Object.keys(S.contacts.drivers || {}).join(',')}|${ND.date}`;
+  const shown = Object.assign({}, r, { pickup: Object.assign({}, r.pickup, { name: r.pickup.name || '…' }), delivery: Object.assign({}, r.delivery, { name: r.delivery.name || '…' }) });
+  $('#nd-text').textContent = r.pickup.name || r.delivery.name ? ndText(shown) : 'Type the pickup and delivery names.';
+  if (moved) ndKeyboard();
+  const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}`;
   if (mode === ndMode && !force) return;
   ndMode = mode;
-  const box = $('#nd-actions');
-  if (ndLater()) {
-    box.innerHTML = `<div class="nd-actions"><button class="btn btn-primary full" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Schedule it'}</button></div>`;
-    return;
-  }
-  box.innerHTML = `<div class="nd-actions">
-      <button class="btn btn-secondary" type="button" data-act="nd-save">${icon('inbox', 'sm')}Save to queue</button>
-      <button class="btn btn-secondary" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button>
-      <button class="btn btn-primary full" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>
-    </div>`;
+  $('#nd-main').innerHTML = ndLater()
+    ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
+    : `<button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>`;
 }
-// "Saved" when the name is already a customer, "New customer" when it'll be added
+/* One leg: a grey line for an address that's known, the address boxes when one is needed
+   (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
+   Returns true when its height changed. */
+function ndLegUi(k) {
+  const L = ND[k];
+  const line = $(`#nd-${k}-line`), box = $(`#nd-${k}-box`), ok = $(`#nd-${k}-ok`), diff = $(`#nd-${k}-diff`);
+  if (!line) return false;
+  const showLine = !!(L.ok && !L.edit && L.address.trim());
+  const showBox = !showLine && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
+  const was = [line.hidden, box.hidden, diff.hidden].join();
+  line.hidden = !showLine;
+  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
+  box.hidden = !showBox;
+  if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${L.from === 'saved' ? 'Saved customer' : 'Checked with Google'}`; }
+  else if (L.address.trim() && mapsUsable()) { ok.className = `addr-ok${L.bad ? ' err' : ''}`; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
+  else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
+  else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
+  diff.hidden = customerAction(k) !== 'update' || !!L.keep;
+  return was !== [line.hidden, box.hidden, diff.hidden].join();
+}
+// "Saved" when the name is a saved customer, the company when it's one of their contacts, "New" otherwise
 function ndRefreshTags() {
   if (!ndOpen() || !ND) return;
   ['pickup', 'delivery'].forEach((k) => {
@@ -2513,17 +3047,16 @@ function ndRefreshTags() {
     if (!tag) return;
     tag.hidden = !name;
     const c = S.lookup[name];
-    tag.className = `tag${c ? ' saved' : ''}`;
-    tag.textContent = c ? 'Saved' : L.addPending ? 'Pick the address' : 'New customer';
+    tag.className = `tag${c || L.from === 'company' ? ' saved' : ''}`;
+    tag.textContent = c ? 'Saved' : L.from === 'company' ? 'Customer’s contact' : L.addPending ? 'Pick the address' : 'New';
     if (!add) return;
     const act = customerAction(k);
-    add.hidden = !act;
-    add.textContent = act === 'update' ? 'Update address' : 'Add +';
-    add.setAttribute('aria-label', act === 'update' ? `Update the saved address for ${L.name.trim()}` : `Add ${L.name.trim()} as a new customer`);
+    add.hidden = act !== 'add';
+    add.setAttribute('aria-label', `Add ${L.name.trim()} as a new customer now`);
   });
 }
-/* What the button next to the tag offers: "add" a new customer, "update" a saved customer's
-   address (only when the dispatcher asks: a one-off job to another dock must not change it), or nothing. */
+/* "add" a new customer (Add +, or by itself when it's sent), "update" a saved customer's address
+   (only when the dispatcher says yes: a one-off job to another dock must not change it), or nothing. */
 function customerAction(k) {
   const L = ND && ND[k];
   if (!L) return '';
@@ -2533,6 +3066,7 @@ function customerAction(k) {
   if (!c) return L.addPending ? '' : 'add';
   const addr = L.address.trim();
   if (!addr || !c.address || L.from === 'saved') return '';
+  if (mapsUsable() && !L.ok) return ''; // only once the new address is picked
   return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
 }
 // Address good enough to save: picked from Google or the map, or typed when Google isn't available
@@ -2552,7 +3086,7 @@ function saveCustomerNow(k) {
     .then(() => toast(was ? `${L.name.trim()}’s address updated.` : `${L.name.trim()} added as a customer.`, 'ok'))
     .catch((err) => toast(`${L.name.trim()} couldn’t be saved: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
 }
-// Add + (or Update address): saves now if the address is ready, otherwise as soon as it's picked
+// Add +: saves now if the address is ready, otherwise as soon as it's picked
 function ndAddCustomer(k) {
   if (!ND || !ND[k]) return;
   const L = ND[k];
@@ -2560,6 +3094,7 @@ function ndAddCustomer(k) {
   ndHideSuggest(k);
   if (legAddrReady(L)) { saveCustomerNow(k); return; }
   L.addPending = true;
+  L.edit = true;
   ndUpdate();
   const a = $(`#nd-${k}-address`);
   if (a) { a.focus({ preventScroll: true }); ndReveal(a); }
@@ -2567,29 +3102,58 @@ function ndAddCustomer(k) {
 // Called whenever a leg's address becomes ready (Google, the map or a saved customer)
 function ndAddressReady(k) { if (ND && ND[k] && ND[k].addPending && legAddrReady(ND[k])) saveCustomerNow(k); }
 
-/* ---------- Name suggestions from the saved customers ---------- */
+/* ---------- Customers' own contacts (Request Pickup address books) ----------
+   Staff can read every company; customers never see address_lookup. Read when the form opens,
+   at most every 5 minutes, and only used for suggestions in the name boxes. */
+let coBooks = { at: 0, list: [] };
+function loadCompanyBooks() {
+  if (!db || !S.user || S.fromCache || Date.now() - coBooks.at < 300000) return;
+  coBooks.at = Date.now();
+  db.ref('companies').once('value').then((snap) => {
+    const list = [];
+    Object.values(snap.val() || {}).forEach((v) => {
+      v = v || {};
+      const company = String(v.name || '').trim();
+      Object.values(v.address_book || {}).forEach((e) => {
+        if (!e || !String(e.name || '').trim() || !String(e.address || '').trim()) return;
+        list.push({ name: String(e.name).trim(), address: String(e.address).trim(), city: String(e.city || '').trim(), lat: typeof e.lat === 'number' ? e.lat : null, lng: typeof e.lng === 'number' ? e.lng : null, company });
+      });
+    });
+    coBooks.list = list;
+    ['pickup', 'delivery'].forEach((k) => { if (ND && document.activeElement === $(`#nd-${k}-name`)) ndSuggest(k); });
+  }).catch(() => { coBooks.at = 0; });
+}
+/* ---------- Name suggestions: saved customers first, then customers' own contacts ---------- */
+const ndFound = { pickup: [], delivery: [] };
 function ndMatches(q) {
   q = q.trim().toLowerCase();
   if (!q) return [];
-  const keys = Object.keys(S.lookup);
-  const starts = keys.filter((k) => k.toLowerCase().startsWith(q));
-  const words = keys.filter((k) => !k.toLowerCase().startsWith(q) && k.toLowerCase().split(/[\s&,-]+/).some((w) => w.startsWith(q)));
-  return starts.sort((a, b) => a.localeCompare(b)).concat(words.sort((a, b) => a.localeCompare(b))).slice(0, 8);
+  const hit = (name) => { const n = name.toLowerCase(); return n.startsWith(q) ? 2 : n.split(/[\s&,-]+/).some((w) => w.startsWith(q)) ? 1 : 0; };
+  const order = (a, b) => b.score - a.score || a.name.localeCompare(b.name);
+  const saved = Object.keys(S.lookup).map((name) => ({ name, score: hit(name), src: 'saved' })).filter((x) => x.score).sort(order);
+  const seen = new Set(saved.map((x) => x.name.toLowerCase()));
+  const co = coBooks.list.map((e) => Object.assign({ score: hit(e.name), src: 'company' }, e))
+    .filter((x) => x.score && !S.lookup[lookupKey(x.name)] && !seen.has(`${x.name}|${x.address}`.toLowerCase()) && seen.add(`${x.name}|${x.address}`.toLowerCase()))
+    .sort(order);
+  const top = saved.slice(0, 8 - Math.min(3, co.length));
+  return top.concat(co.slice(0, 8 - top.length));
 }
 function ndSuggest(k) {
   const list = $(`#nd-${k}-ac`);
   if (!list) return;
   const q = ND[k].name;
   const found = ndMatches(q);
+  ndFound[k] = found;
   const isNew = !!lookupKey(q) && !S.lookup[lookupKey(q)];
   if (!found.length && !(isNew && q.trim().length >= 2)) { list.hidden = true; list.innerHTML = ''; return; }
   const hl = (name) => {
     const i = name.toLowerCase().indexOf(q.trim().toLowerCase());
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
   };
-  list.innerHTML = found.map((name, i) => {
-    const c = S.lookup[name] || {};
-    return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
+  list.innerHTML = found.map((x, i) => {
+    const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
+    const where = [c.address, c.city].filter(Boolean).join(', ') || 'No address saved';
+    return `<button class="ac-item${i === 0 ? ' on' : ''}${x.src === 'company' ? ' co' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-i="${i}"><b>${hl(x.name)}</b><small>${x.src === 'company' ? `<em>${esc(x.company || 'Customer')}’s contact</em> · ` : ''}${esc(where)}</small></button>`;
   }).join('') + (isNew ? `<div class="ac-new"><span class="grow">New customer: <b>${esc(q.trim())}</b><small>Added when you send, or now with Add +</small></span><button class="tag-add" type="button" data-act="nd-add-customer" data-leg="${k}" aria-label="Add ${esc(q.trim())} as a new customer">Add +</button></div>` : '');
   const was = list.hidden;
   list.hidden = false;
@@ -2619,16 +3183,20 @@ function comboState(k) {
   input.setAttribute('aria-expanded', String(open));
   if (on) input.setAttribute('aria-activedescendant', on.id); else input.removeAttribute('aria-activedescendant');
 }
-function ndPick(k, name) {
-  const c = S.lookup[name] || {};
-  ND[k] = { name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+function ndPick(k, i) {
+  const x = ndFound[k][i];
+  if (!x) return;
+  const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
+  ND[k] = { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
+  if (x.src === 'company') ND[k].company = x.company || '';
   ndFillLeg(k);
   ndHideSuggest(k);
   ndUpdate();
-  // Straight on to the next thing to fill in, keyboard stays up
-  const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-notes') || $('#nd-po');
-  const go = !c.address ? $(`#nd-${k}-address`) : next;
-  if (go) { go.focus({ preventScroll: true }); ndReveal(go); }
+  // Straight on to the next thing to fill in. Both places done: keyboard away, Send in reach.
+  if (!c.address) { const a = $(`#nd-${k}-address`); a.focus({ preventScroll: true }); ndReveal(a); return; }
+  const other = k === 'pickup' ? 'delivery' : 'pickup';
+  if (!ND[other].name.trim()) { const n = $(`#nd-${other}-name`); n.focus({ preventScroll: true }); ndReveal(n); return; }
+  ndDone();
 }
 
 /* ---------- Google address boxes ---------- */
@@ -2650,7 +3218,7 @@ function ndAttachPlaces() {
       const parts = placeParts(p.address_components, p.formatted_address || p.name);
       const L = ND[k];
       const business = (p.types || []).some((t) => ['establishment', 'point_of_interest', 'store'].includes(t)) && !(p.types || []).includes('street_address');
-      Object.assign(L, parts, { lat: +p.geometry.location.lat().toFixed(6), lng: +p.geometry.location.lng().toFixed(6), ok: true, from: 'google' });
+      Object.assign(L, parts, { lat: +p.geometry.location.lat().toFixed(6), lng: +p.geometry.location.lng().toFixed(6), ok: true, from: 'google', edit: false, bad: false, keep: false });
       if (business && !L.name.trim()) L.name = p.name;
       ndFillLeg(k);
       ndUpdate();
@@ -2713,7 +3281,7 @@ function mapSet(loc) {
 function mapUse() {
   if (!mapPick || !mapPick.loc || !ND) return;
   const k = mapPick.leg;
-  Object.assign(ND[k], mapPick.loc, { ok: true, from: 'google' });
+  Object.assign(ND[k], mapPick.loc, { ok: true, from: 'google', edit: false, bad: false, keep: false });
   closeMap();
   if (ndOpen()) { ndFillLeg(k); ndUpdate(); ndAddressReady(k); }
 }
@@ -2728,7 +3296,7 @@ async function nextRefNo() {
 }
 /* New customers go into the shared list when the job is saved, like Route Planner does.
    A saved customer's address is never changed here: a one-off job to another address would
-   otherwise change it for everyone. "Update address" in the form does that on purpose. */
+   otherwise change it for everyone. "Save this one?" in the form does that on purpose. */
 function saveCustomers(r) {
   [r.pickup, r.delivery].forEach((L) => {
     const key = lookupKey(L.name);
@@ -2765,7 +3333,7 @@ function ndSendGroup() {
   if (sharing) return;
   const r = ndValid();
   if (!r) return;
-  const text = dispatchText(r);
+  const text = ndText(r);
   const shared = () => {};
   if (canShare()) {
     sharing = true;
@@ -2802,7 +3370,7 @@ function openSendPanel(title, pickup, onSend, swap, jobId) {
   spMsg('');
   $('#sp-title').textContent = title;
   $('#sp-to').textContent = pickup && pickup.name ? `Pickup: ${pickup.name}` : '';
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-hold-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(d.phone)}</small></span></button>`).join('');
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-hold-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(formatPhone(d.phone))}</small></span></button>`).join('');
   $('#nd-pop-list').innerHTML = rows ? `<div class="pick-grid">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
   $('#sp-vans').innerHTML = '';
   const el = $('#nd-pop');
@@ -2867,6 +3435,7 @@ function spList() {
   return used.concat(idle);
 }
 function spRender() {
+  deskRender();
   if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
   const list = spList();
   const box = $('#sp-vans');
@@ -3112,7 +3681,7 @@ async function ndSendDriver(did) {
   if (!d) return;
   const r = ndValid();
   if (!r) return;
-  const text = dispatchText(r);
+  const text = ndText(r);
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
   if (!SmsSender) { inMessages(); ndSent(r, d.name); return; }
   const done = toast(`Sending to ${d.name}…`, 'info', 25000);
@@ -3255,15 +3824,13 @@ function ndReset() {
 document.addEventListener('input', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
-  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; ND[k].addPending = false; if (ND[k].from === 'saved') { ND[k].from = ''; } t.classList.remove('invalid'); ndSuggest(k); }
-  else if (t.dataset.ndAddr) { const L = ND[t.dataset.ndAddr]; L.address = t.value; L.ok = false; L.from = ''; L.lat = null; L.lng = null; t.classList.remove('invalid'); }
+  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; ND[k].addPending = false; if (ND[k].from === 'saved' || ND[k].from === 'company') { ND[k].from = ''; } t.classList.remove('invalid'); t.removeAttribute('aria-invalid'); ndSuggest(k); }
+  else if (t.dataset.ndAddr) { const L = ND[t.dataset.ndAddr]; L.address = t.value; L.ok = false; L.from = ''; L.lat = null; L.lng = null; L.keep = false; L.edit = true; t.classList.remove('invalid'); t.removeAttribute('aria-invalid'); }
   else if (t.dataset.ndCity) ND[t.dataset.ndCity].city = t.value;
   else if (t.dataset.ndF) { ND[t.dataset.ndF] = t.value; t.classList.remove('invalid'); }
   else if (t.dataset.ndQty) ND.items[+t.dataset.ndQty].qty = Math.max(0, Math.min(999, parseInt(t.value, 10) || 0));
   else if (t.dataset.ndOther) ND.items[+t.dataset.ndOther].other = t.value;
   else if (t.dataset.ndWt) ND.items[+t.dataset.ndWt].weight = t.value.trim();
-  else if (t.name === 'nd-pay') ND.payment = t.value;
-  else if (t.name === 'nd-when') { ND.when = t.value; if (t.value === 'later' && !ND.date) { ND.date = tomorrowStr(); $('#nd-date').value = ND.date; } }
   ndUpdate();
 });
 document.addEventListener('change', (e) => {
@@ -3277,17 +3844,16 @@ document.addEventListener('change', (e) => {
     if (next) { next.focus({ preventScroll: true }); if (next.select) next.select(); ndReveal(next); }
     ndUpdate();
   }
-  else if (t.name === 'nd-pay' || t.name === 'nd-when') t.dispatchEvent(new Event('input', { bubbles: true }));
   // Typed, when Google isn't available: saved once the city is in (or with the job when it's sent)
   else if (t.dataset.ndCity || (t.dataset.ndAddr && ND[t.dataset.ndAddr].city.trim())) ndAddressReady(t.dataset.ndAddr || t.dataset.ndCity);
 });
 document.addEventListener('keydown', (e) => {
   const t = e.target;
-  // Weight box: the keyboard's Next/Enter goes on to the notes
-  if (t.dataset && t.dataset.ndWt != null && e.key === 'Enter') {
+  // Weight or PO box: the keyboard's Done/Enter closes it, Send in reach
+  if (t.dataset && (t.dataset.ndWt != null || t.id === 'nd-po') && e.key === 'Enter') {
     e.preventDefault();
-    const go = $('#nd-notes') || $('#nd-po');
-    if (go) { go.focus({ preventScroll: true }); ndReveal(go); } else t.blur();
+    if (t.id === 'nd-po') ndX = '';
+    ndDone();
     return;
   }
   if (!t.dataset || !t.dataset.ndName) return;
@@ -3296,7 +3862,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
     const on = items.find((b) => b.classList.contains('on'));
-    if (on) ndPick(on.dataset.leg, on.dataset.name);
+    if (on) ndPick(on.dataset.leg, +on.dataset.i);
     else { ndHideSuggest(t.dataset.ndName); $(`#nd-${t.dataset.ndName}-address`).focus(); }
   } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && items.length) {
     e.preventDefault();
@@ -3336,7 +3902,7 @@ function contactsSettings() {
 }
 // The driver list, in its own sheet so Settings stays short
 function driversEditor() {
-  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(d.phone)}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
+  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(formatPhone(d.phone))}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
   return `<div id="drivers-edit">${drivers || '<p class="card-note">No drivers yet.</p>'}
     <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary" type="submit">Add</button></form></div>`;
 }
@@ -3357,6 +3923,7 @@ document.addEventListener('submit', async (e) => {
     if (!name || cleanPhone(phone).replace('+', '').length < 7) { toast('Enter the driver\u2019s name and full phone number.', 'error'); return; }
     if (await saveContact((ref) => ref.child('drivers').push({ name, phone }))) toast(`${name} added.`, 'ok');
   }
+  if (f.dataset.form === 'add-quick') { const v = ins[0].value; ins[0].value = ''; await addQuick(v); }
 });
 
 // Queue reminders: shared by every dispatcher phone (dispatch_settings/reminders)
@@ -3416,10 +3983,17 @@ function renderSettings() {
     ${contactsSettings()}
     <section class="card">
       <h2>${icon('plus')}New dispatch</h2>
-      <p class="card-note">Fields the Dispatch form shows. Hidden fields stay out of the text. Pickup and delivery names are always there.</p>
-      ${FORM_FIELDS.map((f) => `<div class="setting"><span class="grow">${esc(f.label)}${f.hint ? `<small>${esc(f.hint)}</small>` : ''}</span><span class="switch"><input type="checkbox" data-form-field="${f.key}"${st.form[f.key] ? ' checked' : ''} aria-label="Show ${esc(f.label)}"><span></span></span></div>`).join('')}
+      <p class="card-note">How each new dispatch starts. You can still change it on each one.</p>
+      <div class="setting"><span class="grow">Payment</span><div class="seg set-seg" role="radiogroup" aria-label="Payment starts as">${[['prepaid', 'Prepaid'], ['collect', 'Collect']].map(([v, l]) => `<label><input type="radio" name="set-nd-pay" value="${v}" data-nd-def="payment"${ndDefaults().payment === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></div>
+      <div class="setting"><span class="grow">Pieces</span><select class="set-select" data-nd-def="type" aria-label="Pieces start as">${ITEM_TYPES.filter((t) => t.id !== 'other').map((t) => `<option value="${t.id}"${ndDefaults().type === t.id ? ' selected' : ''}>1 ${t.one}</option>`).join('')}</select></div>
     </section>
     ${remindersSettings()}
+    <section class="card">
+      <h2>${icon('chat')}Quick replies<em>${quickList().length}</em></h2>
+      <p class="card-note">One-tap answers to customers, under Messages in a request\u2019s Details. They show in the customer\u2019s app. Shared with every dispatcher.</p>
+      <div class="quick-peek">${quickList().slice(0, 6).map((q) => `<span>${esc(q.text)}</span>`).join('')}${quickList().length > 6 ? `<span>+${quickList().length - 6} more</span>` : ''}</div>
+      <button class="btn btn-secondary block" type="button" data-act="edit-quick">${icon('edit', 'sm')}Edit quick replies</button>
+    </section>
     <section class="card">
       <h2>${icon('bell')}Alerts</h2>
       ${sw('sound', 'Alert sound', 'Turn the phone’s media volume up.')}
@@ -3455,7 +4029,7 @@ function renderSettings() {
     zr.addEventListener('change', () => { S.settings.vanZoom = +zr.value; saveSettings(); });
   }
   $$('[data-rem]', body).forEach((x) => x.addEventListener('change', () => saveReminders({ [x.dataset.rem]: x.type === 'checkbox' ? x.checked : x.value })));
-  $$('[data-form-field]', body).forEach((x) => x.addEventListener('change', () => { S.settings.form[x.dataset.formField] = x.checked; saveSettings(); }));
+  $$('[data-nd-def]', body).forEach((x) => x.addEventListener('change', () => { S.settings.nd = Object.assign(ndDefaults(), { [x.dataset.ndDef]: x.value }); saveSettings(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
     const key = x.dataset.setting;
     if (key === 'notify' && x.checked) {
@@ -3489,7 +4063,7 @@ document.addEventListener('click', async (e) => {
   if (tab) { switchTab(tab.dataset.tab); return; }
   const el = e.target.closest('[data-act]');
   if (!el) {
-    if (e.target.closest('textarea, a, .addr-ticks')) return;
+    if (e.target.closest('textarea, a, .addr-sw')) return;
     const card = e.target.closest('.job.unseen');
     if (card) ack(card.dataset.id);
     return;
@@ -3536,6 +4110,21 @@ document.addEventListener('click', async (e) => {
     case 'pick-driver': pickDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
+    case 'job-menu': jobMenu(id); break;
+    case 'job-text': toggleJobText(id); break;
+    case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
+    case 'addr-map': setAddrMode(id, { map: el.getAttribute('aria-pressed') !== 'true' }); break;
+    case 'quick-reply': sendMsg(id, el.dataset.text); break;
+    case 'edit-quick': openSheet('Quick replies', quickEditor()); break;
+    case 'del-quick': delQuick(el.dataset.q); break;
+    case 'day-board': openDayBoard(); break;
+    case 'board-copy': boardCopy(); break;
+    case 'queue-search': {
+      S.queueSearch = !S.queueSearch;
+      renderQueue();
+      if (S.queueSearch) setTimeout(() => $('#queue-q').focus(), 30);
+      break;
+    }
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
     case 'remove': askRemove(id); break;
     case 'rem-day': {
@@ -3553,7 +4142,29 @@ document.addEventListener('click', async (e) => {
     case 'test-alert': testAlert(); break;
     case 'test-push': sendTestPush(); break;
     case 'new-dispatch': openNewDispatch(); break;
-    case 'nd-pick': ndPick(el.dataset.leg, el.dataset.name); break;
+    case 'nd-pick': ndPick(el.dataset.leg, +el.dataset.i); break;
+    case 'nd-x': ndOpenX(el.dataset.x); break;
+    case 'nd-pay': ND.payment = ND.payment === 'collect' ? 'prepaid' : 'collect'; ndUpdate(); break;
+    case 'nd-now': ND.when = 'asap'; ndX = ''; ndUpdate(); break;
+    case 'nd-sched': ndOpenX('when'); break;
+    case 'nd-more': ndX = ndX === 'more' ? '' : 'more'; ndUpdate(); break;
+    case 'nd-addr': ndSetAddr({ addr: el.dataset.mode }); break;
+    case 'nd-map-link': ndSetAddr({ map: !ndAddrMode(ndRecord()).map }); break;
+    case 'nd-addr-edit': {
+      const L = ND && ND[el.dataset.leg];
+      if (!L) break;
+      L.edit = true;
+      ndUpdate();
+      const a = $(`#nd-${el.dataset.leg}-address`);
+      if (a) { a.focus({ preventScroll: true }); a.select(); ndReveal(a); }
+      break;
+    }
+    case 'nd-diff': {
+      const L = ND && ND[el.dataset.leg];
+      if (!L) break;
+      if (el.dataset.v === 'yes') saveCustomerNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      break;
+    }
     case 'nd-add-customer': ndAddCustomer(el.dataset.leg); break;
     case 'nd-map': ndOpenMap(el.dataset.leg); break;
     case 'map-close': closeMap(); break;
@@ -3568,9 +4179,9 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'nd-done': break; // handled on touch (pointerdown)
-    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
+    case 'nd-add-item': ND.items.push({ qty: 1, type: ndDefaults().type, other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
-    case 'nd-group': ndSendGroup(); break;
+    case 'nd-group': ndX = ''; ndSendGroup(); break;
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
     case 'nd-save': ndSave(el); break;
