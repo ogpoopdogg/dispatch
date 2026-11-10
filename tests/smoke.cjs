@@ -195,11 +195,32 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('[data-x=items]'), /1 box/);
     assert.match(await page.textContent('[data-x=when]'), /Now/);
     await page.click('[data-act=nd-pay]');
-    assert.match(await page.textContent('#nd-text'), /, Collect/);
+    assert.match(await page.inputValue('#nd-text'), /, Collect/);
     await page.click('[data-x=notes]');
     assert.ok(await page.isVisible('#nd-notes') && await page.isHidden('#nd-x-po'), 'only the tapped one opens');
     await page.fill('#nd-notes', 'Back door');
-    assert.match(await page.textContent('#nd-text'), /Back door$/);
+    assert.match(await page.inputValue('#nd-text'), /Back door$/);
+    // Tapping the buttons leaves the form where it is (it used to jump back to the top of Pickup)
+    await page.click('[data-x=notes]');
+    await page.evaluate(() => { const b = document.getElementById('sheet-body'); b.scrollTop = b.scrollHeight; });
+    const keep = await page.evaluate(() => document.getElementById('sheet-body').scrollTop);
+    assert.ok(keep > 20, 'the form can scroll');
+    for (const sel of ['[data-x=items]', '[data-act=nd-qty][data-d="1"]', '[data-act=nd-pay]', '[data-act=nd-pay]']) {
+      await page.tap(sel);
+      await page.waitForTimeout(450);
+      assert.ok(await page.evaluate(() => document.getElementById('sheet-body').scrollTop) >= keep - 5, `stays put after ${sel}`);
+    }
+    assert.ok(await page.isVisible('#nd-x-items'), 'the box button opens pieces');
+    assert.match(await page.textContent('[data-x=items]'), /2 boxes/);
+    await page.tap('[data-x=items]');
+    // The driver text can be typed over, and that text is what gets used
+    await page.fill('#nd-text', 'Acme for Rosser, rush please');
+    assert.ok(await page.isVisible('[data-act=nd-text-reset]'), 'a way back to the automatic text');
+    await page.click('[data-act=nd-pay]');
+    await page.click('[data-act=nd-pay]');
+    assert.strictEqual(await page.inputValue('#nd-text'), 'Acme for Rosser, rush please', 'typed text is kept');
+    await page.click('[data-act=nd-text-reset]');
+    assert.match(await page.inputValue('#nd-text'), /Back door$/);
     assert.ok((await page.locator('[data-act=nd-pick-driver]').boundingBox()).height >= 48, 'Send to driver is big');
     await page.waitForTimeout(300);
     await shot(page, 'update-address');
@@ -223,10 +244,23 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.ac-item.co'), /Prairie Parts/);
     await page.click('.ac-item.co');
     assert.match(await page.textContent('#nd-pickup-line'), /50 Rosser Ave/);
+    // Now opens a calendar with Tomorrow on top; tapping the day again goes back to Now
     await page.click('[data-x=when]');
+    await page.waitForSelector('#nd-cal .nd-cal-grid button');
+    await page.waitForTimeout(800);
+    await shot(page, 'nd-calendar');
+    await page.click('#nd-cal .nd-cal-top [data-act=nd-cal-day]');
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
+    assert.ok(await page.isHidden('#nd-x-when'), 'the calendar closes once a day is picked');
     await shot(page, 'nd-later');
-    await page.click('#nd-x-when [data-act=nd-now]');
+    await page.click('[data-x=when]');
+    assert.match(await page.textContent('[data-x=when]'), /Now/);
+    assert.ok(await page.isVisible('[data-act=nd-pick-driver]'), 'back to Send to driver');
+    await page.click('[data-x=when]');
+    await page.click('#nd-cal [data-act=nd-cal-mon][data-d="1"]');
+    await page.click('#nd-cal .nd-cal-grid button:not([disabled]) >> nth=2');
+    assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
+    await page.click('[data-x=when]');
     await page.click('[data-act=nd-reset]');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert);
