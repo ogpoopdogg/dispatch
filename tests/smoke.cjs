@@ -23,6 +23,7 @@ const DATA = {
   staff: { staff1: true },
   dispatch_contacts: { drivers: { d1: { name: 'Mike', phone: '2045550111' }, d2: { name: 'Sara', phone: '2045550122' } } },
   address_lookup: { 'Acme Supply': { address: '12 Main St', city: 'Brandon' } },
+  companies: { c2: { name: 'Prairie Parts', owner_uid: 'u2', join_code: 'ABCDEFGH', address_book: { a1: { name: 'Rosser Warehouse', address: '50 Rosser Ave', city: 'Brandon' } } } },
   requests: {
     r1: { ref_no: 1201, status: 'new', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co', address: '40 Park Ave' }, items_text: '2 boxes', payment: 'prepaid', when: 'asap', created_at: now - 25 * 60000 },
     r2: { ref_no: 1202, status: 'new', company_id: 'c2', company_name: 'Prairie Parts', pickup: { name: 'Prairie Parts', address: '9 Rosser Ave' }, delivery: { name: 'Dock 4', address: '1 Industrial Rd' }, items_text: '1 pallet 400 lbs', payment: 'collect', when: 'asap', created_at: now - 8 * 60000 },
@@ -181,21 +182,59 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForFunction(() => window.__fakeDb.get('address_lookup/Westman Tire'));
     assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire').address), '200 18th St');
     assert.strictEqual(await page.textContent('#nd-pickup-tag'), 'Saved');
-    // A saved customer with a different address offers Update, and sending doesn't overwrite it
-    await page.fill('#nd-delivery-name', 'Acme Supply');
-    await page.click('.ac-item[data-name="Acme Supply"]');
+    // A saved customer's address is one grey line; Change + a new address asks "Save this one?"
+    await page.fill('#nd-delivery-name', 'Acme');
+    await page.click('.ac-item:has-text("Acme Supply")');
+    assert.ok(await page.isVisible('#nd-delivery-line'), 'saved address shows as a grey line');
+    assert.ok(await page.isHidden('#nd-delivery-box'), 'no address boxes for a saved customer');
+    await page.click('#nd-delivery-line [data-act=nd-addr-edit]');
     await page.fill('#nd-delivery-address', '3 Other Dock Rd');
-    await page.waitForFunction(() => document.querySelector('#nd-delivery-add') && !document.querySelector('#nd-delivery-add').hidden);
-    assert.strictEqual(await page.textContent('#nd-delivery-add'), 'Update address');
+    await page.waitForSelector('#nd-delivery-diff:not([hidden])');
+    assert.ok(await page.isHidden('#nd-delivery-add'), 'no Add + for a saved customer');
+    // Tap buttons start on the usual answers; Prepaid flips to Collect; + Note opens just that box
+    assert.match(await page.textContent('[data-x=items]'), /1 box/);
+    assert.match(await page.textContent('[data-x=when]'), /Now/);
+    await page.click('[data-act=nd-pay]');
+    assert.match(await page.textContent('#nd-text'), /, Collect/);
+    await page.click('[data-x=notes]');
+    assert.ok(await page.isVisible('#nd-notes') && await page.isHidden('#nd-x-po'), 'only the tapped one opens');
+    await page.fill('#nd-notes', 'Back door');
+    assert.match(await page.textContent('#nd-text'), /Back door$/);
+    assert.ok((await page.locator('[data-act=nd-pick-driver]').boundingBox()).height >= 48, 'Send to driver is big');
     await page.waitForTimeout(300);
     await shot(page, 'update-address');
-    await page.click('[data-act=nd-save]');
+    // Save to queue is under the dots button
+    await page.click('[data-act=nd-more]');
+    await page.waitForSelector('#nd-more:not([hidden]) [data-act=nd-save]');
+    await shot(page, 'nd-more');
+    await page.click('#nd-more [data-act=nd-save]');
     await page.waitForFunction(() => Object.values(window.__fakeDb.get('requests')).some((r) => r.source === 'dispatcher'));
     assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Acme Supply').address), '12 Main St', 'saved address not overwritten');
+    assert.strictEqual(await page.evaluate(() => Object.values(window.__fakeDb.get('requests')).find((r) => r.source === 'dispatcher').payment), 'collect');
+    // Empty form: Send shakes the missing box red, no message needed
+    await page.click('[data-act=new-dispatch]');
+    await page.waitForSelector('#nd-pickup-name');
+    await page.click('[data-act=nd-pick-driver]');
+    await page.waitForSelector('#nd-pickup-name.invalid');
+    assert.ok(await page.isHidden('#sp-title') || !(await page.isVisible('.sp.open')), 'send panel did not open');
+    // Customers' own contacts show in the name box (staff only), and Later makes the button say the day
+    await page.fill('#nd-pickup-name', 'Rosser');
+    await page.waitForSelector('.ac-item.co');
+    assert.match(await page.textContent('.ac-item.co'), /Prairie Parts/);
+    await page.click('.ac-item.co');
+    assert.match(await page.textContent('#nd-pickup-line'), /50 Rosser Ave/);
+    await page.click('[data-x=when]');
+    assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
+    await shot(page, 'nd-later');
+    await page.click('#nd-x-when [data-act=nd-now]');
+    await page.click('[data-act=nd-reset]');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('view-app').inert);
     // Settings: alert check
     await page.click('.tab[data-tab=settings]');
     await page.waitForFunction(() => /2 phones/.test((document.getElementById('alert-reach') || {}).textContent || ''));
     assert.ok(await page.isVisible('[data-act=edit-quick]'), 'quick replies in Settings');
+    assert.ok(await page.isVisible('[data-nd-def=type]'), 'Settings picks how a new dispatch starts');
     await shot(page, 'settings');
     // Done: no "Load 20 more" when there's nothing older, and the day summary
     await page.click('.tab[data-tab=done]');

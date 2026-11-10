@@ -638,8 +638,55 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-when{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
 .nd-when input[type=date]{width:100%;min-height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;outline:none;color-scheme:inherit}
-.nd-send{border-top:1px solid var(--line);margin:4px -12px 0;padding:10px 12px 0}
-.nd-send .text-preview{margin-bottom:8px}
+/* New dispatch: a known address is one grey line; Change opens the boxes */
+.addr-line{display:flex;align-items:center;gap:6px;min-height:36px;margin:-2px 0 6px;font-size:13.5px;color:var(--ink-2)}
+.addr-line .grow{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
+.addr-line .grow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addr-line .grow small{flex:none;font-size:12px;color:var(--ink-3)}
+.addr-line .i{flex:none;width:14px;height:14px;color:var(--ink-3)}
+.addr-line .link-btn{min-height:36px;padding:0 4px 0 10px;font-size:14px}
+.addr-ok.err{color:var(--danger)}
+.addr-diff{display:flex;align-items:center;gap:6px;margin:-2px 0 8px;padding:6px 6px 6px 10px;border-radius:var(--r-sm);background:var(--yellow-soft);font-size:13px;font-weight:650;color:var(--ink)}
+.addr-diff .grow{flex:1;min-width:0}
+.addr-diff button{flex:none;min-width:52px;min-height:38px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
+.addr-diff button[data-v=yes]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ac-item small em{font-style:normal;font-weight:750;color:var(--accent-ink)}
+/* The tap buttons under the two places */
+.nd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+.nd-chip{display:inline-flex;align-items:center;gap:5px;min-height:42px;max-width:100%;padding:0 13px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.nd-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-chip .i{flex:none;width:16px;height:16px;color:var(--ink-2)}
+.nd-chip:active{transform:scale(.96)}
+.nd-chip.set{background:var(--surface-2);border-color:var(--ink-3)}
+.nd-chip.open{background:var(--yellow-soft);border-color:var(--yellow-lo)}
+.nd-chip.invalid{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.nd-x{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 4px;animation:riseIn var(--t) var(--out)}
+.nd-x .item-row:last-of-type{margin-bottom:6px}
+.nd-when{grid-template-columns:minmax(0,1fr) auto}
+.nd-when .btn{min-height:var(--ctl)}
+/* The bar at the bottom: the text that gets sent, the big button, and ⋯ */
+.nd-send{position:sticky;bottom:-14px;z-index:3;margin:8px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface);box-shadow:0 -10px 18px -14px rgba(0,0,0,.45)}
+.sheet.kb .nd-send{position:static;box-shadow:none}
+.nd-preview{margin:0 0 8px;font-size:13.5px;line-height:1.35;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
+.nd-go>span{display:block}
+.nd-big{width:100%;min-height:52px;font-size:16.5px}
+.nd-dots{min-height:52px;padding:0;color:var(--ink)}
+.nd-dots .i{width:24px;height:24px}
+.btn.nd-dots.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.nd-more{margin-bottom:8px;animation:riseIn var(--t) var(--out)}
+.nd-more-list{display:grid;gap:6px;margin-bottom:8px}
+.nd-more-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-more-list button:active{background:var(--surface-3)}
+.nd-more-list button .i{flex:none;width:22px;height:22px;color:var(--ink-2)}
+.nd-more-list small{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:1px}
+.nd-more-note{font-size:12px;color:var(--ink-3);margin:4px 2px 0}
+/* A missing box shakes and turns red */
+.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+.set-seg{flex:none;width:190px}
+.set-select{flex:none;width:150px;min-height:var(--ctl);padding:0 28px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;font:inherit;font-size:16px;font-weight:600;color:var(--ink);-webkit-appearance:none;appearance:none}
 /* The form starts mid-screen (where Pieces and count used to sit), in easy reach of the right thumb;
    the dimmed backdrop fills the top.
    While typing (keyboard up) it grows to full height like before. */
@@ -905,14 +952,6 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    ========================================================= */
 const REPEAT_ALARM_MS = 20000;   // how often the alarm repeats until someone taps "Got it"
 const REMINDER_DEFAULTS = { enabled: true, start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] }; // same as functions/reminders.js
-// New dispatch fields that Settings can hide. Pickup and delivery names are always shown.
-const FORM_FIELDS = [
-  { key: 'items', label: 'Pieces and count', hint: 'e.g. 2 boxes' },
-  { key: 'payment', label: 'Prepaid / Collect' },
-  { key: 'po', label: 'PO number' },
-  { key: 'notes', label: 'Notes for the driver' },
-  { key: 'when', label: 'Scheduled date', hint: 'Book it for a later day' }
-];
 const DONE_DAYS = 2;             // Done tab shows today and yesterday
 
 // Firebase loads in the background (deferred scripts) so the app can draw instantly from the last saved queue.
@@ -978,7 +1017,8 @@ function loadSettings() {
   const def = { sound: true, repeat: true, vibrate: true, wake: true, notify: false, mapType: 'roadmap', vanZoom: 65, mapTraffic: false };
   let st = def;
   try { st = Object.assign(def, JSON.parse(localStorage.getItem('ecd_settings') || '{}')); } catch (e) { /* ignore */ }
-  st.form = Object.assign(Object.fromEntries(FORM_FIELDS.map((f) => [f.key, true])), st.form); // New dispatch fields shown
+  delete st.form; // the old switches that hid New dispatch fields; the tap buttons hide them now
+  st.nd = Object.assign({ payment: 'prepaid', type: 'box' }, st.nd); // how a New dispatch starts
   delete st.mode; // one Dispatch button now; the old main-button choice was removed
   delete st.theme; // light only
   Object.assign(st, { repeat: true, vibrate: true, wake: true }); // always on; no longer in Settings
@@ -2745,45 +2785,48 @@ function placeParts(comps, formatted) {
 }
 
 /* ---------- Draft (kept if the form is closed by mistake) ---------- */
+// Settings › New dispatch picks how each one starts (payment and the usual kind of piece)
+const ndDefaults = () => Object.assign({ payment: 'prepaid', type: 'box' }, S.settings.nd);
 const blankLeg = () => ({ name: '', address: '', city: '', lat: null, lng: null, ok: false, from: '' });
-const blankDraft = () => ({ pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: 'box', other: '', weight: '' }], payment: 'prepaid', po: '', notes: '', when: 'asap', date: '' });
+const blankDraft = () => { const d = ndDefaults(); return { pickup: blankLeg(), delivery: blankLeg(), items: [{ qty: 1, type: d.type, other: '', weight: '' }], payment: d.payment, po: '', notes: '', when: 'asap', date: '' }; };
 let ND = null;
 try { ND = JSON.parse(localStorage.getItem('ecd_nd') || 'null'); } catch (e) { ND = null; }
 const saveDraft = () => { try { localStorage.setItem('ecd_nd', JSON.stringify(ND)); } catch (e) { /* ignore */ } };
-const clearDraft = () => { ND = null; try { localStorage.removeItem('ecd_nd'); } catch (e) { /* ignore */ } };
+const clearDraft = () => { ND = null; ndAddrPick = null; try { localStorage.removeItem('ecd_nd'); } catch (e) { /* ignore */ } };
 const ndOpen = () => !!(sheetOpen && $('#sheet-body [data-nd]'));
 const tomorrowStr = () => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); };
-const ndLater = () => S.settings.form.when && ND.when === 'later';
+const ndLater = () => ND.when === 'later';
+let ndX = ''; // the one extra that's open under the tap buttons: items | when | notes | po | more
+let ndAddrPick = null; // address choice made in this form; otherwise the one remembered for the customer
 
+/* The "two names and go" form: Pickup and Delivery names (a saved customer's address is one grey
+   line), a row of tap buttons that start on the usual answers, and the Send button in a bar at the bottom. */
 function openNewDispatch() {
   if (!S.user || $('#view-app').hidden) return;
   if (!ND) ND = blankDraft();
+  ndX = '';
   loadMaps();
-  const f = S.settings.form;
+  loadCompanyBooks();
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
-      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden></button></h3>
+      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden>Add +</button></h3>
       <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nd-${k}-ac" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
-      <div class="field"><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
+      <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
+      <div class="field addr-box" id="nd-${k}-box" hidden><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
+      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
     ${leg('pickup', 'Pickup')}
     ${leg('delivery', 'Delivery')}
-    ${f.items || f.notes ? `<section class="nd-block">
-      ${f.items ? `<div class="field"><label>Pieces and count</label><div id="nd-items"></div></div>` : ''}
-      ${f.notes ? `<div class="field"><label for="nd-notes">Notes for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>` : ''}
-    </section>` : ''}
-    ${f.payment || f.po || f.when ? `<section class="nd-block">
-      ${f.payment || f.po ? `<div class="${f.payment && f.po ? 'two' : ''}">
-        ${f.payment ? `<div class="field"><label>Payment</label><div class="seg" role="radiogroup" aria-label="Payment"><label><input type="radio" name="nd-pay" value="prepaid"><span>Prepaid</span></label><label><input type="radio" name="nd-pay" value="collect"><span>Collect</span></label></div></div>` : ''}
-        ${f.po ? `<div class="field"><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" placeholder="Optional" autocomplete="off"></div>` : ''}
-      </div>` : ''}
-      ${f.when ? `<div class="field"><label>When</label><div class="nd-when"><div class="seg" role="radiogroup" aria-label="When"><label><input type="radio" name="nd-when" value="asap"><span>Now</span></label><label><input type="radio" name="nd-when" value="later"><span>Later</span></label></div><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}" aria-label="Date" hidden></div></div>` : ''}
-    </section>` : ''}
+    <div class="nd-chips" id="nd-chips" role="group" aria-label="Pieces, payment, when, note and PO"></div>
+    <div class="field nd-x" id="nd-x-items" hidden><div id="nd-items"></div></div>
+    <div class="field nd-x" id="nd-x-when" hidden><label for="nd-date">Book it for</label><div class="nd-when"><input type="date" id="nd-date" data-nd-f="date" min="${tomorrowStr()}"><button class="btn btn-secondary" type="button" data-act="nd-now">Now instead</button></div></div>
+    <div class="field nd-x" id="nd-x-notes" hidden><label for="nd-notes">Note for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>
+    <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
     <div class="nd-send">
-      <div class="text-preview"><span>Text to send</span><b id="nd-text"></b></div>
-      <div id="nd-actions"></div>
+      <div class="nd-more" id="nd-more" hidden></div>
+      <p class="nd-preview" id="nd-text"></p>
+      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, Group Chat, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
     </div>
-    <p class="pick-note">Show or hide fields in Settings › New dispatch.</p>
   </form>`;
   openSheet('New dispatch', html, (body) => {
     ndFillAll(body);
@@ -2801,8 +2844,6 @@ function ndFillLeg(k) {
 function ndFillAll(body) {
   ndFillLeg('pickup'); ndFillLeg('delivery');
   ['po', 'notes', 'date'].forEach((k) => { const el = $(`[data-nd-f="${k}"]`, body); if (el) el.value = ND[k] || ''; });
-  $$('input[name=nd-pay]', body).forEach((x) => { x.checked = x.value === ND.payment; });
-  $$('input[name=nd-when]', body).forEach((x) => { x.checked = x.value === ND.when; });
   ndRenderItems();
 }
 function ndRenderItems() {
@@ -2811,13 +2852,40 @@ function ndRenderItems() {
   box.innerHTML = ND.items.map((it, i) => `<div class="item-row">
       <div class="stepper"><button type="button" data-act="nd-qty" data-i="${i}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="999" data-nd-qty="${i}" value="${esc(it.qty)}" aria-label="How many"><button type="button" data-act="nd-qty" data-i="${i}" data-d="1" aria-label="One more">+</button></div>
       <select data-nd-type="${i}" aria-label="Kind">${ITEM_TYPES.map((t) => `<option value="${t.id}"${t.id === it.type ? ' selected' : ''}>${t.label}</option>`).join('')}</select>
-      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="next" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
+      <label class="wt"><input type="number" inputmode="decimal" min="0" max="99999" step="any" data-nd-wt="${i}" enterkeyhint="done" value="${esc(it.weight || '')}" placeholder="Weight" aria-label="Weight in pounds"><span>lbs</span></label>
       ${ND.items.length > 1 ? `<button class="icon-btn sm del" type="button" data-act="nd-del-item" data-i="${i}" aria-label="Remove this line">${icon('x')}</button>` : '<span></span>'}
       ${it.type === 'other' ? `<input data-nd-other="${i}" value="${esc(it.other)}" maxlength="40" placeholder="What is it? e.g. tires" style="grid-column:1/-1" aria-label="What kind">` : ''}
     </div>`).join('') + `<div class="item-foot"><button class="link-btn" type="button" data-act="nd-add-item">${icon('plus', 'sm')}Add another kind</button><button class="nd-done" type="button" data-act="nd-done">Done</button>${ND.items.length > 1 ? '<span class="del-ph"></span>' : '<span></span>'}</div>`;
 }
-// Done (under the weight): keyboard away, then the send buttons slide into view
+/* The tap buttons: each starts on the usual answer. Only the one tapped opens up. */
+function ndChips() {
+  const box = $('#nd-chips');
+  if (!box) return;
+  const it = itemsText(ND.items);
+  const later = ndLater();
+  const chip = (x, label, set, aria) => `<button type="button" class="nd-chip${set ? ' set' : ''}${ndX === x ? ' open' : ''}" data-act="nd-x" data-x="${x}" aria-expanded="${ndX === x}" aria-label="${esc(aria)}">${label}</button>`;
+  const note = oneLine(ND.notes), po = ND.po.trim();
+  box.innerHTML = [
+    chip('items', `${icon('box', 'sm')}<span>${esc(clampText(it || 'Pieces?', 24))}</span>`, !!it, `Pieces: ${it || 'none yet'}. Tap to change`),
+    `<button type="button" class="nd-chip${ND.payment === 'collect' ? ' set' : ''}" data-act="nd-pay" aria-label="Payment: ${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}. Tap to switch">${ND.payment === 'collect' ? 'Collect' : 'Prepaid'}</button>`,
+    chip('when', `${icon('clock', 'sm')}<span>${later && ND.date ? esc(fmtDay(ND.date)) : later ? 'Pick a day' : 'Now'}</span>`, later, later ? `Booked for ${ND.date ? fmtDay(ND.date) : 'a later day'}. Tap to change` : 'Now. Tap to book it for a later day'),
+    chip('notes', note ? `${icon('edit', 'sm')}<span>${esc(clampText(note, 18))}</span>` : '+ Note', !!note, note ? `Note: ${note}` : 'Add a note for the driver'),
+    chip('po', po ? `<span>PO ${esc(clampText(po, 12))}</span>` : '+ PO', !!po, po ? `PO ${po}` : 'Add a PO number')
+  ].join('');
+}
+// Opens one extra (or closes it when it's tapped again)
+function ndOpenX(x) {
+  if (x === 'when' && !ndLater()) { ND.when = 'later'; if (!ND.date) ND.date = tomorrowStr(); const d = $('#nd-date'); if (d) d.value = ND.date; ndX = 'when'; }
+  else ndX = ndX === x ? '' : x;
+  ndUpdate();
+  const go = { notes: '#nd-notes', po: '#nd-po' }[ndX];
+  const panel = ndX && ndX !== 'more' ? $(`#nd-x-${ndX}`) : null;
+  if (go) { const el = $(go); el.focus({ preventScroll: true }); if (Keyboard) Keyboard.show().catch(() => {}); ndReveal(el); }
+  else if (panel) { const a = document.activeElement; if (a && a.closest && a.closest('[data-nd]') && a.blur) a.blur(); setTimeout(() => ndReveal(panel), 30); }
+}
+// Done (under the weight), or both places picked: keyboard away, Send in reach
 function ndDone() {
+  if (ndX === 'items') { ndX = ''; ndUpdate(); }
   const a = document.activeElement;
   if (a && a.blur) a.blur();
   if (Keyboard) Keyboard.hide().catch(() => {});
@@ -2833,14 +2901,13 @@ function ndDone() {
 
 /* What gets saved: a request in the same shape Request Pickup writes */
 function ndRecord() {
-  const f = S.settings.form;
   const leg = (L) => {
     const o = { name: L.name.trim(), address: L.address.trim() };
     if (L.city.trim()) o.city = L.city.trim();
     if (L.lat != null) { o.lat = L.lat; o.lng = L.lng; }
     return o;
   };
-  const items = f.items ? clampText(itemsText(ND.items), 500) : '';
+  const items = clampText(itemsText(ND.items), 500);
   const later = ndLater() && ND.date;
   return {
     source: 'dispatcher',
@@ -2852,72 +2919,124 @@ function ndRecord() {
     delivery: leg(ND.delivery),
     items_text: items || null,
     item_details: items ? null : '', // the rules need one of the two, even if empty
-    payment: f.payment ? ND.payment : 'prepaid',
-    text_hide: f.payment ? null : { payment: true },
-    po: (f.po && ND.po.trim()) || null,
-    notes: (f.notes && ND.notes.trim()) || null,
+    payment: ND.payment === 'collect' ? 'collect' : 'prepaid',
+    po: ND.po.trim() || null,
+    notes: ND.notes.trim() || null,
     when: later ? 'scheduled' : 'asap',
     scheduled_for: later ? ND.date : null
   };
 }
-// Checks the form. Returns the request, or null after pointing at what's missing.
+// Address in the text: the choice made here, or the one remembered for this pickup customer
+function ndAddrMode(r) {
+  const m = ndAddrPick || (S.addrPrefs && S.addrPrefs[custKey(r)]) || {};
+  return { addr: ADDR_MODES.some(([v]) => v === m.addr) ? m.addr : 'off', map: !!m.map };
+}
+const ndText = (r) => dispatchText(r, modeWith(ndAddrMode(r)));
+function ndSetAddr(change) {
+  const r = ndRecord();
+  ndAddrPick = Object.assign(ndAddrMode(r), change);
+  if (lookupKey(r.pickup.name)) {
+    const key = custKey(r);
+    S.addrPrefs = Object.assign({}, S.addrPrefs, { [key]: { addr: ndAddrPick.addr, map: ndAddrPick.map } });
+    if (db && S.user && !S.fromCache) db.ref(`dispatch_settings/addr_prefs/${key}`).set({ addr: ndAddrPick.addr, map: ndAddrPick.map }).catch(() => { /* kept in this form anyway */ });
+  }
+  ndUpdate();
+}
+// ⋯ next to Send: the rarer choices
+function ndMoreMenu() {
+  const r = ndRecord();
+  const m = ndAddrMode(r);
+  const has = { pickup: !!r.pickup.address, delivery: !!r.delivery.address };
+  const off = (v) => (v === 'pickup' && !has.pickup) || (v === 'delivery' && !has.delivery) || (v === 'both' && !(has.pickup && has.delivery));
+  const later = ndLater();
+  return `<div class="nd-more-list">
+      ${later ? `<button type="button" data-act="nd-now">${icon('send')}<span>Send now instead<small>Not booked for a later day</small></span></button>` : `<button type="button" data-act="nd-save">${icon('inbox')}<span>Save to queue<small>Send it from the Queue later</small></span></button>`}
+      <button type="button" data-act="nd-group">${icon('users')}<span>Group Chat<small>Share the text. It counts as sent once it goes to a driver.</small></span></button>
+      ${later ? '' : `<button type="button" data-act="nd-sched">${icon('calendar')}<span>Schedule for later<small>Book it for another day</small></span></button>`}
+    </div>
+    <div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+      <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="nd-map-link"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button></div>
+    <p class="nd-more-note">Address in the text. Remembered for ${esc(r.pickup.name || 'this customer')}.</p>`;
+}
+// Checks the form. Returns the request, or null after the missing boxes shake and turn red.
 function ndValid() {
-  const errs = [];
-  const mark = (el, bad) => { if (el) el.classList.toggle('invalid', bad); };
+  const bad = []; // selectors of the boxes to shake
   ['pickup', 'delivery'].forEach((k) => {
     const L = ND[k];
-    const label = k === 'pickup' ? 'pickup' : 'delivery';
-    const badName = !L.name.trim();
-    const badAddr = !L.address.trim() || (mapsUsable() && !L.ok);
-    mark($(`#nd-${k}-name`), badName);
-    mark($(`#nd-${k}-address`), badAddr);
-    if (badName) errs.push([`#nd-${k}-name`, `Type the ${label} contact name.`]);
-    else if (!L.address.trim()) errs.push([`#nd-${k}-address`, `Add the ${label} address.`]);
-    else if (badAddr) errs.push([`#nd-${k}-address`, `Pick the ${label} address from Google’s list or the map.`]);
+    L.bad = false;
+    if (!L.name.trim()) bad.push(`#nd-${k}-name`);
+    else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
   });
-  const f = S.settings.form;
-  if (f.items && !itemsText(ND.items)) errs.push(['[data-nd-qty]', 'Add how many pieces.']);
-  if (ndLater() && !(ND.date && ND.date > todayStr())) { mark($('#nd-date'), true); errs.push(['#nd-date', 'Pick the date it’s booked for.']); } else mark($('#nd-date'), false);
-  if (!errs.length) return ndRecord();
-  const el = $(errs[0][0]);
-  if (el) { el.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' }); }
-  toast(errs[0][1], 'error', 5000);
+  if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
+  if (ndLater() && !(ND.date && ND.date > todayStr())) { ndX = 'when'; bad.push('#nd-date'); }
+  if (!bad.length) return ndRecord();
+  ndUpdate();
+  bad.forEach((sel) => {
+    const el = $(sel);
+    if (!el) return;
+    el.classList.add('invalid');
+    el.classList.remove('shake');
+    void el.offsetWidth; // so the shake plays again on every try
+    el.classList.add('shake');
+    el.setAttribute('aria-invalid', 'true');
+  });
+  if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
+  const first = $(bad[0]);
+  if (first) {
+    first.scrollIntoView({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });
+    if (first.matches('input')) first.focus({ preventScroll: true });
+  }
   return null;
 }
+document.addEventListener('animationend', (e) => { if (e.target.classList && e.target.classList.contains('shake')) e.target.classList.remove('shake'); });
 
-/* Redraws the checks, tags, text preview and send buttons */
+/* Redraws the address lines, tags, tap buttons, text preview and Send button */
 let ndMode = '';
 function ndUpdate(force) {
   if (!ndOpen() || !ND) return;
   saveDraft();
-  ['pickup', 'delivery'].forEach((k) => {
-    const L = ND[k];
-    const ok = $(`#nd-${k}-ok`);
-    if (!ok) return;
-    if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${L.from === 'saved' ? 'Saved customer' : 'Checked with Google'}`; }
-    else if (L.address.trim() && mapsUsable()) { ok.className = 'addr-ok'; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
-    else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
-  });
+  let moved = false;
+  ['pickup', 'delivery'].forEach((k) => { if (ndLegUi(k)) moved = true; });
   ndRefreshTags();
+  ndChips();
+  ['items', 'when', 'notes', 'po'].forEach((x) => { const el = $(`#nd-x-${x}`); if (el && el.hidden !== (ndX !== x)) { el.hidden = ndX !== x; moved = true; } });
+  const more = $('#nd-more');
+  more.hidden = ndX !== 'more';
+  if (!more.hidden) more.innerHTML = ndMoreMenu();
+  $('[data-act=nd-more]').setAttribute('aria-expanded', String(ndX === 'more'));
+  $('[data-act=nd-more]').classList.toggle('on', ndX === 'more');
   const r = ndRecord();
-  $('#nd-text').textContent = r.pickup.name || r.delivery.name ? dispatchText(r) : 'Fill in the pickup and delivery names.';
-  const date = $('#nd-date');
-  if (date) date.hidden = !ndLater();
-  const mode = `${ndLater() ? 'later' : 'now'}|${Object.keys(S.contacts.drivers || {}).join(',')}|${ND.date}`;
+  const shown = Object.assign({}, r, { pickup: Object.assign({}, r.pickup, { name: r.pickup.name || '…' }), delivery: Object.assign({}, r.delivery, { name: r.delivery.name || '…' }) });
+  $('#nd-text').textContent = r.pickup.name || r.delivery.name ? ndText(shown) : 'Type the pickup and delivery names.';
+  if (moved) ndKeyboard();
+  const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}`;
   if (mode === ndMode && !force) return;
   ndMode = mode;
-  const box = $('#nd-actions');
-  if (ndLater()) {
-    box.innerHTML = `<div class="nd-actions"><button class="btn btn-primary full" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Schedule it'}</button></div>`;
-    return;
-  }
-  box.innerHTML = `<div class="nd-actions">
-      <button class="btn btn-secondary" type="button" data-act="nd-save">${icon('inbox', 'sm')}Save to queue</button>
-      <button class="btn btn-secondary" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button>
-      <button class="btn btn-primary full" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>
-    </div>`;
+  $('#nd-main').innerHTML = ndLater()
+    ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
+    : `<button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>`;
 }
-// "Saved" when the name is already a customer, "New customer" when it'll be added
+/* One leg: a grey line for an address that's known, the address boxes when one is needed
+   (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
+   Returns true when its height changed. */
+function ndLegUi(k) {
+  const L = ND[k];
+  const line = $(`#nd-${k}-line`), box = $(`#nd-${k}-box`), ok = $(`#nd-${k}-ok`), diff = $(`#nd-${k}-diff`);
+  if (!line) return false;
+  const showLine = !!(L.ok && !L.edit && L.address.trim());
+  const showBox = !showLine && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
+  const was = [line.hidden, box.hidden, diff.hidden].join();
+  line.hidden = !showLine;
+  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
+  box.hidden = !showBox;
+  if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${L.from === 'saved' ? 'Saved customer' : 'Checked with Google'}`; }
+  else if (L.address.trim() && mapsUsable()) { ok.className = `addr-ok${L.bad ? ' err' : ''}`; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
+  else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
+  else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
+  diff.hidden = customerAction(k) !== 'update' || !!L.keep;
+  return was !== [line.hidden, box.hidden, diff.hidden].join();
+}
+// "Saved" when the name is a saved customer, the company when it's one of their contacts, "New" otherwise
 function ndRefreshTags() {
   if (!ndOpen() || !ND) return;
   ['pickup', 'delivery'].forEach((k) => {
@@ -2928,17 +3047,16 @@ function ndRefreshTags() {
     if (!tag) return;
     tag.hidden = !name;
     const c = S.lookup[name];
-    tag.className = `tag${c ? ' saved' : ''}`;
-    tag.textContent = c ? 'Saved' : L.addPending ? 'Pick the address' : 'New customer';
+    tag.className = `tag${c || L.from === 'company' ? ' saved' : ''}`;
+    tag.textContent = c ? 'Saved' : L.from === 'company' ? 'Customer’s contact' : L.addPending ? 'Pick the address' : 'New';
     if (!add) return;
     const act = customerAction(k);
-    add.hidden = !act;
-    add.textContent = act === 'update' ? 'Update address' : 'Add +';
-    add.setAttribute('aria-label', act === 'update' ? `Update the saved address for ${L.name.trim()}` : `Add ${L.name.trim()} as a new customer`);
+    add.hidden = act !== 'add';
+    add.setAttribute('aria-label', `Add ${L.name.trim()} as a new customer now`);
   });
 }
-/* What the button next to the tag offers: "add" a new customer, "update" a saved customer's
-   address (only when the dispatcher asks: a one-off job to another dock must not change it), or nothing. */
+/* "add" a new customer (Add +, or by itself when it's sent), "update" a saved customer's address
+   (only when the dispatcher says yes: a one-off job to another dock must not change it), or nothing. */
 function customerAction(k) {
   const L = ND && ND[k];
   if (!L) return '';
@@ -2948,6 +3066,7 @@ function customerAction(k) {
   if (!c) return L.addPending ? '' : 'add';
   const addr = L.address.trim();
   if (!addr || !c.address || L.from === 'saved') return '';
+  if (mapsUsable() && !L.ok) return ''; // only once the new address is picked
   return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
 }
 // Address good enough to save: picked from Google or the map, or typed when Google isn't available
@@ -2967,7 +3086,7 @@ function saveCustomerNow(k) {
     .then(() => toast(was ? `${L.name.trim()}’s address updated.` : `${L.name.trim()} added as a customer.`, 'ok'))
     .catch((err) => toast(`${L.name.trim()} couldn’t be saved: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
 }
-// Add + (or Update address): saves now if the address is ready, otherwise as soon as it's picked
+// Add +: saves now if the address is ready, otherwise as soon as it's picked
 function ndAddCustomer(k) {
   if (!ND || !ND[k]) return;
   const L = ND[k];
@@ -2975,6 +3094,7 @@ function ndAddCustomer(k) {
   ndHideSuggest(k);
   if (legAddrReady(L)) { saveCustomerNow(k); return; }
   L.addPending = true;
+  L.edit = true;
   ndUpdate();
   const a = $(`#nd-${k}-address`);
   if (a) { a.focus({ preventScroll: true }); ndReveal(a); }
@@ -2982,29 +3102,58 @@ function ndAddCustomer(k) {
 // Called whenever a leg's address becomes ready (Google, the map or a saved customer)
 function ndAddressReady(k) { if (ND && ND[k] && ND[k].addPending && legAddrReady(ND[k])) saveCustomerNow(k); }
 
-/* ---------- Name suggestions from the saved customers ---------- */
+/* ---------- Customers' own contacts (Request Pickup address books) ----------
+   Staff can read every company; customers never see address_lookup. Read when the form opens,
+   at most every 5 minutes, and only used for suggestions in the name boxes. */
+let coBooks = { at: 0, list: [] };
+function loadCompanyBooks() {
+  if (!db || !S.user || S.fromCache || Date.now() - coBooks.at < 300000) return;
+  coBooks.at = Date.now();
+  db.ref('companies').once('value').then((snap) => {
+    const list = [];
+    Object.values(snap.val() || {}).forEach((v) => {
+      v = v || {};
+      const company = String(v.name || '').trim();
+      Object.values(v.address_book || {}).forEach((e) => {
+        if (!e || !String(e.name || '').trim() || !String(e.address || '').trim()) return;
+        list.push({ name: String(e.name).trim(), address: String(e.address).trim(), city: String(e.city || '').trim(), lat: typeof e.lat === 'number' ? e.lat : null, lng: typeof e.lng === 'number' ? e.lng : null, company });
+      });
+    });
+    coBooks.list = list;
+    ['pickup', 'delivery'].forEach((k) => { if (ND && document.activeElement === $(`#nd-${k}-name`)) ndSuggest(k); });
+  }).catch(() => { coBooks.at = 0; });
+}
+/* ---------- Name suggestions: saved customers first, then customers' own contacts ---------- */
+const ndFound = { pickup: [], delivery: [] };
 function ndMatches(q) {
   q = q.trim().toLowerCase();
   if (!q) return [];
-  const keys = Object.keys(S.lookup);
-  const starts = keys.filter((k) => k.toLowerCase().startsWith(q));
-  const words = keys.filter((k) => !k.toLowerCase().startsWith(q) && k.toLowerCase().split(/[\s&,-]+/).some((w) => w.startsWith(q)));
-  return starts.sort((a, b) => a.localeCompare(b)).concat(words.sort((a, b) => a.localeCompare(b))).slice(0, 8);
+  const hit = (name) => { const n = name.toLowerCase(); return n.startsWith(q) ? 2 : n.split(/[\s&,-]+/).some((w) => w.startsWith(q)) ? 1 : 0; };
+  const order = (a, b) => b.score - a.score || a.name.localeCompare(b.name);
+  const saved = Object.keys(S.lookup).map((name) => ({ name, score: hit(name), src: 'saved' })).filter((x) => x.score).sort(order);
+  const seen = new Set(saved.map((x) => x.name.toLowerCase()));
+  const co = coBooks.list.map((e) => Object.assign({ score: hit(e.name), src: 'company' }, e))
+    .filter((x) => x.score && !S.lookup[lookupKey(x.name)] && !seen.has(`${x.name}|${x.address}`.toLowerCase()) && seen.add(`${x.name}|${x.address}`.toLowerCase()))
+    .sort(order);
+  const top = saved.slice(0, 8 - Math.min(3, co.length));
+  return top.concat(co.slice(0, 8 - top.length));
 }
 function ndSuggest(k) {
   const list = $(`#nd-${k}-ac`);
   if (!list) return;
   const q = ND[k].name;
   const found = ndMatches(q);
+  ndFound[k] = found;
   const isNew = !!lookupKey(q) && !S.lookup[lookupKey(q)];
   if (!found.length && !(isNew && q.trim().length >= 2)) { list.hidden = true; list.innerHTML = ''; return; }
   const hl = (name) => {
     const i = name.toLowerCase().indexOf(q.trim().toLowerCase());
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
   };
-  list.innerHTML = found.map((name, i) => {
-    const c = S.lookup[name] || {};
-    return `<button class="ac-item${i === 0 ? ' on' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-name="${esc(name)}"><b>${hl(name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`;
+  list.innerHTML = found.map((x, i) => {
+    const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
+    const where = [c.address, c.city].filter(Boolean).join(', ') || 'No address saved';
+    return `<button class="ac-item${i === 0 ? ' on' : ''}${x.src === 'company' ? ' co' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-i="${i}"><b>${hl(x.name)}</b><small>${x.src === 'company' ? `<em>${esc(x.company || 'Customer')}’s contact</em> · ` : ''}${esc(where)}</small></button>`;
   }).join('') + (isNew ? `<div class="ac-new"><span class="grow">New customer: <b>${esc(q.trim())}</b><small>Added when you send, or now with Add +</small></span><button class="tag-add" type="button" data-act="nd-add-customer" data-leg="${k}" aria-label="Add ${esc(q.trim())} as a new customer">Add +</button></div>` : '');
   const was = list.hidden;
   list.hidden = false;
@@ -3034,16 +3183,20 @@ function comboState(k) {
   input.setAttribute('aria-expanded', String(open));
   if (on) input.setAttribute('aria-activedescendant', on.id); else input.removeAttribute('aria-activedescendant');
 }
-function ndPick(k, name) {
-  const c = S.lookup[name] || {};
-  ND[k] = { name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+function ndPick(k, i) {
+  const x = ndFound[k][i];
+  if (!x) return;
+  const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
+  ND[k] = { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
+  if (x.src === 'company') ND[k].company = x.company || '';
   ndFillLeg(k);
   ndHideSuggest(k);
   ndUpdate();
-  // Straight on to the next thing to fill in, keyboard stays up
-  const next = k === 'pickup' ? $('#nd-delivery-name') : !c.address ? $('#nd-delivery-address') : $('[data-nd-qty]') || $('#nd-notes') || $('#nd-po');
-  const go = !c.address ? $(`#nd-${k}-address`) : next;
-  if (go) { go.focus({ preventScroll: true }); ndReveal(go); }
+  // Straight on to the next thing to fill in. Both places done: keyboard away, Send in reach.
+  if (!c.address) { const a = $(`#nd-${k}-address`); a.focus({ preventScroll: true }); ndReveal(a); return; }
+  const other = k === 'pickup' ? 'delivery' : 'pickup';
+  if (!ND[other].name.trim()) { const n = $(`#nd-${other}-name`); n.focus({ preventScroll: true }); ndReveal(n); return; }
+  ndDone();
 }
 
 /* ---------- Google address boxes ---------- */
@@ -3065,7 +3218,7 @@ function ndAttachPlaces() {
       const parts = placeParts(p.address_components, p.formatted_address || p.name);
       const L = ND[k];
       const business = (p.types || []).some((t) => ['establishment', 'point_of_interest', 'store'].includes(t)) && !(p.types || []).includes('street_address');
-      Object.assign(L, parts, { lat: +p.geometry.location.lat().toFixed(6), lng: +p.geometry.location.lng().toFixed(6), ok: true, from: 'google' });
+      Object.assign(L, parts, { lat: +p.geometry.location.lat().toFixed(6), lng: +p.geometry.location.lng().toFixed(6), ok: true, from: 'google', edit: false, bad: false, keep: false });
       if (business && !L.name.trim()) L.name = p.name;
       ndFillLeg(k);
       ndUpdate();
@@ -3128,7 +3281,7 @@ function mapSet(loc) {
 function mapUse() {
   if (!mapPick || !mapPick.loc || !ND) return;
   const k = mapPick.leg;
-  Object.assign(ND[k], mapPick.loc, { ok: true, from: 'google' });
+  Object.assign(ND[k], mapPick.loc, { ok: true, from: 'google', edit: false, bad: false, keep: false });
   closeMap();
   if (ndOpen()) { ndFillLeg(k); ndUpdate(); ndAddressReady(k); }
 }
@@ -3143,7 +3296,7 @@ async function nextRefNo() {
 }
 /* New customers go into the shared list when the job is saved, like Route Planner does.
    A saved customer's address is never changed here: a one-off job to another address would
-   otherwise change it for everyone. "Update address" in the form does that on purpose. */
+   otherwise change it for everyone. "Save this one?" in the form does that on purpose. */
 function saveCustomers(r) {
   [r.pickup, r.delivery].forEach((L) => {
     const key = lookupKey(L.name);
@@ -3180,7 +3333,7 @@ function ndSendGroup() {
   if (sharing) return;
   const r = ndValid();
   if (!r) return;
-  const text = dispatchText(r);
+  const text = ndText(r);
   const shared = () => {};
   if (canShare()) {
     sharing = true;
@@ -3528,7 +3681,7 @@ async function ndSendDriver(did) {
   if (!d) return;
   const r = ndValid();
   if (!r) return;
-  const text = dispatchText(r);
+  const text = ndText(r);
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
   if (!SmsSender) { inMessages(); ndSent(r, d.name); return; }
   const done = toast(`Sending to ${d.name}…`, 'info', 25000);
@@ -3671,15 +3824,13 @@ function ndReset() {
 document.addEventListener('input', (e) => {
   const t = e.target;
   if (!ND || !t.closest || !t.closest('[data-nd]')) return;
-  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; ND[k].addPending = false; if (ND[k].from === 'saved') { ND[k].from = ''; } t.classList.remove('invalid'); ndSuggest(k); }
-  else if (t.dataset.ndAddr) { const L = ND[t.dataset.ndAddr]; L.address = t.value; L.ok = false; L.from = ''; L.lat = null; L.lng = null; t.classList.remove('invalid'); }
+  if (t.dataset.ndName) { const k = t.dataset.ndName; ND[k].name = t.value; ND[k].addPending = false; if (ND[k].from === 'saved' || ND[k].from === 'company') { ND[k].from = ''; } t.classList.remove('invalid'); t.removeAttribute('aria-invalid'); ndSuggest(k); }
+  else if (t.dataset.ndAddr) { const L = ND[t.dataset.ndAddr]; L.address = t.value; L.ok = false; L.from = ''; L.lat = null; L.lng = null; L.keep = false; L.edit = true; t.classList.remove('invalid'); t.removeAttribute('aria-invalid'); }
   else if (t.dataset.ndCity) ND[t.dataset.ndCity].city = t.value;
   else if (t.dataset.ndF) { ND[t.dataset.ndF] = t.value; t.classList.remove('invalid'); }
   else if (t.dataset.ndQty) ND.items[+t.dataset.ndQty].qty = Math.max(0, Math.min(999, parseInt(t.value, 10) || 0));
   else if (t.dataset.ndOther) ND.items[+t.dataset.ndOther].other = t.value;
   else if (t.dataset.ndWt) ND.items[+t.dataset.ndWt].weight = t.value.trim();
-  else if (t.name === 'nd-pay') ND.payment = t.value;
-  else if (t.name === 'nd-when') { ND.when = t.value; if (t.value === 'later' && !ND.date) { ND.date = tomorrowStr(); $('#nd-date').value = ND.date; } }
   ndUpdate();
 });
 document.addEventListener('change', (e) => {
@@ -3693,17 +3844,16 @@ document.addEventListener('change', (e) => {
     if (next) { next.focus({ preventScroll: true }); if (next.select) next.select(); ndReveal(next); }
     ndUpdate();
   }
-  else if (t.name === 'nd-pay' || t.name === 'nd-when') t.dispatchEvent(new Event('input', { bubbles: true }));
   // Typed, when Google isn't available: saved once the city is in (or with the job when it's sent)
   else if (t.dataset.ndCity || (t.dataset.ndAddr && ND[t.dataset.ndAddr].city.trim())) ndAddressReady(t.dataset.ndAddr || t.dataset.ndCity);
 });
 document.addEventListener('keydown', (e) => {
   const t = e.target;
-  // Weight box: the keyboard's Next/Enter goes on to the notes
-  if (t.dataset && t.dataset.ndWt != null && e.key === 'Enter') {
+  // Weight or PO box: the keyboard's Done/Enter closes it, Send in reach
+  if (t.dataset && (t.dataset.ndWt != null || t.id === 'nd-po') && e.key === 'Enter') {
     e.preventDefault();
-    const go = $('#nd-notes') || $('#nd-po');
-    if (go) { go.focus({ preventScroll: true }); ndReveal(go); } else t.blur();
+    if (t.id === 'nd-po') ndX = '';
+    ndDone();
     return;
   }
   if (!t.dataset || !t.dataset.ndName) return;
@@ -3712,7 +3862,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
     const on = items.find((b) => b.classList.contains('on'));
-    if (on) ndPick(on.dataset.leg, on.dataset.name);
+    if (on) ndPick(on.dataset.leg, +on.dataset.i);
     else { ndHideSuggest(t.dataset.ndName); $(`#nd-${t.dataset.ndName}-address`).focus(); }
   } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && items.length) {
     e.preventDefault();
@@ -3833,8 +3983,9 @@ function renderSettings() {
     ${contactsSettings()}
     <section class="card">
       <h2>${icon('plus')}New dispatch</h2>
-      <p class="card-note">Fields the Dispatch form shows. Hidden fields stay out of the text. Pickup and delivery names are always there.</p>
-      ${FORM_FIELDS.map((f) => `<div class="setting"><span class="grow">${esc(f.label)}${f.hint ? `<small>${esc(f.hint)}</small>` : ''}</span><span class="switch"><input type="checkbox" data-form-field="${f.key}"${st.form[f.key] ? ' checked' : ''} aria-label="Show ${esc(f.label)}"><span></span></span></div>`).join('')}
+      <p class="card-note">How each new dispatch starts. You can still change it on each one.</p>
+      <div class="setting"><span class="grow">Payment</span><div class="seg set-seg" role="radiogroup" aria-label="Payment starts as">${[['prepaid', 'Prepaid'], ['collect', 'Collect']].map(([v, l]) => `<label><input type="radio" name="set-nd-pay" value="${v}" data-nd-def="payment"${ndDefaults().payment === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></div>
+      <div class="setting"><span class="grow">Pieces</span><select class="set-select" data-nd-def="type" aria-label="Pieces start as">${ITEM_TYPES.filter((t) => t.id !== 'other').map((t) => `<option value="${t.id}"${ndDefaults().type === t.id ? ' selected' : ''}>1 ${t.one}</option>`).join('')}</select></div>
     </section>
     ${remindersSettings()}
     <section class="card">
@@ -3878,7 +4029,7 @@ function renderSettings() {
     zr.addEventListener('change', () => { S.settings.vanZoom = +zr.value; saveSettings(); });
   }
   $$('[data-rem]', body).forEach((x) => x.addEventListener('change', () => saveReminders({ [x.dataset.rem]: x.type === 'checkbox' ? x.checked : x.value })));
-  $$('[data-form-field]', body).forEach((x) => x.addEventListener('change', () => { S.settings.form[x.dataset.formField] = x.checked; saveSettings(); }));
+  $$('[data-nd-def]', body).forEach((x) => x.addEventListener('change', () => { S.settings.nd = Object.assign(ndDefaults(), { [x.dataset.ndDef]: x.value }); saveSettings(); }));
   $$('[data-setting]', body).forEach((x) => x.addEventListener('change', async () => {
     const key = x.dataset.setting;
     if (key === 'notify' && x.checked) {
@@ -3991,7 +4142,29 @@ document.addEventListener('click', async (e) => {
     case 'test-alert': testAlert(); break;
     case 'test-push': sendTestPush(); break;
     case 'new-dispatch': openNewDispatch(); break;
-    case 'nd-pick': ndPick(el.dataset.leg, el.dataset.name); break;
+    case 'nd-pick': ndPick(el.dataset.leg, +el.dataset.i); break;
+    case 'nd-x': ndOpenX(el.dataset.x); break;
+    case 'nd-pay': ND.payment = ND.payment === 'collect' ? 'prepaid' : 'collect'; ndUpdate(); break;
+    case 'nd-now': ND.when = 'asap'; ndX = ''; ndUpdate(); break;
+    case 'nd-sched': ndOpenX('when'); break;
+    case 'nd-more': ndX = ndX === 'more' ? '' : 'more'; ndUpdate(); break;
+    case 'nd-addr': ndSetAddr({ addr: el.dataset.mode }); break;
+    case 'nd-map-link': ndSetAddr({ map: !ndAddrMode(ndRecord()).map }); break;
+    case 'nd-addr-edit': {
+      const L = ND && ND[el.dataset.leg];
+      if (!L) break;
+      L.edit = true;
+      ndUpdate();
+      const a = $(`#nd-${el.dataset.leg}-address`);
+      if (a) { a.focus({ preventScroll: true }); a.select(); ndReveal(a); }
+      break;
+    }
+    case 'nd-diff': {
+      const L = ND && ND[el.dataset.leg];
+      if (!L) break;
+      if (el.dataset.v === 'yes') saveCustomerNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      break;
+    }
     case 'nd-add-customer': ndAddCustomer(el.dataset.leg); break;
     case 'nd-map': ndOpenMap(el.dataset.leg); break;
     case 'map-close': closeMap(); break;
@@ -4006,9 +4179,9 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'nd-done': break; // handled on touch (pointerdown)
-    case 'nd-add-item': ND.items.push({ qty: 1, type: 'box', other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
+    case 'nd-add-item': ND.items.push({ qty: 1, type: ndDefaults().type, other: '', weight: '' }); ndRenderItems(); ndUpdate(); break;
     case 'nd-del-item': ND.items.splice(+el.dataset.i, 1); ndRenderItems(); ndUpdate(); break;
-    case 'nd-group': ndSendGroup(); break;
+    case 'nd-group': ndX = ''; ndSendGroup(); break;
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
     case 'nd-save': ndSave(el); break;
