@@ -117,7 +117,7 @@ way, with nothing to install, is **Google Cloud Shell**:
    cd dispatch/functions
    npm install
    npx firebase-tools login --no-localhost
-   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:sendTestPush,functions:remindQueue,functions:alertCheck,functions:stampHistoryKey,functions:fillHistoryKeys --project eandccourier-36fcc
+   npx firebase-tools deploy --only functions:notifyStaffOnRequest,functions:notifyStaffOnMessage,functions:sendTestPush,functions:remindQueue,functions:alertCheck,functions:stampHistoryKey,functions:fillHistoryKeys --project eandccourier-36fcc
    ```
 
    If `login` says you're already signed in, carry on.
@@ -137,7 +137,7 @@ way, with nothing to install, is **Google Cloud Shell**:
    that flag and run the new History query), so the order you do the two in
    doesn't matter.
 
-   Deploy only these six functions, as above. The project also has other
+   Deploy only these seven functions, as above. The project also has other
    functions (`fleetHuntHistory`, `pajApi`, `pollNow`) that live outside this
    repo. A plain `--only functions` deploy offers to delete them: always
    answer **No** if you see that question.

@@ -29,7 +29,7 @@ const DEAD_TOKEN_CODES = new Set([
   'messaging/invalid-registration-token'
 ]);
 
-const { describeChange } = require('./alerts');
+const { describeChange, describeMessage } = require('./alerts');
 const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
 const { historyKey, missingKeys } = require('./history');
 
@@ -96,6 +96,22 @@ exports.notifyStaffOnRequest = onValueWritten('/requests/{id}', async (event) =>
     body: msg.body,
     tag: `request-${id}`,
     data: { requestId: String(id), kind: msg.kind }
+  });
+});
+
+// A customer wrote to dispatch from Request Pickup (messages/<id>). Tapping it opens that customer's conversation.
+exports.notifyStaffOnMessage = onValueWritten('/messages/{id}', async (event) => {
+  const after = event.data.after.val();
+  if (!after || event.data.before.exists() || after.from !== 'customer') return;
+  const db = admin.database();
+  const company = after.company_id ? (await db.ref(`companies/${after.company_id}/name`).once('value')).val() : null;
+  const msg = describeMessage(null, after, company);
+  if (!msg) return;
+  await send(await staffTokens(), {
+    title: msg.title,
+    body: msg.body,
+    tag: `msg-${after.company_id || event.params.id}`, // a newer message from the same customer replaces the older one
+    data: { kind: 'message', companyId: String(after.company_id || ''), requestId: String(after.rid || '') }
   });
 });
 

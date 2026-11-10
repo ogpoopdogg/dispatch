@@ -2,7 +2,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { describeChange } = require('./alerts');
+const { describeChange, describeMessage } = require('./alerts');
 
 const base = { ref_no: 42, status: 'new', company_name: 'Acme', pickup: { name: 'Shop' }, delivery: { name: 'Site' }, created_at: 1 };
 
@@ -33,4 +33,14 @@ test('removing from the queue and moving it back stay quiet', () => {
 test('a dispatch made in the app stays quiet', () => {
   assert.strictEqual(describeChange(null, { ...base, source: 'dispatcher' }), null);
   assert.strictEqual(describeChange(null, { ...base, source: 'dispatcher', status: 'dispatched' }), null);
+});
+
+test('a new customer message alerts with the company and pickup number', () => {
+  assert.deepStrictEqual(describeMessage(null, { from: 'customer', text: 'Back door please', ref_no: 7, by_name: 'Pat' }, 'Acme'),
+    { kind: 'message', title: 'Message from Acme about #7', body: 'Back door please' });
+});
+test('dispatch replies and edits stay quiet', () => {
+  assert.strictEqual(describeMessage(null, { from: 'dispatch', text: 'On the way' }, 'Acme'), null);
+  assert.strictEqual(describeMessage({ from: 'customer', text: 'a' }, { from: 'customer', text: 'a' }, 'Acme'), null);
+  assert.strictEqual(describeMessage(null, null, 'Acme'), null);
 });

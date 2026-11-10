@@ -148,15 +148,42 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     {
       await page.evaluate(() => window.__fakeDb.put('messages/m1', { rid: 'r1', company_id: 'c1', from: 'customer', text: 'Can you add a box?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
       await page.waitForSelector('#queue-list .job[data-id=r1] .chip.msg');
-      await page.click('#queue-list .job[data-id=r1] .chip.msg');
-      await page.waitForSelector('#sheet .msgs .msg.them');
+      // Like a new job: a banner over the bottom bar and a count on the Messages button
+      await page.waitForSelector('#msg-banner:not([hidden])');
+      assert.match(await page.textContent('#msg-banner'), /Message from Acme Supply about #1201/);
+      assert.strictEqual((await page.textContent('#msg-badge')).trim(), '1');
+      await shot(page, 'msg-banner');
+      // One conversation per customer: messages about every pickup, each with its number
+      await page.evaluate(() => window.__fakeDb.put('messages/m0', { rid: 'r3', company_id: 'c1', ref_no: 1203, from: 'dispatch', text: 'Booked for tomorrow.', at: Date.now() - 3600000, by_uid: 'staff1', by_name: 'dana' }));
+      await page.click('#msg-banner');
+      await page.waitForSelector('#sheet [data-msgs-view=thread] .msg.them');
+      assert.strictEqual(await page.locator('#sheet .msg-ref').count(), 2, 'each message shows its pickup');
+      assert.match(await page.textContent('#sheet .msg-list'), /#1203[\s\S]*#1201/);
+      assert.strictEqual(await page.inputValue('#msg-about'), 'r1', 'the reply is about the pickup they asked about');
+      assert.ok(await page.isHidden('#msg-banner'), 'banner goes once opened');
+      assert.ok(await page.isHidden('#msg-badge'), 'count clears once opened');
       await page.click('#sheet .quick .chip-btn >> nth=1');
-      await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.from === 'dispatch' && m.rid === 'r1'));
-      await page.waitForSelector('#sheet .msgs .msg.me');
+      await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.from === 'dispatch' && m.rid === 'r1' && m.company_id === 'c1'));
+      await page.fill('#sheet .msg-form input', 'Same driver for both.');
+      await page.press('#sheet .msg-form input', 'Enter');
+      await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Same driver for both.' && m.rid === 'r1'));
+      await page.waitForTimeout(300);
       await shot(page, 'messages');
+      // Back to the list of customers
+      await page.click('[data-act=msg-list]');
+      await page.waitForSelector('#sheet .msg-co');
+      assert.match(await page.textContent('#sheet .msg-co'), /Acme Supply/);
+      await shot(page, 'messages-list');
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !document.getElementById('view-app').inert);
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
+      // Details: this pickup's messages, and a way to the whole conversation
+      await page.click('#queue-list .job[data-id=r1] .route');
+      await page.waitForSelector('#sheet .msgs .msg.them');
+      await page.click('#sheet .msgs [data-act=open-msgs]');
+      await page.waitForSelector('#sheet [data-msgs-view=thread]');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('view-app').inert);
     }
     // 3.3 an open sheet is the only thing reachable
     await page.click('#queue-list .job [data-act=details] >> nth=0');

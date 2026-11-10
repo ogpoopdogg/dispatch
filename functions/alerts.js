@@ -30,4 +30,13 @@ function describeChange(before, after) {
   return null;
 }
 
-module.exports = { describeChange };
+/** The push for a new message from a customer (messages/<id>), or null for anything else. */
+function describeMessage(before, after, companyName) {
+  if (before || !after || after.from !== 'customer' || !after.text) return null;
+  const who = companyName || after.by_name || 'a customer';
+  const ref = after.ref_no ? ` about #${after.ref_no}` : '';
+  const text = String(after.text);
+  return { kind: 'message', title: `Message from ${who}${ref}`, body: text.length > 180 ? `${text.slice(0, 177)}...` : text };
+}
+
+module.exports = { describeChange, describeMessage };
