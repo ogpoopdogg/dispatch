@@ -15,6 +15,8 @@ const SHOTS = process.env.SHOTS || '';
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.json': 'application/json' };
 
 const now = Date.now();
+// Dispatched 2 hours ago, but never before midnight: the Day summary shows today only, so early in the morning "2 hours ago" would be yesterday
+const todayAt = Math.max(now - 2 * 3600000, new Date(new Date(now).setHours(0, 0, 0, 0)).getTime());
 const today = new Date(); const pad = (n) => String(n).padStart(2, '0');
 const tomorrow = new Date(now + 86400000);
 const day = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -28,7 +30,7 @@ const DATA = {
     r1: { ref_no: 1201, status: 'new', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co', address: '40 Park Ave' }, items_text: '2 boxes', payment: 'prepaid', when: 'asap', created_at: now - 25 * 60000 },
     r2: { ref_no: 1202, status: 'new', company_id: 'c2', company_name: 'Prairie Parts', pickup: { name: 'Prairie Parts', address: '9 Rosser Ave' }, delivery: { name: 'Dock 4', address: '1 Industrial Rd' }, items_text: '1 pallet 400 lbs', payment: 'collect', when: 'asap', created_at: now - 8 * 60000 },
     r3: { ref_no: 1203, status: 'new', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Lake Clinic', address: '5 Lake Rd' }, items_text: '3 boxes', payment: 'prepaid', when: 'scheduled', scheduled_for: day(tomorrow), created_at: now - 60 * 60000 },
-    r4: { ref_no: 1190, status: 'dispatched', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co' }, items_text: '1 box', payment: 'prepaid', created_at: now - 3 * 3600000, dispatched_at: now - 2 * 3600000, dispatched_to: 'Mike' }
+    r4: { ref_no: 1190, status: 'dispatched', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co' }, items_text: '1 box', payment: 'prepaid', created_at: todayAt - 3600000, dispatched_at: todayAt, dispatched_to: 'Mike' }
   },
   counters: { request_no: 1203 }
 };
