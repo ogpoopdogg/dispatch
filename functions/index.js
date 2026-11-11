@@ -32,6 +32,7 @@ const DEAD_TOKEN_CODES = new Set([
 const { describeChange, describeMessage } = require('./alerts');
 const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
 const { historyKey, missingKeys } = require('./history');
+const { customerAlertForRequest, customerAlertForMessage, recipientsFor } = require('./customer');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -181,4 +182,70 @@ exports.fillHistoryKeys = onSchedule({ schedule: 'every 30 minutes', timeZone: T
   }
   await db.ref('config/history_keys_ready').set(true);
   logger.info(`History keys filled in on ${paths.length} requests`);
+});
+
+/* Customer phone alerts (Request Pickup app). Each phone saves its token under customer_push/<uid>/<key>
+   when the customer turns on alerts (Account > Phone alerts). Alerts are data-only: the pickup app's
+   sw.js shows them, and tapping one opens that pickup (go = "req:<id>") or Messages (go = "messages"). */
+
+/** Push tokens for these customers, only for people still in the company the pickup belongs to. */
+async function customerTokens(uids, companyId) {
+  const db = admin.database();
+  const out = [];
+  await Promise.all(uids.map(async (uid) => {
+    const [cid, devices] = await Promise.all([
+      db.ref(`users/${uid}/company_id`).once('value'),
+      db.ref(`customer_push/${uid}`).once('value')
+    ]);
+    if (!companyId || cid.val() !== companyId) return;
+    for (const [key, d] of Object.entries(devices.val() || {})) {
+      if (d && d.token) out.push({ token: d.token, path: `customer_push/${uid}/${key}` });
+    }
+  }));
+  return out;
+}
+
+async function sendToCustomers(targets, { title, body, tag, go }) {
+  if (!targets.length) return;
+  const db = admin.database();
+  const res = await admin.messaging().sendEachForMulticast({
+    tokens: targets.map((t) => t.token),
+    data: { title, body, tag, go },
+    webpush: { headers: { Urgency: 'high', TTL: String(24 * 3600) } }
+  });
+  const dead = [];
+  res.responses.forEach((r, j) => {
+    if (r.success) return;
+    const code = r.error && r.error.code;
+    if (DEAD_TOKEN_CODES.has(code)) dead.push(db.ref(targets[j].path).remove());
+    else logger.warn('Customer push failed', { code, message: r.error && r.error.message });
+  });
+  await Promise.all(dead);
+  logger.info(`Customer push "${title}": ${res.successCount} sent, ${res.failureCount} failed, ${dead.length} stale tokens removed`);
+}
+
+async function pickupRecipients(rid, request) {
+  const msgs = (await admin.database().ref('messages').orderByChild('rid').equalTo(rid).once('value')).val();
+  return recipientsFor(request, msgs);
+}
+
+// A pickup went to a driver, or dispatch removed it
+exports.notifyCustomerOnRequest = onValueWritten('/requests/{id}', async (event) => {
+  const after = event.data.after.val();
+  const msg = customerAlertForRequest(event.data.before.val(), after);
+  if (!msg) return;
+  const id = event.params.id;
+  const targets = await customerTokens(await pickupRecipients(id, after), after.company_id);
+  await sendToCustomers(targets, { ...msg, tag: `req-${id}`, go: `req:${id}` });
+});
+
+// Dispatch wrote to a customer from the dispatch app's Messages
+exports.notifyCustomerOnMessage = onValueWritten('/messages/{id}', async (event) => {
+  const after = event.data.after.val();
+  const msg = customerAlertForMessage(event.data.before.val(), after);
+  if (!msg || !after.rid) return;
+  const request = (await admin.database().ref(`requests/${after.rid}`).once('value')).val();
+  if (!request) return;
+  const targets = await customerTokens(await pickupRecipients(after.rid, request), request.company_id);
+  await sendToCustomers(targets, { ...msg, tag: `msg-${after.rid}`, go: 'messages' });
 });
