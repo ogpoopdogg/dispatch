@@ -32,7 +32,7 @@ const DEAD_TOKEN_CODES = new Set([
 const { describeChange, describeMessage } = require('./alerts');
 const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
 const { historyKey, missingKeys } = require('./history');
-const { customerAlertForRequest, customerAlertForMessage, recipientsFor } = require('./customer');
+const { customerAlertForRequest, customerAlertForMessage, recipientsFor, generalRecipients } = require('./customer');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -244,6 +244,20 @@ exports.notifyCustomerOnMessage = onValueWritten('/messages/{id}', async (event)
   const after = event.data.after.val();
   const msg = customerAlertForMessage(event.data.before.val(), after);
   if (!msg || !after.rid) return;
+  // A general message (not about a pickup) goes to everyone in that company who wrote one,
+  // or to the whole company if nobody has yet
+  if (after.rid === 'general') {
+    const cid = after.company_id;
+    if (!cid) return;
+    const db = admin.database();
+    const [msgs, members] = await Promise.all([
+      db.ref('messages').orderByChild('company_id').equalTo(cid).once('value'),
+      db.ref(`companies/${cid}/members`).once('value')
+    ]);
+    const targets = await customerTokens(generalRecipients(msgs.val(), members.val()), cid);
+    await sendToCustomers(targets, { ...msg, tag: `msg-general-${cid}`, go: 'messages' });
+    return;
+  }
   const request = (await admin.database().ref(`requests/${after.rid}`).once('value')).val();
   if (!request) return;
   const targets = await customerTokens(await pickupRecipients(after.rid, request), request.company_id);

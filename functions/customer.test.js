@@ -2,7 +2,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { customerAlertForRequest, customerAlertForMessage, recipientsFor } = require('./customer');
+const { customerAlertForRequest, customerAlertForMessage, recipientsFor, generalRecipients } = require('./customer');
 
 const base = { ref_no: 1204, status: 'new', customer_uid: 'u1', pickup: { name: 'Acme Supply' }, delivery: { name: 'Lake Clinic' } };
 
@@ -36,4 +36,16 @@ test('customer messages and edits stay quiet', () => {
 test('recipients: sender plus coworkers who wrote about it, once each', () => {
   assert.deepStrictEqual(recipientsFor(base, { a: { from: 'customer', by_uid: 'u2' }, b: { from: 'dispatch', by_uid: 'staff' }, c: { from: 'customer', by_uid: 'u1' } }).sort(), ['u1', 'u2']);
   assert.deepStrictEqual(recipientsFor(null, null), []);
+});
+test('general message: people who wrote one, still in the company', () => {
+  const members = { u1: { role: 'owner' }, u2: { role: 'member' }, u3: { role: 'member' } };
+  const msgs = { a: { rid: 'general', from: 'customer', by_uid: 'u2' }, b: { rid: 'r1', from: 'customer', by_uid: 'u3' }, c: { rid: 'general', from: 'customer', by_uid: 'gone' } };
+  assert.deepStrictEqual(generalRecipients(msgs, members), ['u2']);
+});
+test('general message nobody asked: the whole company', () => {
+  assert.deepStrictEqual(generalRecipients({}, { u1: {}, u2: {} }).sort(), ['u1', 'u2']);
+  assert.deepStrictEqual(generalRecipients(null, null), []);
+});
+test('general message title has no pickup number', () => {
+  assert.strictEqual(customerAlertForMessage(null, { from: 'dispatch', text: 'Closed weekends.', rid: 'general', ref_no: null }).title, 'Dispatch');
 });

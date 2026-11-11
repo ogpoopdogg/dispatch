@@ -2629,7 +2629,7 @@ async function sendMsg(rid, text) {
   const f = findReq(rid);
   const m0 = (msgsFor(rid)[0] || [])[1];
   text = String(text || '').trim().slice(0, 500);
-  const cid = (f && f.r.company_id) || (m0 && m0.company_id) || '';
+  const cid = rid === GENERAL ? (msgView && msgView !== 'list' ? msgView : '') : (f && f.r.company_id) || (m0 && m0.company_id) || '';
   if (!rid || !cid || !text) { if (text && !rid) toast('Pick which pickup it’s about first.', 'info'); return false; }
   if (!db || !S.user || S.fromCache) { toast('Still connecting. Try again in a moment.', 'info'); return false; }
   try {
@@ -2651,6 +2651,10 @@ function onMessages(snap) {
       const who = coName(m.company_id), ref = msgRef(m) ? ` about #${msgRef(m)}` : '';
       playChime('new'); buzz([400, 150, 400]);
       systemNotify(`Message from ${who}${ref}`, m.text, 'ec-msg');
+    } else if (m) {
+      // Their conversation is open: the reply is about what they just wrote, unless a reply is being typed
+      const input = $('#sheet-body form[data-msg-form] input');
+      if (!input || !input.value.trim()) msgAboutNext = m.rid;
     }
   }
   firstMsgs = false;
@@ -2674,8 +2678,10 @@ document.addEventListener('submit', async (e) => {
    Every message still belongs to one pickup (rid), shown as #number on the bubble,
    but a customer's messages about all their pickups read as one thread. */
 const MSG_DAYS = 30;
+const GENERAL = 'general'; // rid of a message that isn't about any pickup
 let msgView = null; // 'list', or the company id of the open conversation
 let msgAbout = '';  // the pickup the next reply is about
+let msgAboutNext = ''; // set when the customer writes in the open conversation
 let msgAlert = null; // { cid, rid } of the newest message nobody has opened yet
 // The pickup number on a message (older messages may not carry it)
 const msgRef = (m) => { if (m.ref_no) return m.ref_no; const f = findReq(m.rid); return f ? f.r.ref_no : ''; };
@@ -2688,7 +2694,10 @@ function coName(cid) {
   return 'Customer';
 }
 const coMsgs = (cid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.company_id === cid).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
-const coUnread = (cid) => coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[m.rid] || 0)).length;
+// A message not about any pickup has rid "general"; it's counted per customer, so one customer's
+// general messages being read doesn't mark another's as read
+const seenKeyOf = (m) => (m.rid === GENERAL ? `${GENERAL}:${m.company_id}` : m.rid);
+const coUnread = (cid) => coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[seenKeyOf(m)] || 0)).length;
 function msgCompanies() {
   const by = {};
   Object.values(S.msgs || {}).forEach((m) => { if (m && m.company_id) (by[m.company_id] = by[m.company_id] || []).push(m); });
@@ -2700,7 +2709,7 @@ function msgCompanies() {
 const msgUnreadTotal = () => msgCompanies().reduce((n, c) => n + c.unread, 0);
 function markCoSeen(cid) {
   let any = false;
-  coMsgs(cid).forEach(([, m]) => { if (m.from === 'customer' && (m.at || 0) > (msgSeen[m.rid] || 0)) { msgSeen[m.rid] = Date.now(); any = true; } });
+  coMsgs(cid).forEach(([, m]) => { const k = seenKeyOf(m); if (m.from === 'customer' && (m.at || 0) > (msgSeen[k] || 0)) { msgSeen[k] = Date.now(); any = true; } });
   if (msgAlert && msgAlert.cid === cid) msgAlert = null;
   if (!any) { renderMsgUi(); return; }
   try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
@@ -2727,21 +2736,21 @@ function msgBubble(m, coLabel, withRef) {
   const me = m.from === 'dispatch';
   const who = me ? (m.by_name || 'Dispatch') : (m.by_name || coLabel || 'Customer');
   const n = withRef ? msgRef(m) : '';
-  const ref = n ? `<button class="msg-ref" type="button" data-act="details" data-id="${esc(m.rid)}" aria-label="Open pickup #${esc(n)}">#${esc(n)}</button>` : '';
+  const ref = n ? `<button class="msg-ref" type="button" data-act="details" data-id="${esc(m.rid)}" aria-label="Open pickup #${esc(n)}">#${esc(n)}</button>` : withRef && m.rid === GENERAL ? '<span class="msg-ref">General</span>' : '';
   return `<div class="msg ${me ? 'me' : 'them'}"><div class="msg-head">${ref}<b>${esc(who)}</b><span>${esc(fmtDateTime(m.at))}</span></div><p>${esc(m.text)}</p></div>`;
 }
 // Pickups a reply can be about: the ones in this conversation, then this customer's waiting ones
 function msgAboutList(cid) {
   const out = [], seen = new Set();
   const add = (rid, r, refNo) => {
-    if (!rid || seen.has(rid)) return;
+    if (!rid || rid === GENERAL || seen.has(rid)) return;
     seen.add(rid);
     const label = r ? `#${r.ref_no} · ${clampText(`${(r.pickup && r.pickup.name) || '?'} for ${(r.delivery && r.delivery.name) || '?'}`, 34)}` : `#${refNo || '?'}`;
     out.push({ rid, label });
   };
   coMsgs(cid).slice().reverse().forEach(([, m]) => { const f = findReq(m.rid); add(m.rid, f && f.r, msgRef(m)); });
   Object.entries(S.pending || {}).filter(([, r]) => r && r.company_id === cid).sort((a, b) => (b[1].created_at || 0) - (a[1].created_at || 0)).forEach(([id, r]) => add(id, r));
-  return out;
+  return [{ rid: GENERAL, label: 'General (not about a pickup)' }, ...out];
 }
 const msgAboutVal = () => { const sel = $('#msg-about'); return sel ? sel.value : ''; };
 function msgsHtml() {
@@ -2790,6 +2799,7 @@ function refreshMsgs() {
   const input = $('#sheet-body form[data-msg-form] input');
   const draft = input ? input.value : '', typing = !!input && input === document.activeElement;
   const sel = $('#msg-about'); if (sel) msgAbout = sel.value;
+  if (msgAboutNext) { msgAbout = msgAboutNext; msgAboutNext = ''; }
   const atEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 40, top = body.scrollTop;
   $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : coName(msgView);
   body.innerHTML = msgsHtml();
