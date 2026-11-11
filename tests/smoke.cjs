@@ -103,8 +103,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const card = '#queue-list .job[data-id=r2]';
       const ta = `${card} textarea[data-edit]`;
       assert.strictEqual(await page.locator(ta).count(), 0, 'the text is hidden on a small card');
-      const send = await page.locator(`${card} [data-act=pick-driver]`).boundingBox();
-      assert.ok(send.height >= 44, 'Send to driver is big enough for a thumb');
+      // Polled: the queue can redraw right after Got it, and a card being redrawn has no size for a moment
+      await page.waitForFunction((sel) => { const b = document.querySelector(sel); return b && b.getBoundingClientRect().height >= 44; }, `${card} [data-act=pick-driver]`, { timeout: 5000 })
+        .catch(() => assert.fail('Send to driver is big enough for a thumb'));
       await page.click(`${card} [data-act=job-text]`);
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4, 1 pallet 400 lbs, Collect$/, 'no space before the comma');
       // Address switch: None / Pickup / Delivery / Both, and Map link (pickup only)
@@ -169,6 +170,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.fill('#sheet .msg-form input', 'Same driver for both.');
       await page.press('#sheet .msg-form input', 'Enter');
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Same driver for both.' && m.rid === 'r1'));
+      // A general message (not about a pickup): labelled General, and a reply goes back as general for this customer
+      await page.evaluate(() => window.__fakeDb.put('messages/m5', { rid: 'general', company_id: 'c1', from: 'customer', text: 'Are you open Saturday?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
+      await page.waitForFunction(() => /Are you open Saturday\?/.test(document.getElementById('sheet-body').textContent));
+      assert.match(await page.textContent('#sheet .msg-list'), /General[\s\S]*Are you open Saturday/);
+      assert.strictEqual(await page.inputValue('#msg-about'), 'general', 'the reply is about what they wrote: General');
+      await page.fill('#sheet .msg-form input', 'Closed weekends.');
+      await page.press('#sheet .msg-form input', 'Enter');
+      await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Closed weekends.' && m.rid === 'general' && m.company_id === 'c1' && m.from === 'dispatch'));
       await page.waitForTimeout(300);
       await shot(page, 'messages');
       // Back to the list of customers

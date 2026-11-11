@@ -36,4 +36,13 @@ function recipientsFor(request, messages) {
   return [...out];
 }
 
-module.exports = { customerAlertForRequest, customerAlertForMessage, recipientsFor };
+/** Who hears about a general message (not about a pickup): people in the company who wrote one, else everyone in it. */
+function generalRecipients(messages, members) {
+  const wrote = new Set();
+  Object.values(messages || {}).forEach((m) => { if (m && m.rid === 'general' && m.from === 'customer' && m.by_uid) wrote.add(m.by_uid); });
+  const inCompany = Object.keys(members || {});
+  const list = [...wrote].filter((uid) => inCompany.includes(uid));
+  return list.length ? list : inCompany;
+}
+
+module.exports = { customerAlertForRequest, customerAlertForMessage, recipientsFor, generalRecipients };
