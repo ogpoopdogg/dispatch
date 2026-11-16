@@ -394,6 +394,21 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.mouse.wheel(0, 400);
       await pg.waitForFunction(() => document.getElementById('nd-pop-list').scrollTop > 0).catch(() => assert.fail('the driver list scrolls'));
       await shot(pg, 'send-scroll');
+      // Full map: the map takes the panel; Back (or the button) brings the drivers back, the panel stays open
+      await pg.click('[data-act=sp-full]');
+      assert.ok(await pg.isHidden('#nd-pop-list'), 'drivers hidden while the map is full');
+      const mh = await pg.evaluate(() => document.querySelector('.sp-map').getBoundingClientRect().height);
+      assert.ok(mh > 600, `map fills the panel (${mh}px)`);
+      await shot(pg, 'send-fullmap');
+      await pg.goBack();
+      await pg.waitForSelector('#nd-pop-list', { state: 'visible' });
+      assert.ok(await pg.isVisible('#nd-pop'), 'Back leaves the full map, the panel stays');
+      await pg.click('[data-act=sp-full]');
+      await pg.click('[data-act=sp-full]');
+      await pg.waitForSelector('#nd-pop-list', { state: 'visible' });
+      await pg.click('[data-act=sp-full]');
+      await pg.click('#nd-pop .sp-head [data-act=nd-pop-close]');
+      await pg.waitForFunction(() => document.getElementById('nd-pop').hidden);
       assert.deepStrictEqual(p3.errors, []);
       await pg.close();
     }
