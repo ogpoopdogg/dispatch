@@ -146,7 +146,11 @@ p{margin:0}
 .topbar .sub{font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.2;margin-top:2px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .spacer{flex:1}
 .topbar .icon-btn{width:var(--ctl-sm);height:var(--ctl-sm);color:var(--ink)}
-.live{flex:none;display:inline-flex;align-items:center;gap:6px;height:26px;font-size:12px;font-weight:750;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:99px;padding:0 10px;white-space:nowrap;transition:background-color var(--t-slow),color var(--t-slow)}
+/* Name, then a small green dot and "Live" (yellow pill only when the connection drops) */
+.topbar .sub{display:flex;align-items:center;gap:7px}
+.live{flex:none;display:inline-flex;align-items:center;gap:5px;height:18px;font-size:12px;font-weight:700;color:var(--ink-2);border-radius:99px;padding:0;white-space:nowrap;transition:background-color var(--t-slow),color var(--t-slow)}
+.live.off{padding:0 7px}
+.set-btn[aria-current=page]{background:var(--yellow);color:#000 !important}
 .live .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
 .live.on{color:var(--ink)}
 .live.on .dot{background:var(--ok);animation:pulse 2s ease-out infinite}
@@ -175,6 +179,21 @@ main.app-main{max-width:1080px;margin:0 auto;padding:10px 12px calc(var(--nav-h)
 /* Queue: cards gather at the bottom of the screen, the most urgent one last, nearest the thumb */
 #panel-queue:not([hidden]){display:flex;flex-direction:column;min-height:calc(100vh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px);min-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px)}
 #queue-list{margin-top:auto}
+/* Unread messages fill the empty space over the jobs */
+.unread{margin:0 0 14px;padding:6px;border:1px solid #9cc0ff;border-radius:var(--r-lg);background:linear-gradient(180deg,#f3f8ff,#e8f1ff);box-shadow:0 6px 16px -10px rgba(11,79,179,.45);animation:cardIn .3s var(--out) both}
+.unread-head{display:flex;align-items:center;gap:6px;padding:2px 4px 6px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#0b4fb3}
+.unread-head span{flex:1}
+.unread-head .link-btn{font-size:12.5px;text-transform:none;letter-spacing:0;color:#0b4fb3}
+.unread-row{display:flex;align-items:center;gap:9px;width:100%;min-height:52px;padding:6px 8px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06);-webkit-tap-highlight-color:transparent}
+.unread-row+.unread-row{margin-top:4px}
+.unread-row:active{background:var(--surface-2)}
+.unread-row .avatar{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#e8f1ff;color:#0b4fb3;font-weight:800;font-size:12.5px}
+.unread-row .grow{flex:1;min-width:0}
+.unread-top{display:flex;align-items:baseline;gap:6px}
+.unread-top b{min-width:0;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unread-ref{flex:none;font-size:12px;font-weight:800;color:var(--ink-2)}
+.unread-top small{margin-left:auto;flex:none;font-size:12px;color:var(--ink-2)}
+.unread-text{display:block;font-size:14px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .app-main>section:not([hidden]){animation:tabIn var(--t-slow) var(--out) both}
 @keyframes tabIn{from{opacity:0;transform:translateY(4px)}}
 .page-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 8px;min-height:28px;flex-wrap:wrap}
@@ -241,12 +260,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 @media (min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;align-items:start}}
 /* A request card: the top part, and a tab under its right side holding the two buttons.
    The border runs under the text and down the tab's left side, so there's no empty space left of the buttons. */
-.job{position:relative;--job-line:var(--line-strong);--tab-w:max(58cqw,200px);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2)))}
-.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg) var(--r-lg) 0 var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
-.job-tab{position:relative;z-index:1;display:grid;gap:6px;width:min(100%,var(--tab-w));margin:-1px 0 0 auto;padding:0 10px 10px;background:var(--surface);border:1px solid var(--job-line);border-top:0;border-radius:0 0 var(--r-lg) var(--r-lg);transition:border-color var(--t) ease}
-/* Rounded inside corner where the text's bottom edge turns down into the tab */
-.job-tab::before{content:'';position:absolute;top:0;left:-13px;width:13px;height:13px;background:radial-gradient(circle at 0 100%,transparent 12px,var(--job-line) 12.5px,var(--job-line) 13.2px,var(--surface) 13.8px)}
-.job-tab .btn{width:100%;min-width:0}
+.job{position:relative;--job-line:var(--line-strong);container-type:inline-size;overflow:hidden;padding-bottom:3px;filter:var(--job-sh,drop-shadow(0 1px 1.5px rgba(0,0,0,.2)))}
+.job-top{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--job-line);border-radius:var(--r-lg);padding:8px 10px 0 11px;transition:border-color var(--t) ease}
 .job.enter{animation:cardIn .36s var(--out) both}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.985)}}
 .job.unseen{--job-line:var(--yellow);animation:jobGlow 1.8s ease-in-out infinite alternate}
@@ -259,9 +274,16 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .job.overdue .req-no{background:var(--danger);color:#fff;box-shadow:none}
 .job-co{flex:1;min-width:0;font-weight:750;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job-tools{display:flex;flex:none;margin:-4px 0}
-/* Schedule for later / Send to queue, left of Group Chat (same column as the tab below) */
-.job-row{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--tab-w) - 21px);gap:6px;margin-bottom:6px}
-.job-row>.job-text:only-child{grid-column:1}
+/* One row: pencil (Text), Group Chat, Send to driver (widest, right, under the thumb) */
+.job-row{display:flex;gap:6px;margin-bottom:10px}
+.job-row .btn{min-width:0}
+.job-row .job-text{flex:none;width:var(--ctl);padding:0}
+.job-row .btn-secondary:not(.job-text){flex:0 1 auto}
+.job-row .btn-primary{flex:1 1 0}
+.job-tags{display:flex;gap:3px;flex:none}
+.job-tags .chip{height:21px;padding:0 6px;font-size:12px}
+.job-head .job-co{flex:1 1 34%;font-stretch:92%}
+@container (max-width:300px){.job-tags .chip:not(.new):not(.warn){display:none}}
 .job-changed{margin:-2px 0 6px;padding:5px 8px;border-radius:var(--r-sm);background:var(--warn-bg);border-left:3px solid var(--yellow);font-size:13px;line-height:1.35;color:var(--ink)}
 .job-changed b{font-weight:800}
 .job-age{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -300,6 +322,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit.edited .text-edit-head span{color:var(--accent-ink)}
 .text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
 .addr-sw{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin:0 0 6px}
+.text-edit .addr-sw{margin:6px 0 4px}
 .addr-seg{display:flex;gap:2px;padding:2px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface-3)}
 .addr-seg button{flex:1 1 0;min-width:0;min-height:calc(var(--ctl) - 6px);padding:0 4px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t) var(--ease),color var(--t) ease}
 .addr-seg button[aria-checked=true]{background:var(--yellow);color:#000;font-weight:750;box-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -312,7 +335,6 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
 .text-edit.edited textarea{border-color:var(--yellow-lo);background:linear-gradient(0deg,var(--warn-bg),var(--warn-bg)),var(--field)}
 .job-actions .btn{font-stretch:87.5%;font-size:14.5px;padding:0 12px}
-.job-actions .btn-primary{order:2}
 /* Leaving the queue (dispatched or removed): the card slides out and the list closes the gap */
 .job.leaving{pointer-events:none}
 /* Loading placeholders */
@@ -323,7 +345,8 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* Small card: the ⋯ button, tags on one line, Text and Group Chat over the Send tab */
 .job-head .job-age{margin-left:auto}
 .job-more{width:44px;height:40px;margin:-6px -8px -6px -4px;color:var(--ink-2)}
-.job-chips{margin:4px 0 6px}
+.job-chips{margin:0 0 6px}
+.job-head{margin-bottom:6px}
 .job-chips:empty{display:none}
 .job-more-box{margin-bottom:2px}
 .job-text{color:var(--ink)}
@@ -356,8 +379,17 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .msgs-empty{font-size:13px;color:var(--ink-2);margin-bottom:8px}
 .msgs h3 .grow{flex:1;min-width:0}
 .msgs h3 .link-btn{font-size:13px;white-space:nowrap}
-.msg{max-width:88%;margin:0 0 8px;padding:8px 12px 9px;border-radius:16px;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
-.msg p{margin:0;font-weight:500}
+.msg{width:fit-content;max-width:82%;margin:0 0 4px;padding:7px 11px 6px;border-radius:16px;font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+.msg p{margin:0;font-weight:500;white-space:pre-wrap}
+.msg>small{display:block;margin-top:1px;text-align:right;font-size:11px;font-weight:600;color:var(--ink-3)}
+.msg.me>small{color:rgba(0,0,0,.6)}
+.msg.copied{animation:copied .6s ease}
+@keyframes copied{30%{transform:scale(.97);box-shadow:0 0 0 4px var(--yellow-ring)}}
+.msg-day{margin:10px 0 4px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.msg-sep{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
+.msg-sep::before,.msg-sep::after{content:'';flex:1;height:1px;background:var(--line)}
+.msg-sep .msg-ref{min-height:22px;font-size:12px;display:inline-flex;align-items:center}
+.msg-who{margin:6px 0 2px 4px;font-size:12px;font-weight:800;color:var(--ink-2)}
 .msg-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-bottom:3px;font-size:12.5px;line-height:1.2}
 .msg-head b{font-weight:800}
 .msg-head span{color:var(--ink-2)}
@@ -381,18 +413,35 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .msg-co-last{display:block;color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg-co.unread .msg-co-last{color:var(--ink);font-weight:650}
 .msg-count{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--danger);color:#fff;font-size:12px;font-weight:800;line-height:22px;text-align:center}
-.msg-back{margin:0 0 10px;font-size:14px}
 .msg-list{padding-bottom:6px}
-.msg-compose{position:sticky;bottom:-14px;margin:6px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface)}
-.msg-about{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
-.msg-about select{flex:1;min-width:0;min-height:38px;padding:0 8px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:14.5px;font-weight:650}
-.msg-compose .quick{margin:6px 0}
+/* A conversation fills the sheet: messages sit just above the typing bar, like a texting app */
+.sheet.tall:not(.mid) .sheet-body{flex:1 1 auto}
+.sheet-body>[data-msgs-view=thread]{display:flex;flex-direction:column;min-height:calc(100% - 10px)}
+[data-msgs-view=thread] .msg-list{flex:1 0 auto;display:flex;flex-direction:column;justify-content:flex-end}
+.msg-compose{position:sticky;bottom:-14px;margin:6px -12px -14px;padding:7px 12px 12px;border-top:1px solid var(--line);background:var(--surface)}
+.msg-compose .quick{margin:0 -12px 7px;padding:0 12px}
+.msg-search{margin-bottom:8px}
+.msg-co-top .needs{height:19px;padding:0 5px;font-size:11px;flex:none}
 .notice-err{color:var(--danger);font-size:13.5px;margin:0 0 10px}
-.quick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.quick .chip-btn{min-height:40px;color:var(--ink);white-space:normal;text-align:left}
-.msg-form{display:grid;grid-template-columns:minmax(0,1fr) 52px;gap:6px}
-.msg-form input{width:100%;min-height:var(--ctl);padding:7px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);font-size:16px;outline:none}
-.msg-form input:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+/* Quick replies: one row that slides sideways */
+.quick{display:flex;flex-wrap:nowrap;gap:6px;margin:8px 0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.quick::-webkit-scrollbar{display:none}
+.quick .chip-btn{flex:none;min-height:38px;border-radius:99px;padding:0 13px;color:var(--ink);white-space:nowrap}
+/* Typing bar: "About" chip and a box that grows to 4 lines, round Send on the right */
+.msg-form{display:flex;align-items:flex-end;gap:6px}
+.msg-bar{flex:1;min-width:0;display:flex;align-items:flex-end;gap:4px;min-height:var(--ctl);padding:3px 4px 3px 4px;border:1px solid var(--line-strong);border-radius:22px;background:var(--field);transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
+.msg-bar:focus-within{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.msg-bar textarea{flex:1;min-width:0;min-height:36px;max-height:104px;padding:7px 8px 7px 8px;border:0;background:none;resize:none;font:inherit;font-size:16px;line-height:22px;color:var(--ink);outline:none}
+.msg-about{position:relative;flex:none;display:flex;align-items:center;max-width:46%;height:34px;margin-bottom:1px;border-radius:17px;background:var(--surface-3)}
+.msg-about select{min-width:0;max-width:100%;height:34px;padding:0 24px 0 11px;border:0;border-radius:17px;background:none;color:var(--ink);font:inherit;font-size:13px;font-weight:800;-webkit-appearance:none;appearance:none;text-overflow:ellipsis;outline:none}
+.msg-about .caret{position:absolute;right:7px;width:13px;height:13px;pointer-events:none}
+.msg-send{flex:none;display:grid;place-items:center;width:var(--ctl);height:var(--ctl);border:1px solid var(--yellow-lo);border-radius:50%;background:var(--yellow);color:#000;cursor:pointer;box-shadow:0 2px 0 var(--yellow-lo);-webkit-tap-highlight-color:transparent}
+.msg-send:active{transform:translateY(1px);box-shadow:none}
+.msg-send:disabled{opacity:.5}
+.quick-row{gap:8px}
+.quick-n{flex:none;width:20px;font-size:12.5px;font-weight:800;color:var(--ink-3);text-align:center}
+.quick-input{flex:1;min-width:0;min-height:var(--ctl);padding:0 10px;border:1px solid transparent;border-radius:var(--r-sm);background:var(--surface-2);font:inherit;font-size:15px;font-weight:650;color:var(--ink);outline:none}
+.quick-input:focus{border-color:var(--focus);background:var(--field);box-shadow:0 0 0 3px var(--yellow-ring)}
 .quick-peek{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px}
 .quick-peek span{font-size:12.5px;padding:3px 8px;border-radius:99px;background:var(--surface-3);color:var(--ink-2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .add-row.one{grid-template-columns:minmax(0,1fr) auto}
@@ -538,6 +587,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .sheet-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:10px}
 .sheet-actions>.btn:first-child:last-child,.sheet-actions>.btn.full{grid-column:1/-1}
 .sheet-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
+/* Details: Group Chat + Send to driver stay pinned at the bottom, by the thumb. Remove sits apart, at the end. */
+.sheet-actions.pin-bottom{position:sticky;bottom:-14px;z-index:3;display:flex;margin:12px -12px -14px;padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 16px -12px rgba(0,0,0,.25)}
+.sheet-actions.pin-bottom .btn{min-height:calc(var(--ctl) + 4px)}
+.sheet-actions.pin-bottom .btn-primary{flex:1 1 0;min-width:0}
+.remove-far{display:flex;width:100%;margin-top:22px}
+.btn-danger-soft{background:transparent;border:1px dashed var(--line-strong);color:var(--danger);font-weight:650}
 .sched-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
 .sched-days .chip-btn{flex-direction:column;gap:1px;min-height:48px;font-size:14px;font-weight:750;color:var(--ink)}
 .sched-days .chip-btn small{font-size:12.5px;font-weight:600;color:var(--ink-2)}
@@ -555,6 +610,11 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .sheet.dragging{transition:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 6px 14px;border-bottom:1px solid var(--line);touch-action:none}
 .sheet-head h2{flex:1;font-size:20px;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-titles{flex:1;min-width:0;display:flex;flex-direction:column}
+.sheet-back{margin:0 0 0 -8px}
+.sheet-sub{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow:hidden;margin-top:1px;font-size:12.5px;font-weight:650;color:var(--ink-2);white-space:nowrap}
+.sheet-sub .msg-ref{min-height:22px;padding:0 7px;font-size:12px}
+.sheet-sub .msg-ref.now{background:var(--yellow-soft);border-color:var(--yellow-lo)}
 .sheet-body{overflow-y:auto;padding:10px 12px 14px;overscroll-behavior:contain}
 .sheet-body p.muted{font-size:14px;margin-bottom:12px}
 .grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:6px auto 2px;touch-action:none}
@@ -610,6 +670,12 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 /* ---------- New dispatch form ---------- */
 .sheet.tall{height:92vh;height:92dvh;max-height:none}
 .nd-leg{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px 10px 2px;margin-bottom:8px}
+/* Pickup and Delivery in one card, joined like the route on a job card */
+.nd-route{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:8px}
+.nd-route .nd-leg{background:none;border:0;border-radius:0;margin:0;padding:7px 10px 0}
+.nd-route .nd-leg.to{padding-top:2px}
+.nd-route .nd-leg.to::before{content:'';position:absolute;left:14.5px;top:-14px;height:16px;border-left:1.5px dashed var(--line-strong)}
+.nd-route .nd-leg>h3{margin-bottom:5px}
 .nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
@@ -682,8 +748,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-diff button[data-v=yes]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .ac-item small em{font-style:normal;font-weight:750;color:var(--accent-ink)}
 /* The tap buttons under the two places */
-.nd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
-.nd-chip{display:inline-flex;align-items:center;gap:5px;min-height:42px;max-width:100%;padding:0 13px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.nd-chips{display:flex;flex-wrap:nowrap;gap:5px;margin:2px 0 8px}
+.nd-chip{flex:1 1 auto;min-width:0;justify-content:center;display:inline-flex;align-items:center;gap:4px;min-height:42px;max-width:100%;padding:0 8px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
 .nd-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nd-chip .i{flex:none;width:16px;height:16px;color:var(--ink-2)}
 .nd-chip:active{transform:scale(.96)}
@@ -698,6 +764,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-send{position:sticky;bottom:-14px;z-index:3;margin:8px -12px -14px;padding:8px 12px 12px;border-top:1px solid var(--line);background:var(--surface);box-shadow:0 -10px 18px -14px rgba(0,0,0,.45)}
 .sheet.kb .nd-send{position:static;box-shadow:none}
 .nd-text-box{position:relative;margin:0 0 8px}
+.nd-label{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 3px}
+.nd-label span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.nd-label small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
 #nd-text.nd-preview{resize:none}
 .nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
 .nd-preview::placeholder{color:var(--ink-3);font-weight:500}
@@ -764,12 +833,21 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp.open .sp-scrim{background:rgba(0,0,0,.5)}
 .sp-card{position:relative;display:flex;flex-direction:column;height:calc(100dvh - var(--safe-t) - 10px);max-width:680px;width:100%;margin:0 auto;background:var(--surface);border:1px solid var(--yellow);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow);padding:0 10px calc(10px + var(--safe-b));transform:translateY(100%);transition:transform .26s var(--out);overflow:hidden}
 .sp.open .sp-card{transform:none}
-.sp-head{flex:none;display:flex;align-items:center;gap:8px;min-height:44px;padding:2px 0 2px 4px}
-.sp-head b{font-stretch:80%;font-size:19px;font-weight:800;white-space:nowrap}
-.sp-to{flex:1;min-width:0;font-size:12.5px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-head{flex:none;display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0 4px 4px}
+.sp-titles{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.sp-head b{font-stretch:85%;font-size:19px;font-weight:800;white-space:nowrap}
+.sp-to{min-width:0;font-size:13px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-head .icon-btn{margin-right:-6px}
+/* The text the driver gets, right where you send it, and changeable there */
+.sp-text{flex:none;display:block;margin:0 0 8px;padding:6px 8px 8px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2)}
+.sp-text-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 3px}
+.sp-text-head span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.sp-text-head small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
+.sp-text textarea{display:block;width:100%;min-height:44px;max-height:96px;resize:none;field-sizing:content;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);padding:6px 9px;font:inherit;font-size:15px;line-height:1.35;color:var(--ink);outline:none}
+.sp-text textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.sp-card.nomap .sp-map{display:none}
+.sp-card.nomap .sp-drivers{flex:1 1 auto;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end}
 /* The vehicles: a soft strip of chips, centred, wrapping when there are many */
-.sp-vans{flex:none;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;padding:7px;margin-bottom:7px;border-radius:14px;background:linear-gradient(180deg,#fffdf3,#fff8dc);border:1px solid rgba(230,188,0,.35);box-shadow:inset 0 1px 0 #fff,0 2px 8px -4px rgba(150,110,0,.25)}
-.sp-vans:empty{display:none}
 .van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
 .van:active{transform:scale(.95)}
 .van i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.12)}
@@ -785,9 +863,21 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
 .sp-canvas{position:absolute;inset:0}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
-.sp-drivers{flex:none}
-.sp-drivers .pick{min-height:48px;animation:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.sp-drivers{flex:none;max-height:52%;overflow:auto}
+.sp-drivers .pick{min-height:54px;animation:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
+/* One driver per row: van colour, name, van + phone, distance on the right. The closest sits last, by the thumb. */
+.drv-list{display:grid;gap:6px}
+.pick.drv{padding:6px 12px 6px 8px;background:var(--surface)}
+.pick.drv .avatar{background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.pick.drv .grow{font-size:16px;font-weight:800}
+.pick.drv small{font-size:12.5px;font-weight:600}
+.drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:15px;font-weight:800;line-height:1.15}
+.drv-km small{font-size:12px;color:var(--ink-2)}
+.pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
+.pick.drv.novan .avatar{background:var(--ink-3)}
+.pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
+.drv-tag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:#26a356;color:#fff;font-size:10px;font-weight:800;line-height:15px;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px}
 /* Hold to send: a green ring runs clockwise round the button */
 .hold-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .hold-ring path{fill:none;stroke:#26a356;stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 3px rgba(63,207,120,.8))}
@@ -844,6 +934,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></symbol>
 </svg>
 
@@ -878,11 +970,10 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <header class="topbar">
       <div class="topbar-in">
         <span class="logo-tile"><img src="icon2.png" alt="" onerror="this.remove()"></span>
-        <div><div class="wordmark">E&amp;C <b>Dispatch</b></div><div class="sub" id="hdr-sub"></div></div>
+        <div><div class="wordmark">E&amp;C <b>Dispatch</b></div><div class="sub"><span id="hdr-sub"></span><span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span></div></div>
         <div class="spacer"></div>
-        <span class="live" id="live"><span class="dot"></span><span id="live-text">Connecting</span></span>
-        <button class="icon-btn msg-top" type="button" data-act="open-msgs" id="msg-btn" aria-label="Messages"><svg class="i"><use href="#i-chat"/></svg><span class="badge" id="msg-badge" hidden></span></button>
         <button class="icon-btn" type="button" data-act="toggle-sound" id="sound-btn" aria-label="Alert sound on"><svg class="i"><use href="#i-sound"/></svg></button>
+        <button class="icon-btn set-btn" type="button" data-tab="settings" id="set-btn" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
       </div>
     </header>
   </div>
@@ -960,7 +1051,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <!-- Ordered for the right thumb: the most used buttons are on the right -->
   <nav class="tabbar" aria-label="Main">
     <div class="tabbar-in">
-      <button class="tab" type="button" data-tab="settings"><span class="ti"><svg class="i"><use href="#i-gear"/></svg></span>Settings</button>
+      <button class="tab msg-tab" type="button" data-act="open-msgs" id="msg-btn" aria-label="Messages"><span class="ti"><svg class="i"><use href="#i-chat"/></svg></span>Messages<span class="dot" id="msg-badge" hidden></span></button>
       <button class="tab" type="button" data-tab="done"><span class="ti"><svg class="i"><use href="#i-check"/></svg></span>Done</button>
       <button class="tab" type="button" data-tab="scheduled"><span class="ti"><svg class="i"><use href="#i-calendar"/></svg></span>Scheduled<span class="dot quiet" id="dot-scheduled" hidden></span></button>
       <button class="tab" type="button" data-tab="queue" aria-current="page"><span class="ti"><svg class="i"><use href="#i-inbox"/></svg></span>Queue<span class="dot" id="dot-queue" hidden></span></button>
@@ -972,7 +1063,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sheet-head"><h2 id="sheet-title"></h2><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-head"><button class="icon-btn sheet-back" type="button" data-act="msg-list" id="sheet-back" aria-label="All customers" hidden><svg class="i"><use href="#i-back"/></svg></button><div class="sheet-titles"><h2 id="sheet-title"></h2><div class="sheet-sub" id="sheet-sub" hidden></div></div><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
   </div>
 </div>
@@ -980,8 +1071,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 <div class="sp" id="nd-pop" hidden>
   <div class="sp-scrim" data-act="nd-pop-close"></div>
   <div class="sp-card" role="dialog" aria-modal="true" aria-labelledby="sp-title">
-    <div class="sp-head"><b id="sp-title">Send to</b><span class="sp-to" id="sp-to"></span><button class="icon-btn sm" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
-    <div class="sp-vans" id="sp-vans" aria-label="Vehicles, closest to the pickup first"></div>
+    <div class="sp-head"><div class="sp-titles"><b id="sp-title">Send</b><span class="sp-to" id="sp-to"></span></div><button class="icon-btn" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <label class="sp-text"><span class="sp-text-head"><span>Driver gets</span><small id="sp-count"></small></span><textarea id="sp-textarea" rows="2" spellcheck="true" enterkeyhint="done" aria-label="Text the driver gets. Change it here if needed."></textarea></label>
     <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p></div>
     <div class="sp-drivers" id="nd-pop-list"></div>
   </div>
@@ -1309,12 +1400,25 @@ function addrSwitch(id, r) {
       <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="addr-map" data-id="${esc(id)}"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button>
     </div>`;
 }
+/* How many texts a message becomes on the phone. Plain letters fit 160 in one text (153 each when split);
+   anything else (curly quotes, emoji) makes the phone use 70 (67 when split). */
+const GSM_RE = /^[A-Za-z0-9 \r\n@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ!"#¤%&'()*+,\-./:;<=>?¡ÄÖÑÜ§¿äöñüà^{}\\[~\]|€]*$/;
+function smsParts(text) {
+  const t = String(text || '');
+  if (!t) return 0;
+  const gsm = GSM_RE.test(t);
+  const len = gsm ? t.length + (t.match(/[\^{}\\[~\]|€]/g) || []).length : t.length;
+  const one = gsm ? 160 : 70, many = gsm ? 153 : 67;
+  return len <= one ? 1 : Math.ceil(len / many);
+}
+const smsCountText = (text) => { const n = smsParts(text); return n ? `Driver gets this \u00b7 ${n} text${n === 1 ? '' : 's'}` : 'Driver gets this'; };
 function textEditor(id, r, where) {
   const edited = !!edits[editKey(id, r)];
+  const text = textFor(id, r);
   return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
-    <div class="text-edit-head"><span>Address in the text</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
+    <textarea data-edit="${esc(id)}" data-where="${where}" rows="2" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(text)}</textarea>
     ${addrSwitch(id, r)}
-    <textarea data-edit="${esc(id)}" data-where="${where}" rows="2" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(textFor(id, r))}</textarea>
+    <div class="text-edit-head"><span data-sms-count>${esc(smsCountText(text))}</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
   </div>`;
 }
 function setEdit(id, text) {
@@ -1331,6 +1435,8 @@ function setEdit(id, text) {
     const ta = $('textarea', b);
     if (text == null) ta.value = baseText(id, r);
     else if (ta !== document.activeElement) ta.value = text;
+    const c = $('[data-sms-count]', b);
+    if (c) c.textContent = smsCountText(ta.value);
   });
 }
 document.addEventListener('input', (e) => {
@@ -1541,7 +1647,7 @@ function refreshAlarm() {
   const sched = isFuture(first);
   $('#alert-text').innerHTML = list.length === 1
     ? `${sched ? 'New scheduled request' : first.updated_at ? 'Request updated' : 'New request'} #${esc(first.ref_no)}<small>${esc(first.company_name || '')}: ${esc(first.pickup && first.pickup.name)} for ${esc(first.delivery && first.delivery.name)}${sched ? `, for ${esc(fmtDay(first.scheduled_for))}` : ''}</small>`
-    : (() => { const now = list.filter(([, r]) => !isFuture(r)).length, later = list.length - now; return `${[now ? `${now} new in the queue` : '', later ? `${later} scheduled` : ''].filter(Boolean).join(' \u00b7 ')}<small>Tap to mark them seen</small>`; })();
+    : (() => { const now = list.filter(([, r]) => !isFuture(r)).length, later = list.length - now; return `${[now ? `${now} new` : '', later ? `${later} later` : ''].filter(Boolean).join(' \u00b7 ')}<small>Tap to mark seen</small>`; })();
   banner.hidden = false;
   updateSoundUi();
 
@@ -1616,7 +1722,7 @@ function syncLayers() {
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
   if (top && !top.contains(document.activeElement)) {
     if (!layerReturn) layerReturn = document.activeElement;
-    const f = $('.icon-btn', top) || $('button', top);
+    const f = $('[data-act=sheet-close], [data-act=nd-pop-close]', top) || $('.icon-btn', top) || $('button', top);
     if (f) setTimeout(() => { if (!top.contains(document.activeElement)) f.focus({ preventScroll: true }); }, 60);
   }
   if (!top) { const back = layerReturn; layerReturn = null; if (back && back.isConnected && back.focus) back.focus({ preventScroll: true }); }
@@ -1626,9 +1732,12 @@ function openSheet(title, html, onMount, tall) {
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
   if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
-  $('#sheet-reset').hidden = tall !== 'mid';
+  $('#sheet-reset').hidden = true; // New dispatch: Start over lives in the ⋯ menu, away from ✕
   _hidePop();
   $('#sheet-title').textContent = title;
+  $('#sheet-back').hidden = true;
+  $('#sheet-sub').hidden = true;
+  $('#sheet-sub').innerHTML = '';
   $('#sheet-body').innerHTML = html;
   if (!sheetOpen) {
     sheetOpen = true;
@@ -2013,16 +2122,18 @@ function jobCard(id, r) {
   shownCards.add(id);
   const enter = fresh ? ` enter" style="animation-delay:${Math.min(enterIdx++, 6) * 45}ms` : '';
   const open = openCards.has(id);
+  // Short tags ride on the name line; the longer ones (day, hours, posted, messages) get a line of their own
+  const tags = [];
+  if (unseen) tags.push('<span class="chip new">New</span>');
+  if (r.updated_at && !changedText(id, r)) tags.push('<span class="chip warn">Changed</span>');
+  tags.push(`<span class="chip">${icon(r.payment === 'collect' ? 'cash' : 'check')}${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
   const chips = [];
-  if (unseen) chips.push('<span class="chip new">New</span>');
-  if (r.updated_at) chips.push('<span class="chip warn">Changed</span>');
   if (r.when === 'scheduled' && r.scheduled_for) {
     if (isOverdue(r)) chips.push(`<span class="chip bad">${icon('alert')}Was due ${esc(fmtDay(r.scheduled_for))}</span>`);
     else if (isFuture(r)) chips.push(`<span class="chip warn">${icon('calendar')}${esc(fmtDay(r.scheduled_for))}</span>`);
     else chips.push(`<span class="chip warn">${icon('calendar')}Today</span>`);
   }
   if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
-  chips.push(`<span class="chip">${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
   const unread = unreadMsgs(id);
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
@@ -2032,7 +2143,8 @@ function jobCard(id, r) {
     <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
-      <span class="job-age" data-age="${esc(r.created_at || 0)}">${esc(ago(r.created_at))}</span>
+      <span class="job-tags">${tags.join('')}</span>
+      <span class="job-age" data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
       <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
     <div class="chips job-chips">${chips.join('')}</div>
@@ -2042,9 +2154,8 @@ function jobCard(id, r) {
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
     <div class="job-more-box"${open ? '' : ' hidden'}>${open ? textEditor(id, r, 'card') : ''}</div>
-    <div class="job-actions job-row"><button class="btn btn-secondary job-text" type="button" data-act="job-text" data-id="${esc(id)}" aria-expanded="${open}">${icon('edit', 'sm')}Text${icon('caret', 'caret')}</button>${groupChatButton(id)}</div>
+    <div class="job-actions job-row"><button class="btn btn-secondary job-text" type="button" data-act="job-text" data-id="${esc(id)}" aria-expanded="${open}" aria-label="Text for request ${esc(r.ref_no)}" title="Text">${icon('edit', 'sm')}</button>${groupChatButton(id)}${sendButtons(id)}</div>
     </div>
-    <div class="job-actions job-tab">${sendButtons(id)}</div>
   </article>`;
 }
 // Opens or closes a card's text, with the address switch
@@ -2072,6 +2183,7 @@ function jobMenu(id) {
   const later = isFuture(r);
   openSheet(`#${r.ref_no} ${r.company_name || ''}`, `<div class="menu-list">
       <button type="button" data-act="details" data-id="${esc(id)}">${icon('more')}<span>Details<small>Everything on the request${hasMsgs(id) ? ', and messages' : ''}</small></span></button>
+      ${r.company_id && r.source !== 'dispatcher' ? `<button type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(id)}">${icon('chat')}<span>Message ${esc(clampText(r.company_name || 'the customer', 24))}<small>Write to them in their app${hasMsgs(id) ? '. You have messages about this one.' : ''}</small></span></button>` : ''}
       ${hasDrivers() ? `<button type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users')}<span>Group Chat<small>Share the text. It stays in the queue.</small></span></button>` : ''}
       ${later
         ? `<button type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox')}<span>Send to queue<small>Do it today instead</small></span></button>`
@@ -2117,10 +2229,26 @@ function renderQueue() {
   const stick = S.tab === 'queue' && (queueStick || nearBottom());
   queueStick = false;
   // Most urgent last, so it sits right above the bottom bar under the thumb
-  $('#queue-list').innerHTML = list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
+  $('#queue-list').innerHTML = (filtering ? '' : unreadBlock()) + (list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
-    : (S.loaded ? caughtUp() : skeletons());
+    : (S.loaded ? caughtUp() : skeletons()));
   if (stick) scrollToBottom();
+}
+// Unread customer messages, in the free space above the jobs (tap one to open the conversation)
+function unreadBlock() {
+  if (!S.loaded) return '';
+  const cos = msgCompanies().filter((c) => c.unread);
+  if (!cos.length) return '';
+  const rows = cos.slice(0, 3).map((c) => {
+    const m = coMsgs(c.cid).filter(([, x]) => x.from === 'customer').pop();
+    const last = m ? m[1] : c.last;
+    const n = msgRef(last);
+    return `<button class="unread-row" type="button" data-act="open-msgs" data-cid="${esc(c.cid)}" data-id="${esc(last.rid && last.rid !== GENERAL ? last.rid : '')}">
+      <span class="avatar" aria-hidden="true">${esc(initials(coName(c.cid)) || '?')}</span>
+      <span class="grow"><span class="unread-top"><b>${esc(coName(c.cid))}</b>${n && last.rid !== GENERAL ? `<span class="unread-ref">#${esc(n)}</span>` : ''}<small>${esc(fmtTime(last.at))}</small></span><span class="unread-text">${esc(last.text)}</span></span>
+      <span class="msg-count" aria-label="${c.unread} new">${c.unread}</span></button>`;
+  }).join('');
+  return `<section class="unread" aria-label="Unread messages"><div class="unread-head">${icon('chat', 'sm')}<span>Unread messages</span>${cos.length > 3 ? `<button class="link-btn" type="button" data-act="open-msgs">See all ${cos.length}</button>` : ''}</div>${rows}</section>`;
 }
 // Empty queue: a big check, and when the last job went out
 function caughtUp() {
@@ -2245,7 +2373,7 @@ function renderAll() {
 }
 function switchTab(tab) {
   S.tab = tab;
-  $$('.tab[data-tab]').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  $$('.tab[data-tab], #set-btn').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   ['queue', 'scheduled', 'done', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
   if (tab === 'settings') renderSettings();
   if (tab === 'queue') queueStick = true;
@@ -2436,7 +2564,7 @@ function pickDriver(id) {
   // From the details sheet: the panel takes the sheet's place (and its Back step)
   const swap = sheetOpen && history.state && history.state.sheet;
   if (sheetOpen) _hideSheet();
-  openSendPanel(`Send #${r.ref_no} to`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id);
+  openSendPanel(`Send #${r.ref_no}`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id, routeLabel(r));
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
 const sendingIds = new Set(); // jobs whose text is on its way
@@ -2548,23 +2676,23 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    ${kind === 'pending' ? `<div class="sheet-actions">${sendButtons(id).replace('class="btn btn-primary', 'class="btn btn-primary full')}${groupChatButton(id)}
-      <button class="btn btn-danger${hasDrivers() ? '' : ' full'}" type="button" data-act="remove" data-id="${esc(id)}">${icon('trash', 'sm')}Remove from queue</button></div>` : ''}
     ${kind === 'done' ? `<div class="sheet-actions">
       <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('send', 'sm')}Send again</button>
       <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
     </div>` : ''}
     ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
-    ${msgThread(id, r)}</div>`;
+    ${msgThread(id, r)}
+    ${kind === 'pending' ? `<button class="btn btn-danger-soft remove-far" type="button" data-act="remove" data-id="${esc(id)}">${icon('trash', 'sm')}Remove from queue</button>
+    <div class="sheet-actions pin-bottom">${groupChatButton(id)}${sendButtons(id)}</div>` : ''}</div>`;
   if (refresh) {
     // Keep a half-typed message and the scroll spot when the request or its messages update
-    const input = $('#sheet-body form[data-msg-form] input');
+    const input = $('#sheet-body form[data-msg-form] [name=text]');
     const draft = input ? input.value : '', typing = input && input === document.activeElement;
     const body = $('#sheet-body'), top = body.scrollTop;
     $('#sheet-title').textContent = `Request #${r.ref_no}`;
     body.innerHTML = html;
     body.scrollTop = top;
-    const again = $('#sheet-body form[data-msg-form] input');
+    const again = $('#sheet-body form[data-msg-form] [name=text]');
     if (again && draft) again.value = draft;
     if (again && typing) again.focus({ preventScroll: true });
   } else openSheet(`Request #${r.ref_no}`, html);
@@ -2614,15 +2742,57 @@ const quickList = () => {
   if (!q) return QUICK_DEFAULTS.map((text, i) => ({ id: `d${i}`, text }));
   return Object.entries(q).map(([id, v]) => ({ id, text: String((v && v.text) || ''), order: (v && v.order) || 0 })).filter((x) => x.text).sort((a, b) => a.order - b.order || a.text.localeCompare(b.text));
 };
+const quickRow = (rid) => `<div class="quick" role="group" aria-label="Quick replies. Tap one to put it in the box.">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="${esc(rid)}" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>`;
+const msgInput = (ph, label) => `<textarea name="text" rows="1" maxlength="500" placeholder="${esc(ph)}" aria-label="${esc(label)}" autocomplete="off" enterkeyhint="send" spellcheck="true"></textarea>`;
+// A quick reply goes into the box (added to what's there), so it can be changed before Send
+function quickFill(el) {
+  const form = el.closest('section, [data-msgs-view]') && $('form[data-msg-form]', el.closest('section, [data-msgs-view]'));
+  const ta = form && form.elements.text;
+  if (!ta) return;
+  const t = el.dataset.text || '';
+  const cur = ta.value.trim();
+  ta.value = cur ? `${cur} ${t}` : t;
+  msgGrow(ta);
+  ta.focus();
+  try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) { /* ignore */ }
+}
+// The box grows to 4 lines
+function msgGrow(ta) {
+  if (!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = `${Math.min(ta.scrollHeight + 2, 4 * 22 + 16)}px`;
+}
+document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('form[data-msg-form] textarea')) msgGrow(e.target); });
+// Enter sends (Shift+Enter for a new line), like a regular texting app
+document.addEventListener('keydown', (e) => {
+  const t = e.target;
+  if (e.key !== 'Enter' || e.shiftKey || !t.matches || !t.matches('form[data-msg-form] textarea')) return;
+  e.preventDefault();
+  t.form.requestSubmit ? t.form.requestSubmit() : t.form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+});
+// Hold a message to copy it
+let copyHold = 0;
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest && e.target.closest('.msg[data-mid]');
+  if (!b) return;
+  clearTimeout(copyHold);
+  copyHold = setTimeout(() => {
+    const text = $('p', b).textContent;
+    const ok = () => { b.classList.remove('copied'); void b.offsetWidth; b.classList.add('copied'); buzz(15); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, () => {});
+    else { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); ok(); } catch (err) { /* ignore */ } t.remove(); }
+  }, 520);
+});
+['pointerup', 'pointercancel', 'pointermove'].forEach((t) => document.addEventListener(t, (e) => { if (t !== 'pointermove' || Math.abs(e.movementX) + Math.abs(e.movementY) > 6) clearTimeout(copyHold); }, { passive: true }));
 function msgThread(rid, r) {
   if (!r || r.source === 'dispatcher') return '';
   const list = msgsFor(rid);
-  const bubbles = list.map(([, m]) => msgBubble(m, r.company_name, false)).join('');
+  const bubbles = msgListHtml(list, r.company_name, false);
   return `<section class="msgs" data-msgs="${esc(rid)}">
       <h3>${icon('chat', 'sm')}<span class="grow">Messages about #${esc(r.ref_no)}</span>${r.company_id ? `<button class="link-btn" type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(rid)}">All with ${esc(clampText(r.company_name || 'customer', 20))}</button>` : ''}</h3>
       ${bubbles || '<p class="msgs-empty">No messages yet. They show in the customer’s app.</p>'}
-      <div class="quick">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="${esc(rid)}" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>
-      <form class="msg-form" data-msg-form="${esc(rid)}"><input name="text" maxlength="500" placeholder="Write to the customer" aria-label="Message to the customer" autocomplete="off" enterkeyhint="send"><button class="btn btn-primary" type="submit" aria-label="Send message">${icon('send', 'sm')}</button></form>
+      ${quickRow(rid)}
+      <form class="msg-form" data-msg-form="${esc(rid)}"><div class="msg-bar">${msgInput('Write to the customer', 'Message to the customer')}</div><button class="msg-send" type="submit" aria-label="Send message">${icon('send')}</button></form>
     </section>`;
 }
 async function sendMsg(rid, text) {
@@ -2653,7 +2823,7 @@ function onMessages(snap) {
       systemNotify(`Message from ${who}${ref}`, m.text, 'ec-msg');
     } else if (m) {
       // Their conversation is open: the reply is about what they just wrote, unless a reply is being typed
-      const input = $('#sheet-body form[data-msg-form] input');
+      const input = $('#sheet-body form[data-msg-form] [name=text]');
       if (!input || !input.value.trim()) msgAboutNext = m.rid;
     }
   }
@@ -2670,7 +2840,7 @@ document.addEventListener('submit', async (e) => {
   const input = f.elements.text;
   const btn = $('button[type=submit]', f);
   btn.disabled = true;
-  if (await sendMsg(f.dataset.msgForm || msgAboutVal(), input.value)) input.value = '';
+  if (await sendMsg(f.dataset.msgForm || msgAboutVal(), input.value)) { input.value = ''; msgGrow(input); }
   btn.disabled = false;
 });
 
@@ -2682,6 +2852,17 @@ const GENERAL = 'general'; // rid of a message that isn't about any pickup
 let msgView = null; // 'list', or the company id of the open conversation
 let msgAbout = '';  // the pickup the next reply is about
 let msgAboutNext = ''; // set when the customer writes in the open conversation
+let msgSearch = '';   // search on the list of customers
+// Title line: a back arrow to all customers, and this customer's waiting pickups under the name
+function msgHead() {
+  const back = $('#sheet-back'), sub = $('#sheet-sub');
+  if (!back || !sub) return;
+  const thread = msgView && msgView !== 'list';
+  back.hidden = !thread;
+  const mine = thread ? Object.entries(S.pending || {}).filter(([, r]) => r && r.company_id === msgView).sort((a, b) => (a[1].created_at || 0) - (b[1].created_at || 0)) : [];
+  sub.hidden = !mine.length;
+  sub.innerHTML = mine.length ? `<span>Waiting:</span>${mine.slice(0, 4).map(([id, r]) => `<button class="msg-ref${isFuture(r) ? '' : ' now'}" type="button" data-act="details" data-id="${esc(id)}">#${esc(r.ref_no)}${isFuture(r) ? ` ${esc(fmtDay(r.scheduled_for).split(',')[0])}` : ''}</button>`).join('')}${mine.length > 4 ? `<span>+${mine.length - 4}</span>` : ''}` : '';
+}
 let msgAlert = null; // { cid, rid } of the newest message nobody has opened yet
 // The pickup number on a message (older messages may not carry it)
 const msgRef = (m) => { if (m.ref_no) return m.ref_no; const f = findReq(m.rid); return f ? f.r.ref_no : ''; };
@@ -2732,12 +2913,38 @@ function renderMsgUi() {
   const m = last ? last[1] : { rid: '' };
   $('#msg-banner-text').innerHTML = `${esc(n > 1 ? `${n} new messages` : `Message from ${coName(msgAlert.cid)}`)}${msgRef(m) ? ` about #${esc(msgRef(m))}` : ''}<small>${esc(m.text || '')}</small>`;
 }
-function msgBubble(m, coLabel, withRef) {
-  const me = m.from === 'dispatch';
-  const who = me ? (m.by_name || 'Dispatch') : (m.by_name || coLabel || 'Customer');
-  const n = withRef ? msgRef(m) : '';
-  const ref = n ? `<button class="msg-ref" type="button" data-act="details" data-id="${esc(m.rid)}" aria-label="Open pickup #${esc(n)}">#${esc(n)}</button>` : withRef && m.rid === GENERAL ? '<span class="msg-ref">General</span>' : '';
-  return `<div class="msg ${me ? 'me' : 'them'}"><div class="msg-head">${ref}<b>${esc(who)}</b><span>${esc(fmtDateTime(m.at))}</span></div><p>${esc(m.text)}</p></div>`;
+// Bubbles with "Today"/"Yesterday" lines, the #pickup once where it changes, and only the time on each bubble.
+// The customer's name shows when the writer changes; a dispatcher's name only when it's someone else on staff.
+const capName = (n) => String(n || '').trim().replace(/\b\w/g, (c) => c.toUpperCase());
+function msgDayLabel(ts) {
+  const d = new Date(ts); d.setHours(0, 0, 0, 0);
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const diff = Math.round((t - d) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function msgListHtml(list, coLabel, withRef) {
+  let day = '', ref = null, who = null;
+  return list.map(([mid, m]) => {
+    let out = '';
+    const dl = msgDayLabel(m.at || Date.now());
+    if (dl !== day) { day = dl; ref = null; who = null; out += `<div class="msg-day">${esc(dl)}</div>`; }
+    const key = m.rid || '';
+    if (withRef && key !== ref) {
+      ref = key; who = null;
+      const n = msgRef(m);
+      out += `<div class="msg-sep">${n && m.rid !== GENERAL ? `<button class="msg-ref" type="button" data-act="details" data-id="${esc(m.rid)}" aria-label="Open pickup #${esc(n)}">#${esc(n)}</button>` : `<span class="msg-ref">${m.rid === GENERAL ? 'General' : '#?'}</span>`}</div>`;
+    }
+    const me = m.from === 'dispatch';
+    const name = me ? capName(m.by_name || 'Dispatch') : capName(m.by_name || coLabel || 'Customer');
+    const whoKey = `${m.from}|${m.by_uid || name}`;
+    if (!me && whoKey !== who) out += `<div class="msg-who">${esc(name)}</div>`;
+    who = whoKey;
+    const other = me && S.user && m.by_uid && m.by_uid !== S.user.uid;
+    out += `<div class="msg ${me ? 'me' : 'them'}" data-mid="${esc(mid || '')}"><p>${esc(m.text)}</p><small>${esc(fmtTime(m.at))}${other ? ` \u00b7 ${esc(name)}` : ''}</small></div>`;
+    return out;
+  }).join('');
 }
 // Pickups a reply can be about: the ones in this conversation, then this customer's waiting ones
 function msgAboutList(cid) {
@@ -2745,12 +2952,12 @@ function msgAboutList(cid) {
   const add = (rid, r, refNo) => {
     if (!rid || rid === GENERAL || seen.has(rid)) return;
     seen.add(rid);
-    const label = r ? `#${r.ref_no} · ${clampText(`${(r.pickup && r.pickup.name) || '?'} for ${(r.delivery && r.delivery.name) || '?'}`, 34)}` : `#${refNo || '?'}`;
+    const label = r ? `#${r.ref_no} \u00b7 ${clampText((r.delivery && r.delivery.name) || (r.pickup && r.pickup.name) || '', 16)}` : `#${refNo || '?'}`;
     out.push({ rid, label });
   };
   coMsgs(cid).slice().reverse().forEach(([, m]) => { const f = findReq(m.rid); add(m.rid, f && f.r, msgRef(m)); });
   Object.entries(S.pending || {}).filter(([, r]) => r && r.company_id === cid).sort((a, b) => (b[1].created_at || 0) - (a[1].created_at || 0)).forEach(([id, r]) => add(id, r));
-  return [{ rid: GENERAL, label: 'General (not about a pickup)' }, ...out];
+  return [{ rid: GENERAL, label: 'General' }, ...out];
 }
 const msgAboutVal = () => { const sel = $('#msg-about'); return sel ? sel.value : ''; };
 function msgsHtml() {
@@ -2758,14 +2965,18 @@ function msgsHtml() {
     const cos = msgCompanies();
     const err = S.msgsError ? `<p class="notice-err">Messages couldn’t load: ${esc(S.msgsError)}</p>` : '';
     if (!cos.length) return `<div data-msgs-view="list">${err}<div class="empty"><h3>No messages yet</h3><p>When a customer writes from Request Pickup, it shows here and on their card. The last ${MSG_DAYS} days are kept here.</p></div></div>`;
-    return `<div data-msgs-view="list">${err}<div class="list msg-cos">${cos.map((c) => {
+    const q = msgSearch.trim().toLowerCase();
+    const shown = q ? cos.filter((c) => coName(c.cid).toLowerCase().includes(q) || coMsgs(c.cid).some(([, m]) => String(m.text || '').toLowerCase().includes(q) || String(msgRef(m)).includes(q))) : cos;
+    const search = cos.length > 5 ? `<div class="searchbox msg-search">${icon('search')}<input id="msg-q" type="search" value="${esc(msgSearch)}" placeholder="Search customers or messages" aria-label="Search messages" autocomplete="off"></div>` : '';
+    return `<div data-msgs-view="list">${err}${search}<div class="list msg-cos">${shown.map((c) => {
       const name = coName(c.cid), m = c.last;
+      const owe = m.from === 'customer';
       return `<button class="row msg-co${c.unread ? ' unread' : ''}" type="button" data-act="msg-co" data-cid="${esc(c.cid)}">
         <span class="avatar" aria-hidden="true">${esc(initials(name) || '?')}</span>
-        <span class="grow"><span class="msg-co-top"><b>${esc(name)}</b><small>${esc(fmtTime(m.at))}</small></span>
+        <span class="grow"><span class="msg-co-top"><b>${esc(name)}</b>${owe ? '<span class="chip warn needs">Needs reply</span>' : ''}<small>${esc(msgDayLabel(m.at) === 'Today' ? fmtTime(m.at) : msgDayLabel(m.at))}</small></span>
         <span class="msg-co-last">${m.from === 'dispatch' ? 'You: ' : ''}${msgRef(m) ? `#${esc(msgRef(m))} · ` : ''}${esc(m.text)}</span></span>
         ${c.unread ? `<span class="msg-count" aria-label="${c.unread} new">${c.unread}</span>` : ''}</button>`;
-    }).join('')}</div></div>`;
+    }).join('') || '<p class="msgs-empty">No match.</p>'}</div></div>`;
   }
   const cid = msgView, name = coName(cid);
   const list = coMsgs(cid);
@@ -2775,12 +2986,10 @@ function msgsHtml() {
     msgAbout = lastCust ? lastCust[1].rid : (about[0] && about[0].rid) || '';
   }
   return `<div data-msgs-view="thread" data-cid="${esc(cid)}">
-    <button class="link-btn msg-back" type="button" data-act="msg-list">‹ All customers</button>
-    <div class="msg-list" id="msg-list">${list.length ? list.map(([, m]) => msgBubble(m, name, true)).join('') : '<p class="msgs-empty">No messages yet.</p>'}</div>
+    <div class="msg-list" id="msg-list">${list.length ? msgListHtml(list, name, true) : '<p class="msgs-empty">No messages yet.</p>'}</div>
     ${about.length ? `<div class="msg-compose">
-      <label class="msg-about"><span>About</span><select id="msg-about" aria-label="Which pickup the reply is about">${about.map((a) => `<option value="${esc(a.rid)}"${a.rid === msgAbout ? ' selected' : ''}>${esc(a.label)}</option>`).join('')}</select></label>
-      <div class="quick">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>
-      <form class="msg-form" data-msg-form=""><input name="text" maxlength="500" placeholder="Write to ${esc(name)}" aria-label="Message to ${esc(name)}" autocomplete="off" enterkeyhint="send"><button class="btn btn-primary" type="submit" aria-label="Send message">${icon('send', 'sm')}</button></form>
+      ${quickRow('')}
+      <form class="msg-form" data-msg-form=""><div class="msg-bar"><span class="msg-about"><select id="msg-about" aria-label="Which pickup the reply is about">${about.map((a) => `<option value="${esc(a.rid)}"${a.rid === msgAbout ? ' selected' : ''}>${esc(a.label)}</option>`).join('')}</select>${icon('caret', 'caret')}</span>${msgInput(`Write to ${name}`, `Message to ${name}`)}</div><button class="msg-send" type="submit" aria-label="Send message">${icon('send')}</button></form>
     </div>` : ''}
   </div>`;
 }
@@ -2790,43 +2999,73 @@ function openMessages(cid, rid) {
   msgView = cid || 'list';
   if (rid) msgAbout = rid;
   openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); }, true);
+  msgHead();
   if (cid) markCoSeen(cid);
 }
 // Redraws the open Messages screen, keeping a half-typed reply and the scroll spot
 function refreshMsgs() {
   if (!msgSheetOpen()) return;
   const body = $('#sheet-body');
-  const input = $('#sheet-body form[data-msg-form] input');
+  const input = $('#sheet-body form[data-msg-form] [name=text]');
   const draft = input ? input.value : '', typing = !!input && input === document.activeElement;
   const sel = $('#msg-about'); if (sel) msgAbout = sel.value;
   if (msgAboutNext) { msgAbout = msgAboutNext; msgAboutNext = ''; }
   const atEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 40, top = body.scrollTop;
   $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : coName(msgView);
+  const q = $('#msg-q'), searching = q && q === document.activeElement;
   body.innerHTML = msgsHtml();
+  msgHead();
+  if (searching) { const again = $('#msg-q'); if (again) { again.focus({ preventScroll: true }); again.setSelectionRange(again.value.length, again.value.length); } }
   if (atEnd && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
-  const again = $('#sheet-body form[data-msg-form] input');
+  const again = $('#sheet-body form[data-msg-form] [name=text]');
   if (again && draft) again.value = draft;
   if (again && typing) again.focus({ preventScroll: true });
 }
 document.addEventListener('change', (e) => { if (e.target.id === 'msg-about') msgAbout = e.target.value; });
+document.addEventListener('input', (e) => { if (e.target.id === 'msg-q') { msgSearch = e.target.value; refreshMsgs(); } });
 // Quick replies are shared by every dispatcher phone (dispatch_settings/quick_replies) and edited in Settings
+// Up to 10. Each one can be typed over in place (saved when you leave the box) or removed.
+const QUICK_MAX = 10;
 function quickEditor() {
-  const rows = quickList().map((q) => `<div class="contact"><span class="grow"><b>${esc(q.text)}</b></span>${S.quick ? `<button class="icon-btn sm del" type="button" data-act="del-quick" data-q="${esc(q.id)}" aria-label="Remove ${esc(q.text)}">${icon('trash')}</button>` : ''}</div>`).join('');
-  return `<div id="quick-edit">${S.quick ? '' : '<p class="card-note">These are the starting replies. Add your own and they replace them.</p>'}${rows}
-    <form class="add-row one" data-form="add-quick"><input name="text" maxlength="200" placeholder="New quick reply" aria-label="New quick reply" autocomplete="off"><button class="btn btn-secondary" type="submit">Add</button></form></div>`;
+  const list = quickList();
+  const rows = list.map((q, i) => `<div class="contact quick-row"><span class="quick-n">${i + 1}</span><input class="quick-input" data-quick-edit="${esc(q.id)}" value="${esc(q.text)}" maxlength="200" aria-label="Quick reply ${i + 1}" autocomplete="off"><button class="icon-btn sm del" type="button" data-act="del-quick" data-q="${esc(q.id)}" aria-label="Remove ${esc(q.text)}">${icon('trash')}</button></div>`).join('');
+  const full = list.length >= QUICK_MAX;
+  return `<div id="quick-edit"><p class="card-note">Tap one in a conversation to put it in the box. ${list.length} of ${QUICK_MAX}.</p>${rows}
+    ${full ? `<p class="card-note">That’s ${QUICK_MAX}, the most. Remove one to add another.</p>` : '<form class="add-row one" data-form="add-quick"><input name="text" maxlength="200" placeholder="New quick reply" aria-label="New quick reply" autocomplete="off"><button class="btn btn-secondary" type="submit">Add</button></form>'}</div>`;
 }
+// The starting replies become real ones the first time any of them is changed
+async function quickSeed() {
+  const ref = db.ref('dispatch_settings/quick_replies');
+  if (S.quick) return {};
+  const seed = {}, map = {};
+  QUICK_DEFAULTS.forEach((t, i) => { const k = ref.push().key; seed[k] = { text: t, order: i }; map[`d${i}`] = k; });
+  await ref.update(seed);
+  return map;
+}
+async function editQuick(id, text) {
+  text = String(text || '').trim().slice(0, 200);
+  if (!db) return;
+  try {
+    const map = await quickSeed();
+    const key = map[id] || id;
+    if (!text) await db.ref(`dispatch_settings/quick_replies/${key}`).remove();
+    else await db.ref(`dispatch_settings/quick_replies/${key}/text`).set(text);
+  } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 9000); }
+}
+document.addEventListener('change', (e) => { const el = e.target.closest && e.target.closest('[data-quick-edit]'); if (el) editQuick(el.dataset.quickEdit, el.value); });
 const refreshQuickEditor = () => { const el = $('#quick-edit'); if (el) el.outerHTML = quickEditor(); };
 async function addQuick(text) {
   text = String(text || '').trim().slice(0, 200);
   if (!text || !db) return;
+  if (quickList().length >= QUICK_MAX) { toast(`Up to ${QUICK_MAX} quick replies. Remove one first.`, 'info'); return; }
   try {
     const ref = db.ref('dispatch_settings/quick_replies');
-    if (!S.quick) { const seed = {}; QUICK_DEFAULTS.forEach((t, i) => { seed[ref.push().key] = { text: t, order: i }; }); await ref.update(seed); }
+    await quickSeed();
     await ref.push({ text, order: Date.now() });
   } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 9000); }
 }
 async function delQuick(id) {
-  try { await db.ref(`dispatch_settings/quick_replies/${id}`).remove(); } catch (err) { toast(`Couldn’t remove: ${deniedMsg(err)}`, 'error', 9000); }
+  try { const map = await quickSeed(); await db.ref(`dispatch_settings/quick_replies/${map[id] || id}`).remove(); } catch (err) { toast(`Couldn’t remove: ${deniedMsg(err)}`, 'error', 9000); }
 }
 
 /* =========================================================
@@ -3027,8 +3266,7 @@ function openNewDispatch() {
       <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
-    ${leg('pickup', 'Pickup')}
-    ${leg('delivery', 'Delivery')}
+    <div class="nd-route">${leg('pickup', 'Pickup')}${leg('delivery', 'Delivery')}</div>
     <div class="nd-chips" id="nd-chips" role="group" aria-label="Pieces, payment, when, note and PO"></div>
     <div class="field nd-x" id="nd-x-items" hidden><div id="nd-items"></div></div>
     <div class="field nd-x" id="nd-x-when" hidden><div id="nd-cal"></div></div>
@@ -3036,6 +3274,7 @@ function openNewDispatch() {
     <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
     <div class="nd-send">
       <div class="nd-more" id="nd-more" hidden></div>
+      <div class="nd-label"><span>Driver gets</span><small id="nd-count"></small></div>
       <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button></div>
       <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, Group Chat, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
     </div>
@@ -3151,6 +3390,7 @@ function ndTextUi() {
   const box = ta.parentNode;
   box.classList.toggle('edited', ndEdited());
   $('[data-act=nd-text-reset]', box).hidden = !ndEdited();
+  const c = $('#nd-count'); if (c) { const n = smsParts(ta.value); c.textContent = n ? `${n} text${n === 1 ? '' : 's'}` : ''; }
   ndGrow(ta);
 }
 // Done (under the weight), or both places picked: keyboard away, Send in reach
@@ -3223,6 +3463,7 @@ function ndMoreMenu() {
       ${later ? `<button type="button" data-act="nd-now">${icon('send')}<span>Send now instead<small>Not booked for a later day</small></span></button>` : `<button type="button" data-act="nd-save">${icon('inbox')}<span>Save to queue<small>Send it from the Queue later</small></span></button>`}
       <button type="button" data-act="nd-group">${icon('users')}<span>Group Chat<small>Share the text. It counts as sent once it goes to a driver.</small></span></button>
       ${later ? '' : `<button type="button" data-act="nd-sched">${icon('calendar')}<span>Schedule for later<small>Book it for another day</small></span></button>`}
+      <button type="button" data-act="nd-reset">${icon('undo')}<span>Start over<small>Clear the form</small></span></button>
     </div>
     <div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
       <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="nd-map-link"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button></div>
@@ -3637,23 +3878,45 @@ let popOpen = false;
 function ndPickDriver() {
   const r = ndValid();
   if (!r) return;
-  openSendPanel('Send to', ND.pickup, (did) => ndSendDriver(did));
+  openSendPanel('Send to driver', ND.pickup, (did) => ndSendDriver(did), false, null, routeLabel(r));
 }
 const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
 const ALERT_CHECK_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/alertCheck'; // functions/index.js
 const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
 const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
-function openSendPanel(title, pickup, onSend, swap, jobId) {
+const routeLabel = (r) => [r && r.pickup && r.pickup.name, r && r.delivery && r.delivery.name].filter(Boolean).join(' \u2192 ');
+// The panel's text box: a job's text (same as its card), or the New dispatch text
+function spTextGet() {
+  if (sp.jobId) { const r = S.pending[sp.jobId]; return r ? textFor(sp.jobId, r) : ''; }
+  const ta = $('#nd-text');
+  return ta ? (ta.value || '') : '';
+}
+function spTextSet(v) {
+  if (sp.jobId) { setEdit(sp.jobId, v); return; }
+  const ta = $('#nd-text');
+  if (ta) { ta.value = v; ta.dispatchEvent(new Event('input', { bubbles: true })); }
+}
+function spTextUi() {
+  const ta = $('#sp-textarea');
+  if (!ta) return;
+  if (document.activeElement !== ta) ta.value = spTextGet();
+  $('#sp-count').textContent = (() => { const n = smsParts(ta.value); return n ? `${n} text${n === 1 ? '' : 's'}` : ''; })();
+}
+$('#sp-textarea').addEventListener('input', (e) => { spTextSet(e.target.value); spTextUi(); });
+$('#sp-textarea').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.blur(); } });
+function openSendPanel(title, pickup, onSend, swap, jobId, route) {
   const known = pickup && pickup.lat != null && pickup.lng != null && isFinite(+pickup.lat);
   Object.assign(sp, { onSend, pickup, jobId: jobId || null, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : geoCached(pickup), fitted: false, order: '', focus: '' });
   if (sp.pin) sp.pin.setMap(null);
   spMsg('');
   $('#sp-title').textContent = title;
-  $('#sp-to').textContent = pickup && pickup.name ? `Pickup: ${pickup.name}` : '';
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick" type="button" data-hold-driver="${esc(did)}"><span class="avatar">${esc(initials(d.name))}</span><span class="grow">${esc(d.name)}<small>${esc(formatPhone(d.phone))}</small></span></button>`).join('');
-  $('#nd-pop-list').innerHTML = rows ? `<div class="pick-grid">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
-  $('#sp-vans').innerHTML = '';
+  $('#sp-to').textContent = route || (pickup && pickup.name ? `Pickup: ${pickup.name}` : '');
+  spTextUi();
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today \u00b7 ${esc(formatPhone(d.phone))}</small></span><span class="drv-km"></span></button>`).join('');
+  $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send. Tap to find their van.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
+  sp.order = '';
+  $('.sp-card').classList.toggle('nomap', maps === 'failed');
   const el = $('#nd-pop');
   el.hidden = false;
   popOpen = true;
@@ -3715,28 +3978,47 @@ function spList() {
   if (at) { if (used[0]) used[0].rank = 1; if (used[1]) used[1].rank = 2; }
   return used.concat(idle);
 }
+// A driver's van today: the vehicle whose Timeclock nickname is the driver's name (or first name)
+const normName = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+function vanOf(d, list) {
+  const n = normName(d && d.name);
+  if (!n) return null;
+  const first = n.split(' ')[0];
+  return list.find((v) => v.nick && normName(v.nick) === n) || list.find((v) => v.nick && normName(v.nick).split(' ')[0] === first) || null;
+}
+/* Driver rows, updated in place (so a hold in progress isn't broken): van colour, van name, distance and
+   drive time. Drivers with no van go first (greyed, still sendable); the closest goes last, nearest the thumb. */
+function spDrivers(list) {
+  const rows = $$('#nd-pop-list [data-hold-driver]');
+  if (!rows.length) return;
+  const info = rows.map((b) => {
+    const d = S.contacts.drivers[b.dataset.holdDriver] || {};
+    return { b, d, v: vanOf(d, list) };
+  });
+  const ranked = info.filter((x) => x.v && x.v.km != null).sort((a, b) => a.v.km - b.v.km);
+  const best = sp.at && ranked[0] ? ranked[0] : null;
+  info.forEach(({ b, d, v }) => {
+    b.classList.toggle('novan', !v);
+    b.classList.toggle('best', best && best.b === b);
+    if (v) b.dataset.van = v.id; else delete b.dataset.van;
+    b.style.setProperty('--c', v ? v.color : '');
+    const name = $('.drv-name', b);
+    name.innerHTML = `${esc(d.name || '')}${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}`;
+    $('small', b).textContent = `${v ? (sp.vans[v.id] && sp.vans[v.id].name ? String(sp.vans[v.id].name) : 'Van') : 'No van today'} \u00b7 ${formatPhone(d.phone)}`;
+    $('.drv-km', b).innerHTML = v && v.km != null ? `${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
+    b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
+  });
+  // Order: no van, then farthest to closest. Not while a finger is on a row.
+  const group = (x) => (!x.v ? 0 : x.v.km == null ? 1 : 2);
+  const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.v.km - a.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
+  const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
+  if (order !== sp.order && !hold.el) { const box = rows[0].parentNode; sorted.forEach((x) => box.appendChild(x.b)); sp.order = order; }
+}
 function spRender() {
   deskRender();
   if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
   const list = spList();
-  const box = $('#sp-vans');
-  // Chips are kept and updated in place, so their pulse doesn't restart on every GPS update
-  const have = {};
-  $$('.van', box).forEach((b) => { have[b.dataset.van] = b; });
-  const order = list.map((v) => v.id).join('|');
-  list.forEach((v) => {
-    let b = have[v.id];
-    if (!b) { b = document.createElement('button'); b.type = 'button'; b.dataset.act = 'sp-van'; b.dataset.van = v.id; b.innerHTML = '<i></i><b></b><small></small>'; }
-    b.className = `van${v.nick ? '' : ' idle'}${v.rank ? ` c${v.rank}` : ''}`;
-    b.style.setProperty('--c', v.color);
-    b.children[1].textContent = v.label;
-    b.children[2].textContent = v.km == null ? '' : `${fmtKm(v.km)} · ${fmtDrive(v.km)}`;
-    b.setAttribute('aria-label', `${v.label}${v.km == null ? '' : `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup`}${v.rank === 1 ? ', closest' : ''}`);
-    delete have[v.id];
-    if (order !== sp.order) box.appendChild(b);
-  });
-  Object.values(have).forEach((b) => b.remove());
-  sp.order = order;
+  spDrivers(list);
   spMarkers(list);
 }
 /* ---------- The map ---------- */
@@ -3752,7 +4034,7 @@ const MAP_STYLE = [
 let spMapWait = 0;
 function spMapReady() {
   clearTimeout(spMapWait);
-  if (maps === 'failed') { if (popOpen) spMsg('The map isn’t available in this app yet (Google Maps key). Distances still show above.'); return; }
+  if (maps === 'failed') { const c = $('.sp-card'); if (c) c.classList.add('nomap'); return; }
   if (!mapsUsable()) { if (maps !== 'idle') spMapWait = setTimeout(spMapReady, 150); return; }
   if (!sp.map) {
     sp.map = new google.maps.Map($('#sp-canvas'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, gestureHandling: 'greedy', clickableIcons: false, keyboardShortcuts: false });
@@ -3952,6 +4234,11 @@ $('#nd-pop-list').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   holdStart(b);
+});
+$('#nd-pop-list').addEventListener('pointerup', () => {
+  // A quick tap (not a hold) shows that driver's van on the map
+  const el = hold.el;
+  if (el && performance.now() - hold.t0 < 250 && el.dataset.van) spZoomTo(el.dataset.van);
 });
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
 $('#nd-pop-list').addEventListener('contextmenu', (e) => e.preventDefault());
@@ -4406,7 +4693,7 @@ document.addEventListener('click', async (e) => {
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
     case 'addr-map': setAddrMode(id, { map: el.getAttribute('aria-pressed') !== 'true' }); break;
-    case 'quick-reply': sendMsg(id || msgAboutVal(), el.dataset.text); break;
+    case 'quick-reply': quickFill(el); break;
     case 'open-msgs': openMessages(el.dataset.cid || '', id); break;
     case 'msg-co': msgView = el.dataset.cid; msgAbout = ''; refreshMsgs(); msgScrollEnd(); markCoSeen(msgView); break;
     case 'msg-list': msgView = 'list'; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
