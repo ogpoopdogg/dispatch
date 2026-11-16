@@ -768,6 +768,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-label span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
 .nd-label small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
 #nd-text.nd-preview{resize:none}
+.sheet.big #nd-text.nd-preview{min-height:96px;max-height:200px;padding:12px 42px 12px 14px;font-size:22px;line-height:1.3;border-radius:var(--r-md)}
+.sheet.big .nd-pen{right:14px;top:16px}
+.sheet.big .nd-text-reset{right:5px;top:7px}
 .nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
 .nd-preview::placeholder{color:var(--ink-3);font-weight:500}
 .nd-preview:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -815,7 +818,13 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    While typing (keyboard up) it grows to full height like before. */
 @media (max-width:719px){
   .sheet{position:relative}
-  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px))}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height .28s var(--out)}
+  /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
+     of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
+  .sheet.tall.mid.big{height:75dvh}
+  .sheet.tall.mid.big:not(.kb) .sheet-body{flex:1 1 auto;display:flex;flex-direction:column}
+  .sheet.tall.mid.big:not(.kb) .sheet-body>.nd{flex:1 0 auto;display:flex;flex-direction:column}
+  .sheet.tall.mid.big:not(.kb) .nd-send{margin-top:auto}
   .sheet.mid{will-change:auto}
   /* Keyboard up: just the part being filled sits right on top of it, suggestions get the room above */
   .sheet.tall.mid.kb{height:var(--nd-kb-h,240px)}
@@ -1731,6 +1740,7 @@ function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
+  $('#sheet .sheet').classList.remove('big');
   if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
   $('#sheet-reset').hidden = true; // New dispatch: Start over lives in the ⋯ menu, away from ✕
   _hidePop();
@@ -3396,7 +3406,8 @@ const ndFinal = (r) => (ndEdited() ? ND.text.trim() : ndText(r));
 function ndGrow(ta) {
   if (!ta || !ta.offsetParent) return;
   ta.style.height = 'auto';
-  ta.style.height = `${Math.min(ta.scrollHeight + 2, 112)}px`;
+  const big = !!ta.closest('.sheet.big');
+  ta.style.height = `${big ? Math.max(96, Math.min(ta.scrollHeight + 2, 200)) : Math.min(ta.scrollHeight + 2, 112)}px`;
 }
 function ndTextUi() {
   const ta = $('#nd-text');
@@ -3523,6 +3534,7 @@ function ndUpdate(force) {
   saveDraft();
   let moved = false;
   ['pickup', 'delivery'].forEach((k) => { if (ndLegUi(k)) moved = true; });
+  $('#sheet .sheet').classList.toggle('big', !!(ND.pickup.name.trim() && ND.delivery.name.trim()));
   ndRefreshTags();
   ndChips();
   ['items', 'when', 'notes', 'po'].forEach((x) => { const el = $(`#nd-x-${x}`); if (el && el.hidden !== (ndX !== x)) { el.hidden = ndX !== x; moved = true; } });
