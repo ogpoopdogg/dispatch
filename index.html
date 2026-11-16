@@ -889,6 +889,11 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes vanPulse2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,0,0,.18)}50%{transform:scale(1.04);box-shadow:0 0 0 6px rgba(0,0,0,0)}}
 .sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
 .sp-canvas{position:absolute;inset:0}
+/* Full map: the map takes the whole panel for a closer look; the button (or Back) brings the drivers back */
+.sp-full{position:absolute;top:8px;right:8px;z-index:2;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px 0 9px;border:1px solid rgba(0,0,0,.12);border-radius:99px;background:rgba(255,255,255,.95);color:#111;font:inherit;font-size:13px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sp-full .i{width:15px;height:15px}
+.sp-card.mapfull .sp-text,.sp-card.mapfull .sp-drivers{display:none}
+.sp-card.mapfull .sp-map{flex:1 1 auto;margin-bottom:0}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
 /* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
 .sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -1114,7 +1119,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <div class="sp-card" role="dialog" aria-modal="true" aria-labelledby="sp-title">
     <div class="sp-head"><div class="sp-titles"><b id="sp-title">Send</b><span class="sp-to" id="sp-to"></span></div><button class="icon-btn" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <label class="sp-text"><span class="sp-text-head"><span>Driver gets</span><small id="sp-count"></small></span><textarea id="sp-textarea" rows="2" spellcheck="true" enterkeyhint="done" aria-label="Text the driver gets. Change it here if needed."></textarea></label>
-    <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p></div>
+    <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p><button class="sp-full" type="button" data-act="sp-full" aria-pressed="false" aria-label="Make the map full screen"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><span>Full map</span></button></div>
     <div class="sp-drivers" id="nd-pop-list"></div>
   </div>
 </div>
@@ -1855,7 +1860,7 @@ function _hideSheet() {
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
-window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
+window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
 /* A tap on the dimmed area closes the sheet, but only if the finger went down there too:
    the form can slide down under the finger while the keyboard closes. */
 let sheetDownOnBack = false;
@@ -1877,7 +1882,7 @@ document.addEventListener('click', (e) => {
   doneTouched = 0;
   if (fresh) { e.preventDefault(); e.stopPropagation(); }
 }, true);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen) closePop(); else closeSheet(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen && $('.sp-card').classList.contains('mapfull')) spFull(false); else if (popOpen) closePop(); else closeSheet(); } });
 function confirmSheet(title, body, ok, danger) {
   return new Promise((resolve) => {
     openSheet(title, `<p class="muted">${body}</p><div class="btn-row"><button class="btn btn-secondary" type="button" data-c="0">Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" type="button" data-c="1">${esc(ok)}</button></div>`);
@@ -4084,9 +4089,29 @@ function openSendPanel(title, pickup, onSend, swap, jobId, route) {
   spMapReady();
   if (sp.at) spPickupPin();
 }
+// Full map on or off: zoom buttons show while it's big, and the vans are fitted again to the new size
+function spFull(on, fromHistory) {
+  const card = $('.sp-card');
+  if (!card) return;
+  // The phone's Back button leaves the full map first (then closes the panel)
+  if (!fromHistory) {
+    if (on) { try { history.pushState({ pop: true, spFull: true }, ''); } catch (e) { /* ignore */ } }
+    else if (history.state && history.state.spFull) { history.back(); return; }
+  }
+  card.classList.toggle('mapfull', on);
+  const b = $('[data-act=sp-full]', card);
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Back to the drivers' : 'Make the map full screen');
+  $('span', b).textContent = on ? 'Back to drivers' : 'Full map';
+  if (sp.map) {
+    sp.map.setOptions({ zoomControl: on });
+    setTimeout(() => { if (popOpen && sp.map) { sp.focus = ''; spFitAll(spList()); } }, 60);
+  }
+}
 function _hidePop() {
   const el = $('#nd-pop');
   if (!el || !popOpen) return;
+  if ($('.sp-card').classList.contains('mapfull')) spFull(false, true);
   popOpen = false;
   holdCancel();
   spStop();
@@ -4439,7 +4464,12 @@ $('#nd-pop-list').addEventListener('pointerup', () => {
 });
 ['pointerup', 'pointercancel', 'lostpointercapture', 'pointerleave'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
 $('#nd-pop-list').addEventListener('contextmenu', (e) => e.preventDefault());
-function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
+function closePop() {
+  if (!popOpen) return;
+  // Full map open: its own Back step and the panel's both go
+  if (history.state && history.state.spFull) { spFull(false, true); history.go(-2); return; }
+  if (history.state && history.state.pop) history.back(); else _hidePop();
+}
 // Same as the queue: sent and filed straight away, back in the queue if the text fails
 async function ndSendDriver(did) {
   const d = S.contacts.drivers[did];
@@ -4970,6 +5000,7 @@ document.addEventListener('click', async (e) => {
     case 'nd-group': ndX = ''; ndSendGroup(); break;
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
+    case 'sp-full': spFull(!$('.sp-card').classList.contains('mapfull')); break;
     case 'nd-save': ndSave(el); break;
     case 'nd-reset': ndReset(); break;
     case 'del-driver': {
