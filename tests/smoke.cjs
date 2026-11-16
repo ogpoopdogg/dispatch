@@ -160,23 +160,28 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.evaluate(() => window.__fakeDb.put('messages/m0', { rid: 'r3', company_id: 'c1', ref_no: 1203, from: 'dispatch', text: 'Booked for tomorrow.', at: Date.now() - 3600000, by_uid: 'staff1', by_name: 'dana' }));
       await page.click('#msg-banner');
       await page.waitForSelector('#sheet [data-msgs-view=thread] .msg.them');
-      assert.strictEqual(await page.locator('#sheet .msg-ref').count(), 2, 'each message shows its pickup');
+      assert.strictEqual(await page.locator('#sheet .msg-list .msg-ref').count(), 2, 'the pickup shows once where it changes');
+      assert.ok(await page.isVisible('#sheet-back'), 'back arrow in the title line');
+      assert.match(await page.textContent('#sheet-sub'), /Waiting:[\s\S]*#1201/, 'their waiting pickups under the name');
       assert.match(await page.textContent('#sheet .msg-list'), /#1203[\s\S]*#1201/);
       assert.strictEqual(await page.inputValue('#msg-about'), 'r1', 'the reply is about the pickup they asked about');
       assert.ok(await page.isHidden('#msg-banner'), 'banner goes once opened');
       assert.ok(await page.isHidden('#msg-badge'), 'count clears once opened');
+      // A quick reply goes into the box (it doesn't send by itself); Enter sends it
       await page.click('#sheet .quick .chip-btn >> nth=1');
+      assert.strictEqual(await page.inputValue('#sheet .msg-form textarea'), 'A driver is on the way.', 'quick reply fills the box');
+      await page.press('#sheet .msg-form textarea', 'Enter');
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.from === 'dispatch' && m.rid === 'r1' && m.company_id === 'c1'));
-      await page.fill('#sheet .msg-form input', 'Same driver for both.');
-      await page.press('#sheet .msg-form input', 'Enter');
+      await page.fill('#sheet .msg-form textarea', 'Same driver for both.');
+      await page.press('#sheet .msg-form textarea', 'Enter');
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Same driver for both.' && m.rid === 'r1'));
       // A general message (not about a pickup): labelled General, and a reply goes back as general for this customer
       await page.evaluate(() => window.__fakeDb.put('messages/m5', { rid: 'general', company_id: 'c1', from: 'customer', text: 'Are you open Saturday?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
       await page.waitForFunction(() => /Are you open Saturday\?/.test(document.getElementById('sheet-body').textContent));
       assert.match(await page.textContent('#sheet .msg-list'), /General[\s\S]*Are you open Saturday/);
       assert.strictEqual(await page.inputValue('#msg-about'), 'general', 'the reply is about what they wrote: General');
-      await page.fill('#sheet .msg-form input', 'Closed weekends.');
-      await page.press('#sheet .msg-form input', 'Enter');
+      await page.fill('#sheet .msg-form textarea', 'Closed weekends.');
+      await page.press('#sheet .msg-form textarea', 'Enter');
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Closed weekends.' && m.rid === 'general' && m.company_id === 'c1' && m.from === 'dispatch'));
       await page.waitForTimeout(300);
       await shot(page, 'messages');
@@ -299,11 +304,12 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#nd-cal .nd-cal-grid button:not([disabled]) >> nth=2');
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
-    await page.click('[data-act=nd-reset]');
+    await page.click('[data-act=nd-more]');
+    await page.click('#nd-more [data-act=nd-reset]');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert);
     // Settings: alert check
-    await page.click('.tab[data-tab=settings]');
+    await page.click('#set-btn');
     await page.waitForFunction(() => /2 phones/.test((document.getElementById('alert-reach') || {}).textContent || ''));
     assert.ok(await page.isVisible('[data-act=edit-quick]'), 'quick replies in Settings');
     assert.ok(await page.isVisible('[data-nd-def=type]'), 'Settings picks how a new dispatch starts');
