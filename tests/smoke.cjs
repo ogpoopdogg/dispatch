@@ -110,8 +110,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4, 1 pallet 400 lbs, Collect$/, 'no space before the comma');
       // Address switch: None / Pickup / Delivery / Both, and Map link (pickup only)
       const mode = (m) => page.click(`${card} [data-act=addr-mode][data-mode=${m}]`);
-      const seg = await page.locator(`${card} [data-act=addr-mode] >> nth=0`).boundingBox();
-      assert.ok(seg.height >= 38, 'address switch is easy to hit');
+      // Polled for the same reason as above: the card can be mid-redraw
+      await page.waitForFunction((sel) => { const b = document.querySelector(sel); return b && b.getBoundingClientRect().height >= 38; }, `${card} [data-act=addr-mode]`, { timeout: 5000 })
+        .catch(() => assert.fail('address switch is easy to hit'));
       await mode('pickup');
       assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4,/);
       await mode('delivery');
@@ -342,6 +343,42 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await shot(page, 'board');
     await page.keyboard.press('Escape');
     assert.deepStrictEqual(errors, [], 'no script errors');
+    // Send to driver: a long driver list scrolls, and vans picked in Timeclock show even without GPS
+    {
+      const data3 = JSON.parse(JSON.stringify(DATA));
+      const names = ['Mike', 'Sara', 'Jen', 'Tom', 'Ann', 'Bob', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo'];
+      data3.dispatch_contacts.drivers = Object.fromEntries(names.map((n, i) => [`d${i}`, { name: n, phone: `20455501${String(i).padStart(2, '0')}` }]));
+      data3.developer = { dispatch_dashboard: {
+        drivers: { g1: { name: 'Van 1', color: '#e8590c', lastLocation: { lat: 49.85, lng: -99.95 } }, g4: { name: 'Van 4', color: '#1c7ed6' } },
+        driver_nicknames: { g1: 'Mike' } } };
+      data3.timeclock = {
+        vans: { van_9: { name: 'Van 9' } },
+        vehicle_claims: {
+          g1: { ek: 'mike', name: 'Mike Smith', nickname: 'Mike', vehicleName: 'Van 1' },
+          van_9: { ek: 'sara', name: 'Sara Lee', nickname: 'Sara', vehicleName: 'Van 9' },
+          g4: { ek: 'jen', name: 'Jen Roy', nickname: 'Jen', vehicleName: 'Van 4' } } };
+      const p3 = await open(browser, base, { user: STAFF, data: data3 });
+      const pg = p3.page;
+      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
+      await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
+      await pg.waitForTimeout(500);
+      const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name').textContent.startsWith(nm)); return b && b.querySelector('small').textContent; }, n);
+      assert.match(await sub('Mike'), /^Van 1 ·/, 'GPS van');
+      assert.match(await sub('Sara'), /^Van 9 \(no GPS\) ·/, 'van with no GPS unit, picked in Timeclock');
+      assert.match(await sub('Jen'), /^Van 4 \(no GPS\) ·/, 'GPS van that has no position yet');
+      assert.match(await sub('Tom'), /^No van today ·/);
+      const box = await pg.evaluate(() => { const l = document.getElementById('nd-pop-list'); const r = l.querySelector('[data-hold-driver]'); return { sh: l.scrollHeight, ch: l.clientHeight, ta: getComputedStyle(r).touchAction }; });
+      assert.ok(box.sh > box.ch, 'the list is taller than its box (so it has to scroll)');
+      assert.strictEqual(box.ta, 'pan-y', 'a finger can drag the list');
+      await pg.mouse.move(195, 700);
+      await pg.evaluate(() => { document.getElementById('nd-pop-list').scrollTop = 0; });
+      await pg.mouse.wheel(0, 400);
+      await pg.waitForFunction(() => document.getElementById('nd-pop-list').scrollTop > 0).catch(() => assert.fail('the driver list scrolls'));
+      await shot(pg, 'send-scroll');
+      assert.deepStrictEqual(p3.errors, []);
+      await pg.close();
+    }
     console.log('dispatch smoke test passed');
   } finally {
     await browser.close();

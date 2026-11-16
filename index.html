@@ -882,8 +882,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
 .sp-canvas{position:absolute;inset:0}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
-.sp-drivers{flex:none;max-height:52%;overflow:auto}
-.sp-drivers .pick{min-height:54px;animation:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.sp-drivers{flex:0 1 auto;min-height:0;max-height:52%;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* One driver per row: van colour, name, van + phone, distance on the right. The closest sits last, by the thumb. */
 .drv-list{display:grid;gap:6px}
@@ -2075,6 +2075,9 @@ function startListening() {
   // Vehicles for the Send to driver map, kept up to date so the panel opens instantly
   listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); }, () => {});
   listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); }, () => {});
+  // Who has which van today, from Timeclock: GPS vans and vans with no GPS yet (timeclock/vans, ids start with van_)
+  listen(db.ref('timeclock/vehicle_claims'), (snap) => { sp.claims = snap.val() || {}; sp.claimsOk = true; spRender(); }, () => { sp.claimsOk = false; });
+  listen(db.ref('timeclock/vans'), (snap) => { sp.tcVans = snap.val() || {}; spRender(); }, () => {});
   setTimeout(() => { loadMaps(); spMapReady(); }, 1200);
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
@@ -3984,7 +3987,7 @@ const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'H
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
 const ALERT_CHECK_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/alertCheck'; // functions/index.js
 const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
-const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
+const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, claims: {}, tcVans: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
 const routeLabel = (r) => [r && r.pickup && r.pickup.name, r && r.delivery && r.delivery.name].filter(Boolean).join(' \u2192 ');
 // The panel's text box: a job's text (same as its card), or the New dispatch text
 function spTextGet() {
@@ -4080,11 +4083,36 @@ function spList() {
 }
 // A driver's van today: the vehicle whose Timeclock nickname is the driver's name (or first name)
 const normName = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+// Every van a driver has picked in Timeclock today, GPS or not: { id, nick, names[], name }
+function spPicked() {
+  const out = {};
+  Object.entries(sp.claims || {}).forEach(([id, c]) => {
+    if (!c || typeof c !== 'object') return;
+    const gps = sp.vans[id];
+    const tc = sp.tcVans[id];
+    const name = String(c.vehicleName || (gps && gps.name) || (tc && tc.name) || 'Van');
+    out[id] = { id, nick: c.nickname || sp.nicks[id] || '', names: [c.nickname, c.name].filter(Boolean), name };
+  });
+  // GPS vans with a RouteWatcher nickname (if the Timeclock list can't be read on this account)
+  Object.entries(sp.nicks || {}).forEach(([id, nick]) => {
+    if (out[id] || !nick) return;
+    const gps = sp.vans[id];
+    out[id] = { id, nick: String(nick), names: [String(nick)], name: String((gps && gps.name) || 'Van') };
+  });
+  return out;
+}
+// A driver's van: the one picked in Timeclock under their name or nickname (full name first, then first name).
+// It doesn't need GPS: a van with no position is still their van, just without a distance.
 function vanOf(d, list) {
   const n = normName(d && d.name);
   if (!n) return null;
   const first = n.split(' ')[0];
-  return list.find((v) => v.nick && normName(v.nick) === n) || list.find((v) => v.nick && normName(v.nick).split(' ')[0] === first) || null;
+  const picked = Object.values(spPicked());
+  const hit = picked.find((p) => p.names.some((x) => normName(x) === n))
+    || picked.find((p) => p.names.some((x) => normName(x).split(' ')[0] === first));
+  if (!hit) return null;
+  const onMap = list.find((v) => v.id === hit.id);
+  return onMap ? Object.assign({ name: hit.name }, onMap) : { id: hit.id, nick: hit.nick, name: hit.name, label: hit.name, color: (sp.vans[hit.id] && sp.vans[hit.id].color) || '', km: null, pos: null, nogps: true };
 }
 /* Driver rows, updated in place (so a hold in progress isn't broken): van colour, van name, distance and
    drive time. Drivers with no van go first (greyed, still sendable); the closest goes last, nearest the thumb. */
@@ -4100,11 +4128,11 @@ function spDrivers(list) {
   info.forEach(({ b, d, v }) => {
     b.classList.toggle('novan', !v);
     b.classList.toggle('best', best && best.b === b);
-    if (v) b.dataset.van = v.id; else delete b.dataset.van;
+    if (v && !v.nogps) b.dataset.van = v.id; else delete b.dataset.van;
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
     name.innerHTML = `${esc(d.name || '')}${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}`;
-    $('small', b).textContent = `${v ? (sp.vans[v.id] && sp.vans[v.id].name ? String(sp.vans[v.id].name) : 'Van') : 'No van today'} \u00b7 ${formatPhone(d.phone)}`;
+    $('small', b).textContent = `${v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' (no GPS)' : ''}` : 'No van today'} \u00b7 ${formatPhone(d.phone)}`;
     $('.drv-km', b).innerHTML = v && v.km != null ? `${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
@@ -4331,16 +4359,20 @@ function holdCancel() {
 $('#nd-pop-list').addEventListener('pointerdown', (e) => {
   const b = e.target.closest('[data-hold-driver]');
   if (!b || (e.button != null && e.button > 0)) return;
-  e.preventDefault();
-  try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  // A finger can still drag the list up and down (the phone then cancels the hold); only a mouse is held in place
+  if (e.pointerType === 'mouse') { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } }
+  hold.y0 = e.clientY;
   holdStart(b);
 });
+// Moving the finger more than a little means scrolling, not sending
+$('#nd-pop-list').addEventListener('pointermove', (e) => { if (hold.el && hold.y0 != null && Math.abs(e.clientY - hold.y0) > 10) holdCancel(); });
+$('#nd-pop-list').addEventListener('scroll', () => { if (hold.el) holdCancel(); }, { passive: true });
 $('#nd-pop-list').addEventListener('pointerup', () => {
   // A quick tap (not a hold) shows that driver's van on the map
   const el = hold.el;
   if (el && performance.now() - hold.t0 < 250 && el.dataset.van) spZoomTo(el.dataset.van);
 });
-['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
+['pointerup', 'pointercancel', 'lostpointercapture', 'pointerleave'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
 $('#nd-pop-list').addEventListener('contextmenu', (e) => e.preventDefault());
 function closePop() { if (!popOpen) return; if (history.state && history.state.pop) history.back(); else _hidePop(); }
 // Same as the queue: sent and filed straight away, back in the queue if the text fails
