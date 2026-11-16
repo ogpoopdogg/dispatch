@@ -8,13 +8,11 @@ const route = (r) => {
   return from && to ? `${from} to ${to}` : from || to;
 };
 
-/** The alert for the customer when dispatch changes requests/<id>, or null. */
+/** The alert for the customer when dispatch changes requests/<id>, or null.
+    Only a removed pickup gets one: customers aren't alerted when a pickup goes to a driver. */
 function customerAlertForRequest(before, after) {
   if (!before || !after || before.status === after.status) return null;
   const where = route(after);
-  if (after.status === 'dispatched' && before.status === 'new') {
-    return { title: `Pickup #${after.ref_no} sent to a driver`, body: where ? `${where}.` : 'It has gone to a driver.' };
-  }
   if (after.status === 'removed' && before.status === 'new') {
     return { title: `Pickup #${after.ref_no} removed by dispatch`, body: `${where ? `${where}. ` : ''}It won’t be picked up. Open the app to message dispatch.` };
   }

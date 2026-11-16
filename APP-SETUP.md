@@ -139,9 +139,10 @@ way, with nothing to install, is **Google Cloud Shell**:
 
    `notifyCustomerOnRequest` and `notifyCustomerOnMessage` send phone alerts
    to customers who turned them on in the Request Pickup app (Account >
-   Phone alerts): when their pickup goes to a driver or is removed, and when
-   dispatch writes to them. The alert goes to whoever sent the pickup and
-   anyone in their company who wrote to dispatch about it. They need the
+   Phone alerts): when their pickup is removed, and when dispatch writes to
+   them. There is no alert when a pickup goes to a driver. The alert goes to
+   whoever sent the pickup and anyone in their company who wrote to dispatch
+   about it. They need the
    `customer_push` section in the database rules.
 
    Deploy only these nine functions, as above. The project also has other
