@@ -317,12 +317,20 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-preview span{display:block;font-size:12.5px;font-weight:650;color:var(--ink-3);margin-bottom:2px;text-transform:none;letter-spacing:0}
 .text-edit{display:block;margin-bottom:8px}
 .text-edit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px;margin-bottom:3px}
-.text-edit-head span{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:650;color:var(--ink-3);text-transform:none;letter-spacing:0}
-.text-edit-head span::before{content:'';width:11px;height:11px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
-.text-edit.edited .text-edit-head span{color:var(--accent-ink)}
-.text-edit-head button{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
+.text-edit-head [data-sms-count]{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:650;color:var(--ink-3);text-transform:none;letter-spacing:0}
+.text-edit-head [data-sms-count]::before{content:'';width:11px;height:11px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E") center/contain no-repeat}
+.text-edit.edited .text-edit-head [data-sms-count]{color:var(--accent-ink)}
+.text-edit-head [data-act=reset-edit]{border:0;background:var(--yellow-soft);color:var(--accent-ink);font-weight:800;font-size:12.5px;line-height:1;padding:4px 8px;border-radius:99px;cursor:pointer;animation:pop var(--t-slow) var(--spring)}
 .addr-sw{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin:0 0 6px}
 .text-edit .addr-sw{margin:6px 0 4px}
+/* On a card: "Address: None" is one small button on the count line; tapping it shows the full row under it */
+.text-edit.on-card .text-edit-head{margin:5px 0 0}
+.text-edit.on-card .addr-sw{margin:6px 0 0}
+.te-tools{display:flex;align-items:center;gap:6px}
+.addr-chip{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 8px 0 7px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface-2);color:var(--ink-2);font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.addr-chip.on{background:var(--yellow-soft);border-color:var(--yellow-lo);color:var(--accent-ink)}
+.addr-chip .caret{transition:transform var(--t-fast) var(--ease)}
+.addr-chip[aria-expanded=true] .caret{transform:rotate(180deg)}
 .addr-seg{display:flex;gap:2px;padding:2px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface-3)}
 .addr-seg button{flex:1 1 0;min-width:0;min-height:calc(var(--ctl) - 6px);padding:0 4px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t) var(--ease),color var(--t) ease}
 .addr-seg button[aria-checked=true]{background:var(--yellow);color:#000;font-weight:750;box-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -897,8 +905,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .pick.drv small{display:block;font-size:13px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:13px;font-weight:800;line-height:1.15}
 .drv-km:empty{display:none}
+/* Big buttons (few drivers): bigger name, van and distance */
+.drv-list.roomy .pick.drv .grow{font-size:20px}
+.drv-list.roomy .pick.drv small{font-size:14.5px}
+.drv-list.roomy .pick.drv .avatar{width:40px;height:40px;font-size:15px}
+.drv-list.roomy .drv-km{font-size:15px}
+.drv-list.roomy .drv-km small{font-size:12.5px}
 .drv-km small{font-size:11px;color:var(--ink-2)}
-.pick.drv .drv-tag{position:absolute;top:3px;right:4px;margin:0;font-size:9px;line-height:13px}
+.pick.drv .drv-name{display:flex;align-items:center;gap:5px}
+.pick.drv .drv-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pick.drv .drv-tag{margin:0 0 2px;font-size:9px;line-height:14px}
 .pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
 .pick.drv.novan .avatar{background:var(--ink-3)}
 .pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
@@ -1413,6 +1429,11 @@ function setAddrMode(id, change) {
     setEdit(id, t);
   } else setEdit(id, null);
   $$('[data-addr-box]').filter((x) => x.dataset.addrBox === id).forEach((x) => { x.outerHTML = addrSwitch(id, r); });
+  $$('[data-addr-chip]').filter((x) => x.dataset.addrChip === id).forEach((x) => {
+    $('span', x).textContent = addrChipText(id, r);
+    const m = addrModeOf(id, r);
+    x.classList.toggle('on', m.addr !== 'off' || m.map);
+  });
   // Remembered for this customer next time
   const key = custKey(r);
   S.addrPrefs = Object.assign({}, S.addrPrefs, { [key]: { addr: next.addr, map: next.map } });
@@ -1439,14 +1460,39 @@ function smsParts(text) {
   return len <= one ? 1 : Math.ceil(len / many);
 }
 const smsCountText = (text) => { const n = smsParts(text); return n ? `Driver gets this \u00b7 ${n} text${n === 1 ? '' : 's'}` : 'Driver gets this'; };
+const addrOpen = new Set(); // cards showing the full address row
+// The small button on a card: what the text has now ("Address: Both + map")
+function addrChipText(id, r) {
+  const m = addrModeOf(id, r);
+  const l = (ADDR_MODES.find(([v]) => v === m.addr) || [, 'None'])[1];
+  return `Address: ${l}${m.map ? ' + map' : ''}`;
+}
 function textEditor(id, r, where) {
   const edited = !!edits[editKey(id, r)];
   const text = textFor(id, r);
-  return `<div class="text-edit${edited ? ' edited' : ''}" data-edit-box="${esc(id)}">
+  const card = where === 'card';
+  const open = !card || addrOpen.has(id);
+  const chip = card ? `<button class="addr-chip${addrModeOf(id, r).addr !== 'off' || addrModeOf(id, r).map ? ' on' : ''}" type="button" data-act="addr-open" data-id="${esc(id)}" data-addr-chip="${esc(id)}" aria-expanded="${open}">${icon('pin', 'sm')}<span>${esc(addrChipText(id, r))}</span>${icon('caret', 'caret')}</button>` : '';
+  return `<div class="text-edit${edited ? ' edited' : ''}${card ? ' on-card' : ''}${open ? ' addr-open' : ''}" data-edit-box="${esc(id)}">
     <textarea data-edit="${esc(id)}" data-where="${where}" rows="2" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(text)}</textarea>
-    ${addrSwitch(id, r)}
-    <div class="text-edit-head"><span data-sms-count>${esc(smsCountText(text))}</span><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button></div>
+    ${card ? '' : addrSwitch(id, r)}
+    <div class="text-edit-head"><span data-sms-count>${esc(smsCountText(text))}</span><span class="te-tools"><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button>${chip}</span></div>
+    ${card && open ? addrSwitch(id, r) : ''}
   </div>`;
+}
+function toggleAddrRow(id) {
+  const r = S.pending[id] || doneReq(id);
+  if (!r) return;
+  if (addrOpen.has(id)) addrOpen.delete(id); else addrOpen.add(id);
+  $$('.job [data-edit-box]').filter((b) => b.dataset.editBox === id).forEach((b) => {
+    const open = addrOpen.has(id);
+    b.classList.toggle('addr-open', open);
+    const chip = $('[data-addr-chip]', b);
+    if (chip) chip.setAttribute('aria-expanded', String(open));
+    const row = $('[data-addr-box]', b);
+    if (open && !row) b.insertAdjacentHTML('beforeend', addrSwitch(id, r));
+    if (!open && row) row.remove();
+  });
 }
 function setEdit(id, text) {
   const r = S.pending[id] || doneReq(id);
@@ -2114,7 +2160,7 @@ setInterval(() => {
   $$('[data-age]').forEach((el) => { el.textContent = ago(Number(el.dataset.age)); });
   $$('[data-age-short]').forEach((el) => {
     el.textContent = shortAgo(Number(el.dataset.ageShort));
-    if (el.classList.contains('job-age')) { const c = ageCls(el.dataset.ageShort); el.classList.toggle('late', c === 'late'); el.classList.toggle('fresh', c === 'fresh'); }
+    if (el.classList.contains('job-age') && !el.hasAttribute('data-noage')) { const c = ageCls(el.dataset.ageShort); el.classList.toggle('late', c === 'late'); el.classList.toggle('fresh', c === 'fresh'); }
   });
 }, 30000);
 document.addEventListener('visibilitychange', () => {
@@ -2184,7 +2230,7 @@ function jobCard(id, r) {
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
       <span class="job-tags">${tags.join('')}</span>
-      <span class="job-age ${ageCls(r.created_at)}" data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
+      <span class="job-age${r.when === 'scheduled' ? '' : ` ${ageCls(r.created_at)}`}"${r.when === 'scheduled' ? ' data-noage' : ''} data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
       <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
     <div class="chips job-chips">${chips.join('')}</div>
@@ -4023,7 +4069,7 @@ function openSendPanel(title, pickup, onSend, swap, jobId, route) {
   $('#sp-to').textContent = route || (pickup && pickup.name ? `Pickup: ${pickup.name}` : '');
   spTextUi();
   const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today</small></span><span class="drv-km"></span></button>`).join('');
-  $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send. Tap to find their van.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
+  $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
   sp.order = '';
   $('.sp-card').classList.toggle('nomap', maps === 'failed');
   const el = $('#nd-pop');
@@ -4090,10 +4136,13 @@ function spList() {
 // A driver's van today: the vehicle whose Timeclock nickname is the driver's name (or first name)
 const normName = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
 // Every van a driver has picked in Timeclock today, GPS or not: { id, nick, names[], name }
+const CLAIM_MAX_MS = 16 * 3600000; // a van picked more than 16 hours ago: the driver forgot to punch out
 function spPicked() {
   const out = {};
+  const now = Date.now();
   Object.entries(sp.claims || {}).forEach(([id, c]) => {
     if (!c || typeof c !== 'object') return;
+    if (typeof c.at === 'number' && now - c.at > CLAIM_MAX_MS) return;
     const gps = sp.vans[id];
     const tc = sp.tcVans[id];
     const name = String(c.vehicleName || (gps && gps.name) || (tc && tc.name) || 'Van');
@@ -4114,8 +4163,10 @@ function vanOf(d, list) {
   if (!n) return null;
   const first = n.split(' ')[0];
   const picked = Object.values(spPicked());
+  // First name alone only when no other driver in the list has that first name (two Mikes don't share a van)
+  const sameFirst = Object.values(S.contacts.drivers || {}).filter((x) => normName(x && x.name).split(' ')[0] === first).length;
   const hit = picked.find((p) => p.names.some((x) => normName(x) === n))
-    || picked.find((p) => p.names.some((x) => normName(x).split(' ')[0] === first));
+    || (sameFirst <= 1 ? picked.find((p) => p.names.some((x) => normName(x).split(' ')[0] === first)) : null);
   if (!hit) return null;
   const onMap = list.find((v) => v.id === hit.id);
   return onMap ? Object.assign({ name: hit.name }, onMap) : { id: hit.id, nick: hit.nick, name: hit.name, label: hit.name, color: (sp.vans[hit.id] && sp.vans[hit.id].color) || '', km: null, pos: null, nogps: true };
@@ -4135,17 +4186,21 @@ function spDrivers(list) {
     b.classList.toggle('novan', !v);
     b.classList.toggle('best', best && best.b === b);
     if (v && !v.nogps) b.dataset.van = v.id; else delete b.dataset.van;
+    if (v && v.nogps) b.dataset.nogps = v.name || 'This van'; else delete b.dataset.nogps;
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
-    name.innerHTML = `${esc(d.name || '')}${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}`;
+    name.innerHTML = `<span>${esc(d.name || '')}</span>`;
     $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
-    $('.drv-km', b).innerHTML = v && v.km != null ? `${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
+
+    // "Closest" sits over the distance, so the name and van keep their full width
+    $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
   // Order: no van, then farthest to closest. Not while a finger is on a row.
   const group = (x) => (!x.v ? 0 : x.v.km == null ? 1 : 2);
   const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.v.km - a.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
+  rows[0].parentNode.classList.toggle('roomy', rows[0].offsetHeight >= 84);
   if (order !== sp.order && !hold.el) { const box = rows[0].parentNode; sorted.forEach((x) => box.appendChild(x.b)); sp.order = order; }
 }
 function spRender() {
@@ -4376,7 +4431,11 @@ $('#nd-pop-list').addEventListener('scroll', () => { if (hold.el) holdCancel(); 
 $('#nd-pop-list').addEventListener('pointerup', () => {
   // A quick tap (not a hold) shows that driver's van on the map
   const el = hold.el;
-  if (el && performance.now() - hold.t0 < 250 && el.dataset.van) spZoomTo(el.dataset.van);
+  if (el && performance.now() - hold.t0 < 250) {
+    if (el.dataset.van) spZoomTo(el.dataset.van);
+    else if (el.dataset.nogps) toast(`${el.dataset.nogps} has no GPS yet, so it isn't on the map.`, 'info', 2500);
+    else if (el.classList.contains('novan')) toast('No van picked in Timeclock today.', 'info', 2500);
+  }
 });
 ['pointerup', 'pointercancel', 'lostpointercapture', 'pointerleave'].forEach((t) => $('#nd-pop-list').addEventListener(t, () => { if (hold.el) holdCancel(); }));
 $('#nd-pop-list').addEventListener('contextmenu', (e) => e.preventDefault());
@@ -4832,6 +4891,7 @@ document.addEventListener('click', async (e) => {
     case 'job-menu': jobMenu(id); break;
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
+    case 'addr-open': toggleAddrRow(id); break;
     case 'addr-map': setAddrMode(id, { map: el.getAttribute('aria-pressed') !== 'true' }); break;
     case 'quick-reply': quickFill(el); break;
     case 'open-msgs': openMessages(el.dataset.cid || '', id); break;

@@ -108,6 +108,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction((sel) => { const b = document.querySelector(sel); return b && b.getBoundingClientRect().height >= 44; }, `${card} [data-act=pick-driver]`, { timeout: 5000 })
         .catch(() => assert.fail('Send to driver is big enough for a thumb'));
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4, 1 pallet 400 lbs, Collect$/, 'no space before the comma');
+      // Address switch: folded into one small "Address: None" button on the card; tap it for the full row
+      assert.strictEqual(await page.locator(`${card} [data-act=addr-mode]`).count(), 0, 'address row folded away on the card');
+      assert.match(await page.textContent(`${card} [data-act=addr-open]`), /Address: None/);
+      await page.click(`${card} [data-act=addr-open]`);
       // Address switch: None / Pickup / Delivery / Both, and Map link (pickup only)
       const mode = (m) => page.click(`${card} [data-act=addr-mode][data-mode=${m}]`);
       // Polled for the same reason as above: the card can be mid-redraw
@@ -119,6 +123,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4 \(1 Industrial Rd\),/);
       await mode('both');
       assert.match(await page.inputValue(ta), /^Prairie Parts \(9 Rosser Ave\) for Dock 4 \(1 Industrial Rd\),/);
+      assert.match(await page.textContent(`${card} [data-act=addr-open]`), /Address: Both/, 'the small button says what the text has');
       await page.click(`${card} [data-act=addr-map]`);
       assert.match(await page.inputValue(ta), /, https:\/\/maps\.google\.com\/\?q=9\+Rosser\+Ave$/, 'map link for the pickup at the end');
       assert.ok(await page.isHidden(`${card} [data-act=reset-edit]`), 'the switch alone is not a hand edit');
@@ -346,7 +351,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Send to driver: a long driver list scrolls, and vans picked in Timeclock show even without GPS
     {
       const data3 = JSON.parse(JSON.stringify(DATA));
-      const names = ['Mike', 'Sara', 'Jen', 'Tom', 'Ann', 'Bob', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo'].concat(Array.from({ length: 16 }, (_, i) => `Extra${i + 1}`));
+      const names = ['Mike', 'Mike Jones', 'Sara', 'Jen', 'Tom', 'Kim', 'Ann', 'Bob', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo'].concat(Array.from({ length: 16 }, (_, i) => `Extra${i + 1}`));
       data3.dispatch_contacts.drivers = Object.fromEntries(names.map((n, i) => [`d${i}`, { name: n, phone: `20455501${String(i).padStart(2, '0')}` }]));
       data3.developer = { dispatch_dashboard: {
         drivers: { g1: { name: 'Van 1', color: '#e8590c', lastLocation: { lat: 49.85, lng: -99.95 } }, g4: { name: 'Van 4', color: '#1c7ed6' } },
@@ -356,23 +361,35 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
         vehicle_claims: {
           g1: { ek: 'mike', name: 'Mike Smith', nickname: 'Mike', vehicleName: 'Van 1' },
           van_9: { ek: 'sara', name: 'Sara Lee', nickname: 'Sara', vehicleName: 'Van 9' },
-          g4: { ek: 'jen', name: 'Jen Roy', nickname: 'Jen', vehicleName: 'Van 4' } } };
+          g4: { ek: 'jen', name: 'Jen Roy', nickname: 'Jen', vehicleName: 'Van 4' },
+          van_7: { ek: 'kim', name: 'Kim Day', nickname: 'Kim', vehicleName: 'Van 7', at: Date.now() - 20 * 3600000 } } };
       const p3 = await open(browser, base, { user: STAFF, data: data3 });
       const pg = p3.page;
       await pg.waitForSelector('#view-app:not([hidden]) .job');
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
       await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
       await pg.waitForTimeout(500);
-      const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name').textContent.startsWith(nm)); return b && b.querySelector('small').textContent; }, n);
+      const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => (x.querySelector('.drv-name > span') || x.querySelector('.drv-name')).textContent === nm); return b && b.querySelector('small').textContent; }, n);
       assert.match(await sub('Mike'), /^Van 1$/, 'GPS van');
       assert.match(await sub('Sara'), /^Van 9 · no GPS$/, 'van with no GPS unit, picked in Timeclock');
       assert.match(await sub('Jen'), /^Van 4 · no GPS$/, 'GPS van that has no position yet');
       assert.match(await sub('Tom'), /^No van today$/);
+      assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
+      assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
+      assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
+      // A job scheduled for later: its time is not coloured green or red
+      assert.ok(await pg.evaluate(() => { const h = jobCard('r3', S.pending.r3); return /class="job-age" data-noage/.test(h); }), 'no red/green time on a scheduled job');
+      // A quick tap on a driver whose van has no GPS says so
+      const sara = pg.locator('#nd-pop-list [data-hold-driver]', { hasText: 'Sara' });
+      await sara.scrollIntoViewIfNeeded();
+      await sara.click();
+      await pg.waitForSelector('.toast:has-text("Van 9 has no GPS yet")');
       const box = await pg.evaluate(() => { const l = document.getElementById('nd-pop-list'); const r = l.querySelector('[data-hold-driver]'); return { sh: l.scrollHeight, ch: l.clientHeight, ta: getComputedStyle(r).touchAction }; });
       assert.ok(box.sh > box.ch, '30 drivers: the list is taller than its box (so it has to scroll)');
       assert.strictEqual(box.ta, 'pan-y', 'a finger can drag the list');
       assert.strictEqual(await pg.evaluate(() => getComputedStyle(document.querySelector('#nd-pop-list .drv-list')).gridTemplateColumns.split(' ').length), 2, 'drivers in a grid of 2 on a phone');
-      await pg.mouse.move(195, 700);
+      const lb = await pg.locator('#nd-pop-list').boundingBox();
+      await pg.mouse.move(lb.x + lb.width / 2, lb.y + 20);
       await pg.evaluate(() => { document.getElementById('nd-pop-list').scrollTop = 0; });
       await pg.mouse.wheel(0, 400);
       await pg.waitForFunction(() => document.getElementById('nd-pop-list').scrollTop > 0).catch(() => assert.fail('the driver list scrolls'));
