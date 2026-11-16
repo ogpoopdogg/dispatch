@@ -2838,11 +2838,26 @@ document.addEventListener('submit', async (e) => {
   if (!f) return;
   e.preventDefault();
   const input = f.elements.text;
-  const btn = $('button[type=submit]', f);
-  btn.disabled = true;
-  if (await sendMsg(f.dataset.msgForm || msgAboutVal(), input.value)) { input.value = ''; msgGrow(input); }
-  btn.disabled = false;
+  const text = input.value.trim();
+  if (!text || msgSending) return;
+  const rid = f.dataset.msgForm || msgAboutVal();
+  const inMsgs = !!f.closest('[data-msgs-view]');
+  // Clear the box and drop the keyboard the moment Send is tapped, so the same text can't go twice.
+  // (The screen redraws as soon as the message lands, so the box is found again by where it lives.)
+  msgSending = true;
+  input.value = '';
+  msgGrow(input);
+  input.blur();
+  if (Keyboard) Keyboard.hide().catch(() => {});
+  $$('form[data-msg-form] button[type=submit]').forEach((b) => { b.disabled = true; });
+  const ok = await sendMsg(rid, text);
+  msgSending = false;
+  const box = inMsgs ? $('#sheet-body [data-msgs-view] form[data-msg-form] [name=text]') : $(`#sheet-body form[data-msg-form="${rid}"] [name=text]`);
+  $$('form[data-msg-form] button[type=submit]').forEach((b) => { b.disabled = false; });
+  if (!ok && box && !box.value.trim()) { box.value = text; msgGrow(box); } // didn't go: the text comes back to try again
+  else if (ok && box && box.value.trim() === text) { box.value = ''; msgGrow(box); }
 });
+let msgSending = false;
 
 /* ---------- Messages: one conversation per customer account ----------
    Every message still belongs to one pickup (rid), shown as #number on the bubble,
