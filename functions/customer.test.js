@@ -6,8 +6,8 @@ const { customerAlertForRequest, customerAlertForMessage, recipientsFor, general
 
 const base = { ref_no: 1204, status: 'new', customer_uid: 'u1', pickup: { name: 'Acme Supply' }, delivery: { name: 'Lake Clinic' } };
 
-test('dispatched to a driver', () => {
-  assert.deepStrictEqual(customerAlertForRequest(base, { ...base, status: 'dispatched' }), { title: 'Pickup #1204 sent to a driver', body: 'Acme Supply to Lake Clinic.' });
+test('no alert when a pickup goes to a driver', () => {
+  assert.strictEqual(customerAlertForRequest(base, { ...base, status: 'dispatched' }), null);
 });
 test('removed by dispatch', () => {
   const m = customerAlertForRequest(base, { ...base, status: 'removed' });
@@ -15,7 +15,7 @@ test('removed by dispatch', () => {
   assert.match(m.body, /^Acme Supply to Lake Clinic\. It won.t be picked up/);
 });
 test('no delivery listed', () => {
-  assert.strictEqual(customerAlertForRequest(base, { ...base, delivery: {}, status: 'dispatched' }).body, 'Acme Supply.');
+  assert.match(customerAlertForRequest(base, { ...base, delivery: {}, status: 'removed' }).body, /^Acme Supply\. It won/);
 });
 test('new, seen, edits, cancels, undo and deletes stay quiet', () => {
   assert.strictEqual(customerAlertForRequest(null, base), null);
