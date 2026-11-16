@@ -175,6 +175,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.fill('#sheet .msg-form textarea', 'Same driver for both.');
       await page.press('#sheet .msg-form textarea', 'Enter');
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Same driver for both.' && m.rid === 'r1'));
+      await page.waitForTimeout(150);
+      assert.strictEqual(await page.inputValue('#sheet .msg-form textarea'), '', 'the box is empty after Send, so it can\u2019t be sent twice');
+      assert.ok(!(await page.evaluate(() => document.activeElement && document.activeElement.matches('.msg-form textarea'))), 'keyboard goes away after Send');
       // A general message (not about a pickup): labelled General, and a reply goes back as general for this customer
       await page.evaluate(() => window.__fakeDb.put('messages/m5', { rid: 'general', company_id: 'c1', from: 'customer', text: 'Are you open Saturday?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
       await page.waitForFunction(() => /Are you open Saturday\?/.test(document.getElementById('sheet-body').textContent));
