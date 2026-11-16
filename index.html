@@ -333,6 +333,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .text-edit textarea{display:block;width:100%;min-height:44px;resize:vertical;field-sizing:content;background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:6px 10px;font:inherit;font-size:14px;line-height:1.4;color:var(--ink);outline:none;transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .text-edit textarea:hover{border-color:var(--ink-3)}
 .text-edit textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.job .text-edit textarea{font-size:17px;line-height:1.35;padding:8px 11px}
 .text-edit.edited textarea{border-color:var(--yellow-lo);background:linear-gradient(0deg,var(--warn-bg),var(--warn-bg)),var(--field)}
 .job-actions .btn{font-stretch:87.5%;font-size:14.5px;padding:0 12px}
 /* Leaving the queue (dispatched or removed): the card slides out and the list closes the gap */
@@ -344,6 +345,9 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 
 /* Small card: the ⋯ button, tags on one line, Text and Group Chat over the Send tab */
 .job-head .job-age{margin-left:auto}
+/* Time in the queue: green under 5 minutes, red after */
+.job-age.fresh{color:var(--ok);font-weight:700}
+.job-age.late{color:var(--danger);font-weight:700}
 .job-more{width:44px;height:40px;margin:-6px -8px -6px -4px;color:var(--ink-2)}
 .job-chips{margin:0 0 6px}
 .job-head{margin-bottom:6px}
@@ -796,6 +800,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-cal-grid button:not(:disabled):active{background:var(--yellow-soft)}
 .nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
 .nd-go>span{display:block}
+/* Group Chat and Send to driver, side by side and the same size */
+.nd-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.nd-pair .btn{width:100%;min-width:0;padding:0 8px}
 .nd-big{width:100%;min-height:52px;font-size:16.5px}
 .nd-dots{min-height:52px;padding:0;color:var(--ink)}
 .nd-dots .i{width:24px;height:24px}
@@ -835,6 +842,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sheet.moving .ac-list{visibility:hidden}
 .head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .head-link:active{background:var(--yellow-soft)}
+/* New dispatch: "Clear" right after the title, ✕ stays at the far right */
+.sheet.mid .sheet-titles{flex:0 1 auto}
+.sheet.mid #sheet-reset{margin-right:auto;margin-left:4px;padding:0 12px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;min-height:32px;color:var(--ink-2)}
 .nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
 /* ---------- Send to driver panel ---------- */
 .sp{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end}
@@ -1072,7 +1082,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sheet-head"><button class="icon-btn sheet-back" type="button" data-act="msg-list" id="sheet-back" aria-label="All customers" hidden><svg class="i"><use href="#i-back"/></svg></button><div class="sheet-titles"><h2 id="sheet-title"></h2><div class="sheet-sub" id="sheet-sub" hidden></div></div><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Reset</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-head"><button class="icon-btn sheet-back" type="button" data-act="msg-list" id="sheet-back" aria-label="All customers" hidden><svg class="i"><use href="#i-back"/></svg></button><div class="sheet-titles"><h2 id="sheet-title"></h2><div class="sheet-sub" id="sheet-sub" hidden></div></div><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Clear</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
   </div>
 </div>
@@ -1217,6 +1227,8 @@ function ago(ts) {
   return fmtDateTime(ts);
 }
 // Short age for the queue summary: 4m, 1h 12m, 2d
+// Card time colour: green while under 5 minutes in the queue, red after
+function ageCls(ts) { return Date.now() - Number(ts || 0) >= 5 * 60000 ? 'late' : 'fresh'; }
 function shortAgo(ts) {
   if (!ts) return '\u2013';
   const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
@@ -1451,6 +1463,11 @@ function setEdit(id, text) {
 document.addEventListener('input', (e) => {
   const ta = e.target.closest && e.target.closest('textarea[data-edit]');
   if (ta) setEdit(ta.dataset.edit, ta.value);
+});
+// Tapping into a card's text marks the request seen (it used to happen when the pencil opened it)
+document.addEventListener('focusin', (e) => {
+  const ta = e.target.closest && e.target.closest('.job textarea[data-edit]');
+  if (ta && S.pending[ta.dataset.edit]) ack(ta.dataset.edit);
 });
 
 /* ---------------- What a customer changed ----------------
@@ -1742,7 +1759,7 @@ function openSheet(title, html, onMount, tall) {
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
   $('#sheet .sheet').classList.remove('big');
   if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
-  $('#sheet-reset').hidden = true; // New dispatch: Start over lives in the ⋯ menu, away from ✕
+  $('#sheet-reset').hidden = tall !== 'mid'; // New dispatch: Clear sits right after the title, away from ✕
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-back').hidden = true;
@@ -2085,7 +2102,10 @@ setInterval(() => {
   if (!S.user || $('#view-app').hidden) return;
   if (S.day !== todayStr()) { startListening(); return; }
   $$('[data-age]').forEach((el) => { el.textContent = ago(Number(el.dataset.age)); });
-  $$('[data-age-short]').forEach((el) => { el.textContent = shortAgo(Number(el.dataset.ageShort)); });
+  $$('[data-age-short]').forEach((el) => {
+    el.textContent = shortAgo(Number(el.dataset.ageShort));
+    if (el.classList.contains('job-age')) { const c = ageCls(el.dataset.ageShort); el.classList.toggle('late', c === 'late'); el.classList.toggle('fresh', c === 'fresh'); }
+  });
 }, 30000);
 document.addEventListener('visibilitychange', () => {
   applyWakeLock();
@@ -2131,7 +2151,7 @@ function jobCard(id, r) {
   const fresh = !shownCards.has(id);
   shownCards.add(id);
   const enter = fresh ? ` enter" style="animation-delay:${Math.min(enterIdx++, 6) * 45}ms` : '';
-  const open = openCards.has(id);
+  const open = false;
   // Short tags ride on the name line; the longer ones (day, hours, posted, messages) get a line of their own
   const tags = [];
   if (unseen) tags.push('<span class="chip new">New</span>');
@@ -2154,7 +2174,7 @@ function jobCard(id, r) {
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
       <span class="job-tags">${tags.join('')}</span>
-      <span class="job-age" data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
+      <span class="job-age ${ageCls(r.created_at)}" data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
       <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
     <div class="chips job-chips">${chips.join('')}</div>
@@ -2163,8 +2183,8 @@ function jobCard(id, r) {
       <span class="stop"><b>${esc(P.name)}</b><span>${esc(P.address)}</span></span>
       <span class="stop to"><b>${esc(D.name)}</b><span>${esc(D.address)}</span></span>
     </button>
-    <div class="job-more-box"${open ? '' : ' hidden'}>${open ? textEditor(id, r, 'card') : ''}</div>
-    <div class="job-actions job-row"><button class="btn btn-secondary job-text" type="button" data-act="job-text" data-id="${esc(id)}" aria-expanded="${open}" aria-label="Text for request ${esc(r.ref_no)}" title="Text">${icon('edit', 'sm')}</button>${groupChatButton(id)}${sendButtons(id)}</div>
+    <div class="job-more-box">${textEditor(id, r, 'card')}</div>
+    <div class="job-actions job-row">${groupChatButton(id)}${sendButtons(id)}</div>
     </div>
   </article>`;
 }
@@ -2238,10 +2258,22 @@ function renderQueue() {
   renderKpis();
   const stick = S.tab === 'queue' && (queueStick || nearBottom());
   queueStick = false;
+  // Typing in a card's text: keep the cursor there when the list is redrawn
+  const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('#queue-list textarea[data-edit]') ? document.activeElement : null;
+  const keep = typing && { id: typing.dataset.edit, a: typing.selectionStart, b: typing.selectionEnd, top: typing.getBoundingClientRect().top };
   // Most urgent last, so it sits right above the bottom bar under the thumb
   $('#queue-list').innerHTML = (filtering ? '' : unreadBlock()) + (list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? caughtUp() : skeletons()));
+  if (keep) {
+    const ta = $$('#queue-list textarea[data-edit]').find((t) => t.dataset.edit === keep.id);
+    if (ta) {
+      ta.focus({ preventScroll: true });
+      try { ta.setSelectionRange(keep.a, keep.b); } catch (e) { /* ignore */ }
+      const sc = document.scrollingElement; if (sc) sc.scrollTop += ta.getBoundingClientRect().top - keep.top;
+      return;
+    }
+  }
   if (stick) scrollToBottom();
 }
 // Unread customer messages, in the free space above the jobs (tap one to open the conversation)
@@ -3301,7 +3333,7 @@ function openNewDispatch() {
       <div class="nd-more" id="nd-more" hidden></div>
       <div class="nd-label"><span>Driver gets</span><small id="nd-count"></small></div>
       <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button></div>
-      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, Group Chat, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
+      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
     </div>
   </form>`;
   openSheet('New dispatch', html, (body) => {
@@ -3487,9 +3519,7 @@ function ndMoreMenu() {
   const later = ndLater();
   return `<div class="nd-more-list">
       ${later ? `<button type="button" data-act="nd-now">${icon('send')}<span>Send now instead<small>Not booked for a later day</small></span></button>` : `<button type="button" data-act="nd-save">${icon('inbox')}<span>Save to queue<small>Send it from the Queue later</small></span></button>`}
-      <button type="button" data-act="nd-group">${icon('users')}<span>Group Chat<small>Share the text. It counts as sent once it goes to a driver.</small></span></button>
       ${later ? '' : `<button type="button" data-act="nd-sched">${icon('calendar')}<span>Schedule for later<small>Book it for another day</small></span></button>`}
-      <button type="button" data-act="nd-reset">${icon('undo')}<span>Start over<small>Clear the form</small></span></button>
     </div>
     <div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
       <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="nd-map-link"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button></div>
@@ -3551,7 +3581,7 @@ function ndUpdate(force) {
   ndMode = mode;
   $('#nd-main').innerHTML = ndLater()
     ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
-    : `<button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>`;
+    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver</button></span>`;
 }
 /* One leg: a grey line for an address that's known, the address boxes when one is needed
    (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
@@ -4376,7 +4406,8 @@ function ndKeyboard() {
   const up = typing && (shown > 120 || waiting);
   if (up) {
     const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
-    const leg = $('#sheet-body .nd-leg');
+    // Sized to the part being filled (Pickup or Delivery), so that one sits right on the keyboard
+    const leg = (a.closest && a.closest('.nd-leg')) || $('#sheet-body .nd-leg');
     sheet.style.setProperty('--nd-kb-h', `${Math.round(head + (leg ? leg.offsetHeight : 180) + 20)}px`);
   }
   const before = ndLastTop;
@@ -4489,7 +4520,8 @@ document.addEventListener('focusin', (e) => {
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
   ndKeyboard();
-  setTimeout(() => ndReveal(e.target), 30);
+  // Again once the sheet has finished changing height, so Delivery isn't left under the keyboard
+  [30, 320].forEach((ms) => setTimeout(() => { if (document.activeElement === e.target) ndReveal(e.target); }, ms));
 });
 document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'sheet-body') ['pickup', 'delivery'].forEach(ndPlaceSuggest); }, true);
 

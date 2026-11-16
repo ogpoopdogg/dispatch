@@ -98,15 +98,15 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.job-changed'), /Pickup address \(was 12 Main St\)/);
     await page.click('[data-act=ack-all]').catch(() => {});
     await shot(page, 'queue');
-    // Small cards: no text box until Text is tapped
+    // The text is on every card, ready to edit (no pencil)
     {
       const card = '#queue-list .job[data-id=r2]';
       const ta = `${card} textarea[data-edit]`;
-      assert.strictEqual(await page.locator(ta).count(), 0, 'the text is hidden on a small card');
+      assert.strictEqual(await page.locator(ta).count(), 1, 'the text is on the card');
+      assert.strictEqual(await page.locator(`${card} [data-act=job-text]`).count(), 0, 'no pencil');
       // Polled: the queue can redraw right after Got it, and a card being redrawn has no size for a moment
       await page.waitForFunction((sel) => { const b = document.querySelector(sel); return b && b.getBoundingClientRect().height >= 44; }, `${card} [data-act=pick-driver]`, { timeout: 5000 })
         .catch(() => assert.fail('Send to driver is big enough for a thumb'));
-      await page.click(`${card} [data-act=job-text]`);
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4, 1 pallet 400 lbs, Collect$/, 'no space before the comma');
       // Address switch: None / Pickup / Delivery / Both, and Map link (pickup only)
       const mode = (m) => page.click(`${card} [data-act=addr-mode][data-mode=${m}]`);
@@ -134,9 +134,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.click(`${card} [data-act=reset-edit]`);
       await mode('off');
       assert.match(await page.inputValue(ta), /^Prairie Parts for Dock 4,/);
-      await page.click(`${card} [data-act=job-text]`);
-      assert.strictEqual(await page.locator(ta).count(), 0, 'Text closes again');
-      // Opening it marks it seen for the customer
+      await page.click(ta);
+      // Tapping into it marks it seen for the customer
       await page.waitForFunction(() => !!window.__fakeDb.get('requests/r2/seen_at'));
       // ⋯ menu: Details, Schedule for later and Remove
       await page.click(`${card} [data-act=job-menu]`);
@@ -307,8 +306,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#nd-cal .nd-cal-grid button:not([disabled]) >> nth=2');
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
-    await page.click('[data-act=nd-more]');
-    await page.click('#nd-more [data-act=nd-reset]');
+    await page.click('#sheet-reset');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert);
     // Settings: alert check
