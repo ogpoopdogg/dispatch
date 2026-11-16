@@ -2082,7 +2082,8 @@ function startListening() {
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
-  // Messages from customers (Request Pickup), the last 30 days
+  // Messages from customers (Request Pickup), the last 30 days, and which ones this person has read
+  watchMsgRead(S.user.uid);
   firstMsgs = true;
   listen(db.ref('messages').orderByChild('at').startAt(Date.now() - MSG_DAYS * 86400000), onMessages, (err) => { S.msgsError = deniedMsg(err); refreshMsgs(); });
   listen(db.ref('dispatch_contacts'), (snap) => {
@@ -2763,18 +2764,59 @@ const fmtHM = (hm) => {
 const windowText = (r) => [r.ready_after ? `Ready ${fmtHM(r.ready_after)}` : '', r.closes_at ? `Closes ${fmtHM(r.closes_at)}` : ''].filter(Boolean).join(' · ');
 
 /* Messages (messages/): a customer can write from a request in Request Pickup, and dispatch answers
-   here, with a quick reply or typed. Unread is kept on this phone. */
+   here, with a quick reply or typed.
+   Read state: for each pickup (or "general:<customer>") the time of the newest customer message this
+   person has read. It's saved in the database at dispatch_settings/msg_read/<uid>, with a copy on the
+   phone, so read messages stay read after the app is closed, reloaded or put on again. Message times
+   come from the server, so the phone's own clock doesn't matter. */
 let msgSeen = {};
 try { msgSeen = JSON.parse(localStorage.getItem('ecd_msgseen') || '{}') || {}; } catch (e) { msgSeen = {}; }
+let msgReadRef = null;
+let msgReadReady = false; // no unread counts until the saved read state has arrived, so read ones don't flash as new
+let msgReadTimer = 0;
+const readKey = (k) => String(k).replace(/[.#$/[\]]/g, '_').slice(0, 120);
+function storeMsgSeen() { try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ } }
+function msgReadArrived() {
+  clearTimeout(msgReadTimer);
+  if (msgReadReady) return;
+  msgReadReady = true;
+  renderAll();
+  renderMsgUi();
+}
+function watchMsgRead(uid) {
+  msgReadReady = false;
+  msgReadRef = db.ref(`dispatch_settings/msg_read/${uid}`);
+  clearTimeout(msgReadTimer);
+  msgReadTimer = setTimeout(msgReadArrived, 6000); // offline: go with this phone's copy
+  listen(msgReadRef, (snap) => {
+    const saved = snap.val() || {};
+    Object.entries(saved).forEach(([k, v]) => { if (typeof v === 'number' && v > (msgSeen[k] || 0)) msgSeen[k] = v; });
+    // Marks only this phone has (from before, or made offline) go up too
+    const behind = {};
+    Object.entries(msgSeen).forEach(([k, v]) => { if (typeof v === 'number' && v > (saved[readKey(k)] || 0)) behind[readKey(k)] = v; });
+    storeMsgSeen();
+    if (Object.keys(behind).length) msgReadRef.update(behind).catch(() => {});
+    if (msgReadReady) { renderAll(); renderMsgUi(); } else msgReadArrived();
+  }, () => { msgReadRef = null; msgReadArrived(); });
+}
+// Saves new read marks ({ key: time }), dropping ones older than any message still shown
+function saveMsgSeen(changes) {
+  Object.assign(msgSeen, changes);
+  const cutoff = Date.now() - (MSG_DAYS + 2) * 86400000;
+  const up = {};
+  Object.keys(msgSeen).forEach((k) => { if (!(msgSeen[k] >= cutoff)) { delete msgSeen[k]; up[readKey(k)] = null; } });
+  Object.entries(changes).forEach(([k, v]) => { if (msgSeen[k] != null) up[readKey(k)] = v; });
+  storeMsgSeen();
+  if (msgReadRef && Object.keys(up).length) msgReadRef.update(up).catch(() => {});
+}
+const seenAt = (k) => msgSeen[k] || msgSeen[readKey(k)] || 0;
 const msgsFor = (rid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.rid === rid).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
 const hasMsgs = (rid) => msgsFor(rid).length > 0;
-const unreadMsgs = (rid) => msgsFor(rid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[rid] || 0)).length;
+const unreadMsgs = (rid) => (msgReadReady ? msgsFor(rid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > seenAt(rid)).length : 0);
 function markMsgsSeen(rid) {
   if (!unreadMsgs(rid)) return;
-  msgSeen[rid] = Date.now();
-  const cutoff = Date.now() - 14 * 86400000;
-  Object.keys(msgSeen).forEach((k) => { if (msgSeen[k] < cutoff) delete msgSeen[k]; });
-  try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
+  const newest = Math.max(...msgsFor(rid).filter(([, m]) => m.from === 'customer').map(([, m]) => m.at || 0));
+  saveMsgSeen({ [rid]: newest });
   renderCounts();
   renderMsgUi();
 }
@@ -2935,7 +2977,7 @@ const coMsgs = (cid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.co
 // A message not about any pickup has rid "general"; it's counted per customer, so one customer's
 // general messages being read doesn't mark another's as read
 const seenKeyOf = (m) => (m.rid === GENERAL ? `${GENERAL}:${m.company_id}` : m.rid);
-const coUnread = (cid) => coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > (msgSeen[seenKeyOf(m)] || 0)).length;
+const coUnread = (cid) => (msgReadReady ? coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > seenAt(seenKeyOf(m))).length : 0);
 function msgCompanies() {
   const by = {};
   Object.values(S.msgs || {}).forEach((m) => { if (m && m.company_id) (by[m.company_id] = by[m.company_id] || []).push(m); });
@@ -2946,11 +2988,12 @@ function msgCompanies() {
 }
 const msgUnreadTotal = () => msgCompanies().reduce((n, c) => n + c.unread, 0);
 function markCoSeen(cid) {
-  let any = false;
-  coMsgs(cid).forEach(([, m]) => { const k = seenKeyOf(m); if (m.from === 'customer' && (m.at || 0) > (msgSeen[k] || 0)) { msgSeen[k] = Date.now(); any = true; } });
+  // Each pickup's mark is the time of its newest customer message (a server time)
+  const changes = {};
+  coMsgs(cid).forEach(([, m]) => { const k = seenKeyOf(m); const at = m.at || 0; if (m.from === 'customer' && at > seenAt(k) && at > (changes[k] || 0)) changes[k] = at; });
   if (msgAlert && msgAlert.cid === cid) msgAlert = null;
-  if (!any) { renderMsgUi(); return; }
-  try { localStorage.setItem('ecd_msgseen', JSON.stringify(msgSeen)); } catch (e) { /* ignore */ }
+  if (!Object.keys(changes).length) { renderMsgUi(); return; }
+  saveMsgSeen(changes);
   renderMsgUi();
   renderAll();
 }

@@ -166,6 +166,23 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await page.inputValue('#msg-about'), 'r1', 'the reply is about the pickup they asked about');
       assert.ok(await page.isHidden('#msg-banner'), 'banner goes once opened');
       assert.ok(await page.isHidden('#msg-badge'), 'count clears once opened');
+      // Read state is saved in the database as the message's own time, so it stays read after a reload
+      // (even on a phone whose storage was wiped: the test page starts with empty storage)
+      {
+        const m1 = await page.evaluate(() => window.__fakeDb.get('messages/m1'));
+        await page.waitForFunction((at) => { const r = window.__fakeDb.get('dispatch_settings/msg_read/staff1'); return r && r.r1 === at; }, m1.at)
+          .catch(() => assert.fail('read mark saved with the message time'));
+        const data2 = JSON.parse(JSON.stringify(DATA));
+        data2.messages = { m1 };
+        data2.dispatch_settings = Object.assign({}, data2.dispatch_settings, { msg_read: { staff1: await page.evaluate(() => window.__fakeDb.get('dispatch_settings/msg_read/staff1')) } });
+        const again = await open(browser, base, { user: STAFF, data: data2 });
+        await again.page.waitForSelector('#view-app:not([hidden]) .job');
+        await again.page.waitForTimeout(400);
+        assert.ok(await again.page.isHidden('#msg-badge'), 'a read message is not new again after a reload');
+        assert.strictEqual(await again.page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'no "new message" on the card after a reload');
+        assert.deepStrictEqual(again.errors, []);
+        await again.page.close();
+      }
       // A quick reply goes into the box (it doesn't send by itself); Enter sends it
       await page.click('#sheet .quick .chip-btn >> nth=1');
       assert.strictEqual(await page.inputValue('#sheet .msg-form textarea'), 'A driver is on the way.', 'quick reply fills the box');
