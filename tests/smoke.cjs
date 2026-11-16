@@ -346,7 +346,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Send to driver: a long driver list scrolls, and vans picked in Timeclock show even without GPS
     {
       const data3 = JSON.parse(JSON.stringify(DATA));
-      const names = ['Mike', 'Sara', 'Jen', 'Tom', 'Ann', 'Bob', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo'];
+      const names = ['Mike', 'Sara', 'Jen', 'Tom', 'Ann', 'Bob', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jo'].concat(Array.from({ length: 16 }, (_, i) => `Extra${i + 1}`));
       data3.dispatch_contacts.drivers = Object.fromEntries(names.map((n, i) => [`d${i}`, { name: n, phone: `20455501${String(i).padStart(2, '0')}` }]));
       data3.developer = { dispatch_dashboard: {
         drivers: { g1: { name: 'Van 1', color: '#e8590c', lastLocation: { lat: 49.85, lng: -99.95 } }, g4: { name: 'Van 4', color: '#1c7ed6' } },
@@ -364,13 +364,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
       await pg.waitForTimeout(500);
       const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name').textContent.startsWith(nm)); return b && b.querySelector('small').textContent; }, n);
-      assert.match(await sub('Mike'), /^Van 1 ·/, 'GPS van');
-      assert.match(await sub('Sara'), /^Van 9 \(no GPS\) ·/, 'van with no GPS unit, picked in Timeclock');
-      assert.match(await sub('Jen'), /^Van 4 \(no GPS\) ·/, 'GPS van that has no position yet');
-      assert.match(await sub('Tom'), /^No van today ·/);
+      assert.match(await sub('Mike'), /^Van 1$/, 'GPS van');
+      assert.match(await sub('Sara'), /^Van 9 · no GPS$/, 'van with no GPS unit, picked in Timeclock');
+      assert.match(await sub('Jen'), /^Van 4 · no GPS$/, 'GPS van that has no position yet');
+      assert.match(await sub('Tom'), /^No van today$/);
       const box = await pg.evaluate(() => { const l = document.getElementById('nd-pop-list'); const r = l.querySelector('[data-hold-driver]'); return { sh: l.scrollHeight, ch: l.clientHeight, ta: getComputedStyle(r).touchAction }; });
-      assert.ok(box.sh > box.ch, 'the list is taller than its box (so it has to scroll)');
+      assert.ok(box.sh > box.ch, '30 drivers: the list is taller than its box (so it has to scroll)');
       assert.strictEqual(box.ta, 'pan-y', 'a finger can drag the list');
+      assert.strictEqual(await pg.evaluate(() => getComputedStyle(document.querySelector('#nd-pop-list .drv-list')).gridTemplateColumns.split(' ').length), 2, 'drivers in a grid of 2 on a phone');
       await pg.mouse.move(195, 700);
       await pg.evaluate(() => { document.getElementById('nd-pop-list').scrollTop = 0; });
       await pg.mouse.wheel(0, 400);

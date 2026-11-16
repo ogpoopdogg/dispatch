@@ -865,7 +865,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp-text textarea{display:block;width:100%;min-height:44px;max-height:96px;resize:none;field-sizing:content;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);padding:6px 9px;font:inherit;font-size:15px;line-height:1.35;color:var(--ink);outline:none}
 .sp-text textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
 .sp-card.nomap .sp-map{display:none}
-.sp-card.nomap .sp-drivers{flex:1 1 auto;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end}
+.sp-card.nomap .sp-drivers{flex:1 1 auto}
 /* The vehicles: a soft strip of chips, centred, wrapping when there are many */
 .van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
 .van:active{transform:scale(.95)}
@@ -882,17 +882,23 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
 .sp-canvas{position:absolute;inset:0}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
-.sp-drivers{flex:0 1 auto;min-height:0;max-height:52%;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+/* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
+.sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
-/* One driver per row: van colour, name, van + phone, distance on the right. The closest sits last, by the thumb. */
-.drv-list{display:grid;gap:6px}
-.pick.drv{padding:6px 12px 6px 8px;background:var(--surface)}
-.pick.drv .avatar{background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
-.pick.drv .grow{font-size:16px;font-weight:800}
-.pick.drv small{font-size:12.5px;font-weight:600}
-.drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:15px;font-weight:800;line-height:1.15}
-.drv-km small{font-size:12px;color:var(--ink-2)}
+/* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
+   The closest sits last, bottom right, by the thumb. */
+.drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
+@media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
+.pick.drv .avatar{width:34px;height:34px;font-size:13px;background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.pick.drv .grow{min-width:0;font-size:17px;font-weight:800;line-height:1.2}
+.pick.drv .drv-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick.drv small{display:block;font-size:13px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:13px;font-weight:800;line-height:1.15}
+.drv-km:empty{display:none}
+.drv-km small{font-size:11px;color:var(--ink-2)}
+.pick.drv .drv-tag{position:absolute;top:3px;right:4px;margin:0;font-size:9px;line-height:13px}
 .pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
 .pick.drv.novan .avatar{background:var(--ink-3)}
 .pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
@@ -4016,7 +4022,7 @@ function openSendPanel(title, pickup, onSend, swap, jobId, route) {
   $('#sp-title').textContent = title;
   $('#sp-to').textContent = route || (pickup && pickup.name ? `Pickup: ${pickup.name}` : '');
   spTextUi();
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today \u00b7 ${esc(formatPhone(d.phone))}</small></span><span class="drv-km"></span></button>`).join('');
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today</small></span><span class="drv-km"></span></button>`).join('');
   $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div><p class="pick-note">Hold a driver until the ring fills to send. Tap to find their van.</p>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
   sp.order = '';
   $('.sp-card').classList.toggle('nomap', maps === 'failed');
@@ -4132,7 +4138,7 @@ function spDrivers(list) {
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
     name.innerHTML = `${esc(d.name || '')}${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}`;
-    $('small', b).textContent = `${v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' (no GPS)' : ''}` : 'No van today'} \u00b7 ${formatPhone(d.phone)}`;
+    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
     $('.drv-km', b).innerHTML = v && v.km != null ? `${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
