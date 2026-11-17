@@ -841,7 +841,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height .28s var(--out)}
   /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
      of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
-  .sheet.tall.mid.big{height:75dvh}
+  .sheet.tall.mid.big{height:var(--nd-big-h,75dvh)}
   .sheet.tall.mid.big:not(.kb) .sheet-body{flex:1 1 auto;display:flex;flex-direction:column}
   .sheet.tall.mid.big:not(.kb) .sheet-body>.nd{flex:1 0 auto;display:flex;flex-direction:column}
   .sheet.tall.mid.big:not(.kb) .nd-send{margin-top:auto}
@@ -3441,6 +3441,10 @@ function openNewDispatch() {
   if (!ND) ND = blankDraft();
   ndX = '';
   ndAddrOpen = false;
+  ndKbMax = 0;
+  ndHoldKb = false;
+  const sh = $('#sheet .sheet');
+  if (sh) sh.style.removeProperty('--nd-big-h');
   loadMaps();
   loadCompanyBooks();
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
@@ -3582,9 +3586,10 @@ function ndTextUi() {
 }
 // Done (under the weight), or both places picked: keyboard away, Send in reach
 function ndDone() {
-  if (ndX === 'items') { ndX = ''; ndUpdate(); }
   const a = document.activeElement;
   if (a && a.blur) a.blur();
+  ndHoldKb = false; // after the blur, so the redraw below can't take the keyboard's space again
+  if (ndX === 'items') { ndX = ''; ndUpdate(); }
   if (Keyboard) Keyboard.hide().catch(() => {});
   const show = () => {
     const body = $('#sheet-body'), send = $('#sheet-body .nd-send');
@@ -3915,7 +3920,19 @@ function ndPick(k, i) {
   if (!c.address) { const a = $(`#nd-${k}-address`); a.focus({ preventScroll: true }); ndReveal(a); return; }
   const other = k === 'pickup' ? 'delivery' : 'pickup';
   if (!ND[other].name.trim()) { const n = $(`#nd-${other}-name`); n.focus({ preventScroll: true }); ndReveal(n); return; }
-  ndDone();
+  ndStartPieces();
+}
+// Pickup and Delivery done: the pieces open with the cursor in the weight (the number pad comes up
+// where the keyboard was, so nothing moves). The kind of piece is right beside it.
+function ndStartPieces() {
+  ndX = 'items';
+  ndUpdate();
+  const w = $('[data-nd-wt="0"]');
+  if (!w) { ndDone(); return; }
+  w.focus({ preventScroll: true });
+  if (Keyboard) Keyboard.show().catch(() => {});
+  ndKeyboard();
+  ndReveal(w);
 }
 
 /* ---------- Google address boxes ---------- */
@@ -4643,17 +4660,25 @@ function ndKbGroup(a) {
   if (a.dataset && (a.dataset.ndAddr || a.dataset.ndCity)) return a.closest('.addr-box');
   return a.closest('.nd-x') || a.closest('.nd-text-box') || a.closest('.field');
 }
-// The form's height with the keyboard up. Both name boxes give the same height, so going from Pickup
-// to Delivery only slides the form: Delivery lands where Pickup was. An extra gets room for all of it.
+// The form's height with the keyboard up. Pickup starts low (half the screen, in reach of the thumb).
+// From there the form grows with each box filled: tall enough to show everything above the box being
+// typed in, up to the whole screen. It never shrinks while the keyboard is up, and the box being typed
+// in always sits right on the keyboard, so it stays in the same spot as the one before.
+let ndKbMax = 0;
 function ndKbHeight(a, head, kb) {
   const g = ndKbGroup(a);
+  const form = $('#sheet-body [data-nd]');
+  const body = $('#sheet-body');
   const h3 = $('#sheet-body .nd-leg>h3');
   const nameF = $('#nd-pickup-name') && $('#nd-pickup-name').closest('.field');
-  let h;
-  if (a.closest('.nd-leg')) h = (h3 ? h3.offsetHeight + 6 : 24) + Math.max(nameF ? nameF.offsetHeight : 48, g && !g.hidden ? g.offsetHeight : 0) + 22;
-  else h = (g ? g.offsetHeight : 140) + (a.id === 'nd-text' ? 30 : 0) + 22;
+  const padT = body ? parseFloat(getComputedStyle(body).paddingTop) || 0 : 0;
+  // Smallest: a name box with its Pickup/Delivery label (where the form starts)
+  let h = (h3 ? h3.offsetHeight + 6 : 24) + (nameF ? nameF.offsetHeight : 48) + 22;
+  // Everything from the top of the form down to the bottom of the box being typed in
+  if (g && !g.hidden && form) h = Math.max(h, g.getBoundingClientRect().bottom - form.getBoundingClientRect().top + padT + 10);
   const room = fullH - (kb || 0) - 40;
-  return Math.round(Math.min(head + h, Math.max(head + 120, room)));
+  ndKbMax = Math.max(ndKbMax, Math.round(Math.min(head + h, Math.max(head + 120, room))));
+  return ndKbMax;
 }
 // Brings a box (with the rest of its pickup/delivery card) into view. With the keyboard up,
 // the box being filled sits right on the keyboard so the suggestions have the room above.
@@ -4679,6 +4704,9 @@ let ndLastTop = null;
 let kbKnown = 0;   // keyboard height from the last time it opened
 try { kbKnown = +localStorage.getItem('ecd_kbh') || 0; } catch (e) { kbKnown = 0; }
 let expectKb = 0;  // when the keyboard was asked for and hasn't shown yet
+// While filling the form, the keyboard's space is kept even between boxes (keyboard closing, number pad
+// opening, the list of kinds), so the boxes don't move. Done (or sending, or closing) lets it go.
+let ndHoldKb = false;
 function ndKeyboard() {
   const sheet = $('#sheet .sheet');
   const vv = window.visualViewport;
@@ -4690,9 +4718,12 @@ function ndKeyboard() {
     if (Math.abs(shown - kbKnown) > 2) { kbKnown = shown; try { localStorage.setItem('ecd_kbh', String(shown)); } catch (e) { /* ignore */ } }
   }
   const a = document.activeElement;
-  const typing = !!(a && a.closest && a.closest('[data-nd]') && a.matches('input:not([type=radio]):not([type=checkbox]),textarea'));
+  const inForm = !!(a && a.closest && a.closest('[data-nd]') && a.matches('input:not([type=radio]):not([type=checkbox]),textarea'));
+  if (inForm && ndOpen()) ndHoldKb = true;
+  const holding = !!(ndHoldKb && ndOpen() && kbKnown);
+  const typing = inForm || holding;
   // Keyboard on its way: leave room for it now so the card doesn't move when it lands
-  const waiting = !!(expectKb && typing && shown <= 120 && ndOpen());
+  const waiting = !!(((expectKb && inForm) || holding) && shown <= 120 && ndOpen());
   if (!typing) expectKb = 0;
   document.documentElement.style.setProperty('--kb', `${waiting ? kbKnown : inset > 80 ? inset : 0}px`);
   if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
@@ -4703,6 +4734,11 @@ function ndKeyboard() {
     sheet.style.setProperty('--nd-kb-h', `${ndKbHeight(a, head, shown > 120 ? shown : kbKnown)}px`);
   }
   const before = ndLastTop;
+  // Keyboard going away after the form has grown: it keeps its top where it reached (it doesn't shrink back)
+  if (!up && sheet.classList.contains('kb')) {
+    const top = sheet.getBoundingClientRect().top;
+    if (top > 0 && fullH - top > fullH * 0.75) sheet.style.setProperty('--nd-big-h', `${Math.round(fullH - top)}px`);
+  }
   sheet.classList.toggle('kb', up);
   const now = sheet.offsetTop; // layout spot, ignoring any slide that's still running
   ndLastTop = now;
@@ -4713,11 +4749,18 @@ function ndKeyboard() {
     const anim = sheet.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
     anim.onfinish = anim.oncancel = () => { sheet.classList.remove('moving'); ['pickup', 'delivery'].forEach(ndPlaceSuggest); };
   }
-  if (up) ndReveal(a);
+  if (up && inForm) ndReveal(a);
   ['pickup', 'delivery'].forEach(ndPlaceSuggest);
 }
 window.addEventListener('resize', ndKeyboard);
 if (window.visualViewport) visualViewport.addEventListener('resize', ndKeyboard);
+// The keyboard often lands while the form is still growing: once the height has settled, the box
+// being typed in (the weight with its Done button, a name, …) is put right on the keyboard again
+document.addEventListener('transitionend', (e) => {
+  if (e.propertyName !== 'height' || !e.target.matches || !e.target.matches('#sheet .sheet.kb')) return;
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('[data-nd]')) ndReveal(a);
+});
 // Cursor in Pickup with the keyboard up, ready to type. Once the keyboard's height is known,
 // the card is put straight where it'll sit on the keyboard, so nothing bounces.
 function ndTypeNow() {
@@ -4813,7 +4856,7 @@ document.addEventListener('focusin', (e) => {
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
   ndKeyboard();
   // Again once the sheet has finished changing height, so Delivery isn't left under the keyboard
-  [30, 320].forEach((ms) => setTimeout(() => { if (document.activeElement === e.target) ndReveal(e.target); }, ms));
+  [30, 320, 650].forEach((ms) => setTimeout(() => { if (document.activeElement === e.target) ndReveal(e.target); }, ms));
 });
 document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'sheet-body') ['pickup', 'delivery'].forEach(ndPlaceSuggest); }, true);
 

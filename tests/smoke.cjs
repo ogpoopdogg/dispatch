@@ -449,15 +449,32 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await pg.evaluate(() => document.activeElement.id), 'nd-delivery-name');
       const d0 = await bottom('#nd-delivery-name');
       assert.ok(Math.abs(d0 - p0) <= 3, `Delivery lands where Pickup was (${d0} vs ${p0})`);
-      await pg.setViewportSize({ width: 390, height: 844 });
-      await pg.evaluate(() => document.activeElement.blur());
-      await pg.waitForTimeout(600);
-      await pg.click('[data-x=items]');
-      await pg.focus('[data-nd-wt="0"]');
-      await pg.setViewportSize({ width: 390, height: 500 });
+      // Both places in: straight on to the weight (number pad); the form only grew, it never shrank
+      const top1 = await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top);
+      await pg.type('#nd-delivery-name', 'Ross');
+      await pg.click('.ac-item:has-text("Rosser Warehouse")');
       await pg.waitForTimeout(900);
+      assert.strictEqual(await pg.evaluate(() => document.activeElement.matches('[data-nd-wt="0"]')), true, 'cursor goes to the weight');
       const done = await bottom('[data-act=nd-done]');
       assert.ok(done <= 500 && done > 300, `Done is above the keyboard (${done})`);
+      assert.ok(await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top) <= top1, 'the form grows as it is filled');
+      // The number pad closes while the list of kinds is open: nothing moves
+      const wt = await bottom('[data-nd-wt="0"]');
+      await pg.evaluate(() => document.querySelector('[data-nd-type="0"]').focus());
+      await pg.setViewportSize({ width: 390, height: 844 });
+      await pg.waitForTimeout(900);
+      assert.ok(Math.abs(await bottom('[data-nd-wt="0"]') - wt) <= 2, 'the weight stays put when the number pad closes for the list');
+      await pg.selectOption('[data-nd-type="0"]', 'pallet');
+      await pg.setViewportSize({ width: 390, height: 500 });
+      await pg.waitForTimeout(900);
+      assert.ok(Math.abs(await bottom('[data-nd-wt="0"]') - wt) <= 2, 'and when it opens again');
+      // Done: the keyboard goes, the form keeps its top and Send to driver is at the bottom
+      const topK = await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top);
+      await pg.click('[data-act=nd-done]');
+      await pg.setViewportSize({ width: 390, height: 844 });
+      await pg.waitForTimeout(900);
+      assert.ok(Math.abs(await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top) - topK) <= 2, "the form doesn't shrink back after Done");
+      assert.ok(await bottom('[data-act=nd-pick-driver]') > 700, 'Send to driver at the bottom');
       assert.deepStrictEqual(p4.errors, []);
       await pg.close();
     }
