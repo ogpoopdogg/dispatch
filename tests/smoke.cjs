@@ -210,6 +210,37 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Closed weekends.' && m.rid === 'general' && m.company_id === 'c1' && m.from === 'dispatch'));
       await page.waitForTimeout(300);
       await shot(page, 'messages');
+      // The newest message always sits at the bottom, fully in sight just above the typing bar
+      await page.evaluate(() => { for (let i = 0; i < 14; i++) window.__fakeDb.put(`messages/x${i}`, { rid: 'r1', company_id: 'c1', from: i % 2 ? 'customer' : 'dispatch', text: `Older message number ${i} with a little more text so it wraps`, at: Date.now() - (20 - i) * 60000, by_uid: 'u9', by_name: 'Pat' }); });
+      await page.waitForTimeout(300);
+      const lastShown = () => page.evaluate(() => {
+        const ms = [...document.querySelectorAll('#msg-list .msg')].sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+        const last = ms[ms.length - 1].getBoundingClientRect(), bar = document.querySelector('#sheet-body .msg-compose').getBoundingClientRect();
+        return { gap: Math.round(bar.top - last.bottom), text: ms[ms.length - 1].textContent };
+      });
+      const shown = async (why) => { const r = await lastShown(); assert.ok(r.gap >= 0 && r.gap < 40, `${why}: newest message right above the typing bar (gap ${r.gap})`); return r; };
+      await page.evaluate(() => window.__fakeDb.put('messages/x99', { rid: 'r1', company_id: 'c1', from: 'customer', text: 'Newest one', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
+      await page.waitForTimeout(300);
+      assert.match((await shown('new message')).text, /Newest one/);
+      await page.focus('#sheet .msg-form textarea');
+      await page.setViewportSize({ width: 390, height: 500 });
+      await page.waitForTimeout(500);
+      await shown('keyboard up');
+      await page.click('#sheet .quick .chip-btn >> nth=0');
+      await page.click('#sheet .quick .chip-btn >> nth=1');
+      await page.click('#sheet .quick .chip-btn >> nth=2');
+      await page.waitForTimeout(300);
+      await shown('quick replies grow the box');
+      await page.fill('#sheet .msg-form textarea', '');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(500);
+      await shown('keyboard down');
+      await page.evaluate(() => { document.getElementById('sheet-body').scrollTop = 0; });
+      await page.waitForTimeout(200);
+      await page.evaluate(() => window.__fakeDb.put('messages/x100', { rid: 'r1', company_id: 'c1', from: 'customer', text: 'Even newer', at: Date.now() + 1000, by_uid: 'u9', by_name: 'Pat' }));
+      await page.waitForTimeout(300);
+      assert.match((await shown('a new message after scrolling up')).text, /Even newer/);
+      await page.evaluate(() => { kbKnown = 0; try { localStorage.removeItem('ecd_kbh'); } catch (e) { /* */ } }); // the test keyboard above isn't a real one
       // Back to the list of customers
       await page.click('[data-act=msg-list]');
       await page.waitForSelector('#sheet .msg-co');

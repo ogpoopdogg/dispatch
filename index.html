@@ -3015,6 +3015,7 @@ document.addEventListener('submit', async (e) => {
   msgSending = true;
   input.value = '';
   msgGrow(input);
+  if (inMsgs) msgScrollEnd();
   input.blur();
   if (Keyboard) Keyboard.hide().catch(() => {});
   $$('form[data-msg-form] button[type=submit]').forEach((b) => { b.disabled = true; });
@@ -3177,12 +3178,43 @@ function msgsHtml() {
     </div>` : ''}
   </div>`;
 }
-function msgScrollEnd() { const b = $('#sheet-body'); if (b) b.scrollTop = b.scrollHeight; }
+/* The chat stays scrolled all the way down: the newest message sits just above the typing bar.
+   It's kept there when anything changes size (keyboard opening or closing, the typing bar growing,
+   a quick reply filling it, a new message), unless the dispatcher has scrolled up to read older ones.
+   Sending or receiving a message always brings it back to the bottom. */
+let msgPinned = true;
+let msgRO = null;
+function msgScrollEnd() {
+  const b = $('#sheet-body');
+  if (!b) return;
+  msgPinned = true;
+  b.scrollTop = b.scrollHeight;
+  // Again after the layout settles (fonts, the keyboard, the bar resizing)
+  requestAnimationFrame(() => { if (msgPinned && msgSheetOpen() && msgView !== 'list') b.scrollTop = b.scrollHeight; });
+}
+function msgWatch() {
+  const b = $('#sheet-body');
+  if (!b || typeof ResizeObserver === 'undefined') return;
+  if (!msgRO) msgRO = new ResizeObserver(() => { if (msgPinned && msgSheetOpen() && msgView !== 'list') b.scrollTop = b.scrollHeight; });
+  msgRO.disconnect();
+  msgRO.observe(b);
+  ['#msg-list', '#sheet-body .msg-compose'].forEach((q) => { const el = $(q); if (el) msgRO.observe(el); });
+}
+// Only a finger (or wheel) moving the chat lets it leave the bottom; the layout shifting never does
+let msgUserScroll = 0;
+['touchmove', 'wheel'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#sheet-body [data-msgs-view=thread]')) msgUserScroll = Date.now(); }, { passive: true, capture: true }));
+document.addEventListener('scroll', (e) => {
+  if (!e.target || e.target.id !== 'sheet-body' || !msgSheetOpen() || msgView === 'list') return;
+  const b = e.target;
+  const atEnd = b.scrollHeight - b.scrollTop - b.clientHeight < 60;
+  if (atEnd) msgPinned = true;
+  else if (Date.now() - msgUserScroll < 800) msgPinned = false;
+}, true);
 function openMessages(cid, rid) {
   loadCompanyBooks();
   msgView = cid || 'list';
   if (rid) msgAbout = rid;
-  openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); }, true);
+  openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); msgWatch(); }, true);
   msgHead();
   if (cid) markCoSeen(cid);
 }
@@ -3194,13 +3226,17 @@ function refreshMsgs() {
   const draft = input ? input.value : '', typing = !!input && input === document.activeElement;
   const sel = $('#msg-about'); if (sel) msgAbout = sel.value;
   if (msgAboutNext) { msgAbout = msgAboutNext; msgAboutNext = ''; }
-  const atEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 40, top = body.scrollTop;
+  const atEnd = msgPinned || body.scrollHeight - body.scrollTop - body.clientHeight < 60, top = body.scrollTop;
+  // A new message in this chat (sent or received) always shows at the bottom
+  const count = msgView !== 'list' ? $$('#msg-list .msg').length : 0;
   $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : coName(msgView);
   const q = $('#msg-q'), searching = q && q === document.activeElement;
   body.innerHTML = msgsHtml();
   msgHead();
   if (searching) { const again = $('#msg-q'); if (again) { again.focus({ preventScroll: true }); again.setSelectionRange(again.value.length, again.value.length); } }
-  if (atEnd && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
+  const grew = msgView !== 'list' && $$('#msg-list .msg').length > count;
+  if ((atEnd || grew) && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
+  msgWatch();
   const again = $('#sheet-body form[data-msg-form] [name=text]');
   if (again && draft) again.value = draft;
   if (again && typing) again.focus({ preventScroll: true });
