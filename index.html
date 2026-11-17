@@ -761,8 +761,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .ac-item small em{font-style:normal;font-weight:750;color:var(--accent-ink)}
 /* The tap buttons under the two places */
 .nd-chips{display:flex;flex-wrap:nowrap;gap:5px;margin:2px 0 8px}
-.nd-chip{flex:1 1 auto;min-width:0;justify-content:center;display:inline-flex;align-items:center;gap:4px;min-height:42px;max-width:100%;padding:0 8px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
+.nd-chip{flex:1 0 auto;white-space:nowrap;min-width:0;justify-content:center;display:inline-flex;align-items:center;gap:4px;min-height:42px;max-width:100%;padding:0 8px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease,border-color var(--t-fast) ease,transform var(--t-fast) var(--ease)}
 .nd-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-chip[data-x=items]{flex:1 1 auto} /* the pieces shorten (…) so the other buttons keep their words */
 .nd-chip .i{flex:none;width:16px;height:16px;color:var(--ink-2)}
 .nd-chip:active{transform:scale(.96)}
 .nd-chip.set{background:var(--surface-2);border-color:var(--ink-3)}
@@ -788,6 +789,33 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sheet.big #nd-text.nd-preview{min-height:96px;max-height:200px;padding:12px 42px 12px 14px;font-size:22px;line-height:1.3;border-radius:var(--r-md)}
 .sheet.big .nd-pen{right:14px;top:16px}
 .sheet.big .nd-text-reset{right:5px;top:7px}
+/* Mic: round blue button above + Dispatch (and above the form's Send bar). Lit up and glowing while it listens. */
+.mic-fab{position:fixed;right:14px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 12px);z-index:66;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;border:2px solid #2563eb;background:var(--surface);color:#2563eb;box-shadow:0 10px 24px -10px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s var(--out),background .12s,color .12s,border-color .12s}
+.mic-fab .i{width:26px;height:26px;stroke-width:2.2;position:relative;z-index:1}
+.mic-fab:active{transform:scale(.93)}
+.mic-fab.inline{width:40px;height:40px;border-width:1.5px;box-shadow:none}
+.mic-fab.inline .i{width:21px;height:21px}
+.mic-fab.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite;transform:scale(1.08)}
+.mic-fab.on::before,.mic-fab.on::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(56,189,248,.8);animation:mic-wave 1.1s ease-out infinite;pointer-events:none}
+.mic-fab.on::after{animation-delay:.55s}
+@keyframes mic-glow{50%{box-shadow:0 0 0 6px rgba(56,189,248,.28),0 0 30px 8px rgba(56,189,248,.7)}}
+@keyframes mic-wave{0%{transform:scale(.95);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mic-fab.on,.mic-fab.on::before,.mic-fab.on::after{animation:none}}
+/* Room for the mic: above the Send bar on the form, and under the last card in the queue */
+.nd-mic-gap{display:none;flex:none;height:62px}
+body.mic-ok .nd-mic-gap{display:block}
+body.mic-ok main.app-main{padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 78px)}
+body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 88px)}
+/* What the mic is hearing: a strip to the left of the mic */
+.mic-hear{position:fixed;left:12px;right:84px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 16px);z-index:66;min-height:48px;display:flex;align-items:center;padding:6px 12px;border-radius:12px;background:#0b1a33;color:#e0f2fe;font-size:15px;line-height:1.25;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);pointer-events:none;animation:slideUp .18s var(--out)}
+.mic-hear span{opacity:.8;font-weight:600}
+.mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@keyframes slideUp{from{transform:translateY(8px);opacity:0}}
+/* A box the mic just filled flashes blue for a moment */
+.vfill{animation:vfill 1s var(--out)}
+@keyframes vfill{0%{box-shadow:0 0 0 3px rgba(56,189,248,.75);background-color:rgba(186,230,253,.55)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
+/* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
+body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on) [data-nd] textarea:focus{padding-right:48px}
 .nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
 .nd-preview::placeholder{color:var(--ink-3);font-weight:500}
 .nd-preview:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
@@ -842,6 +870,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
      of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
   .sheet.tall.mid.big{height:var(--nd-big-h,75dvh)}
+  body.mic-ok .sheet.tall.mid.big:not(.kb){height:var(--nd-big-h,max(75dvh,min(92dvh,690px)))} /* a little taller: room for the mic above the Send bar */
   .sheet.tall.mid.big:not(.kb) .sheet-body{flex:1 1 auto;display:flex;flex-direction:column}
   .sheet.tall.mid.big:not(.kb) .sheet-body>.nd{flex:1 0 auto;display:flex;flex-direction:column}
   .sheet.tall.mid.big:not(.kb) .nd-send{margin-top:auto}
@@ -997,6 +1026,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
   <symbol id="i-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
   <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
@@ -1137,6 +1167,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
     <div class="sheet-body" id="sheet-body"></div>
   </div>
 </div>
+<!-- Mic: say a dispatch (above + Dispatch, or on the form), or say words into the box being typed in -->
+<button class="mic-fab" id="mic-fab" type="button" aria-pressed="false" aria-label="Say a dispatch, or say words into the box you are typing in" hidden><svg class="i"><use href="#i-mic"/></svg></button>
+<div class="mic-hear" id="mic-hear" role="status" aria-live="polite" hidden></div>
 <!-- Send to driver: vehicles and their distance to the pickup, the live map, then the drivers (hold to send) -->
 <div class="sp" id="nd-pop" hidden>
   <div class="sp-scrim" data-act="nd-pop-close"></div>
@@ -1833,6 +1866,7 @@ function syncLayers() {
     if (f) setTimeout(() => { if (!top.contains(document.activeElement)) f.focus({ preventScroll: true }); }, 60);
   }
   if (!top) { const back = layerReturn; layerReturn = null; if (back && back.isConnected && back.focus) back.focus({ preventScroll: true }); }
+  micSoon();
 }
 function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
@@ -1860,6 +1894,7 @@ function openSheet(title, html, onMount, tall) {
   }
   if (onMount) onMount($('#sheet-body'));
   syncLayers();
+  micFollow();
 }
 let liftTimer = 0;
 function sheetLift() {
@@ -1881,6 +1916,7 @@ function _hideSheet() {
   el.classList.remove('open', 'hold', 'lift');
   document.body.classList.remove('no-scroll');
   syncLayers();
+  micFollow();
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
@@ -1918,7 +1954,9 @@ function confirmSheet(title, body, ok, danger) {
 /* =========================================================
    Auth and staff check
    ========================================================= */
-function show(view) { ['loading', 'auth', 'denied', 'app'].forEach((v) => { $('#view-' + v).hidden = v !== view; }); }
+function show(view) { ['loading', 'auth', 'denied', 'app'].forEach((v) => { $('#view-' + v).hidden = v !== view; }); micSoon(); }
+// The mic button shows only in the app, and not under other pop-ups
+function micSoon() { setTimeout(() => { try { micPlace(); } catch (e) { /* not set up yet */ } }, 0); }
 
 $('#auth-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -3472,7 +3510,8 @@ let ndAddrPick = null; // address choice made in this form; otherwise the one re
 
 /* The "two names and go" form: Pickup and Delivery names (a saved customer's address is one grey
    line), a row of tap buttons that start on the usual answers, and the Send button in a bar at the bottom. */
-function openNewDispatch() {
+function openNewDispatch(opts) {
+  const byVoice = !!(opts && opts.voice);
   if (!S.user || $('#view-app').hidden) return;
   if (!ND) ND = blankDraft();
   ndX = '';
@@ -3497,6 +3536,7 @@ function openNewDispatch() {
     <div class="field nd-x" id="nd-x-when" hidden><div id="nd-cal"></div></div>
     <div class="field nd-x" id="nd-x-notes" hidden><label for="nd-notes">Note for the driver</label><textarea id="nd-notes" data-nd-f="notes" maxlength="1000" rows="1"></textarea></div>
     <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
+    <div class="nd-mic-gap" aria-hidden="true"></div>
     <div class="nd-send">
       <div class="nd-more" id="nd-more" hidden></div>
       <div class="nd-label"><span>Driver gets</span><span class="nd-label-r"><small id="nd-count"></small><button class="addr-chip" type="button" id="nd-addr-chip" data-act="nd-addr-open" aria-expanded="false" aria-controls="nd-addr-row">${icon('pin', 'sm')}<span></span>${icon('caret', 'caret')}</button></span></div>
@@ -3509,7 +3549,8 @@ function openNewDispatch() {
     ndFillAll(body);
     ndAttachPlaces();
     ndUpdate(true);
-    ndTypeNow();
+    if (byVoice) sheetLift(); // the mic is listening: no keyboard, the form comes straight up
+    else ndTypeNow();
   }, 'mid');
 }
 function ndFillLeg(k) {
@@ -3752,7 +3793,7 @@ function ndUpdate(force) {
   saveDraft();
   let moved = false;
   ['pickup', 'delivery'].forEach((k) => { if (ndLegUi(k)) moved = true; });
-  $('#sheet .sheet').classList.toggle('big', !!(ND.pickup.name.trim() && ND.delivery.name.trim()));
+  $('#sheet .sheet').classList.toggle('big', !!((ND.pickup.name.trim() && ND.delivery.name.trim()) || (voice && voice.mode === 'form')));
   ndRefreshTags();
   ndChips();
   ['items', 'when', 'notes', 'po'].forEach((x) => { const el = $(`#nd-x-${x}`); if (el && el.hidden !== (ndX !== x)) { el.hidden = ndX !== x; moved = true; } });
@@ -4816,6 +4857,7 @@ function ndTypeNow() {
 }
 // Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
 function ndReset() {
+  if (voice) voiceStop(true);
   clearDraft();
   ndMode = '';
   openNewDispatch();
@@ -5277,4 +5319,446 @@ initPushListeners();
 if (CAP) { const g = $('[data-act=google]'); if (g) g.hidden = true; }
 renderAll();
 document.addEventListener('DOMContentLoaded', startFirebase);
+/* =========================================================
+   MIC: say a dispatch, or say words into a box
+   Tap the round mic (above + Dispatch, or on the New dispatch form) and say it like
+   "GNR Electric to AAA Bobcat, one box, 25 pounds" ("for" works too). The form fills in
+   as you talk. With the cursor in a text box (driver text, note, PO, a card's text) the
+   words go into that box instead, where the cursor is.
+   Customer names are matched the same way Route Planner's mic does it (spelling, sound-alike,
+   and the phrases taught in Route Planner's "Teach the mic", developer/route_planner/voice_aliases).
+   The phone's own speech engine is used in the app (@capacitor-community/speech-recognition);
+   in a browser it's the browser's.
+   ========================================================= */
+const NativeSpeech = CAP ? CAP.registerPlugin('SpeechRecognition') : null;
+const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const voiceCan = () => !!(NativeSpeech || WebSpeech);
+
+// Listens once. h.text(words, alternatives) as they come; h.end(lastWords, error) once, when it stops.
+function voiceListen(h) {
+  let ended = false, last = '', alts = [];
+  const timers = [];
+  const end = (err) => { if (ended) return; ended = true; timers.forEach(clearTimeout); clearInterval(poll); if (ctl.cleanup) ctl.cleanup(); h.end(last, err, alts); };
+  const got = (t, a) => { t = String(t || '').trim(); if (!t || ended) return; last = t; alts = a || [t]; h.text(t, alts); };
+  const ctl = { stop: () => {}, cleanup: null };
+  let poll = 0;
+  // Nothing heard at all in 8 s: stop. Never longer than 40 s.
+  timers.push(setTimeout(() => { if (!last) ctl.stop(); }, 8000), setTimeout(() => ctl.stop(), 40000));
+  if (NativeSpeech) {
+    let stopped = false, subs = [];
+    ctl.cleanup = () => { subs.forEach((s) => s && s.remove && s.remove()); NativeSpeech.stop().catch(() => {}); };
+    // The final words come right after the phone says it stopped listening
+    const afterStop = () => { stopped = true; timers.push(setTimeout(() => end(), 1200)); };
+    ctl.stop = () => { if (stopped) return; NativeSpeech.stop().catch(() => {}); afterStop(); };
+    (async () => {
+      try {
+        let p = await NativeSpeech.checkPermissions();
+        if (p.speechRecognition !== 'granted') p = await NativeSpeech.requestPermissions();
+        if (p.speechRecognition !== 'granted') { end('denied'); return; }
+        subs.push(await NativeSpeech.addListener('partialResults', (d) => { const m = (d && d.matches) || []; got(m[0], m); if (stopped && m.length) end(); }));
+        subs.push(await NativeSpeech.addListener('listeningState', (d) => { if (d && d.status === 'stopped' && !stopped) afterStop(); }));
+        if (ended) return;
+        await NativeSpeech.start({ language: 'en-CA', maxResults: 5, partialResults: true, popup: false });
+        // The phone can stop on its own without saying so (an error): check now and then
+        poll = setInterval(() => { NativeSpeech.isListening().then((r) => { if (r && r.listening === false && !stopped) afterStop(); }).catch(() => {}); }, 1000);
+      } catch (e) { end(String((e && e.message) || e)); }
+    })();
+    return ctl;
+  }
+  const rec = new WebSpeech();
+  rec.lang = 'en-CA';
+  rec.continuous = false;    // the phone stops listening when you stop talking
+  rec.interimResults = true; // words as they come, so the form fills in while you talk
+  rec.maxAlternatives = 5;
+  rec.onresult = (ev) => {
+    let t = '', a = [];
+    for (let i = 0; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      t += (t ? ' ' : '') + r[0].transcript.trim();
+      if (i === ev.results.length - 1 && r.isFinal) a = Array.from({ length: r.length }, (_, k) => r[k] && r[k].transcript.trim()).filter(Boolean);
+    }
+    got(t, a.length > 1 && ev.results.length === 1 ? a : [t]);
+  };
+  rec.onerror = (ev) => { if (ev && ev.error === 'not-allowed') end('denied'); };
+  rec.onend = () => end();
+  ctl.stop = () => { try { rec.stop(); } catch (e) { end(); } };
+  ctl.cleanup = () => { try { rec.abort(); } catch (e) { /* */ } };
+  try { rec.start(); } catch (e) { end(String(e)); }
+  return ctl;
+}
+
+/* ---------- Matching a spoken name to a saved customer (same as Route Planner's mic) ---------- */
+const VOICE_ALIASES_PATH = 'developer/route_planner/voice_aliases';
+let voiceAliases = {}, voiceAliasesOn = false;
+function listenVoiceAliases() {
+  if (voiceAliasesOn || !db || !S.user) return;
+  voiceAliasesOn = true;
+  db.ref(VOICE_ALIASES_PATH).on('value', (snap) => { voiceAliases = snap.val() || {}; }, () => { voiceAliasesOn = false; });
+}
+function vNorm(t) {
+  return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+// Letters that sound alike share a code and vowels drop out, so "virden", "burden" and "verdun" match
+function soundKey(word) {
+  let w = String(word || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (!w) return '';
+  w = w.replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/^kn/, 'n').replace(/^wr/, 'r').replace(/^ps/, 's').replace(/gh/g, 'g');
+  const code = { b: '1', f: '1', p: '1', v: '1', c: '2', g: '2', j: '2', k: '2', q: '2', s: '2', x: '2', z: '2', d: '3', t: '3', l: '4', m: '5', n: '5', r: '6' };
+  let out = '', lastC = '';
+  for (const ch of w) { const c = code[ch] || ''; if (c && c !== lastC) out += c; lastC = c; }
+  return out;
+}
+function editDistance(a, b) {
+  if (a === b) return 0;
+  const prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) { const tmp = prev[j]; prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1)); diag = tmp; }
+  }
+  return prev[b.length];
+}
+const likeness = (a, b) => { const m = Math.max(a.length, b.length); return m === 0 ? 0 : 1 - editDistance(a, b) / m; };
+let vIndexFor = null, vIndex = null;
+function customerIndex() {
+  if (vIndex && vIndexFor === S.lookup) return vIndex;
+  const list = [], exact = {};
+  Object.keys(S.lookup || {}).forEach((name) => {
+    const norm = vNorm(name);
+    if (!norm) return;
+    const words = norm.split(' ').filter((w) => w && w !== 'and' && w !== 'the');
+    const joined = words.join('');
+    list.push({ name, norm, words, keys: words.map(soundKey), joined, joinedKey: soundKey(joined) });
+    if (!exact[norm] || norm.length > vNorm(exact[norm]).length) exact[norm] = name;
+  });
+  vIndexFor = S.lookup;
+  vIndex = { list, exact };
+  return vIndex;
+}
+function wordLikeness(heard, have, ka, kb) {
+  if (heard === have) return 1;
+  if (heard.length >= 3 && have.length >= 3 && (have.startsWith(heard) || heard.startsWith(have))) return 0.9;
+  const could = (x, y, need) => 1 - Math.abs(x.length - y.length) / Math.max(x.length, y.length) >= need;
+  let best = could(heard, have, 0.6) ? likeness(heard, have) : 0;
+  if (ka.length >= 2 && ka === kb) best = Math.max(best, 0.85);
+  else if (ka.length >= 3 && kb.length >= 3 && could(ka, kb, 0.75)) best = Math.max(best, likeness(ka, kb) * 0.8);
+  return best;
+}
+function closestCustomers(words, count) {
+  const want = words.filter((w) => w.length > 1 && w !== 'and' && w !== 'the');
+  if (!want.length) return [];
+  const wantJoined = want.join(''), wantKeys = want.map(soundKey), wantJoinedKey = soundKey(wantJoined);
+  return customerIndex().list.map((c) => {
+    let total = 0;
+    want.forEach((w, wi) => {
+      let best = 0;
+      c.words.forEach((hw, hi) => { if (best < 1) best = Math.max(best, wordLikeness(w, hw, wantKeys[wi], c.keys[hi])); });
+      if (best >= 0.6) total += best;
+    });
+    let score = c.words.length ? (2 * total) / (want.length + c.words.length) : 0;
+    const joined = Math.max(likeness(wantJoined, c.joined), wantJoinedKey.length >= 3 ? likeness(wantJoinedKey, c.joinedKey) * 0.85 : 0);
+    if (joined >= 0.7) score = Math.max(score, joined);
+    return { name: c.name, score };
+  }).filter((x) => x.score >= 0.25).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)).slice(0, count || 3);
+}
+const titleCase = (s) => String(s).replace(/\b([a-z])/g, (m) => m.toUpperCase());
+// Spoken words -> { name, src: 'saved'|'company'|'', score }. A sure saved customer, a customer's own
+// contact said word for word, or else the words as said (a new customer, the suggestions list shows).
+function voiceName(words) {
+  const norm = vNorm(words.join(' '));
+  if (!norm) return null;
+  const idx = customerIndex();
+  if (idx.exact[norm]) return { name: idx.exact[norm], src: 'saved', score: 1 };
+  const alias = voiceAliases[norm];
+  if (alias && S.lookup[alias]) return { name: alias, src: 'saved', score: 1 };
+  const co = coBooks.list.find((e) => vNorm(e.name) === norm);
+  if (co) return { name: co.name, src: 'company', score: 0.95, co };
+  const close = closestCustomers(norm.split(' '), 2);
+  if (close.length && close[0].score >= 0.72 && (!close[1] || close[0].score - close[1].score >= 0.08)) return { name: close[0].name, src: 'saved', score: close[0].score };
+  return { name: titleCase(words.join(' ')), src: '', score: close.length ? close[0].score * 0.5 : 0 };
+}
+
+/* ---------- Reading a spoken dispatch ---------- */
+const V_NUM = { zero: 0, a: 1, an: 1, one: 1, won: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+const V_KIND = { box: 'box', boxes: 'box', carton: 'box', cartons: 'box', case: 'box', cases: 'box', pallet: 'pallet', pallets: 'pallet', skid: 'pallet', skids: 'pallet', envelope: 'envelope', envelopes: 'envelope', letter: 'envelope', letters: 'envelope', piece: 'piece', pieces: 'piece', package: 'piece', packages: 'piece', parcel: 'piece', parcels: 'piece', item: 'piece', items: 'piece', bundle: 'bundle', bundles: 'bundle' };
+const V_LBS = /^(pounds?|lbs?|lb)$/;
+const V_TO = /^(to|too|two|2|for|four|4|into)$/; // "for" and "to" often come out as "4" or "2"
+const vWord = (w) => String(w || '').toLowerCase().replace(/[^a-z0-9.]/g, '').replace(/\.$/, '');
+// A number said at word i (digits or words like "two hundred fifty"): { n, len } or null
+function vNumber(ws, i) {
+  const w = ws[i];
+  if (/^\d+(\.\d+)?$/.test(w)) return { n: +w, len: 1 };
+  if (!(w in V_NUM)) return null;
+  if ((w === 'a' || w === 'an' || w === 'won') && !V_KIND[ws[i + 1]]) return null;
+  let n = V_NUM[w], len = 1;
+  if (n >= 20 && n < 100 && V_NUM[ws[i + 1]] > 0 && V_NUM[ws[i + 1]] < 10) { n += V_NUM[ws[i + 1]]; len++; }
+  if (ws[i + len] === 'hundred') {
+    n *= 100; len++;
+    if (ws[i + len] === 'and') len++;
+    const rest = ws[i + len] in V_NUM && V_NUM[ws[i + len]] > 1 ? vNumber(ws, i + len) : null;
+    if (rest && rest.n < 100) { n += rest.n; len += rest.len; } else if (ws[i + len - 1] === 'and') len--;
+  }
+  return { n, len };
+}
+// "GNR Electric to AAA Bobcat, one box, 25 pounds" -> { pickup, delivery, items, payment, po, note }
+// startLeg: the name box the cursor was in, so a single name goes there.
+function voiceParse(text, startLeg) {
+  // "triple A" -> "AAA", "1,200" -> "1200"
+  const raw = String(text || '').replace(/(\d),(\d{3})/g, '$1$2').replace(/\b(triple|double) ([a-z])\b/gi, (m, n, l) => l.repeat(n.toLowerCase() === 'triple' ? 3 : 2)).split(/\s+/).filter(Boolean);
+  const ws = raw.map(vWord);
+  const out = { items: [], payment: '', po: '', note: null };
+  // Where the names stop: the first count, kind, weight, payment, PO or note
+  const isTail = (i) => {
+    const w = ws[i];
+    if (V_KIND[w] || V_LBS.test(w) || /^(collect|prepaid|prepay|po|note|notes)$/.test(w) || (w === 'pre' && ws[i + 1] === 'paid') || (w === 'purchase' && ws[i + 1] === 'order')) return true;
+    const num = vNumber(ws, i);
+    return !!(num && (V_KIND[ws[i + num.len]] || V_LBS.test(ws[i + num.len] || '')));
+  };
+  let cut = ws.findIndex((w, i) => isTail(i));
+  if (cut < 0) cut = ws.length;
+  // The rest, left to right
+  let cur = null;
+  for (let i = cut; i < ws.length;) {
+    const w = ws[i];
+    if (w === 'note' || w === 'notes') { out.note = raw.slice(i + 1).join(' ').replace(/^[,.:\s]+/, ''); break; }
+    if (w === 'po' || (w === 'purchase' && ws[i + 1] === 'order')) {
+      let j = i + (w === 'po' ? 1 : 2);
+      if (ws[j] === 'number' || ws[j] === 'no' || ws[j] === 'is') j++;
+      const po = [];
+      while (j < ws.length && /\d/.test(ws[j]) && !V_KIND[ws[j + 1]] && !V_LBS.test(ws[j + 1] || '')) po.push(raw[j].replace(/[^A-Za-z0-9-]/g, '')), j++;
+      if (po.length) out.po = po.join('');
+      i = j; continue;
+    }
+    if (w === 'collect') { out.payment = 'collect'; i++; continue; }
+    if (w === 'prepaid' || w === 'prepay' || (w === 'pre' && ws[i + 1] === 'paid')) { out.payment = 'prepaid'; i += w === 'pre' ? 2 : 1; continue; }
+    const num = vNumber(ws, i);
+    const next = num ? ws[i + num.len] || '' : '';
+    if (num && V_KIND[next]) { cur = { qty: num.n, type: V_KIND[next], weight: '' }; out.items.push(cur); i += num.len + 1; continue; }
+    if (num && V_LBS.test(next)) { if (!cur) { cur = { qty: 1, type: '', weight: '' }; out.items.push(cur); } cur.weight = num.n; i += num.len + 1; continue; }
+    if (V_KIND[w]) { cur = { qty: 1, type: V_KIND[w], weight: '' }; out.items.push(cur); i++; continue; }
+    i++;
+  }
+  // The names: try each "to"/"for" as the split and keep the one where both sides look most like customers
+  let names = raw.slice(0, cut), nws = ws.slice(0, cut);
+  while (nws.length && (V_TO.test(nws[nws.length - 1]) || nws[nws.length - 1] === 'and')) { nws.pop(); names.pop(); }
+  const clean = (a) => a.map((w) => w.replace(/[,.;:!?]+$/, '')).filter(Boolean);
+  let best = null;
+  for (let i = 1; i < nws.length - 1; i++) {
+    if (!V_TO.test(nws[i])) continue;
+    const a = voiceName(clean(names.slice(0, i))), b = voiceName(clean(names.slice(i + 1)));
+    const sc = (a ? a.score : 0) + (b ? b.score : 0);
+    if (!best || sc > best.sc + 0.01) best = { sc, a, b };
+  }
+  const whole = nws.length ? voiceName(clean(names)) : null;
+  if (best && !(whole && whole.src === 'saved' && whole.score >= 1 && best.sc < 2)) { out.pickup = best.a; out.delivery = best.b; }
+  else if (whole) out[startLeg || 'pickup'] = whole;
+  // A trailing "to" with nothing after it yet: the delivery is coming next
+  out.toNext = !best && ws.length > 0 && cut === ws.length && V_TO.test(ws[ws.length - 1]);
+  return out;
+}
+// How much of what was heard matched (to pick the best of the phone's guesses)
+const voiceScore = (p) => (p.pickup ? p.pickup.score : 0) + (p.delivery ? p.delivery.score : 0) + p.items.length * 0.2;
+
+/* ---------- The mic button ---------- */
+let voice = null; // { mode: 'form'|'type', ctl, ... }
+const micBtn = $('#mic-fab');
+const micHear = $('#mic-hear');
+function micListening(on) {
+  micBtn.classList.toggle('on', on);
+  micBtn.setAttribute('aria-pressed', String(on));
+  micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
+  document.body.classList.toggle('voice-on', on);
+  if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
+  micPlace();
+}
+function micSay(text, hint) {
+  micHear.hidden = false;
+  micHear.classList.toggle('heard', !!text);
+  micHear.innerHTML = text ? `<b>${esc(text)}</b>` : `<span>${esc(hint || 'Listening…')}</span>`;
+  micPlace();
+}
+// Where the mic sits: above + Dispatch; on the form, just above its Send bar (or at the end of the box
+// being typed in while the keyboard is up). Hidden under other pop-ups.
+function micPlace() {
+  const appOn = !$('#view-app').hidden && S.user;
+  const nd = ndOpen();
+  const hide = !appOn || !voiceCan() || mapOpen || popOpen || (sheetOpen && !nd);
+  micBtn.hidden = hide;
+  document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
+  if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
+  micBtn.classList.remove('inline');
+  micBtn.style.top = '';
+  micBtn.style.right = '';
+  let bottom = null;
+  if (nd) {
+    const sheet = $('#sheet .sheet');
+    const a = document.activeElement;
+    const kb = sheet.classList.contains('kb') && a && a.closest && a.closest('[data-nd]') && a.matches('input,textarea');
+    if (kb && (!voice || voice.mode === 'type')) {
+      // Keyboard up: a small mic at the end of the box being typed in (not on the number pad)
+      if (a.type === 'number') { micBtn.hidden = true; return; }
+      const r = a.getBoundingClientRect();
+      micBtn.classList.add('inline');
+      micBtn.style.top = `${Math.round(r.top + Math.min(r.height, 52) / 2 - 20)}px`;
+      micBtn.style.right = `${Math.round(document.documentElement.clientWidth - r.right + 4)}px`;
+      micBtn.style.bottom = 'auto';
+      micHear.style.bottom = `${Math.round(window.innerHeight - r.top + 8)}px`;
+      return;
+    }
+    const send = $('#sheet-body .nd-send');
+    if (send) {
+      const st = Math.min(send.getBoundingClientRect().top, window.innerHeight);
+      bottom = Math.round(window.innerHeight - st + 10);
+    }
+  }
+  micBtn.style.bottom = bottom == null ? '' : `${bottom}px`;
+  micHear.style.bottom = bottom == null ? '' : `${bottom + 4}px`;
+}
+// Keeps the mic in place while the form moves (keyboard, growing, scrolling)
+let micRaf = 0;
+function micFollow() {
+  cancelAnimationFrame(micRaf);
+  if (!sheetOpen) { micPlace(); return; }
+  const tick = () => { micPlace(); if (sheetOpen) micRaf = requestAnimationFrame(tick); };
+  micRaf = requestAnimationFrame(tick);
+}
+// Keep the cursor (and keyboard) where it is when the mic is touched
+micBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* */ } } });
+micBtn.addEventListener('click', () => { if (voice) voiceStop(); else voiceStart(); });
+
+function voiceStart() {
+  if (!voiceCan()) { toast('Voice isn’t available on this phone.', 'error'); return; }
+  listenVoiceAliases();
+  const a = document.activeElement;
+  const box = a && a.matches && a.matches('textarea, input:not([type=checkbox]):not([type=radio]):not([type=button])') && !a.readOnly && !a.disabled ? a : null;
+  // In a text box (not a Pickup/Delivery name): the words go into that box
+  if (box && !box.dataset.ndName) { voiceType(box); return; }
+  if (!ndOpen()) {
+    if (sheetOpen) return;
+    openNewDispatch({ voice: true });
+  }
+  voiceForm(box && box.dataset.ndName ? box.dataset.ndName : (ND.pickup.name.trim() && !ND.delivery.name.trim() ? 'delivery' : 'pickup'));
+}
+function voiceStop(quiet) {
+  if (!voice) return;
+  if (quiet) { const v = voice; voice = null; v.ctl.cleanup && v.ctl.cleanup(); v.ctl.stop(); micListening(false); return; }
+  voice.ctl.stop();
+}
+
+/* Say a dispatch: the form fills in as you talk */
+function voiceForm(startLeg) {
+  // Keyboard away so the whole form is in sight while it fills in
+  const a = document.activeElement;
+  if (a && a.blur && a.closest && a.closest('[data-nd]')) a.blur();
+  ndHoldKb = false;
+  ndX = '';
+  if (Keyboard) Keyboard.hide().catch(() => {});
+  const base = JSON.parse(JSON.stringify(ND));
+  const v = { mode: 'form', base, startLeg, shown: '' };
+  voice = v;
+  micListening(true);
+  micSay('', 'Listening… say pickup to delivery, pieces, weight');
+  ndUpdate();
+  // The form opened by the mic has no box to type in: don't leave a focus ring on ✕
+  setTimeout(() => { const f = document.activeElement; if (voice === v && f && f.matches && f.matches('[data-act=sheet-close]')) f.blur(); }, 120);
+  v.ctl = voiceListen({
+    text: (t, alts) => { if (voice !== v) return; micSay(t); voiceFill(v, t, alts, false); },
+    end: (t, err, alts) => {
+      if (voice !== v) return;
+      voice = null;
+      micListening(false);
+      if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
+      if (!t) { toast('Didn’t hear anything. Tap the mic and try again.', 'error'); ndUpdate(); return; }
+      voiceFill(v, t, alts, true);
+    }
+  });
+}
+function voiceFill(v, t, alts, final) {
+  if (!ndOpen()) return;
+  // Of the phone's guesses, the one with the most customers in it
+  let p = voiceParse(t, v.startLeg);
+  (alts || []).slice(1).forEach((x) => { const q = voiceParse(x, v.startLeg); if (voiceScore(q) > voiceScore(p) + 0.05) p = q; });
+  const key = JSON.stringify(p) + final;
+  if (key === v.shown) return;
+  v.shown = key;
+  const was = JSON.parse(JSON.stringify(ND));
+  ND = JSON.parse(JSON.stringify(v.base));
+  ['pickup', 'delivery'].forEach((k) => {
+    const r = p[k];
+    if (!r || !r.name) return;
+    if (vNorm(r.name) === vNorm(v.base[k].name)) return;
+    if (r.src === 'saved') {
+      const c = S.lookup[r.name] || {};
+      ND[k] = { name: r.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+    } else if (r.src === 'company') {
+      const c = r.co;
+      ND[k] = { name: c.name, address: c.address || '', city: c.city || '', lat: c.lat, lng: c.lng, ok: !!c.address, from: c.address ? 'company' : '', company: c.company || '' };
+    } else ND[k] = Object.assign(blankLeg(), { name: r.name });
+  });
+  if (p.items.length) {
+    const d = ndDefaults().type;
+    ND.items = p.items.map((it) => ({ qty: it.qty || 1, type: it.type || d, other: '', weight: it.weight === '' ? '' : String(it.weight) }));
+  }
+  if (p.payment) ND.payment = p.payment;
+  if (p.po) ND.po = p.po;
+  if (p.note != null && p.note.trim()) ND.notes = (v.base.notes ? v.base.notes.trim() + ' ' : '') + p.note.trim().replace(/^./, (c) => c.toUpperCase());
+  // Show what changed
+  ndFillAll($('#sheet-body'));
+  if (final) ['pickup', 'delivery'].forEach((k) => ndHideSuggest(k));
+  ndUpdate();
+  const flash = (el) => { if (!el) return; el.classList.remove('vfill'); void el.offsetWidth; el.classList.add('vfill'); };
+  ['pickup', 'delivery'].forEach((k) => { if (ND[k].name !== was[k].name) flash($(`#nd-${k}-name`)); });
+  if (itemsText(ND.items) !== itemsText(was.items)) flash($('[data-act=nd-x][data-x=items]'));
+  if (ND.payment !== was.payment) flash($('[data-act=nd-pay]'));
+  if (ND.notes !== was.notes) flash($('[data-act=nd-x][data-x=notes]'));
+  if (ND.po !== was.po) flash($('[data-act=nd-x][data-x=po]'));
+  if (!final) return;
+  // A new name (not a saved customer): its address box is waiting, cursor there
+  const miss = ['pickup', 'delivery'].find((k) => ND[k].name.trim() && !ND[k].address.trim());
+  if (miss) { const el = $(`#nd-${miss}-address`); if (el && !el.hidden && el.offsetParent) { el.focus({ preventScroll: true }); ndReveal(el); } }
+}
+
+/* Say words into a box, at the cursor. The words show in the box as they come. */
+function voiceType(box) {
+  const start = box.selectionStart != null ? box.selectionStart : box.value.length;
+  const endSel = box.selectionEnd != null ? box.selectionEnd : start;
+  const before = box.value.slice(0, start), after = box.value.slice(endSel);
+  const v = { mode: 'type', box };
+  voice = v;
+  micListening(true);
+  micSay('', 'Listening… say the words');
+  const put = (t) => {
+    if (!box.isConnected) return;
+    if (box.type === 'number') {
+      const ws = String(t).split(/\s+/).map(vWord);
+      let num = null;
+      for (let i = 0; i < ws.length && !num; i++) num = vNumber(ws, i);
+      if (!num) return;
+      box.value = String(num.n);
+    } else {
+      let s = String(t).trim();
+      if (!before.trim() || /[.!?]\s*$/.test(before)) s = s.replace(/^./, (c) => c.toUpperCase());
+      const gapL = before && !/\s$/.test(before) ? ' ' : '';
+      const gapR = after && !/^[\s,.!?]/.test(after) ? ' ' : '';
+      box.value = before + gapL + s + gapR + after;
+      const at = (before + gapL + s).length;
+      try { box.setSelectionRange(at, at); } catch (e) { /* */ }
+    }
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  v.ctl = voiceListen({
+    text: (t) => { if (voice !== v) return; micSay(t); put(t); },
+    end: (t, err) => {
+      if (voice !== v) return;
+      voice = null;
+      micListening(false);
+      if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
+      if (t) put(t);
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+}
+window.addEventListener('resize', micPlace);
+document.addEventListener('focusin', () => setTimeout(micPlace, 0));
+document.addEventListener('focusout', () => setTimeout(micPlace, 0));
 </script></body></html>

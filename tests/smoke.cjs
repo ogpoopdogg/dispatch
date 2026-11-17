@@ -47,10 +47,11 @@ function serve() {
   });
 }
 
-async function open(browser, base, fake) {
+async function open(browser, base, fake, init) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
+  if (init) await page.addInitScript(init);
   await page.addInitScript((f) => { window.__FAKE = f; try { localStorage.clear(); } catch (e) { /* */ } }, fake);
   let served = false;
   await page.route(/gstatic\.com\/firebasejs/, (r) => { const body = served ? '' : FAKE; served = true; r.fulfill({ contentType: 'text/javascript', body }); });
@@ -507,6 +508,46 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(Math.abs(await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top) - topK) <= 2, "the form doesn't shrink back after Done");
       assert.ok(await bottom('[data-act=nd-pick-driver]') > 700, 'Send to driver at the bottom');
       assert.deepStrictEqual(p4.errors, []);
+      await pg.close();
+    }
+    // The mic: a spoken dispatch fills the form in as it's said; with the cursor in a text box the words go there
+    {
+      const fakeSpeech = () => {
+        window.SpeechRecognition = window.webkitSpeechRecognition = class { start() { window.__rec = this; } stop() { setTimeout(() => this.onend && this.onend(), 10); } abort() {} };
+        window.__say = (t, final) => { const r = window.__rec; const res = [Object.assign([{ transcript: t }], { isFinal: !!final })]; r.onresult({ results: res }); if (final) setTimeout(() => r.onend && r.onend(), 30); };
+      };
+      const data = JSON.parse(JSON.stringify(DATA));
+      Object.assign(data.address_lookup, { 'GNR Electric': { address: '1420 Pacific Ave', city: 'Brandon' }, 'AAA Bobcat': { address: '33 Middleton Ave', city: 'Brandon' }, 'Virden Pinnacle': { address: '1 Nelson St', city: 'Virden' } });
+      const p5 = await open(browser, base, { user: STAFF, data }, fakeSpeech);
+      const pg = p5.page;
+      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.waitForSelector('#mic-fab:not([hidden])');
+      // Reading what was said
+      const said = (t) => pg.evaluate((x) => { const p = voiceParse(x, 'pickup'); return [p.pickup && p.pickup.name, p.delivery && p.delivery.name, itemsText(p.items.map((i) => Object.assign({}, i, { type: i.type || 'piece' }))), p.payment, p.po].join('|'); }, t);
+      assert.strictEqual(await said('GNR Electric to AAA Bobcat, one box, 25 pounds'), 'GNR Electric|AAA Bobcat|1 box 25 lbs||');
+      assert.strictEqual(await said('GNR electric for AAA Bobcat one pallet 25 pounds'), 'GNR Electric|AAA Bobcat|1 pallet 25 lbs||');
+      assert.strictEqual(await said('gnr electric 4 triple a bobcat 2 boxes 40 lb collect PO 5521'), 'GNR Electric|AAA Bobcat|2 boxes 40 lbs|collect|5521');
+      assert.strictEqual(await said('GNR Electric to burden pinnacle three envelopes'), 'GNR Electric|Virden Pinnacle|3 envelopes||', 'sound-alike names, like Route Planner');
+      // Tap the mic: the form opens and fills in while talking
+      await pg.click('#mic-fab');
+      await pg.waitForSelector('#nd-pickup-name');
+      await pg.waitForTimeout(300);
+      await pg.evaluate(() => __say('GNR Electric to', false));
+      await pg.waitForFunction(() => document.getElementById('nd-pickup-name').value === 'GNR Electric');
+      assert.strictEqual(await pg.inputValue('#nd-delivery-name'), '', 'nothing in Delivery yet');
+      await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box 25 pounds', true));
+      await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
+      await pg.waitForFunction(() => !document.getElementById('mic-fab').classList.contains('on'));
+      assert.strictEqual(await pg.inputValue('#nd-text'), 'GNR Electric for AAA Bobcat, 1 box 25 lbs, Prepaid');
+      // Cursor in the note: the words go in there
+      await pg.click('[data-act=nd-x][data-x=notes]');
+      await pg.focus('#nd-notes');
+      await pg.click('#mic-fab');
+      await pg.evaluate(() => __say('back door ask for Dave', true));
+      await pg.waitForFunction(() => document.getElementById('nd-notes').value === 'Back door ask for Dave');
+      assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
+      await shot(pg, 'voice');
+      assert.deepStrictEqual(p5.errors, []);
       await pg.close();
     }
     console.log('dispatch smoke test passed');
