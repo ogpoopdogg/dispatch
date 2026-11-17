@@ -688,7 +688,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .nd-route .nd-leg.to{padding-top:2px}
 .nd-route .nd-leg.to::before{content:'';position:absolute;left:14.5px;top:-14px;height:16px;border-left:1.5px dashed var(--line-strong)}
 .nd-route .nd-leg>h3{margin-bottom:5px}
-.nd-leg>h3{display:flex;align-items:center;gap:6px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink-2);margin-bottom:6px}
+.nd-leg>h3{display:flex;align-items:center;gap:6px;height:20px;font-size:12px;font-stretch:100%;font-weight:800;text-transform:none;letter-spacing:0;color:var(--ink-2);margin-bottom:6px}
 .nd-leg>h3::before{content:'';width:10px;height:10px;border-radius:50%;border:3px solid var(--yellow);box-sizing:border-box}
 .nd-leg.to>h3::before{border:0;border-radius:2px;background:var(--ink);width:9px;height:9px}
 .nd-leg h3 .tag{margin-left:auto;letter-spacing:.04em}
@@ -777,7 +777,12 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sheet.kb .nd-send{position:static;box-shadow:none}
 .nd-text-box{position:relative;margin:0 0 8px}
 .nd-label{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 3px}
-.nd-label span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.nd-label{align-items:center}
+.nd-label-r{display:flex;align-items:center;gap:8px}
+.nd-label .addr-chip{min-height:30px}
+.nd-addr-row{margin:2px 0 8px;animation:riseIn var(--t) var(--out)}
+.nd-addr-row .addr-sw{margin:0}
+.nd-label>span:first-child{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
 .nd-label small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
 #nd-text.nd-preview{resize:none}
 .sheet.big #nd-text.nd-preview{min-height:96px;max-height:200px;padding:12px 42px 12px 14px;font-size:22px;line-height:1.3;border-radius:var(--r-md)}
@@ -894,6 +899,25 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .sp-full .i{width:15px;height:15px}
 .sp-card.mapfull .sp-text,.sp-card.mapfull .sp-drivers{display:none}
 .sp-card.mapfull .sp-map{flex:1 1 auto;margin-bottom:0}
+/* Full map: one button per driver along the bottom; tapping one zooms to the van and shows where it is */
+.sp-fvans,.sp-where{display:none}
+.sp-card.mapfull .sp-fvans{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:6px;padding:8px;overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.22))}
+.sp-fvans::-webkit-scrollbar{display:none}
+.sp-fvan{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:46px;padding:0 14px 0 10px;border:1px solid rgba(0,0,0,.14);border-radius:99px;background:#fff;color:#111;font:inherit;font-size:15px;font-weight:800;line-height:1.1;text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.sp-fvan:active{transform:scale(.95)}
+.sp-fvan i{flex:none;width:14px;height:14px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.15)}
+.sp-fvan small{display:block;font-size:12px;font-weight:650;color:#555}
+.sp-fvan.on{background:#111;border-color:#111;color:#fff}
+.sp-fvan.on small{color:#ccc}
+.sp-fnone{margin:auto;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.92);font-size:13px;font-weight:650;color:#444}
+.sp-card.mapfull .sp-where:not([hidden]){position:absolute;left:8px;right:8px;bottom:68px;z-index:3;display:flex;align-items:flex-start;gap:6px;padding:10px 4px 10px 12px;border-radius:14px;background:#fff;color:#111;box-shadow:0 4px 18px rgba(0,0,0,.28);animation:riseIn var(--t) var(--out)}
+.sp-where .grow{min-width:0}
+.sp-where b{font-size:16px;font-weight:800}
+.sp-where small{font-size:12.5px;font-weight:650;color:#555}
+.sp-where p{margin:3px 0 0;font-size:15.5px;font-weight:650;line-height:1.3;user-select:text;-webkit-user-select:text}
+.sp-where p.wait{color:#777}
+.sp-where .icon-btn{flex:none;color:#111}
+.sp-card.mapfull .sp-msg{bottom:auto;top:52px}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
 /* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
 .sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -1119,7 +1143,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
   <div class="sp-card" role="dialog" aria-modal="true" aria-labelledby="sp-title">
     <div class="sp-head"><div class="sp-titles"><b id="sp-title">Send</b><span class="sp-to" id="sp-to"></span></div><button class="icon-btn" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <label class="sp-text"><span class="sp-text-head"><span>Driver gets</span><small id="sp-count"></small></span><textarea id="sp-textarea" rows="2" spellcheck="true" enterkeyhint="done" aria-label="Text the driver gets. Change it here if needed."></textarea></label>
-    <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p><button class="sp-full" type="button" data-act="sp-full" aria-pressed="false" aria-label="Make the map full screen"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><span>Full map</span></button></div>
+    <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p><button class="sp-full" type="button" data-act="sp-full" aria-pressed="false" aria-label="Make the map full screen"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><span>Full map</span></button><div class="sp-where" id="sp-where" hidden aria-live="polite"></div><div class="sp-fvans" id="sp-fvans" role="group" aria-label="Drivers on the map"></div></div>
     <div class="sp-drivers" id="nd-pop-list"></div>
   </div>
 </div>
@@ -3416,6 +3440,7 @@ function openNewDispatch() {
   if (!S.user || $('#view-app').hidden) return;
   if (!ND) ND = blankDraft();
   ndX = '';
+  ndAddrOpen = false;
   loadMaps();
   loadCompanyBooks();
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
@@ -3434,9 +3459,10 @@ function openNewDispatch() {
     <div class="field nd-x" id="nd-x-po" hidden><label for="nd-po">PO number</label><input id="nd-po" data-nd-f="po" maxlength="100" autocomplete="off" enterkeyhint="done"></div>
     <div class="nd-send">
       <div class="nd-more" id="nd-more" hidden></div>
-      <div class="nd-label"><span>Driver gets</span><small id="nd-count"></small></div>
+      <div class="nd-label"><span>Driver gets</span><span class="nd-label-r"><small id="nd-count"></small><button class="addr-chip" type="button" id="nd-addr-chip" data-act="nd-addr-open" aria-expanded="false" aria-controls="nd-addr-row">${icon('pin', 'sm')}<span></span>${icon('caret', 'caret')}</button></span></div>
+      <div class="nd-addr-row" id="nd-addr-row" hidden></div>
       <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button></div>
-      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue, schedule, address in the text" aria-expanded="false">${icon('dots')}</button></div>
+      <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue or schedule for later" aria-expanded="false">${icon('dots')}</button></div>
     </div>
   </form>`;
   openSheet('New dispatch', html, (body) => {
@@ -3612,21 +3638,39 @@ function ndSetAddr(change) {
     if (db && S.user && !S.fromCache) db.ref(`dispatch_settings/addr_prefs/${key}`).set({ addr: ndAddrPick.addr, map: ndAddrPick.map }).catch(() => { /* kept in this form anyway */ });
   }
   ndUpdate();
+  // The text changes right away, even with the cursor still in it (it's the automatic text)
+  const ta = $('#nd-text');
+  if (ta && !ndEdited()) { ta.value = ndAutoText(); ndTextUi(); }
 }
 // ⋯ next to Send: the rarer choices
 function ndMoreMenu() {
-  const r = ndRecord();
-  const m = ndAddrMode(r);
-  const has = { pickup: !!r.pickup.address, delivery: !!r.delivery.address };
-  const off = (v) => (v === 'pickup' && !has.pickup) || (v === 'delivery' && !has.delivery) || (v === 'both' && !(has.pickup && has.delivery));
   const later = ndLater();
   return `<div class="nd-more-list">
       ${later ? `<button type="button" data-act="nd-now">${icon('send')}<span>Send now instead<small>Not booked for a later day</small></span></button>` : `<button type="button" data-act="nd-save">${icon('inbox')}<span>Save to queue<small>Send it from the Queue later</small></span></button>`}
       ${later ? '' : `<button type="button" data-act="nd-sched">${icon('calendar')}<span>Schedule for later<small>Book it for another day</small></span></button>`}
-    </div>
-    <div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+    </div>`;
+}
+// The address choice on the form ("Address: Both + map"), opened under "Driver gets"
+let ndAddrOpen = false;
+function ndAddrRow() {
+  const r = ndRecord();
+  const m = ndAddrMode(r);
+  const has = { pickup: !!r.pickup.address, delivery: !!r.delivery.address };
+  const off = (v) => (v === 'pickup' && !has.pickup) || (v === 'delivery' && !has.delivery) || (v === 'both' && !(has.pickup && has.delivery));
+  return `<div class="addr-sw nd-addr"><div class="addr-seg" role="radiogroup" aria-label="Addresses in the text">${ADDR_MODES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${m.addr === v}" data-act="nd-addr" data-mode="${v}"${off(v) && m.addr !== v ? ' disabled' : ''}>${l}</button>`).join('')}</div>
       <button class="map-tog" type="button" aria-pressed="${m.map}" data-act="nd-map-link"${!pickupLink(r) && !m.map ? ' disabled' : ''} aria-label="Google Maps link for the pickup">${icon('pin', 'sm')}Map link</button></div>
-    <p class="nd-more-note">Address in the text. Remembered for ${esc(r.pickup.name || 'this customer')}.</p>`;
+    <p class="nd-more-note">Remembered for ${esc(r.pickup.name || 'this customer')}.</p>`;
+}
+function ndAddrUi() {
+  const chip = $('#nd-addr-chip'), row = $('#nd-addr-row');
+  if (!chip || !row) return;
+  const m = ndAddrMode(ndRecord());
+  const l = (ADDR_MODES.find(([v]) => v === m.addr) || [, 'None'])[1];
+  $('span', chip).textContent = `Address: ${l}${m.map ? ' + map' : ''}`;
+  chip.classList.toggle('on', m.addr !== 'off' || m.map);
+  chip.setAttribute('aria-expanded', String(ndAddrOpen));
+  row.hidden = !ndAddrOpen;
+  if (ndAddrOpen) row.innerHTML = ndAddrRow(); else row.innerHTML = '';
 }
 // Checks the form. Returns the request, or null after the missing boxes shake and turn red.
 function ndValid() {
@@ -3677,6 +3721,7 @@ function ndUpdate(force) {
   $('[data-act=nd-more]').setAttribute('aria-expanded', String(ndX === 'more'));
   $('[data-act=nd-more]').classList.toggle('on', ndX === 'more');
   if (ndX === 'when') ndCalRender();
+  ndAddrUi();
   ndTextUi();
   if (moved) ndKeyboard();
   const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}`;
@@ -4099,12 +4144,17 @@ function spFull(on, fromHistory) {
     else if (history.state && history.state.spFull) { history.back(); return; }
   }
   card.classList.toggle('mapfull', on);
+  sp.fsel = '';
+  const where = $('#sp-where');
+  if (where) where.hidden = true;
+  const strip = $('#sp-fvans');
+  if (strip) { strip._key = ''; if (on) spFullVans(); }
   const b = $('[data-act=sp-full]', card);
   b.setAttribute('aria-pressed', String(on));
   b.setAttribute('aria-label', on ? 'Back to the drivers' : 'Make the map full screen');
   $('span', b).textContent = on ? 'Back to drivers' : 'Full map';
   if (sp.map) {
-    sp.map.setOptions({ zoomControl: on });
+    sp.map.setOptions({ zoomControl: on, zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER } });
     setTimeout(() => { if (popOpen && sp.map) { sp.focus = ''; spFitAll(spList()); } }, 60);
   }
 }
@@ -4226,6 +4276,10 @@ function spDrivers(list) {
   const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.v.km - a.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
   rows[0].parentNode.classList.toggle('roomy', rows[0].offsetHeight >= 84);
+  // For the full map: the drivers whose van is on the map, closest first
+  sp.fv = info.filter((x) => x.v && !x.v.nogps).map((x) => ({ did: x.b.dataset.holdDriver, name: String(x.d.name || ''), van: x.v.id, vname: x.v.name || (sp.vans[x.v.id] && sp.vans[x.v.id].name) || 'Van', color: x.v.color || '', km: x.v.km }))
+    .sort((a, b) => (a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km) || a.name.localeCompare(b.name));
+  if ($('.sp-card').classList.contains('mapfull')) spFullVans();
   if (order !== sp.order && !hold.el) { const box = rows[0].parentNode; sorted.forEach((x) => box.appendChild(x.b)); sp.order = order; }
 }
 function spRender() {
@@ -4340,7 +4394,7 @@ function spMarkers(list) {
     let m = sp.markers[v.id];
     if (!m) {
       m = new google.maps.Marker({ map: sp.map, position: v.pos, optimized: false });
-      m.addListener('click', () => spZoomTo(v.id));
+      m.addListener('click', () => spMarkerTap(v.id));
       sp.markers[v.id] = m;
     } else if (popOpen) glide(m, v.pos); else m.setPosition(v.pos);
     if (m._key !== key) { m.setIcon(vanIcon(v)); m._key = key; m.setZIndex(v.rank === 1 ? 30 : v.rank === 2 ? 20 : v.nick ? 10 : 1); }
@@ -4386,6 +4440,54 @@ function spPickupPin() {
   if (!sp.pin) sp.pin = new google.maps.Marker({ map: sp.map, zIndex: 40, icon: { url: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40"><path d="M15 39C15 39 2 23 2 14.5A13 13 0 0 1 28 14.5C28 23 15 39 15 39Z" fill="#FFD100" stroke="#000" stroke-width="2"/><circle cx="15" cy="14.5" r="5" fill="#000"/></svg>'), scaledSize: new google.maps.Size(30, 40), anchor: new google.maps.Point(15, 39) } });
   sp.pin.setMap(sp.at ? sp.map : null);
   if (sp.at) sp.pin.setPosition(sp.at);
+}
+// Full map: the driver buttons along the bottom (redrawn only when something on them changes)
+function spFullVans() {
+  const box = $('#sp-fvans');
+  if (!box) return;
+  const list = sp.fv || [];
+  const key = list.map((x) => `${x.did}|${x.van}|${x.color}|${x.vname}|${sp.fsel === x.did ? 1 : 0}`).join(',');
+  if (box._key === key) return;
+  box._key = key;
+  box.innerHTML = list.length
+    ? list.map((x) => `<button type="button" class="sp-fvan${sp.fsel === x.did ? ' on' : ''}" data-act="sp-fvan" data-driver="${esc(x.did)}" data-van="${esc(x.van)}" style="--c:${esc(x.color)}" aria-pressed="${sp.fsel === x.did}" aria-label="${esc(x.name)}, ${esc(x.vname)}. Show where they are"><i></i><span>${esc(x.name.split(' ')[0] || x.name)}<small>${esc(x.vname)}</small></span></button>`).join('')
+    : '<span class="sp-fnone">No driver vans on the map right now.</span>';
+}
+// Tap a driver on the full map: zoom to their van and show its street address with the city.
+// Each spot is looked up once (a Google lookup costs a little); the same spot again comes from memory.
+const revGeo = {};
+function spShowDriver(did, id) {
+  const x = (sp.fv || []).find((f) => f.did === did && f.van === id);
+  const v = spList().find((f) => f.id === id);
+  if (!sp.map || !x || !v) return;
+  sp.fsel = did;
+  spFullVans();
+  sp.focus = '';
+  spZoomTo(id);
+  const box = $('#sp-where');
+  box.hidden = false;
+  box.innerHTML = `<div class="grow"><b>${esc(x.name)}</b> <small>${esc(x.vname)}${x.km != null ? ` · ${esc(fmtKm(x.km))} from the pickup` : ''}</small><p class="wait" id="sp-where-a">Finding the address…</p></div><button class="icon-btn sm" type="button" data-act="sp-where-x" aria-label="Close">${icon('x')}</button>`;
+  const put = (t, ok) => { if (sp.fsel !== did) return; const el = $('#sp-where-a'); if (el) { el.textContent = t; el.classList.toggle('wait', !ok); } };
+  const k = `${v.pos.lat.toFixed(4)},${v.pos.lng.toFixed(4)}`; // about 10 m
+  if (revGeo[k]) { put(revGeo[k], true); return; }
+  try {
+    new google.maps.Geocoder().geocode({ location: v.pos }, (res, status) => {
+      if (status === 'OK' && res && res[0]) { revGeo[k] = String(res[0].formatted_address || '').replace(/,\s*Canada$/i, ''); put(revGeo[k], true); }
+      else put('No street address found for this spot.', false);
+    });
+  } catch (e) { put('The address couldn’t be looked up.', false); }
+}
+function spHideWhere() {
+  sp.fsel = '';
+  const box = $('#sp-where');
+  if (box) box.hidden = true;
+  spFullVans();
+}
+// A van tapped on the map: on the full map it shows that driver's address too
+function spMarkerTap(id) {
+  const full = $('.sp-card') && $('.sp-card').classList.contains('mapfull');
+  const x = full && (sp.fv || []).find((f) => f.van === id);
+  if (x) spShowDriver(x.did, id); else spZoomTo(id);
 }
 // Tapping a vehicle (chip or map) only zooms to it (zoom level in Settings), with a little bounce.
 // Tapping the same one again zooms back out to everyone.
@@ -4533,14 +4635,35 @@ function ndScrollTo(body, y) {
   };
   ndScrollAnim = requestAnimationFrame(step);
 }
+// What sits right on the keyboard while typing: the name box (its Pickup/Delivery label just above it),
+// the address boxes, or the whole open extra (pieces with their Done button, note, PO), or the driver's text.
+function ndKbGroup(a) {
+  if (!a || !a.closest) return null;
+  if (a.dataset && a.dataset.ndName) return a.closest('.field');
+  if (a.dataset && (a.dataset.ndAddr || a.dataset.ndCity)) return a.closest('.addr-box');
+  return a.closest('.nd-x') || a.closest('.nd-text-box') || a.closest('.field');
+}
+// The form's height with the keyboard up. Both name boxes give the same height, so going from Pickup
+// to Delivery only slides the form: Delivery lands where Pickup was. An extra gets room for all of it.
+function ndKbHeight(a, head, kb) {
+  const g = ndKbGroup(a);
+  const h3 = $('#sheet-body .nd-leg>h3');
+  const nameF = $('#nd-pickup-name') && $('#nd-pickup-name').closest('.field');
+  let h;
+  if (a.closest('.nd-leg')) h = (h3 ? h3.offsetHeight + 6 : 24) + Math.max(nameF ? nameF.offsetHeight : 48, g && !g.hidden ? g.offsetHeight : 0) + 22;
+  else h = (g ? g.offsetHeight : 140) + (a.id === 'nd-text' ? 30 : 0) + 22;
+  const room = fullH - (kb || 0) - 40;
+  return Math.round(Math.min(head + h, Math.max(head + 120, room)));
+}
 // Brings a box (with the rest of its pickup/delivery card) into view. With the keyboard up,
-// the card's bottom sits right on the keyboard so the suggestions have the room above.
+// the box being filled sits right on the keyboard so the suggestions have the room above.
 function ndReveal(el) {
   const body = $('#sheet-body');
   if (!el || !el.isConnected || el.hidden || !body || !ndOpen()) return;
-  const group = el.closest('.nd-leg') || el.closest('.field') || el;
+  const kbg = $('#sheet .sheet').classList.contains('kb') ? ndKbGroup(el) : null;
+  const onKb = !!(kbg && !kbg.hidden);
+  const group = (onKb && kbg) || el.closest('.nd-leg') || el.closest('.field') || el;
   const b = body.getBoundingClientRect(), g = group.getBoundingClientRect();
-  const onKb = $('#sheet .sheet').classList.contains('kb') && !!el.closest('.nd-leg');
   // The Send bar sticks to the bottom and covers that part of the form
   const send = $('#sheet-body .nd-send');
   const cover = send && !el.closest('.nd-send') && getComputedStyle(send).position === 'sticky' ? send.offsetHeight : 0;
@@ -4576,9 +4699,8 @@ function ndKeyboard() {
   const up = typing && (shown > 120 || waiting);
   if (up) {
     const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
-    // Sized to the part being filled (Pickup or Delivery), so that one sits right on the keyboard
-    const leg = (a.closest && a.closest('.nd-leg')) || $('#sheet-body .nd-leg');
-    sheet.style.setProperty('--nd-kb-h', `${Math.round(head + (leg ? leg.offsetHeight : 180) + 20)}px`);
+    // Sized to the box being filled, so it sits right on the keyboard (the same spot for both names)
+    sheet.style.setProperty('--nd-kb-h', `${ndKbHeight(a, head, shown > 120 ? shown : kbKnown)}px`);
   }
   const before = ndLastTop;
   sheet.classList.toggle('kb', up);
@@ -4965,6 +5087,7 @@ document.addEventListener('click', async (e) => {
     case 'nd-sched': ndOpenX('when'); break;
     case 'nd-more': ndX = ndX === 'more' ? '' : 'more'; ndUpdate(); break;
     case 'nd-addr': ndSetAddr({ addr: el.dataset.mode }); break;
+    case 'nd-addr-open': ndAddrOpen = !ndAddrOpen; if (ndAddrOpen && ndX === 'more') ndX = ''; ndUpdate(); break;
     case 'nd-map-link': ndSetAddr({ map: !ndAddrMode(ndRecord()).map }); break;
     case 'nd-addr-edit': {
       const L = ND && ND[el.dataset.leg];
@@ -5001,6 +5124,8 @@ document.addEventListener('click', async (e) => {
     case 'nd-pick-driver': ndPickDriver(); break;
     case 'nd-pop-close': closePop(); break;
     case 'sp-full': spFull(!$('.sp-card').classList.contains('mapfull')); break;
+    case 'sp-fvan': spShowDriver(el.dataset.driver, el.dataset.van); break;
+    case 'sp-where-x': spHideWhere(); break;
     case 'nd-save': ndSave(el); break;
     case 'nd-reset': ndReset(); break;
     case 'del-driver': {

@@ -296,6 +296,19 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('[data-act=nd-more]');
     await page.waitForSelector('#nd-more:not([hidden]) [data-act=nd-save]');
     await shot(page, 'nd-more');
+    assert.strictEqual(await page.locator('#nd-more .addr-sw').count(), 0, 'the dots only hold Save to queue and Schedule');
+    await page.click('[data-act=nd-more]');
+    // Address in the text: its own button under "Driver gets"
+    assert.match(await page.textContent('#nd-addr-chip'), /Address: None/);
+    await page.click('#nd-addr-chip');
+    await page.click('#nd-addr-row [data-act=nd-addr][data-mode=pickup]');
+    assert.match(await page.textContent('#nd-addr-chip'), /Address: Pickup/);
+    assert.match(await page.inputValue('#nd-text'), /\(/, 'the pickup address is in the text');
+    await page.click('#nd-addr-row [data-act=nd-addr][data-mode=off]');
+    await page.click('#nd-addr-chip');
+    assert.ok(await page.isHidden('#nd-addr-row'));
+    await page.click('[data-act=nd-more]');
+    await page.waitForSelector('#nd-more:not([hidden]) [data-act=nd-save]');
     await page.click('#nd-more [data-act=nd-save]');
     await page.waitForFunction(() => Object.values(window.__fakeDb.get('requests')).some((r) => r.source === 'dispatcher'));
     assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Acme Supply').address), '12 Main St', 'saved address not overwritten');
@@ -399,6 +412,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await pg.isHidden('#nd-pop-list'), 'drivers hidden while the map is full');
       const mh = await pg.evaluate(() => document.querySelector('.sp-map').getBoundingClientRect().height);
       assert.ok(mh > 600, `map fills the panel (${mh}px)`);
+      assert.ok(await pg.isVisible('.sp-fvan:has-text("Mike")'), 'a button for each driver whose van is on the map');
       await shot(pg, 'send-fullmap');
       await pg.goBack();
       await pg.waitForSelector('#nd-pop-list', { state: 'visible' });
@@ -410,6 +424,41 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.click('#nd-pop .sp-head [data-act=nd-pop-close]');
       await pg.waitForFunction(() => document.getElementById('nd-pop').hidden);
       assert.deepStrictEqual(p3.errors, []);
+      await pg.close();
+    }
+    // Keyboard up (the window shrinks): Pickup's name box and then Delivery's sit in the same spot right on it,
+    // typing a new name doesn't move it, and the pieces' Done button stays above the keyboard
+    {
+      const p4 = await open(browser, base, { user: STAFF, data: DATA });
+      const pg = p4.page;
+      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.click('[data-act=new-dispatch]');
+      await pg.waitForSelector('#nd-pickup-name');
+      await pg.waitForTimeout(500);
+      await pg.setViewportSize({ width: 390, height: 500 });
+      await pg.waitForTimeout(700);
+      const bottom = (sel) => pg.evaluate((q) => Math.round(document.querySelector(q).getBoundingClientRect().bottom), sel);
+      const p0 = await bottom('#nd-pickup-name');
+      assert.ok(p0 <= 500 && p0 >= 470, `Pickup sits right on the keyboard (${p0})`);
+      await pg.type('#nd-pickup-name', 'Ne');
+      await pg.waitForTimeout(600);
+      assert.ok(Math.abs(await bottom('#nd-pickup-name') - p0) <= 2, "typing a new name doesn't move the box");
+      await pg.fill('#nd-pickup-name', 'Acme');
+      await pg.click('.ac-item:has-text("Acme Supply")');
+      await pg.waitForTimeout(900);
+      assert.strictEqual(await pg.evaluate(() => document.activeElement.id), 'nd-delivery-name');
+      const d0 = await bottom('#nd-delivery-name');
+      assert.ok(Math.abs(d0 - p0) <= 3, `Delivery lands where Pickup was (${d0} vs ${p0})`);
+      await pg.setViewportSize({ width: 390, height: 844 });
+      await pg.evaluate(() => document.activeElement.blur());
+      await pg.waitForTimeout(600);
+      await pg.click('[data-x=items]');
+      await pg.focus('[data-nd-wt="0"]');
+      await pg.setViewportSize({ width: 390, height: 500 });
+      await pg.waitForTimeout(900);
+      const done = await bottom('[data-act=nd-done]');
+      assert.ok(done <= 500 && done > 300, `Done is above the keyboard (${done})`);
+      assert.deepStrictEqual(p4.errors, []);
       await pg.close();
     }
     console.log('dispatch smoke test passed');
