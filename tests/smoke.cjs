@@ -422,6 +422,22 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
       assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
       assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
+      // Order: the closest driver is the first button (top left), then the next closest; no GPS, then no van, last
+      const order = await pg.evaluate(() => {
+        sp.at = { lat: 49.85, lng: -99.0 };
+        sp.vans.g2 = { name: 'Van 2', color: '#2f9e44', lastLocation: { lat: 49.85, lng: -99.1 } }; // ~7 km
+        sp.vans.g3 = { name: 'Van 3', color: '#ae3ec9', lastLocation: { lat: 49.85, lng: -99.5 } }; // ~36 km
+        sp.claims.g2 = { name: 'Bob', nickname: 'Bob', vehicleName: 'Van 2' };
+        sp.claims.g3 = { name: 'Ann', nickname: 'Ann', vehicleName: 'Van 3' };
+        sp.order = '';
+        spRender();
+        return [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].map((b) => b.querySelector('.drv-name > span').textContent);
+      });
+      assert.deepStrictEqual(order.slice(0, 3), ['Bob', 'Ann', 'Mike'], `closest first: ${order.slice(0, 5)}`);
+      assert.deepStrictEqual(order.slice(3, 5).sort(), ['Jen', 'Sara'], 'vans with no GPS next');
+      assert.ok(order.indexOf('Tom') > 4, 'drivers with no van after every van');
+      await shot(pg, 'send-closest-first');
+      assert.ok(await pg.locator('#nd-pop-list [data-hold-driver]').first().evaluate((b) => b.classList.contains('best') && /Closest/.test(b.textContent)), 'the first button wears the Closest tag');
       // A job scheduled for later: its time is not coloured green or red
       assert.ok(await pg.evaluate(() => { const h = jobCard('r3', S.pending.r3); return /class="job-age" data-noage/.test(h); }), 'no red/green time on a scheduled job');
       // A quick tap on a driver whose van has no GPS says so

@@ -966,7 +966,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits last, bottom right, by the thumb. */
+   The closest sits first, top left, then the next closest, and so on. */
 .drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
@@ -1269,7 +1269,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits last, bottom right, by the thumb. */
+   The closest sits first, top left, then the next closest, and so on. */
 .drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
@@ -4754,7 +4754,7 @@ function vanOf(d, list) {
   return onMap ? Object.assign({ name: hit.name }, onMap) : { id: hit.id, nick: hit.nick, name: hit.name, label: hit.name, color: (sp.vans[hit.id] && sp.vans[hit.id].color) || '', km: null, pos: null, nogps: true };
 }
 /* Driver rows, updated in place (so a hold in progress isn't broken): van colour, van name, distance and
-   drive time. Drivers with no van go first (greyed, still sendable); the closest goes last, nearest the thumb. */
+   drive time. The closest goes first, top left; drivers with no van go last (greyed, still sendable). */
 function spDrivers(list) {
   const rows = $$('#nd-pop-list [data-hold-driver]');
   if (!rows.length) return;
@@ -4778,9 +4778,9 @@ function spDrivers(list) {
     $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
-  // Order: no van, then farthest to closest. Not while a finger is on a row.
-  const group = (x) => (!x.v ? 0 : x.v.km == null ? 1 : 2);
-  const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.v.km - a.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
+  // Order: closest first (top left), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
+  const group = (x) => (!x.v ? 2 : x.v.km == null ? 1 : 0);
+  const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 0 ? a.v.km - b.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
   rows[0].parentNode.classList.toggle('roomy', rows[0].offsetHeight >= 84);
   // For the full map: the drivers whose van is on the map, closest first
