@@ -1016,6 +1016,403 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 [data-theme=light] .wordmark b{color:#b88f00}
 [data-theme=light] .topbar .wordmark b{color:var(--yellow)}
 [data-theme=light] .auth .wordmark b{color:inherit;background:var(--yellow);padding:1px 5px 2px;border-radius:4px;margin-left:2px}
+
+/* =========================================================
+   Color and depth layer (2026-11-18): more color, shadows and motion so the
+   screen is easier to scan. Only colors, shadows and animations change here:
+   no sizes or spacing, so nothing moves or jumps.
+   Color meanings: yellow = act now, blue = messages / Group Chat,
+   green = done / prepaid, orange = collect, purple = scheduled, red = late.
+   ========================================================= */
+[data-theme=light]{
+  --blue:#1f6feb;--blue-ink:#0b4fb3;--blue-bg:#e9f2ff;--blue-line:#a9c8ff;
+  --green-bg:#e7f7ec;--green-line:#9fdcb2;
+  --orange:#d9480f;--orange-bg:#fff0e6;--orange-line:#ffc199;
+  --purple:#7048e8;--purple-bg:#f1edff;--purple-line:#c9b9ff;
+  --bg:#e9e7e0;
+  --sh-card:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(20,18,10,.08),0 10px 24px -10px rgba(20,18,10,.28);
+}
+/* Page: a soft warm wash with a faint dot grid instead of flat grey */
+[data-theme=light] body{background:radial-gradient(700px 300px at 100% 0,rgba(255,209,0,.12),transparent 70%),radial-gradient(600px 400px at 0 100%,rgba(31,111,235,.06),transparent 70%),radial-gradient(circle at 1px 1px,rgba(0,0,0,.05) 1px,transparent 1.3px) 0 0/18px 18px,var(--bg);background-attachment:fixed}
+/* Top bar: deep gradient, a slow shine running along the yellow line */
+.topbar{background:linear-gradient(180deg,#1c1c1c,#060606 85%)}
+.topbar::after{background:linear-gradient(90deg,var(--yellow-lo),var(--yellow) 30%,#fff3b0 50%,var(--yellow) 70%,var(--yellow-lo));background-size:200% 100%;animation:lineShine 4s linear infinite}
+@keyframes lineShine{to{background-position:-200% 0}}
+.topbar .logo-tile{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,209,0,.35),0 4px 14px -4px rgba(255,209,0,.8)}
+/* Cards: white with a light top glow and a deeper soft shadow */
+[data-theme=light] .job-top{background:linear-gradient(180deg,#fffdf3 0,#fff 46px);box-shadow:0 1px 0 #fff inset}
+[data-theme=light] .job.overdue .job-top{background:linear-gradient(180deg,#fff3f2 0,#fff 46px)}
+.job .req-no{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 10px -4px rgba(230,160,0,.75)}
+.job.overdue .req-no{background:linear-gradient(160deg,#ff6b66,var(--danger));box-shadow:0 3px 10px -4px rgba(196,36,30,.6)}
+/* Payment chips get their own color */
+[data-theme=light] .chip.pay-prepaid{background:var(--green-bg);border-color:var(--green-line);color:var(--ok)}
+[data-theme=light] .chip.pay-collect{background:var(--orange-bg);border-color:var(--orange-line);color:var(--orange)}
+/* Route box: pickup = yellow, delivery = blue, colored line between them */
+[data-theme=light] .route{background:linear-gradient(90deg,#fffbe8,#f7f9ff);border-color:#ece6cf}
+.route::before{border-left:2px dashed transparent;border-image:linear-gradient(var(--yellow),var(--blue,#1f6feb)) 1}
+[data-theme=light] .stop.to::before,[data-theme=light] .nd-leg.to>h3::before{background:var(--blue);box-shadow:0 0 6px rgba(31,111,235,.45)}
+/* Driver text box: soft inner shade so it reads as "the message" */
+[data-theme=light] .text-edit textarea{background:linear-gradient(180deg,#fff,#fbfaf6);box-shadow:inset 0 1px 2px rgba(20,18,10,.06)}
+/* Buttons: Send to driver glossy yellow with a slow shine; Group Chat blue */
+.btn-primary{background:linear-gradient(180deg,var(--yellow-hi),var(--yellow) 55%,#f2c400)}
+.btn-primary:not(:disabled):hover{background:linear-gradient(180deg,#ffe25c,var(--yellow-hi))}
+.job .btn-primary::after,.nd-pair .btn-primary::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.6) 50%,transparent 65%);transform:translateX(-120%);animation:btnShine 5s ease-in-out infinite;pointer-events:none}
+@keyframes btnShine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+[data-theme=light] .btn-secondary[data-act=dispatch],[data-theme=light] .btn-secondary[data-act=nd-group]{background:linear-gradient(180deg,#f4f8ff,var(--blue-bg));border-color:var(--blue-line);color:var(--blue-ink);box-shadow:0 1px 0 #fff inset,0 2px 6px -3px rgba(31,111,235,.4)}
+.btn:not(:disabled):active{box-shadow:0 0 0 rgba(0,0,0,0)!important;filter:brightness(.97)}
+[data-theme=light] .addr-chip{background:linear-gradient(180deg,#fff,#f5f3ec);box-shadow:0 1px 2px rgba(20,18,10,.08)}
+/* Group headings (Today, Thu Nov 19): a colored label */
+.group-head{background:transparent}
+.group-head span:first-child{padding:2px 8px;border-radius:99px;background:var(--ink);color:#fff;box-shadow:0 2px 6px -2px rgba(0,0,0,.35)}
+#panel-scheduled .group-head span:first-child{background:var(--purple,#7048e8)}
+/* Done list: green / red / grey edge glow on each row by how it ended */
+[data-theme=light] .list,[data-theme=light] .board-group{box-shadow:var(--sh-card)}
+.row{transition:background-color var(--t-fast) ease}
+.row::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ok)}
+.row.cancelled::before{background:var(--danger)}.row.removed::before{background:var(--ink-3)}
+/* Messages: customer bubbles light blue, ours glossy yellow, colored avatars */
+[data-theme=light] .msg.them{background:var(--blue-bg);border-color:var(--blue-line);color:#0d1b33;box-shadow:0 2px 6px -3px rgba(31,111,235,.35)}
+.msg.me{background:linear-gradient(170deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 2px 8px -3px rgba(230,160,0,.6)}
+.msg-list>.msg:last-child{animation:msgIn .28s var(--out) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px) scale(.98)}}
+.msg-day{color:var(--blue-ink,var(--ink-3))}
+.msg-cos .msg-co:nth-child(5n+1) .avatar{background:#ffe9a8;color:#7a5600}
+.msg-cos .msg-co:nth-child(5n+2) .avatar{background:#dbe8ff;color:#0b4fb3}
+.msg-cos .msg-co:nth-child(5n+3) .avatar{background:#d9f5e1;color:#11803c}
+.msg-cos .msg-co:nth-child(5n+4) .avatar{background:#ece5ff;color:#5a36c9}
+.msg-cos .msg-co:nth-child(5n+5) .avatar{background:#ffe1d1;color:#b33d0c}
+.msg-send{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 4px 12px -4px rgba(230,160,0,.8)}
+/* Send to driver: tiles lift, closest glows */
+[data-theme=light] .pick.drv{background:linear-gradient(180deg,#fff,#f7f6f1);box-shadow:0 1px 2px rgba(20,18,10,.08),0 6px 14px -8px rgba(20,18,10,.3)}
+.pick.drv .avatar{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 8px -3px rgba(0,0,0,.35)}
+/* New dispatch: Pickup leg warm yellow, Delivery leg cool blue */
+[data-theme=light] .nd-route{background:linear-gradient(180deg,#fffbe6,#fff 48%,#f3f7ff);border-color:#e6dfc4;box-shadow:0 1px 0 #fff inset,0 4px 12px -8px rgba(20,18,10,.25)}
+[data-theme=light] .nd-leg.to>h3{color:var(--blue-ink)}
+/* Bottom bar: every tab has its own color, the chosen one fills in */
+.tabbar{box-shadow:0 -8px 24px -12px rgba(20,18,10,.25)}
+.tab[data-tab=messages] .i{color:var(--blue,#1f6feb)}
+.tab[data-tab=done] .i{color:var(--ok)}
+.tab[data-tab=scheduled] .i{color:var(--purple,#7048e8)}
+.tab[data-tab=messages][aria-current=page] .ti{background:var(--blue,#1f6feb);box-shadow:0 4px 12px -4px rgba(31,111,235,.6)}
+.tab[data-tab=done][aria-current=page] .ti{background:var(--ok);box-shadow:0 4px 12px -4px rgba(17,128,60,.55)}
+.tab[data-tab=scheduled][aria-current=page] .ti{background:var(--purple,#7048e8);box-shadow:0 4px 12px -4px rgba(112,72,232,.55)}
+.tab[data-tab=messages][aria-current=page] .i,.tab[data-tab=done][aria-current=page] .i,.tab[data-tab=scheduled][aria-current=page] .i{color:#fff}
+.tab[aria-current=page] .ti{animation:tabPop .38s var(--spring)}
+.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
+@keyframes tabPop{0%{transform:scale(.8)}100%{transform:translateY(-1px) scale(1)}}
+.tab-new .ti{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo))}
+/* Sheets: a little more depth */
+[data-theme=light] .sheet,[data-theme=light] .sp-card{box-shadow:0 -12px 40px -12px rgba(20,18,10,.45)}
+@media (prefers-reduced-motion:reduce){.mic-fab.on,.mic-fab.on::before,.mic-fab.on::after{animation:none}}
+/* Room for the mic: above the Send bar on the form, and under the last card in the queue */
+.nd-mic-gap{display:none;flex:none;height:62px}
+body.mic-ok .nd-mic-gap{display:block}
+body.mic-ok main.app-main{padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 78px)}
+body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 88px)}
+/* Teach the mic */
+.vl-label{display:block;font-size:12.5px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px}
+.vl .ac-list{position:static;flex-direction:column;max-height:230px;margin-top:4px;box-shadow:none;animation:none}
+.vl-rec{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:8px 14px;border:2px solid #2563eb;border-radius:var(--r-md);background:var(--surface);color:#2563eb;font:inherit;font-size:16px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vl-rec .i{width:28px;height:28px;stroke-width:2.2}
+.vl-rec.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 20% 35%,#7dd3fc,#38bdf8 35%,#2563eb);box-shadow:0 0 0 4px rgba(56,189,248,.28),0 0 24px 4px rgba(56,189,248,.55)}
+.vl-status{margin:8px 0 0;padding:8px 10px;border-radius:var(--r-sm);font-size:14px;font-weight:650;background:var(--surface-2)}
+.vl-status.err{background:var(--danger-bg);color:var(--danger)}
+.vl-status.ok{background:rgba(22,163,74,.12);color:#15803d}
+.vl-known{margin-top:10px}
+.vl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.vl-chip{display:inline-flex;align-items:center;gap:2px;padding:0 2px 0 10px;min-height:34px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;font-weight:650;background:var(--surface-2)}
+.vl-chip button{border:0;background:none;color:var(--ink-2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px}
+/* What the mic is hearing: a strip to the left of the mic */
+.mic-hear{position:fixed;left:12px;right:84px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 16px);z-index:66;min-height:48px;display:flex;align-items:center;padding:6px 12px;border-radius:12px;background:#0b1a33;color:#e0f2fe;font-size:15px;line-height:1.25;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);pointer-events:none;animation:slideUp .18s var(--out)}
+.mic-hear span{opacity:.8;font-weight:600}
+.mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@keyframes slideUp{from{transform:translateY(8px);opacity:0}}
+/* A box the mic just filled flashes blue for a moment */
+.vfill{animation:vfill 1s var(--out)}
+@keyframes vfill{0%{box-shadow:0 0 0 3px rgba(56,189,248,.75);background-color:rgba(186,230,253,.55)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
+/* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
+body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on) [data-nd] textarea:focus{padding-right:48px}
+.nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
+.nd-preview::placeholder{color:var(--ink-3);font-weight:500}
+.nd-preview:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.nd-pen{position:absolute;right:10px;top:12px;display:flex;color:var(--ink-2);pointer-events:none}
+.nd-pen .i{width:16px;height:16px}
+.nd-text-box:focus-within .nd-pen,.nd-text-box.edited .nd-pen{display:none}
+.nd-text-box.edited .nd-preview{border-color:var(--yellow-lo)}
+.nd-text-reset{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);cursor:pointer}
+.nd-text-reset:active{background:var(--surface-2)}
+.nd-cal-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px;margin-bottom:4px}
+.nd-cal-top .btn{min-height:42px;gap:6px}
+.nd-cal-top small{font-weight:600;opacity:.75;margin-left:2px}
+.nd-cal-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 4px}
+.nd-cal-head b{font-size:14.5px}
+.nd-cal-head button{width:44px;height:32px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.nd-cal-head button:disabled{opacity:.3;cursor:default}
+.nd-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding-bottom:6px}
+.nd-cal-grid .wd{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-3);padding:2px 0}
+.nd-cal-grid button{height:34px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font:inherit;font-size:14.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-cal-grid button:disabled{color:var(--ink-3);opacity:.5;cursor:default}
+.nd-cal-grid button.today{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.nd-cal-grid button.on{background:var(--yellow);color:#000}
+.nd-cal-grid button:not(:disabled):active{background:var(--yellow-soft)}
+.nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
+.nd-go>span{display:block}
+/* Group Chat and Send to driver, side by side and the same size */
+.nd-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.nd-pair .btn{width:100%;min-width:0;padding:0 8px}
+.nd-big{width:100%;min-height:52px;font-size:16.5px}
+.nd-dots{min-height:52px;padding:0;color:var(--ink)}
+.nd-dots .i{width:24px;height:24px}
+.btn.nd-dots.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.nd-more{margin-bottom:8px;animation:riseIn var(--t) var(--out)}
+.nd-more-list{display:grid;gap:6px;margin-bottom:8px}
+.nd-more-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-more-list button:active{background:var(--surface-3)}
+.nd-more-list button .i{flex:none;width:22px;height:22px;color:var(--ink-2)}
+.nd-more-list small{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:1px}
+.nd-more-note{font-size:12px;color:var(--ink-3);margin:4px 2px 0}
+/* A missing box shakes and turns red */
+.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+.set-seg{flex:none;width:190px}
+.set-select{flex:none;width:150px;min-height:var(--ctl);padding:0 28px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;font:inherit;font-size:16px;font-weight:600;color:var(--ink);-webkit-appearance:none;appearance:none}
+/* The form starts mid-screen (where Pieces and count used to sit), in easy reach of the right thumb;
+   the dimmed backdrop fills the top.
+   While typing (keyboard up) it grows to full height like before. */
+@media (max-width:719px){
+  .sheet{position:relative}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height .28s var(--out)}
+  /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
+     of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
+  .sheet.tall.mid.big{height:var(--nd-big-h,75dvh)}
+  body.mic-ok .sheet.tall.mid.big:not(.kb){height:var(--nd-big-h,max(75dvh,min(92dvh,690px)))} /* a little taller: room for the mic above the Send bar */
+  .sheet.tall.mid.big:not(.kb) .sheet-body{flex:1 1 auto;display:flex;flex-direction:column}
+  .sheet.tall.mid.big:not(.kb) .sheet-body>.nd{flex:1 0 auto;display:flex;flex-direction:column}
+  .sheet.tall.mid.big:not(.kb) .nd-send{margin-top:auto}
+  .sheet.mid{will-change:auto}
+  /* Keyboard up: just the part being filled sits right on top of it, suggestions get the room above */
+  .sheet.tall.mid.kb{height:var(--nd-kb-h,240px)}
+  /* Fills the gap under the sheet while it glides to a new spot */
+  .sheet.mid::after{content:'';position:absolute;left:-1px;right:-1px;top:100%;height:60vh;background:var(--surface);pointer-events:none}
+}
+#sheet{padding-bottom:var(--kb,0px)}
+.sheet.moving .ac-list{visibility:hidden}
+.head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.head-link:active{background:var(--yellow-soft)}
+/* New dispatch: "Clear" right after the title, ✕ stays at the far right */
+.sheet.mid .sheet-titles{flex:0 1 auto}
+.sheet.mid #sheet-reset{margin-right:auto;margin-left:4px;padding:0 12px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;min-height:32px;color:var(--ink-2)}
+.nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
+/* ---------- Send to driver panel ---------- */
+.sp{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end}
+.sp-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t-slow) ease}
+.sp.open .sp-scrim{background:rgba(0,0,0,.5)}
+.sp-card{position:relative;display:flex;flex-direction:column;height:calc(100dvh - var(--safe-t) - 10px);max-width:680px;width:100%;margin:0 auto;background:var(--surface);border:1px solid var(--yellow);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow);padding:0 10px calc(10px + var(--safe-b));transform:translateY(100%);transition:transform .26s var(--out);overflow:hidden}
+.sp.open .sp-card{transform:none}
+.sp-head{flex:none;display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0 4px 4px}
+.sp-titles{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.sp-head b{font-stretch:85%;font-size:19px;font-weight:800;white-space:nowrap}
+.sp-to{min-width:0;font-size:13px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-head .icon-btn{margin-right:-6px}
+/* The text the driver gets, right where you send it, and changeable there */
+.sp-text{flex:none;display:block;margin:0 0 8px;padding:6px 8px 8px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2)}
+.sp-text-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 3px}
+.sp-text-head span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.sp-text-head small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
+.sp-text textarea{display:block;width:100%;min-height:44px;max-height:96px;resize:none;field-sizing:content;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);padding:6px 9px;font:inherit;font-size:15px;line-height:1.35;color:var(--ink);outline:none}
+.sp-text textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
+.sp-card.nomap .sp-map{display:none}
+.sp-card.nomap .sp-drivers{flex:1 1 auto}
+/* The vehicles: a soft strip of chips, centred, wrapping when there are many */
+.van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.van:active{transform:scale(.95)}
+.van i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.12)}
+.van small{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.van.idle{opacity:.55;box-shadow:none;background:rgba(255,255,255,.6)}
+/* Closest vehicle in use: green pulse and glow. Second closest: the same pulse, no colour */
+.van.c1{border-color:#26a356;background:linear-gradient(160deg,#eafff2,#d3f8e2);color:#0b5f2c;animation:vanPulse 1.6s ease-in-out infinite}
+.van.c1 small{color:#11803c}
+.van.c1::after{content:'Closest';position:absolute;top:-7px;right:6px;padding:0 5px;border-radius:6px;background:#26a356;color:#fff;font-size:9px;font-weight:800;line-height:13px;letter-spacing:.04em;text-transform:uppercase}
+.van.c2{border-color:rgba(0,0,0,.28);animation:vanPulse2 1.6s ease-in-out .2s infinite}
+@keyframes vanPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(38,163,86,.55),0 2px 10px -2px rgba(38,163,86,.5)}50%{transform:scale(1.06);box-shadow:0 0 0 7px rgba(38,163,86,0),0 4px 18px 0 rgba(38,163,86,.6)}}
+@keyframes vanPulse2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,0,0,.18)}50%{transform:scale(1.04);box-shadow:0 0 0 6px rgba(0,0,0,0)}}
+.sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
+.sp-canvas{position:absolute;inset:0}
+/* Full map: the map takes the whole panel for a closer look; the button (or Back) brings the drivers back */
+.sp-full{position:absolute;top:8px;right:8px;z-index:2;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px 0 9px;border:1px solid rgba(0,0,0,.12);border-radius:99px;background:rgba(255,255,255,.95);color:#111;font:inherit;font-size:13px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sp-full .i{width:15px;height:15px}
+.sp-card.mapfull .sp-text,.sp-card.mapfull .sp-drivers{display:none}
+.sp-card.mapfull .sp-map{flex:1 1 auto;margin-bottom:0}
+/* Full map: one button per driver along the bottom; tapping one zooms to the van and shows where it is */
+.sp-fvans,.sp-where{display:none}
+.sp-card.mapfull .sp-fvans{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:6px;padding:8px;overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.22))}
+.sp-fvans::-webkit-scrollbar{display:none}
+.sp-fvan{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:46px;padding:0 14px 0 10px;border:1px solid rgba(0,0,0,.14);border-radius:99px;background:#fff;color:#111;font:inherit;font-size:15px;font-weight:800;line-height:1.1;text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
+.sp-fvan:active{transform:scale(.95)}
+.sp-fvan i{flex:none;width:14px;height:14px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.15)}
+.sp-fvan small{display:block;font-size:12px;font-weight:650;color:#555}
+.sp-fvan.on{background:#111;border-color:#111;color:#fff}
+.sp-fvan.on small{color:#ccc}
+.sp-fnone{margin:auto;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.92);font-size:13px;font-weight:650;color:#444}
+.sp-card.mapfull .sp-where:not([hidden]){position:absolute;left:8px;right:8px;bottom:68px;z-index:3;display:flex;align-items:flex-start;gap:6px;padding:10px 4px 10px 12px;border-radius:14px;background:#fff;color:#111;box-shadow:0 4px 18px rgba(0,0,0,.28);animation:riseIn var(--t) var(--out)}
+.sp-where .grow{min-width:0}
+.sp-where b{font-size:16px;font-weight:800}
+.sp-where small{font-size:12.5px;font-weight:650;color:#555}
+.sp-where p{margin:3px 0 0;font-size:15.5px;font-weight:650;line-height:1.3;user-select:text;-webkit-user-select:text}
+.sp-where p.wait{color:#777}
+.sp-where .icon-btn{flex:none;color:#111}
+.sp-card.mapfull .sp-msg{bottom:auto;top:52px}
+.sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
+/* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
+.sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.sp-drivers .pick-note{margin-top:6px;text-align:center}
+/* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
+   The closest sits last, bottom right, by the thumb. */
+.drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
+@media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
+.pick.drv .avatar{width:34px;height:34px;font-size:13px;background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.pick.drv .grow{min-width:0;font-size:17px;font-weight:800;line-height:1.2}
+.pick.drv .drv-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick.drv small{display:block;font-size:13px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:13px;font-weight:800;line-height:1.15}
+.drv-km:empty{display:none}
+/* Big buttons (few drivers): bigger name, van and distance */
+.drv-list.roomy .pick.drv .grow{font-size:20px}
+.drv-list.roomy .pick.drv small{font-size:14.5px}
+.drv-list.roomy .pick.drv .avatar{width:40px;height:40px;font-size:15px}
+.drv-list.roomy .drv-km{font-size:15px}
+.drv-list.roomy .drv-km small{font-size:12.5px}
+.drv-km small{font-size:11px;color:var(--ink-2)}
+.pick.drv .drv-name{display:flex;align-items:center;gap:5px}
+.pick.drv .drv-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pick.drv .drv-tag{margin:0 0 2px;font-size:9px;line-height:14px}
+.pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
+.pick.drv.novan .avatar{background:var(--ink-3)}
+.pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
+.drv-tag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:#26a356;color:#fff;font-size:10px;font-weight:800;line-height:15px;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px}
+/* Hold to send: a green ring runs clockwise round the button */
+.hold-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.hold-ring path{fill:none;stroke:#26a356;stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 3px rgba(63,207,120,.8))}
+.pick.unwind .hold-ring path{transition:stroke-dashoffset .25s var(--ease)}
+.pick.holding{border-color:rgba(38,163,86,.5);background:var(--ok-bg);transform:scale(.985)}
+.pick.held{border-color:#26a356;background:rgba(63,207,120,.22)}
+.setting.range{flex-wrap:wrap}
+.setting.range input[type=range]{width:100%;accent-color:var(--yellow-lo)}
+.nd-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.nd-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
+.nd-actions .full{grid-column:1/-1}
+.pac-container{z-index:120!important;border-radius:var(--r-md);border:1px solid var(--line);font-family:var(--font);margin-top:4px;box-shadow:var(--shadow);overflow:hidden}
+/* Map picker */
+.map-overlay{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;background:var(--bg);animation:riseIn var(--t-slow) var(--out)}
+.map-top{padding:calc(8px + var(--safe-t)) 10px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
+.map-canvas{flex:1;min-height:0}
+.map-bar{padding:10px 12px calc(10px + var(--safe-b));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px -12px rgba(0,0,0,.5)}
+.map-addr{font-weight:650;font-size:14.5px;line-height:1.3;margin-bottom:8px;min-height:19px;overflow-wrap:anywhere}
+.map-btns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:6px}
+.map-btns .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.banner-alert{animation:none}}
+/* The top bar stays dark in both themes */
+.topbar{--ink:#f3f2ec;--ink-2:#a7a59e;--ink-3:#73716b;--surface-2:#1b1b1b;--surface-3:#232323;--line-strong:#383838;color:var(--ink)}
+[data-theme=light] .wordmark b{color:#b88f00}
+[data-theme=light] .topbar .wordmark b{color:var(--yellow)}
+[data-theme=light] .auth .wordmark b{color:inherit;background:var(--yellow);padding:1px 5px 2px;border-radius:4px;margin-left:2px}
+
+/* =========================================================
+   Color and depth layer (2026-11-18): more color, shadows and motion so the
+   screen is easier to scan. Only colors, shadows and animations change here:
+   no sizes or spacing, so nothing moves or jumps.
+   Color meanings: yellow = act now, blue = messages / Group Chat,
+   green = done / prepaid, orange = collect, purple = scheduled, red = late.
+   ========================================================= */
+[data-theme=light]{
+  --blue:#1f6feb;--blue-ink:#0b4fb3;--blue-bg:#e9f2ff;--blue-line:#a9c8ff;
+  --green-bg:#e7f7ec;--green-line:#9fdcb2;
+  --orange:#d9480f;--orange-bg:#fff0e6;--orange-line:#ffc199;
+  --purple:#7048e8;--purple-bg:#f1edff;--purple-line:#c9b9ff;
+  --bg:#e9e7e0;
+  --sh-card:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(20,18,10,.08),0 10px 24px -10px rgba(20,18,10,.28);
+}
+/* Page: a soft warm wash with a faint dot grid instead of flat grey */
+[data-theme=light] body{background:radial-gradient(700px 300px at 100% 0,rgba(255,209,0,.12),transparent 70%),radial-gradient(600px 400px at 0 100%,rgba(31,111,235,.06),transparent 70%),radial-gradient(circle at 1px 1px,rgba(0,0,0,.05) 1px,transparent 1.3px) 0 0/18px 18px,var(--bg);background-attachment:fixed}
+/* Top bar: deep gradient, a slow shine running along the yellow line */
+.topbar{background:linear-gradient(180deg,#1c1c1c,#060606 85%)}
+.topbar::after{background:linear-gradient(90deg,var(--yellow-lo),var(--yellow) 30%,#fff3b0 50%,var(--yellow) 70%,var(--yellow-lo));background-size:200% 100%;animation:lineShine 4s linear infinite}
+@keyframes lineShine{to{background-position:-200% 0}}
+.topbar .logo-tile{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,209,0,.35),0 4px 14px -4px rgba(255,209,0,.8)}
+/* Cards: white with a light top glow and a deeper soft shadow */
+[data-theme=light] .job-top{background:linear-gradient(180deg,#fffdf3 0,#fff 46px);box-shadow:0 1px 0 #fff inset}
+[data-theme=light] .job.overdue .job-top{background:linear-gradient(180deg,#fff3f2 0,#fff 46px)}
+.job .req-no{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 10px -4px rgba(230,160,0,.75)}
+.job.overdue .req-no{background:linear-gradient(160deg,#ff6b66,var(--danger));box-shadow:0 3px 10px -4px rgba(196,36,30,.6)}
+/* Payment chips get their own color */
+[data-theme=light] .chip.pay-prepaid{background:var(--green-bg);border-color:var(--green-line);color:var(--ok)}
+[data-theme=light] .chip.pay-collect{background:var(--orange-bg);border-color:var(--orange-line);color:var(--orange)}
+/* Route box: pickup = yellow, delivery = blue, colored line between them */
+[data-theme=light] .route{background:linear-gradient(90deg,#fffbe8,#f7f9ff);border-color:#ece6cf}
+.route::before{border-left:2px dashed transparent;border-image:linear-gradient(var(--yellow),var(--blue,#1f6feb)) 1}
+[data-theme=light] .stop.to::before,[data-theme=light] .nd-leg.to>h3::before{background:var(--blue);box-shadow:0 0 6px rgba(31,111,235,.45)}
+/* Driver text box: soft inner shade so it reads as "the message" */
+[data-theme=light] .text-edit textarea{background:linear-gradient(180deg,#fff,#fbfaf6);box-shadow:inset 0 1px 2px rgba(20,18,10,.06)}
+/* Buttons: Send to driver glossy yellow with a slow shine; Group Chat blue */
+.btn-primary{background:linear-gradient(180deg,var(--yellow-hi),var(--yellow) 55%,#f2c400)}
+.btn-primary:not(:disabled):hover{background:linear-gradient(180deg,#ffe25c,var(--yellow-hi))}
+.job .btn-primary::after,.nd-pair .btn-primary::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.6) 50%,transparent 65%);transform:translateX(-120%);animation:btnShine 5s ease-in-out infinite;pointer-events:none}
+@keyframes btnShine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+[data-theme=light] .btn-secondary[data-act=dispatch],[data-theme=light] .btn-secondary[data-act=nd-group]{background:linear-gradient(180deg,#f4f8ff,var(--blue-bg));border-color:var(--blue-line);color:var(--blue-ink);box-shadow:0 1px 0 #fff inset,0 2px 6px -3px rgba(31,111,235,.4)}
+.btn:not(:disabled):active{box-shadow:0 0 0 rgba(0,0,0,0)!important;filter:brightness(.97)}
+[data-theme=light] .addr-chip{background:linear-gradient(180deg,#fff,#f5f3ec);box-shadow:0 1px 2px rgba(20,18,10,.08)}
+/* Group headings (Today, Thu Nov 19): a colored label */
+.group-head{background:transparent}
+.group-head span:first-child{padding:2px 8px;border-radius:99px;background:var(--ink);color:#fff;box-shadow:0 2px 6px -2px rgba(0,0,0,.35)}
+#panel-scheduled .group-head span:first-child{background:var(--purple,#7048e8)}
+/* Done list: green / red / grey edge glow on each row by how it ended */
+[data-theme=light] .list,[data-theme=light] .board-group{box-shadow:var(--sh-card)}
+.row{transition:background-color var(--t-fast) ease}
+.row::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ok)}
+.row.cancelled::before{background:var(--danger)}.row.removed::before{background:var(--ink-3)}
+/* Messages: customer bubbles light blue, ours glossy yellow, colored avatars */
+[data-theme=light] .msg.them{background:var(--blue-bg);border-color:var(--blue-line);color:#0d1b33;box-shadow:0 2px 6px -3px rgba(31,111,235,.35)}
+.msg.me{background:linear-gradient(170deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 2px 8px -3px rgba(230,160,0,.6)}
+.msg-list>.msg:last-child{animation:msgIn .28s var(--out) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px) scale(.98)}}
+.msg-day{color:var(--blue-ink,var(--ink-3))}
+.msg-cos .msg-co:nth-child(5n+1) .avatar{background:#ffe9a8;color:#7a5600}
+.msg-cos .msg-co:nth-child(5n+2) .avatar{background:#dbe8ff;color:#0b4fb3}
+.msg-cos .msg-co:nth-child(5n+3) .avatar{background:#d9f5e1;color:#11803c}
+.msg-cos .msg-co:nth-child(5n+4) .avatar{background:#ece5ff;color:#5a36c9}
+.msg-cos .msg-co:nth-child(5n+5) .avatar{background:#ffe1d1;color:#b33d0c}
+.msg-send{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 4px 12px -4px rgba(230,160,0,.8)}
+/* Send to driver: tiles lift, closest glows */
+[data-theme=light] .pick.drv{background:linear-gradient(180deg,#fff,#f7f6f1);box-shadow:0 1px 2px rgba(20,18,10,.08),0 6px 14px -8px rgba(20,18,10,.3)}
+.pick.drv .avatar{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 8px -3px rgba(0,0,0,.35)}
+/* New dispatch: Pickup leg warm yellow, Delivery leg cool blue */
+[data-theme=light] .nd-route{background:linear-gradient(180deg,#fffbe6,#fff 48%,#f3f7ff);border-color:#e6dfc4;box-shadow:0 1px 0 #fff inset,0 4px 12px -8px rgba(20,18,10,.25)}
+[data-theme=light] .nd-leg.to>h3{color:var(--blue-ink)}
+/* Bottom bar: every tab has its own color, the chosen one fills in */
+.tabbar{box-shadow:0 -8px 24px -12px rgba(20,18,10,.25)}
+.tab[data-tab=messages] .i{color:var(--blue,#1f6feb)}
+.tab[data-tab=done] .i{color:var(--ok)}
+.tab[data-tab=scheduled] .i{color:var(--purple,#7048e8)}
+.tab[data-tab=messages][aria-current=page] .ti{background:var(--blue,#1f6feb);box-shadow:0 4px 12px -4px rgba(31,111,235,.6)}
+.tab[data-tab=done][aria-current=page] .ti{background:var(--ok);box-shadow:0 4px 12px -4px rgba(17,128,60,.55)}
+.tab[data-tab=scheduled][aria-current=page] .ti{background:var(--purple,#7048e8);box-shadow:0 4px 12px -4px rgba(112,72,232,.55)}
+.tab[data-tab=messages][aria-current=page] .i,.tab[data-tab=done][aria-current=page] .i,.tab[data-tab=scheduled][aria-current=page] .i{color:#fff}
+.tab[aria-current=page] .ti{animation:tabPop .38s var(--spring)}
+.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
+@keyframes tabPop{0%{transform:scale(.8)}100%{transform:translateY(-1px) scale(1)}}
+.tab-new .ti{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo))}
+/* Sheets: a little more depth */
+[data-theme=light] .sheet,[data-theme=light] .sp-card{box-shadow:0 -12px 40px -12px rgba(20,18,10,.45)}
+/* Cards come in one after another when a tab opens */
+.app-main>section:not([hidden]) .cards>.job:nth-child(1){animation:cardIn .34s var(--out) both}
+.app-main>section:not([hidden]) .cards>.job:nth-child(2){animation:cardIn .34s var(--out) .05s both}
+.app-main>section:not([hidden]) .cards>.job:nth-child(3){animation:cardIn .34s var(--out) .1s both}
+.app-main>section:not([hidden]) .cards>.job:nth-child(n+4){animation:cardIn .34s var(--out) .14s both}
+.app-main>section:not([hidden]) .cards>.job.unseen{animation:cardIn .34s var(--out) both,jobGlow 1.8s ease-in-out .34s infinite alternate}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2292,7 +2689,7 @@ function jobCard(id, r) {
   const tags = [];
   if (unseen) tags.push('<span class="chip new">New</span>');
   if (r.updated_at && !changedText(id, r)) tags.push('<span class="chip warn">Changed</span>');
-  tags.push(`<span class="chip">${icon(r.payment === 'collect' ? 'cash' : 'check')}${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
+  tags.push(`<span class="chip ${r.payment === 'collect' ? 'pay-collect' : 'pay-prepaid'}">${icon(r.payment === 'collect' ? 'cash' : 'check')}${r.payment === 'collect' ? 'Collect' : 'Prepaid'}</span>`);
   const chips = [];
   if (r.when === 'scheduled' && r.scheduled_for) {
     if (isOverdue(r)) chips.push(`<span class="chip bad">${icon('alert')}Was due ${esc(fmtDay(r.scheduled_for))}</span>`);
