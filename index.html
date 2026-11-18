@@ -3793,7 +3793,7 @@ function ndUpdate(force) {
   saveDraft();
   let moved = false;
   ['pickup', 'delivery'].forEach((k) => { if (ndLegUi(k)) moved = true; });
-  $('#sheet .sheet').classList.toggle('big', !!((ND.pickup.name.trim() && ND.delivery.name.trim()) || (voice && voice.mode === 'form')));
+  $('#sheet .sheet').classList.toggle('big', !!((ND.pickup.name.trim() && ND.delivery.name.trim()) || (voice && voice.mode === 'form') || ND.voiced));
   ndRefreshTags();
   ndChips();
   ['items', 'when', 'notes', 'po'].forEach((x) => { const el = $(`#nd-x-${x}`); if (el && el.hidden !== (ndX !== x)) { el.hidden = ndX !== x; moved = true; } });
@@ -5465,17 +5465,38 @@ const titleCase = (s) => String(s).replace(/\b([a-z])/g, (m) => m.toUpperCase())
 // Spoken words -> { name, src: 'saved'|'company'|'', score }. A sure saved customer, a customer's own
 // contact said word for word, or else the words as said (a new customer, the suggestions list shows).
 function voiceName(words) {
-  const norm = vNorm(words.join(' '));
+  const said = words.join(' ').trim();
+  const norm = vNorm(said);
   if (!norm) return null;
   const idx = customerIndex();
-  if (idx.exact[norm]) return { name: idx.exact[norm], src: 'saved', score: 1 };
+  const saved = (name, score) => ({ name, src: 'saved', score });
+  if (idx.exact[norm]) return saved(idx.exact[norm], 1.05);
   const alias = voiceAliases[norm];
-  if (alias && S.lookup[alias]) return { name: alias, src: 'saved', score: 1 };
-  const co = coBooks.list.find((e) => vNorm(e.name) === norm);
-  if (co) return { name: co.name, src: 'company', score: 0.95, co };
-  const close = closestCustomers(norm.split(' '), 2);
-  if (close.length && close[0].score >= 0.72 && (!close[1] || close[0].score - close[1].score >= 0.08)) return { name: close[0].name, src: 'saved', score: close[0].score };
-  return { name: titleCase(words.join(' ')), src: '', score: close.length ? close[0].score * 0.5 : 0 };
+  if (alias && S.lookup[alias]) return saved(alias, 1.05);
+  // The same suggestions the name box shows when this is typed (saved customers only, like Route Planner)
+  const typed = ndMatches(said.replace(/[^\w&'’ .-]/g, '')).filter((x) => x.src === 'saved');
+  if (typed.length && typed[0].score === 2) return saved(typed[0].name, 0.95);
+  // Like Route Planner: the closest customer by spelling and sound, if it's at all close
+  const close = closestCustomers(norm.split(' '), 1);
+  if (close.length && close[0].score >= 0.4) return saved(close[0].name, Math.min(0.94, close[0].score));
+  if (typed.length) return saved(typed[0].name, 0.5);
+  // Not a saved customer: nothing goes in the box (add them as a customer, then the mic finds them)
+  return { name: titleCase(said), src: '', score: 0 };
+}
+// Saved customers' names said in full inside the words, in the order said (Route Planner does this too,
+// for names said without a pause)
+function voiceNamesInside(text) {
+  const idx = customerIndex();
+  if (!idx.byLength) idx.byLength = idx.list.filter((x) => x.norm.length >= 3).sort((a, b) => b.norm.length - a.norm.length);
+  let rest = ` ${vNorm(text)} `;
+  const found = [];
+  idx.byLength.forEach((x) => {
+    const at = rest.indexOf(` ${x.norm} `);
+    if (at === -1) return;
+    found.push({ at, name: x.name });
+    rest = rest.slice(0, at + 1) + '#'.repeat(x.norm.length) + rest.slice(at + 1 + x.norm.length);
+  });
+  return found.sort((a, b) => a.at - b.at).map((f) => ({ name: f.name, src: 'saved', score: 1 }));
 }
 
 /* ---------- Reading a spoken dispatch ---------- */
@@ -5543,7 +5564,9 @@ function voiceParse(text, startLeg) {
   while (nws.length && (V_TO.test(nws[nws.length - 1]) || nws[nws.length - 1] === 'and')) { nws.pop(); names.pop(); }
   const clean = (a) => a.map((w) => w.replace(/[,.;:!?]+$/, '')).filter(Boolean);
   let best = null;
-  for (let i = 1; i < nws.length - 1; i++) {
+  const inside = voiceNamesInside(clean(names).join(' '));
+  if (inside.length >= 2) best = { sc: 2, a: inside[0], b: inside[1] };
+  for (let i = 1; i < nws.length - 1 && inside.length < 2; i++) {
     if (!V_TO.test(nws[i])) continue;
     const a = voiceName(clean(names.slice(0, i))), b = voiceName(clean(names.slice(i + 1)));
     const sc = (a ? a.score : 0) + (b ? b.score : 0);
@@ -5653,8 +5676,9 @@ function voiceForm(startLeg) {
   ndHoldKb = false;
   ndX = '';
   if (Keyboard) Keyboard.hide().catch(() => {});
+  ND.voiced = true; // stays tall after talking, so the mic doesn't sit on the form
   const base = JSON.parse(JSON.stringify(ND));
-  const v = { mode: 'form', base, startLeg, shown: '' };
+  const v = { mode: 'form', base, startLeg, shown: '', missing: [] };
   voice = v;
   micListening(true);
   micSay('', 'Listening… say pickup to delivery, pieces, weight');
@@ -5681,11 +5705,14 @@ function voiceFill(v, t, alts, final) {
   const key = JSON.stringify(p) + final;
   if (key === v.shown) return;
   v.shown = key;
+  v.missing = [];
   const was = JSON.parse(JSON.stringify(ND));
   ND = JSON.parse(JSON.stringify(v.base));
   ['pickup', 'delivery'].forEach((k) => {
     const r = p[k];
     if (!r || !r.name) return;
+    // A box only fills in with a saved customer. Words that match no one stay out of it.
+    if (!r.src) { if (final) v.missing.push(r.name); return; }
     if (vNorm(r.name) === vNorm(v.base[k].name)) return;
     if (r.src === 'saved') {
       const c = S.lookup[r.name] || {};
@@ -5713,9 +5740,8 @@ function voiceFill(v, t, alts, final) {
   if (ND.notes !== was.notes) flash($('[data-act=nd-x][data-x=notes]'));
   if (ND.po !== was.po) flash($('[data-act=nd-x][data-x=po]'));
   if (!final) return;
-  // A new name (not a saved customer): its address box is waiting, cursor there
-  const miss = ['pickup', 'delivery'].find((k) => ND[k].name.trim() && !ND[k].address.trim());
-  if (miss) { const el = $(`#nd-${miss}-address`); if (el && !el.hidden && el.offsetParent) { el.focus({ preventScroll: true }); ndReveal(el); } }
+  // Like Route Planner: a name that matches no saved customer gets a message instead
+  if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
 }
 
 /* Say words into a box, at the cursor. The words show in the box as they come. */
