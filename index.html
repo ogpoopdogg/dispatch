@@ -966,7 +966,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits last, bottom right, by the thumb. */
+   The closest sits first, top left, then the next closest, and so on. */
 .drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
@@ -1269,7 +1269,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits last, bottom right, by the thumb. */
+   The closest sits first, top left, then the next closest, and so on. */
 .drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
@@ -1413,6 +1413,13 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .app-main>section:not([hidden]) .cards>.job:nth-child(n+4){animation:cardIn .34s var(--out) .14s both}
 .app-main>section:not([hidden]) .cards>.job.unseen{animation:cardIn .34s var(--out) both,jobGlow 1.8s ease-in-out .34s infinite alternate}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Driver buttons: the distance is one line (no drive time) and never wraps; text shrinks to fit (drvFit) */
+.drv-km .drv-d{display:block;white-space:nowrap;overflow:hidden}
+.pick.drv .drv-name>span:first-child{text-overflow:clip}
+.pick.drv .grow>small{text-overflow:clip}
+.sp-drivers .pick.drv{gap:6px;padding-left:6px;padding-right:7px}
+.pick.drv .avatar{width:30px;height:30px;font-size:12px}
+.drv-list.roomy .pick.drv .avatar{width:36px;height:36px;font-size:14px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -4754,7 +4761,7 @@ function vanOf(d, list) {
   return onMap ? Object.assign({ name: hit.name }, onMap) : { id: hit.id, nick: hit.nick, name: hit.name, label: hit.name, color: (sp.vans[hit.id] && sp.vans[hit.id].color) || '', km: null, pos: null, nogps: true };
 }
 /* Driver rows, updated in place (so a hold in progress isn't broken): van colour, van name, distance and
-   drive time. Drivers with no van go first (greyed, still sendable); the closest goes last, nearest the thumb. */
+   drive time. The closest goes first, top left; drivers with no van go last (greyed, still sendable). */
 function spDrivers(list) {
   const rows = $$('#nd-pop-list [data-hold-driver]');
   if (!rows.length) return;
@@ -4775,20 +4782,35 @@ function spDrivers(list) {
     $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
 
     // "Closest" sits over the distance, so the name and van keep their full width
-    $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}${esc(fmtKm(v.km))}<small>${esc(fmtDrive(v.km))}</small>` : '';
+    $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
-  // Order: no van, then farthest to closest. Not while a finger is on a row.
-  const group = (x) => (!x.v ? 0 : x.v.km == null ? 1 : 2);
-  const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.v.km - a.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
+  // Order: closest first (top left), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
+  const group = (x) => (!x.v ? 2 : x.v.km == null ? 1 : 0);
+  const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 0 ? a.v.km - b.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
   rows[0].parentNode.classList.toggle('roomy', rows[0].offsetHeight >= 84);
+  info.forEach(({ b }) => drvFit(b));
   // For the full map: the drivers whose van is on the map, closest first
   sp.fv = info.filter((x) => x.v && !x.v.nogps).map((x) => ({ did: x.b.dataset.holdDriver, name: String(x.d.name || ''), van: x.v.id, vname: x.v.name || (sp.vans[x.v.id] && sp.vans[x.v.id].name) || 'Van', color: x.v.color || '', km: x.v.km }))
     .sort((a, b) => (a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km) || a.name.localeCompare(b.name));
   if ($('.sp-card').classList.contains('mapfull')) spFullVans();
   if (order !== sp.order && !hold.el) { const box = rows[0].parentNode; sorted.forEach((x) => box.appendChild(x.b)); sp.order = order; }
 }
+/* Each driver button's text as big as it can be while every letter still fits: name, van and distance
+   start at their normal size and shrink only as much as needed (never below 10px). */
+function drvFit(b) {
+  [$('.drv-name > span', b), $('.grow > small', b), $('.drv-d', b)].forEach((el) => {
+    if (!el) return;
+    el.style.fontSize = '';
+    if (!el.clientWidth || el.scrollWidth <= el.clientWidth) return;
+    let px = parseFloat(getComputedStyle(el).fontSize);
+    px = Math.max(10, Math.floor(px * el.clientWidth / el.scrollWidth * 2) / 2);
+    el.style.fontSize = px + 'px';
+    while (px > 10 && el.scrollWidth > el.clientWidth) { px -= 0.5; el.style.fontSize = px + 'px'; }
+  });
+}
+addEventListener('resize', () => { if (popOpen) $$('#nd-pop-list [data-hold-driver]').forEach(drvFit); });
 function spRender() {
   deskRender();
   if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
