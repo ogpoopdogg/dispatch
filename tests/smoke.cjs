@@ -280,6 +280,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.fill('#nd-pickup-address', '200 18th St');
     await page.fill('#nd-pickup-city', 'Brandon');
     await page.waitForSelector('#nd-pickup-nc-btn.ready');
+    assert.ok(await page.isVisible('#nd-pickup-box') && await page.isHidden('#nd-pickup-line'), 'a new customer keeps the address box to tap');
     await page.click('#nd-pickup-nc-btn');
     await page.waitForFunction(() => window.__fakeDb.get('address_lookup/Westman Tire'));
     assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire').address), '200 18th St');

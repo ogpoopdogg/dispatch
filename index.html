@@ -4253,13 +4253,16 @@ function ndLegUi(k) {
   const L = ND[k];
   const line = $(`#nd-${k}-line`), box = $(`#nd-${k}-box`), ok = $(`#nd-${k}-ok`), diff = $(`#nd-${k}-diff`);
   if (!line) return false;
-  const showLine = !!(L.ok && !L.edit && L.address.trim());
-  const showBox = !showLine && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
+  // A new customer keeps its address as a box to tap, even once Google has found it; a saved one is a grey line
+  const showLine = !!(L.ok && !L.edit && L.address.trim() && !ndIsNew(L));
+  // While saved customers still match what's typed, no address box yet: it pops up for a new customer
+  const typingSaved = ndIsNew(L) && !L.address.trim() && !L.edit && !L.bad && ndMatches(L.name).length > 0;
+  const showBox = !showLine && !typingSaved && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
   const was = [line.hidden, box.hidden, diff.hidden, $(`#nd-${k}-nc`).hidden].join();
   line.hidden = !showLine;
   if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
   box.hidden = !showBox;
-  if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${L.from === 'saved' ? 'Saved customer' : 'Checked with Google'}`; }
+  if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${esc([L.from === 'saved' ? 'Saved customer' : 'Checked with Google', mapsUsable() ? L.city.trim() : ''].filter(Boolean).join(' · '))}`; }
   else if (L.address.trim() && mapsUsable()) { ok.className = `addr-ok${L.bad ? ' err' : ''}`; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
   else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
   else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
@@ -5407,6 +5410,9 @@ document.addEventListener('focusin', (e) => {
   if (!e.target.matches('input, textarea, select')) return;
   const k = e.target.dataset && e.target.dataset.ndName;
   if (k && ND && ND[k].name && !ND[k].ok) ndSuggest(k);
+  // Tapping an address that's already filled in selects it, so typing replaces it
+  const ak = e.target.dataset && e.target.dataset.ndAddr;
+  if (ak && ND && ND[ak].ok && e.target.value) setTimeout(() => { if (document.activeElement === e.target) e.target.select(); }, 0);
   ndKeyboard();
   // Again once the sheet has finished changing height, so Delivery isn't left under the keyboard
   [30, 320, 650].forEach((ms) => setTimeout(() => { if (document.activeElement === e.target) ndReveal(e.target); }, ms));
