@@ -754,6 +754,19 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-line .i{flex:none;width:14px;height:14px;color:var(--ink-3)}
 .addr-line .link-btn{min-height:36px;padding:0 4px 0 10px;font-size:14px}
 .addr-ok.err{color:var(--danger)}
+/* A name that isn't a saved customer: "New customer +" with a Google address bar under it */
+.nc-row{display:flex;align-items:center;gap:8px;margin:-2px 0 6px;animation:riseIn var(--t) var(--out)}
+.nc-row .grow{flex:1;min-width:0;font-size:12.5px;font-weight:650;color:var(--ink-3);line-height:1.25}
+.nc-row .grow b{color:var(--ink-2)}
+.nc-btn{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 6px 0 11px;border:1px dashed var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink-3);font:inherit;font-size:14px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background var(--t) ease,color var(--t) ease,border-color var(--t) ease,transform var(--t-fast) ease}
+.nc-btn .i{width:16px;height:16px}
+.nc-plus{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface-3);color:var(--ink-3);font-size:19px;font-weight:800;line-height:1}
+.nc-btn.ready{border:1px solid var(--yellow);background:var(--yellow);color:#000;box-shadow:0 4px 12px -5px rgba(255,209,0,.9);animation:pop var(--t-slow) var(--spring)}
+.nc-btn.ready .nc-plus{background:#000;color:var(--yellow)}
+.nc-btn:active{transform:scale(.96)}
+.nc-btn.invalid{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-bg)}
+.addr-box.g .addr-row{grid-template-columns:minmax(0,1fr) var(--ctl)}
+.addr-box.g [data-nd-city]{display:none}
 .addr-diff{display:flex;align-items:center;gap:6px;margin:-2px 0 8px;padding:6px 6px 6px 10px;border-radius:var(--r-sm);background:var(--yellow-soft);font-size:13px;font-weight:650;color:var(--ink)}
 .addr-diff .grow{flex:1;min-width:0}
 .addr-diff button{flex:none;min-width:52px;min-height:38px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
@@ -1440,6 +1453,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
   <symbol id="i-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -3942,6 +3956,7 @@ function openNewDispatch(opts) {
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
       <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden>Add +</button></h3>
       <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nd-${k}-ac" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
+      <div class="nc-row" id="nd-${k}-nc" hidden><span class="grow" id="nd-${k}-nc-t"></span><button class="nc-btn" type="button" id="nd-${k}-nc-btn" data-act="nd-add-customer" data-leg="${k}" aria-disabled="true">${icon('user-plus')}New customer<span class="nc-plus" aria-hidden="true">+</span></button></div>
       <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
       <div class="field addr-box" id="nd-${k}-box" hidden><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
       <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
@@ -4171,6 +4186,14 @@ function ndAddrUi() {
   row.hidden = !ndAddrOpen;
   if (ndAddrOpen) row.innerHTML = ndAddrRow(); else row.innerHTML = '';
 }
+function ndShake(el) {
+  if (!el) return;
+  el.classList.add('invalid');
+  el.classList.remove('shake');
+  void el.offsetWidth; // so the shake plays again on every try
+  el.classList.add('shake');
+  if (el.matches('input')) el.setAttribute('aria-invalid', 'true');
+}
 // Checks the form. Returns the request, or null after the missing boxes shake and turn red.
 function ndValid() {
   const bad = []; // selectors of the boxes to shake
@@ -4179,20 +4202,13 @@ function ndValid() {
     L.bad = false;
     if (!L.name.trim()) bad.push(`#nd-${k}-name`);
     else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
+    else if (ndIsNew(L)) bad.push(`#nd-${k}-nc-btn`); // only saved customers go out: add it first
   });
   if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
   if (ndLater() && !(ND.date && ND.date > todayStr())) { ndX = 'when'; bad.push('[data-x=when]'); }
   if (!bad.length) return ndRecord();
   ndUpdate();
-  bad.forEach((sel) => {
-    const el = $(sel);
-    if (!el) return;
-    el.classList.add('invalid');
-    el.classList.remove('shake');
-    void el.offsetWidth; // so the shake plays again on every try
-    el.classList.add('shake');
-    el.setAttribute('aria-invalid', 'true');
-  });
+  bad.forEach((sel) => ndShake($(sel)));
   if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
   const first = $(bad[0]);
   if (first) {
@@ -4239,7 +4255,7 @@ function ndLegUi(k) {
   if (!line) return false;
   const showLine = !!(L.ok && !L.edit && L.address.trim());
   const showBox = !showLine && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
-  const was = [line.hidden, box.hidden, diff.hidden].join();
+  const was = [line.hidden, box.hidden, diff.hidden, $(`#nd-${k}-nc`).hidden].join();
   line.hidden = !showLine;
   if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
   box.hidden = !showBox;
@@ -4248,7 +4264,22 @@ function ndLegUi(k) {
   else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
   else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
   diff.hidden = customerAction(k) !== 'update' || !!L.keep;
-  return was !== [line.hidden, box.hidden, diff.hidden].join();
+  // City fills in from Google; its box is only for typing when Google isn't there
+  box.classList.toggle('g', mapsUsable());
+  $(`#nd-${k}-address`).placeholder = mapsUsable() ? 'Search Google for the address' : 'Address';
+  const nc = $(`#nd-${k}-nc`);
+  const isNew = ndIsNew(L);
+  nc.hidden = !isNew;
+  if (isNew) {
+    const ready = legAddrReady(L);
+    const btn = $(`#nd-${k}-nc-btn`);
+    btn.classList.toggle('ready', ready);
+    btn.setAttribute('aria-disabled', String(!ready));
+    btn.setAttribute('aria-label', ready ? `Add ${L.name.trim()} as a new customer` : `New customer: pick ${L.name.trim()}’s address from Google first`);
+    if (ready) btn.classList.remove('invalid');
+    $(`#nd-${k}-nc-t`).innerHTML = ready ? '<b>Address found.</b> Save the customer:' : 'Not a saved customer. Find the address below.';
+  }
+  return was !== [line.hidden, box.hidden, diff.hidden, nc.hidden].join();
 }
 // "Saved" when the name is a saved customer, the company when it's one of their contacts, "New" otherwise
 function ndRefreshTags() {
@@ -4259,13 +4290,13 @@ function ndRefreshTags() {
     const L = ND[k];
     const name = lookupKey(L.name);
     if (!tag) return;
-    tag.hidden = !name;
+    tag.hidden = !name || ndIsNew(L); // a new name has the New customer button instead
     const c = S.lookup[name];
     tag.className = `tag${c || L.from === 'company' ? ' saved' : ''}`;
     tag.textContent = c ? 'Saved' : L.from === 'company' ? 'Customer’s contact' : L.addPending ? 'Pick the address' : 'New';
     if (!add) return;
     const act = customerAction(k);
-    add.hidden = act !== 'add';
+    add.hidden = act !== 'add' || ndIsNew(L);
     add.setAttribute('aria-label', `Add ${L.name.trim()} as a new customer now`);
   });
 }
@@ -4283,6 +4314,8 @@ function customerAction(k) {
   if (mapsUsable() && !L.ok) return ''; // only once the new address is picked
   return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
 }
+// Typed a name that isn't a saved customer (or one of a customer's own contacts)
+const ndIsNew = (L) => !!lookupKey(L.name) && !S.lookup[lookupKey(L.name)] && L.from !== 'company';
 // Address good enough to save: picked from Google or the map, or typed when Google isn't available
 const legAddrReady = (L) => !!L.address.trim() && (L.ok || !mapsUsable());
 function saveCustomerNow(k) {
@@ -4307,11 +4340,12 @@ function ndAddCustomer(k) {
   if (!lookupKey(L.name)) return;
   ndHideSuggest(k);
   if (legAddrReady(L)) { saveCustomerNow(k); return; }
-  L.addPending = true;
+  // Not until the address is picked from Google: point at the address bar
   L.edit = true;
+  L.bad = true;
   ndUpdate();
   const a = $(`#nd-${k}-address`);
-  if (a) { a.focus({ preventScroll: true }); ndReveal(a); }
+  if (a) { ndShake(a); a.focus({ preventScroll: true }); ndReveal(a); }
 }
 // Called whenever a leg's address becomes ready (Google, the map or a saved customer)
 function ndAddressReady(k) { if (ND && ND[k] && ND[k].addPending && legAddrReady(ND[k])) saveCustomerNow(k); }
@@ -4362,8 +4396,7 @@ function ndSuggest(k) {
   const q = ND[k].name;
   const found = ndMatches(q);
   ndFound[k] = found;
-  const isNew = !!lookupKey(q) && !S.lookup[lookupKey(q)];
-  if (!found.length && !(isNew && q.trim().length >= 2)) { list.hidden = true; list.innerHTML = ''; return; }
+  if (!found.length) { list.hidden = true; list.innerHTML = ''; return; }
   const hl = (name) => {
     const i = name.toLowerCase().indexOf(q.trim().toLowerCase());
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
@@ -4372,7 +4405,7 @@ function ndSuggest(k) {
     const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
     const where = [c.address, c.city].filter(Boolean).join(', ') || 'No address saved';
     return `<button class="ac-item${i === 0 ? ' on' : ''}${x.src === 'company' ? ' co' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-i="${i}"><b>${hl(x.name)}</b><small>${x.src === 'company' ? `<em>${esc(x.company || 'Customer')}’s contact</em> · ` : ''}${esc(where)}</small></button>`;
-  }).join('') + (isNew ? `<div class="ac-new"><span class="grow">New customer: <b>${esc(q.trim())}</b><small>Added when you send, or now with Add +</small></span><button class="tag-add" type="button" data-act="nd-add-customer" data-leg="${k}" aria-label="Add ${esc(q.trim())} as a new customer">Add +</button></div>` : '');
+  }).join('');
   const was = list.hidden;
   list.hidden = false;
   comboState(k);
