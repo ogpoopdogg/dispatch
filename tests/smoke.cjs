@@ -547,6 +547,19 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForFunction(() => document.getElementById('nd-notes').value === 'Back door ask for Dave');
       assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
       await shot(pg, 'voice');
+      // A name that's not a saved customer never goes in a box (like Route Planner): a message says so instead
+      await pg.click('[data-act=nd-reset]');
+      await pg.waitForTimeout(300);
+      await pg.click('#mic-fab');
+      await pg.evaluate(() => __say('Brandon hospital to', false));
+      await pg.waitForTimeout(200);
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'words that match no one stay out of the box while talking');
+      await pg.evaluate(() => __say('Brandon hospital to AAA Bobcat one box', true));
+      await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
+      await pg.waitForTimeout(300);
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'and after');
+      assert.match(await pg.textContent('.toasts'), /Couldn.t find "Brandon Hospital"/);
+      await shot(pg, 'voice-missing');
       assert.deepStrictEqual(p5.errors, []);
       await pg.close();
     }
