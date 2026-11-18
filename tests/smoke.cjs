@@ -253,6 +253,17 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       // Details: this pickup's messages, and a way to the whole conversation
       await page.click('#queue-list .job[data-id=r1] .route');
       await page.waitForSelector('#sheet .msgs .msg.them');
+      // Keyboard up in the details: the typing bar sits right on top of it, title still in sight
+      await page.focus('#sheet .msgs .msg-form textarea');
+      await page.setViewportSize({ width: 390, height: 500 });
+      await page.waitForTimeout(500);
+      const kbChat = await page.evaluate(() => ({ below: Math.round(innerHeight - document.querySelector('#sheet .msgs .msg-form').getBoundingClientRect().bottom), head: Math.round(document.querySelector('#sheet .sheet-head').getBoundingClientRect().top) }));
+      assert.ok(kbChat.below >= 0 && kbChat.below < 30, `details: typing bar right on top of the keyboard (${kbChat.below}px above it)`);
+      assert.ok(kbChat.head >= 0, 'details: the title stays in sight');
+      await page.evaluate(() => document.activeElement.blur());
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(300);
+      await page.evaluate(() => { kbKnown = 0; try { localStorage.removeItem('ecd_kbh'); } catch (e) { /* */ } }); // not a real keyboard
       await page.click('#sheet .msgs [data-act=open-msgs]');
       await page.waitForSelector('#sheet [data-msgs-view=thread]');
       await page.keyboard.press('Escape');
