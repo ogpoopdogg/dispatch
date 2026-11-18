@@ -806,6 +806,19 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 body.mic-ok .nd-mic-gap{display:block}
 body.mic-ok main.app-main{padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 78px)}
 body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 88px)}
+/* Teach the mic */
+.vl-label{display:block;font-size:12.5px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px}
+.vl .ac-list{position:static;flex-direction:column;max-height:230px;margin-top:4px;box-shadow:none;animation:none}
+.vl-rec{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:8px 14px;border:2px solid #2563eb;border-radius:var(--r-md);background:var(--surface);color:#2563eb;font:inherit;font-size:16px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vl-rec .i{width:28px;height:28px;stroke-width:2.2}
+.vl-rec.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 20% 35%,#7dd3fc,#38bdf8 35%,#2563eb);box-shadow:0 0 0 4px rgba(56,189,248,.28),0 0 24px 4px rgba(56,189,248,.55)}
+.vl-status{margin:8px 0 0;padding:8px 10px;border-radius:var(--r-sm);font-size:14px;font-weight:650;background:var(--surface-2)}
+.vl-status.err{background:var(--danger-bg);color:var(--danger)}
+.vl-status.ok{background:rgba(22,163,74,.12);color:#15803d}
+.vl-known{margin-top:10px}
+.vl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.vl-chip{display:inline-flex;align-items:center;gap:2px;padding:0 2px 0 10px;min-height:34px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;font-weight:650;background:var(--surface-2)}
+.vl-chip button{border:0;background:none;color:var(--ink-2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px}
 /* What the mic is hearing: a strip to the left of the mic */
 .mic-hear{position:fixed;left:12px;right:84px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 16px);z-index:66;min-height:48px;display:flex;align-items:center;padding:6px 12px;border-radius:12px;background:#0b1a33;color:#e0f2fe;font-size:15px;line-height:1.25;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);pointer-events:none;animation:slideUp .18s var(--out)}
 .mic-hear span{opacity:.8;font-weight:600}
@@ -3987,6 +4000,9 @@ function comboState(k) {
 function ndPick(k, i) {
   const x = ndFound[k][i];
   if (!x) return;
+  // The mic put the wrong customer here (or no one): what was said now means this customer, in Route Planner too
+  const heard = ND[k].voiceHeard;
+  if (heard && x.src === 'saved' && x.name !== ND[k].name) voiceTeach([heard], x.name);
   const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
   ND[k] = { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
   if (x.src === 'company') ND[k].company = x.company || '';
@@ -4951,6 +4967,16 @@ function contactsSettings() {
       <button class="btn btn-secondary block" type="button" data-act="edit-drivers">${icon('phone', 'sm')}Edit drivers</button>
     </section>`;
 }
+// The mic: teach it customers it gets wrong (shared with Route Planner's "Teach the mic")
+function micSettings() {
+  if (!voiceCan()) return '';
+  listenVoiceAliases();
+  return `<section class="card">
+      <h2>${icon('mic')}Mic</h2>
+      <p class="card-note">Teach the mic a customer it keeps getting wrong. It's the same list as Route Planner's \u201cTeach the mic\u201d, so teaching one teaches both.</p>
+      <button class="btn btn-secondary block" type="button" data-act="teach-mic">${icon('mic', 'sm')}Teach the mic</button>
+    </section>`;
+}
 // The driver list, in its own sheet so Settings stays short
 function driversEditor() {
   const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(formatPhone(d.phone))}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
@@ -5032,6 +5058,7 @@ function renderSettings() {
   const body = $('#settings-body');
   body.innerHTML = `
     ${contactsSettings()}
+    ${(() => { try { return micSettings(); } catch (e) { return ''; } })()}
     <section class="card">
       <h2>${icon('plus')}New dispatch</h2>
       <p class="card-note">How each new dispatch starts. You can still change it on each one.</p>
@@ -5256,6 +5283,10 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'edit-drivers': openSheet('Drivers', driversEditor()); break;
+    case 'teach-mic': openVoiceLearner(); break;
+    case 'vl-rec': voiceLearnRecord(); break;
+    case 'vl-pick': voiceLearnPick(el.dataset.name); break;
+    case 'vl-forget': voiceForget(el.dataset.heard); break;
     case 'sp-van': spZoomTo(el.dataset.van); break;
     default: break;
   }
@@ -5393,7 +5424,7 @@ let voiceAliases = {}, voiceAliasesOn = false;
 function listenVoiceAliases() {
   if (voiceAliasesOn || !db || !S.user) return;
   voiceAliasesOn = true;
-  db.ref(VOICE_ALIASES_PATH).on('value', (snap) => { voiceAliases = snap.val() || {}; }, () => { voiceAliasesOn = false; });
+  db.ref(VOICE_ALIASES_PATH).on('value', (snap) => { voiceAliases = snap.val() || {}; voiceLearnKnown(); }, () => { voiceAliasesOn = false; });
 }
 function vNorm(t) {
   return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -5469,7 +5500,7 @@ function voiceName(words) {
   const norm = vNorm(said);
   if (!norm) return null;
   const idx = customerIndex();
-  const saved = (name, score) => ({ name, src: 'saved', score });
+  const saved = (name, score) => ({ name, src: 'saved', score, heard: norm });
   if (idx.exact[norm]) return saved(idx.exact[norm], 1.05);
   const alias = voiceAliases[norm];
   if (alias && S.lookup[alias]) return saved(alias, 1.05);
@@ -5481,7 +5512,7 @@ function voiceName(words) {
   if (close.length && close[0].score >= 0.4) return saved(close[0].name, Math.min(0.94, close[0].score));
   if (typed.length) return saved(typed[0].name, 0.5);
   // Not a saved customer: nothing goes in the box (add them as a customer, then the mic finds them)
-  return { name: titleCase(said), src: '', score: 0 };
+  return { name: titleCase(said), src: '', score: 0, heard: norm };
 }
 // Saved customers' names said in full inside the words, in the order said (Route Planner does this too,
 // for names said without a pause)
@@ -5608,6 +5639,7 @@ function micPlace() {
   const hide = !appOn || !voiceCan() || mapOpen || popOpen || (sheetOpen && !nd);
   micBtn.hidden = hide;
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
+  if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
   if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
   micBtn.classList.remove('inline');
   micBtn.style.top = '';
@@ -5712,7 +5744,7 @@ function voiceFill(v, t, alts, final) {
     const r = p[k];
     if (!r || !r.name) return;
     // A box only fills in with a saved customer. Words that match no one stay out of it.
-    if (!r.src) { if (final) v.missing.push(r.name); return; }
+    if (!r.src) { if (final) { v.missing.push(r.name); ND[k].voiceHeard = r.heard || ''; } return; }
     if (vNorm(r.name) === vNorm(v.base[k].name)) return;
     if (r.src === 'saved') {
       const c = S.lookup[r.name] || {};
@@ -5721,6 +5753,8 @@ function voiceFill(v, t, alts, final) {
       const c = r.co;
       ND[k] = { name: c.name, address: c.address || '', city: c.city || '', lat: c.lat, lng: c.lng, ok: !!c.address, from: c.address ? 'company' : '', company: c.company || '' };
     } else ND[k] = Object.assign(blankLeg(), { name: r.name });
+    // What was said for this box: if the dispatcher then picks someone else here, the mic learns it
+    if (final) ND[k].voiceHeard = r.heard || '';
   });
   if (p.items.length) {
     const d = ndDefaults().type;
@@ -5781,6 +5815,111 @@ function voiceType(box) {
       if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
       if (t) put(t);
       box.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+}
+
+/* ---------- Teach the mic (Settings › Mic), like Route Planner's ----------
+   The phone's speech engine can't learn a voice. So: pick the customer, say their name, and every way
+   the phone wrote it down is saved as meaning that customer, in developer/route_planner/voice_aliases,
+   the same list Route Planner uses. Both apps' mics find them from then on. */
+// Heard words can mean this customer: not empty or too long, not just their own name, and never another
+// customer's whole name (that customer would be lost to the mic). Same rule as Route Planner.
+function canTeachVoice(heard, name) {
+  if (!heard || heard.length > 80 || /[.#$[\]/]/.test(heard) || heard === vNorm(name)) return false;
+  const owner = customerIndex().exact[heard];
+  return !owner || owner === name;
+}
+function voiceTeach(heardList, name) {
+  if (!db || !S.lookup[name]) return Promise.resolve(0);
+  const updates = {};
+  heardList.map(vNorm).forEach((h) => { if (canTeachVoice(h, name)) { updates[h] = name; voiceAliases[h] = name; } });
+  const n = Object.keys(updates).length;
+  return n ? db.ref(VOICE_ALIASES_PATH).update(updates).then(() => n) : Promise.resolve(0);
+}
+function voiceForget(heard) {
+  if (!heard || /[.#$[\]/]/.test(heard)) return;
+  delete voiceAliases[heard];
+  db.ref(`${VOICE_ALIASES_PATH}/${heard}`).remove().catch((e) => voiceLearnStatus(`Couldn’t remove it: ${e.message}`, 'err'));
+  voiceLearnKnown();
+}
+let vlRec = null;
+const vlName = () => { const t = ($('#vl-name') && $('#vl-name').value.trim().toLowerCase()) || ''; return Object.keys(S.lookup).find((n) => n.toLowerCase() === t) || ''; };
+function openVoiceLearner() {
+  listenVoiceAliases();
+  openSheet('Teach the mic', `<div class="vl" data-vl>
+      <label class="vl-label" for="vl-name">1 · Customer</label>
+      <div class="field"><input id="vl-name" placeholder="Start typing a customer name" autocomplete="off" autocapitalize="words" enterkeyhint="done"><div class="ac-list" id="vl-ac" role="listbox" hidden></div></div>
+      <label class="vl-label" style="margin-top:12px">2 · Say their name</label>
+      <button class="vl-rec" id="vl-rec" type="button" data-act="vl-rec">${icon('mic')}<span id="vl-rec-t">Tap to record</span></button>
+      <p class="vl-status" id="vl-status" role="status" hidden></p>
+      <div class="vl-known" id="vl-known" hidden></div>
+      <p class="card-note" style="margin-top:10px">Record 2 or 3 times. Everything the phone hears is saved for this customer, here and in Route Planner, so the mic finds them next time.</p>
+    </div>`, (body) => {
+    const input = $('#vl-name', body);
+    input.addEventListener('input', () => { voiceLearnSuggest(); voiceLearnKnown(); voiceLearnStatus(''); });
+    setTimeout(() => input.focus(), 80);
+  });
+}
+function voiceLearnSuggest() {
+  const box = $('#vl-ac');
+  if (!box) return;
+  const q = $('#vl-name').value;
+  const found = vlName() ? [] : ndMatches(q).filter((x) => x.src === 'saved').slice(0, 6);
+  box.hidden = !found.length;
+  box.innerHTML = found.map((x) => { const c = S.lookup[x.name] || {}; return `<button class="ac-item" type="button" data-act="vl-pick" data-name="${esc(x.name)}"><b>${esc(x.name)}</b><small>${esc([c.address, c.city].filter(Boolean).join(', ') || 'No address saved')}</small></button>`; }).join('');
+}
+function voiceLearnPick(name) {
+  $('#vl-name').value = name;
+  $('#vl-ac').hidden = true;
+  $('#vl-name').blur();
+  voiceLearnStatus('');
+  voiceLearnKnown();
+}
+// What the mic already knows for this customer, each with ✕ to forget it
+function voiceLearnKnown() {
+  const box = $('#vl-known');
+  if (!box) return;
+  const name = vlName();
+  const heard = name ? Object.keys(voiceAliases).filter((k) => voiceAliases[k] === name) : [];
+  box.hidden = !heard.length;
+  box.innerHTML = heard.length ? `<div class="vl-label">Already taught</div><div class="vl-chips">${heard.map((k) => `<span class="vl-chip">${esc(k)}<button type="button" data-act="vl-forget" data-heard="${esc(k)}" aria-label="Forget ${esc(k)}">✕</button></span>`).join('')}</div>` : '';
+}
+function voiceLearnStatus(text, kind) {
+  const el = $('#vl-status');
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text || '';
+  el.className = `vl-status${kind ? ` ${kind}` : ''}`;
+}
+function voiceLearnRecord() {
+  if (vlRec) { vlRec.stop(); return; }
+  const typed = $('#vl-name').value.trim();
+  const name = vlName();
+  if (!name) { voiceLearnStatus(typed ? `"${typed}" isn’t in the customers. Pick one from the list.` : 'Pick a customer first.', 'err'); return; }
+  const btn = $('#vl-rec'), label = $('#vl-rec-t');
+  btn.classList.add('on');
+  label.textContent = 'Listening… tap to stop';
+  voiceLearnStatus('');
+  vlRec = voiceListen({
+    text: (t) => { label.textContent = `Hearing: ${t}`; },
+    end: (t, err, alts) => {
+      vlRec = null;
+      if (!btn.isConnected) return;
+      btn.classList.remove('on');
+      label.textContent = 'Tap to record';
+      if (err === 'denied') { voiceLearnStatus('The microphone is blocked. Allow it in the phone’s settings for this app.', 'err'); return; }
+      const heard = Array.from(new Set([t].concat(alts || []).map(vNorm).filter(Boolean)));
+      if (!heard.length) { voiceLearnStatus('Didn’t hear anything. Tap the mic and try again.', 'err'); return; }
+      const ok = heard.filter((x) => canTeachVoice(x, name));
+      if (!ok.length) {
+        const other = heard.map((x) => customerIndex().exact[x]).find((n) => n && n !== name);
+        voiceLearnStatus(other ? `The phone heard "${other}", another customer, so nothing was taught. Try saying it again.` : `Saved. The phone already hears "${name}" right.`, other ? 'err' : 'ok');
+        return;
+      }
+      voiceTeach(ok, name)
+        .then(() => { voiceLearnStatus(`Saved. Saying "${name}" with the mic should now find them.`, 'ok'); voiceLearnKnown(); })
+        .catch((e) => voiceLearnStatus(`Couldn’t save: ${e.message}`, 'err'));
     }
   });
 }

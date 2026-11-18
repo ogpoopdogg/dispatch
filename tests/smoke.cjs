@@ -560,6 +560,31 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'and after');
       assert.match(await pg.textContent('.toasts'), /Couldn.t find "Brandon Hospital"/);
       await shot(pg, 'voice-missing');
+      // Picking the right customer after the mic missed teaches it (shared with Route Planner)
+      await pg.fill('#nd-pickup-name', 'Acme');
+      await pg.click('.ac-item:has-text("Acme Supply")');
+      await pg.waitForFunction(() => (window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['brandon hospital'] === 'Acme Supply');
+      assert.strictEqual(await said('Brandon hospital to AAA Bobcat'), 'Acme Supply|AAA Bobcat|||', 'the mic now finds them');
+      await pg.keyboard.press('Escape');
+      await pg.waitForFunction(() => !document.getElementById('view-app').inert);
+      // Teach the mic (Settings › Mic): pick a customer, say the name, it's saved for both apps; ✕ forgets
+      await pg.click('#set-btn');
+      await pg.click('[data-act=teach-mic]');
+      await pg.fill('#vl-name', 'Virden');
+      await pg.click('#vl-ac .ac-item:has-text("Virden Pinnacle")');
+      await pg.click('#vl-rec');
+      await pg.evaluate(() => __say('burden pinnacle', true));
+      await pg.waitForFunction(() => (window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['burden pinnacle'] === 'Virden Pinnacle');
+      await pg.waitForSelector('#vl-known .vl-chip:has-text("burden pinnacle")');
+      assert.match(await pg.textContent('#vl-status'), /Saved/);
+      await pg.evaluate(() => { document.querySelector('.toasts').innerHTML = ''; }); // the earlier message, out of the picture
+      await shot(pg, 'voice-teach');
+      await pg.click('[data-act=vl-forget][data-heard="burden pinnacle"]');
+      await pg.waitForFunction(() => !(window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['burden pinnacle']);
+      // Another customer's own name is never taught
+      await pg.click('#vl-rec');
+      await pg.evaluate(() => __say('AAA Bobcat', true));
+      await pg.waitForFunction(() => /another customer/.test(document.getElementById('vl-status').textContent));
       assert.deepStrictEqual(p5.errors, []);
       await pg.close();
     }
