@@ -4268,7 +4268,8 @@ function ndLegUi(k) {
   box.classList.toggle('g', mapsUsable());
   $(`#nd-${k}-address`).placeholder = mapsUsable() ? 'Search Google for the address' : 'Address';
   const nc = $(`#nd-${k}-nc`);
-  const isNew = ndIsNew(L);
+  // Only once no saved customer matches what's typed, so typing a saved name doesn't make the form jump
+  const isNew = ndIsNew(L) && !ndMatches(L.name).length;
   nc.hidden = !isNew;
   if (isNew) {
     const ready = legAddrReady(L);
@@ -5201,7 +5202,13 @@ function ndScrollTo(body, y) {
 // the address boxes, or the whole open extra (pieces with their Done button, note, PO), or the driver's text.
 function ndKbGroup(a) {
   if (!a || !a.closest) return null;
-  if (a.dataset && a.dataset.ndName) return a.closest('.field');
+  if (a.dataset && a.dataset.ndName) {
+    // A new customer: the New customer button and the address bar come up above the keyboard with the name
+    const leg = a.closest('.nd-leg');
+    const nc = leg && $('.nc-row', leg);
+    if (nc && !nc.hidden) return [$('.addr-box', leg), $('.addr-line', leg)].find((x) => x && !x.hidden) || nc;
+    return a.closest('.field');
+  }
   if (a.dataset && (a.dataset.ndAddr || a.dataset.ndCity)) return a.closest('.addr-box');
   return a.closest('.nd-x') || a.closest('.nd-text-box') || a.closest('.field');
 }

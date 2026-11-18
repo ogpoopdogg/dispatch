@@ -500,9 +500,16 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const bottom = (sel) => pg.evaluate((q) => Math.round(document.querySelector(q).getBoundingClientRect().bottom), sel);
       const p0 = await bottom('#nd-pickup-name');
       assert.ok(p0 <= 500 && p0 >= 470, `Pickup sits right on the keyboard (${p0})`);
-      await pg.type('#nd-pickup-name', 'Ne');
+      await pg.type('#nd-pickup-name', 'Ac');
       await pg.waitForTimeout(600);
-      assert.ok(Math.abs(await bottom('#nd-pickup-name') - p0) <= 2, "typing a new name doesn't move the box");
+      assert.ok(Math.abs(await bottom('#nd-pickup-name') - p0) <= 2, "typing a saved name doesn't move the box");
+      // A name nobody has: the New customer button and the address bar come up above the keyboard too
+      await pg.fill('#nd-pickup-name', 'Westman Tire');
+      await pg.waitForTimeout(900);
+      await shot(pg, 'new-customer-keyboard');
+      const nb = await bottom('#nd-pickup-nc-btn'), ab = await bottom('#nd-pickup-address');
+      assert.ok(nb <= 500 && ab <= 500, `New customer (${nb}) and the address bar (${ab}) are above the keyboard`);
+      assert.ok(await bottom('#nd-pickup-name') < ab, 'the name box sits above them');
       await pg.fill('#nd-pickup-name', 'Acme');
       await pg.click('.ac-item:has-text("Acme Supply")');
       await pg.waitForTimeout(900);
