@@ -427,7 +427,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
         sp.at = { lat: 49.85, lng: -99.0 };
         sp.vans.g2 = { name: 'Van 2', color: '#2f9e44', lastLocation: { lat: 49.85, lng: -99.1 } }; // ~7 km
         sp.vans.g3 = { name: 'Van 3', color: '#ae3ec9', lastLocation: { lat: 49.85, lng: -99.5 } }; // ~36 km
-        sp.claims.g2 = { name: 'Bob', nickname: 'Bob', vehicleName: 'Van 2' };
+        sp.claims.g2 = { name: 'Bob', nickname: 'Bob', vehicleName: 'Sprinter 12 Hi' };
         sp.claims.g3 = { name: 'Ann', nickname: 'Ann', vehicleName: 'Van 3' };
         sp.order = '';
         spRender();
@@ -437,6 +437,15 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.deepStrictEqual(order.slice(3, 5).sort(), ['Jen', 'Sara'], 'vans with no GPS next');
       assert.ok(order.indexOf('Tom') > 4, 'drivers with no van after every van');
       await shot(pg, 'send-closest-first');
+      // Every letter fits inside each driver button (text shrinks only as needed); the distance is one line
+      const fit = await pg.evaluate(() => [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].flatMap((b) =>
+        [b.querySelector('.drv-name > span'), b.querySelector('.grow > small'), b.querySelector('.drv-d')].filter(Boolean)
+          .filter((el) => el.scrollWidth > el.clientWidth + 0.5).map((el) => el.textContent)));
+      assert.deepStrictEqual(fit, [], 'no cut-off text in driver buttons');
+      const bob = await pg.evaluate(() => { const b = document.querySelector('#nd-pop-list [data-hold-driver]'); return { km: b.querySelector('.drv-km').innerText.trim(), van: parseFloat(b.querySelector('.grow > small').style.fontSize) || 0, name: b.querySelector('.drv-name > span').style.fontSize }; });
+      assert.ok(/^CLOSEST\s+7\.2 km$/i.test(bob.km), `one line of km, no drive time: ${JSON.stringify(bob.km)}`);
+      assert.ok(bob.van >= 10 && bob.van < 13, `long van name shrinks to fit (${bob.van}px)`);
+      assert.strictEqual(bob.name, '', 'a short name keeps its full size');
       assert.ok(await pg.locator('#nd-pop-list [data-hold-driver]').first().evaluate((b) => b.classList.contains('best') && /Closest/.test(b.textContent)), 'the first button wears the Closest tag');
       // A job scheduled for later: its time is not coloured green or red
       assert.ok(await pg.evaluate(() => { const h = jobCard('r3', S.pending.r3); return /class="job-age" data-noage/.test(h); }), 'no red/green time on a scheduled job');
