@@ -264,24 +264,27 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(await page.evaluate(() => document.getElementById('view-app').inert), 'page behind the sheet is inert');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert);
-    // 1.4 + Add +: a new customer can be added from the form
+    // New customer: a name that isn't saved shows "New customer +" and an address bar; it only saves once the address is ready
     await page.click('[data-act=new-dispatch]');
     await page.waitForSelector('#nd-pickup-name');
     await page.fill('#nd-pickup-name', 'Westman Tire');
-    await page.waitForSelector('.ac-new .tag-add');
-    assert.ok(await page.isVisible('#nd-pickup-add'), 'Add + shows next to New customer');
-    assert.strictEqual(await page.getAttribute('#nd-pickup-name', 'aria-expanded'), 'true', 'combobox says the list is open');
+    await page.waitForSelector('#nd-pickup-nc:not([hidden])');
+    assert.ok(await page.isVisible('#nd-pickup-address'), 'an address bar opens under the name');
+    assert.strictEqual(await page.getAttribute('#nd-pickup-nc-btn', 'aria-disabled'), 'true', 'New customer waits for the address');
+    assert.strictEqual(await page.locator('.ac-new').count(), 0, 'no New customer row in the suggestions');
     await page.waitForTimeout(900); // the form slides up once the (absent) keyboard times out
     await shot(page, 'new-customer');
-    await page.click('#nd-pickup-add');
-    assert.strictEqual(await page.textContent('#nd-pickup-tag'), 'Pick the address');
-    assert.strictEqual(await page.evaluate(() => document.activeElement.id), 'nd-pickup-address', 'Add + moves on to the address');
+    await page.click('#nd-pickup-nc-btn', { force: true });
+    assert.strictEqual(await page.evaluate(() => document.activeElement.id), 'nd-pickup-address', 'New customer points at the address first');
+    assert.ok(!(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire'))), 'nothing saved without an address');
     await page.fill('#nd-pickup-address', '200 18th St');
     await page.fill('#nd-pickup-city', 'Brandon');
-    await page.click('#nd-delivery-name');
+    await page.waitForSelector('#nd-pickup-nc-btn.ready');
+    await page.click('#nd-pickup-nc-btn');
     await page.waitForFunction(() => window.__fakeDb.get('address_lookup/Westman Tire'));
     assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire').address), '200 18th St');
     assert.strictEqual(await page.textContent('#nd-pickup-tag'), 'Saved');
+    assert.ok(await page.isHidden('#nd-pickup-nc'), 'New customer goes away once saved');
     // A saved customer's address is one grey line; Change + a new address asks "Save this one?"
     await page.fill('#nd-delivery-name', 'Acme');
     await page.click('.ac-item:has-text("Acme Supply")');
