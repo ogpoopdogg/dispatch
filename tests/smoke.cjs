@@ -498,6 +498,64 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.deepStrictEqual(p3.errors, []);
       await pg.close();
     }
+    // Live GPS check: driver buttons stay locked under a spinner until fresh spots come back,
+    // then a van whose spot is old shows its age; if the GPS never answers they open with a warning
+    {
+      const data4 = JSON.parse(JSON.stringify(DATA));
+      data4.dispatch_contacts.drivers = { d1: { name: 'Mike', phone: '2045550101' }, d2: { name: 'Sara', phone: '2045550102' }, d3: { name: 'Tom', phone: '2045550103' } };
+      const t = Date.now();
+      data4.developer = { dispatch_dashboard: {
+        drivers: { g1: { name: 'Van 1', color: '#e8590c', lastLocation: { lat: 49.85, lng: -99.95, updatedAt: t - 20000 } },
+          g2: { name: 'Van 2', color: '#2f9e44', lastLocation: { lat: 49.86, lng: -99.9, updatedAt: t - 25 * 60000 } } },
+        driver_nicknames: { g1: 'Mike', g2: 'Sara' } } };
+      const p4 = await open(browser, base, { user: STAFF, data: data4 });
+      const pg = p4.page;
+      let answer = { status: 200, contentType: 'application/json', body: '{"paj":"polled","fleethunt":"recent"}' };
+      let delay = 1500, polls = 0;
+      await pg.route(/cloudfunctions\.net\/pollNow/, async (r) => { polls++; await new Promise((ok) => setTimeout(ok, delay)); r.fulfill(answer).catch(() => {}); });
+      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.evaluate(() => { window.__sent = []; const real = window.sendToDriver; window.sendToDriver = (id, did) => { window.__sent.push(did); }; });
+      await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
+      await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
+      assert.ok(await pg.evaluate(() => document.querySelector('.sp-card').classList.contains('gps-wait')), 'buttons locked while GPS loads');
+      assert.match(await pg.textContent('#sp-gps'), /Getting live GPS/);
+      await shot(pg, 'send-gps-wait');
+      // Holding a driver while it loads sends nothing and says why
+      const btn = pg.locator('#nd-pop-list [data-hold-driver]').first();
+      const bb = await btn.boundingBox();
+      await pg.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
+      await pg.mouse.down();
+      await pg.waitForTimeout(800);
+      await pg.mouse.up();
+      await pg.waitForSelector('.toast:has-text("Getting live GPS first")');
+      assert.ok(!(await btn.evaluate((b) => b.classList.contains('holding') || b.classList.contains('held'))), 'no hold ring while locked');
+      // GPS answers: unlocked, a green "Live GPS" note with how long it took
+      await pg.waitForFunction(() => !document.querySelector('.sp-card').classList.contains('gps-wait'), null, { timeout: 5000 });
+      assert.match(await pg.textContent('#sp-gps'), /Live GPS\s*\d+\.\d s/);
+      const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name > span').textContent === nm); return { t: b.querySelector('small').textContent, old: b.classList.contains('gps-old') }; }, n);
+      assert.deepStrictEqual(await sub('Mike'), { t: 'Van 1', old: false }, 'a fresh spot shows no age');
+      assert.deepStrictEqual(await sub('Sara'), { t: 'Van 2 · 25 min old', old: true }, 'an old spot shows its age');
+      await shot(pg, 'send-gps-live');
+      // After loading, a hold sends
+      await pg.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
+      await pg.mouse.down();
+      await pg.waitForTimeout(900);
+      await pg.mouse.up();
+      await pg.waitForFunction(() => window.__sent.length === 1 && document.getElementById('nd-pop').hidden, null, { timeout: 3000 });
+      assert.deepStrictEqual(await pg.evaluate(() => window.__sent), ['d1'], 'the held driver got the text');
+      // GPS fails: the buttons open with a warning and every van's spot age
+      answer = { status: 500, body: 'no' }; delay = 300;
+      await pg.waitForTimeout(300);
+      await pg.click('#queue-list .job[data-id=r1] [data-act=pick-driver]').catch(() => pg.click('#queue-list .job [data-act=pick-driver]'));
+      await pg.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
+      await pg.waitForFunction(() => !document.querySelector('.sp-card').classList.contains('gps-wait'), null, { timeout: 5000 });
+      assert.match(await pg.textContent('#sp-gps'), /No live GPS/);
+      assert.match((await sub('Mike')).t, /^Van 1 · (just now|\d min old)$/, 'with no live GPS every van shows its age');
+      await shot(pg, 'send-gps-failed');
+      assert.ok(polls >= 2, 'asked for GPS each time the panel opened');
+      assert.deepStrictEqual(p4.errors, []);
+      await pg.close();
+    }
     // Keyboard up (the window shrinks): Pickup's name box and then Delivery's sit in the same spot right on it,
     // typing a new name doesn't move it, and the pieces' Done button stays above the keyboard
     {
