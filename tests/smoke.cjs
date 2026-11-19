@@ -511,8 +511,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const p4 = await open(browser, base, { user: STAFF, data: data4 });
       const pg = p4.page;
       let answer = { status: 200, contentType: 'application/json', body: '{"paj":"polled","fleethunt":"recent"}' };
-      let delay = 1500, polls = 0;
-      await pg.route(/cloudfunctions\.net\/pollNow/, async (r) => { polls++; await new Promise((ok) => setTimeout(ok, delay)); r.fulfill(answer).catch(() => {}); });
+      // The GPS answer is held back until the test lets it go (so a slow machine can't race it)
+      let polls = 0, release = null;
+      let gate = new Promise((ok) => { release = ok; });
+      await pg.route(/cloudfunctions\.net\/pollNow/, async (r) => { polls++; await gate; r.fulfill(answer).catch(() => {}); });
       await pg.waitForSelector('#view-app:not([hidden]) .job');
       await pg.evaluate(() => { window.__sent = []; const real = window.sendToDriver; window.sendToDriver = (id, did) => { window.__sent.push(did); }; });
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
@@ -521,6 +523,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await pg.textContent('#sp-gps'), /Getting live GPS/);
       await shot(pg, 'send-gps-wait');
       // Holding a driver while it loads sends nothing and says why
+      await pg.waitForTimeout(400); // the panel finishes sliding up
       const btn = pg.locator('#nd-pop-list [data-hold-driver]').first();
       const bb = await btn.boundingBox();
       await pg.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
@@ -529,6 +532,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.mouse.up();
       await pg.waitForSelector('.toast:has-text("Getting live GPS first")');
       assert.ok(!(await btn.evaluate((b) => b.classList.contains('holding') || b.classList.contains('held'))), 'no hold ring while locked');
+      assert.deepStrictEqual(await pg.evaluate(() => window.__sent), [], 'nothing sent while locked');
+      release();
       // GPS answers: unlocked, a green "Live GPS" note with how long it took
       await pg.waitForFunction(() => !document.querySelector('.sp-card').classList.contains('gps-wait'), null, { timeout: 5000 });
       assert.match(await pg.textContent('#sp-gps'), /Live GPS\s*\d+\.\d s/);
@@ -544,7 +549,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForFunction(() => window.__sent.length === 1 && document.getElementById('nd-pop').hidden, null, { timeout: 3000 });
       assert.deepStrictEqual(await pg.evaluate(() => window.__sent), ['d1'], 'the held driver got the text');
       // GPS fails: the buttons open with a warning and every van's spot age
-      answer = { status: 500, body: 'no' }; delay = 300;
+      answer = { status: 500, body: 'no' };
       await pg.waitForTimeout(300);
       await pg.click('#queue-list .job[data-id=r1] [data-act=pick-driver]').catch(() => pg.click('#queue-list .job [data-act=pick-driver]'));
       await pg.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
