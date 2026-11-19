@@ -432,6 +432,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 [data-msgs-view=thread] .msg-list{flex:1 0 auto;display:flex;flex-direction:column;justify-content:flex-end}
 .msg-compose{position:sticky;bottom:-14px;margin:6px -12px -14px;padding:7px 12px 12px;border-top:1px solid var(--line);background:var(--surface)}
 .msg-compose .quick{margin:0 -12px 7px;padding:0 12px}
+/* Writing a message with the keyboard up: the sheet fills the space above the keyboard (title still in sight)
+   and the typing bar sits right on top of the keyboard, with the newest messages just above it */
+body.kb-chat #sheet .sheet{height:calc(100vh - var(--kb,0px) - var(--safe-t) - 8px);height:calc(100dvh - var(--kb,0px) - var(--safe-t) - 8px);max-height:none}
+body.kb-chat #sheet .sheet-body{flex:1 1 auto;min-height:0}
+body.kb-chat #sheet .msgs .msg-form{position:sticky;bottom:-14px;z-index:3;margin:0 -12px -14px;padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--line)}
+body.kb-chat #sheet .pin-bottom,body.kb-chat #sheet .remove-far{display:none}
 .msg-search{margin-bottom:8px}
 .msg-co-top .needs{height:19px;padding:0 5px;font-size:11px;flex:none}
 .notice-err{color:var(--danger);font-size:13.5px;margin:0 0 10px}
@@ -5309,6 +5315,33 @@ function ndKeyboard() {
 }
 window.addEventListener('resize', ndKeyboard);
 if (window.visualViewport) visualViewport.addEventListener('resize', ndKeyboard);
+// Writing a message (a customer's conversation or a pickup's details) with the keyboard up: the typing bar
+// sits right on top of the keyboard and the newest message just above it, like a texting app
+let chatUp = false;
+let chatH = 0;
+function chatKeyboard() {
+  const a = document.activeElement;
+  const vv = window.visualViewport;
+  const chat = !!(a && a.matches && a.matches('#sheet form[data-msg-form] textarea'));
+  const covered = vv ? window.innerHeight - vv.height - vv.offsetTop : 0; // keyboard drawn over the page
+  fullH = Math.max(fullH, window.innerHeight);
+  const up = chat && (fullH - window.innerHeight > 120 || covered > 80);
+  document.body.classList.toggle('kb-chat', up);
+  const h = vv ? vv.height : window.innerHeight;
+  if (up && (!chatUp || Math.abs(h - chatH) > 1)) requestAnimationFrame(() => chatToEnd(a)); // opened, or still sliding up
+  chatUp = up;
+  chatH = h;
+}
+function chatToEnd(a) {
+  const b = $('#sheet-body');
+  if (!b || !chatUp || document.activeElement !== a) return;
+  if (a.closest('[data-msgs-view=thread]')) msgScrollEnd();
+  else b.scrollTop = b.scrollHeight;
+}
+window.addEventListener('resize', chatKeyboard);
+if (window.visualViewport) visualViewport.addEventListener('resize', chatKeyboard);
+document.addEventListener('focusin', () => setTimeout(chatKeyboard, 0));
+document.addEventListener('focusout', () => setTimeout(chatKeyboard, 50));
 // The keyboard often lands while the form is still growing: once the height has settled, the box
 // being typed in (the weight with its Done button, a name, …) is put right on the keyboard again
 document.addEventListener('transitionend', (e) => {
