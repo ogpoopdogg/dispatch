@@ -6123,12 +6123,8 @@ function micListening(on) {
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
-function micSay(text, hint) {
-  micHear.hidden = false;
-  micHear.classList.toggle('heard', !!text);
-  micHear.innerHTML = text ? `<b>${esc(text)}</b>` : `<span>${esc(hint || 'Listening…')}</span>`;
-  micPlace();
-}
+// No words beside the mic (Justin's wish): the glowing mic shows it's listening, and the form fills in when you stop
+function micSay() { micHear.hidden = true; }
 // Where the mic sits: above + Dispatch; on the form, just above its Send bar (or at the end of the box
 // being typed in while the keyboard is up). Hidden under other pop-ups.
 function micPlace() {
@@ -6216,7 +6212,8 @@ function voiceForm(startLeg) {
   // The form opened by the mic has no box to type in: don't leave a focus ring on ✕
   setTimeout(() => { const f = document.activeElement; if (voice === v && f && f.matches && f.matches('[data-act=sheet-close]')) f.blur(); }, 120);
   v.ctl = voiceListen({
-    text: (t, alts) => { if (voice !== v) return; micSay(t); voiceFill(v, t, alts, false); },
+    // While talking, the words only show in the strip. The form fills in all at once when you stop, ready to check and fix.
+    text: (t) => { if (voice !== v) return; micSay(t); },
     end: (t, err, alts) => {
       if (voice !== v) return;
       voice = null;
