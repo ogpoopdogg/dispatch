@@ -1439,6 +1439,21 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick.drv{gap:6px;padding-left:6px;padding-right:7px}
 .pick.drv .avatar{width:30px;height:30px;font-size:12px}
 .drv-list.roomy .pick.drv .avatar{width:36px;height:36px;font-size:14px}
+
+/* Same trip twice (Send panel) */
+.sp-dup{display:flex;align-items:flex-start;gap:6px;margin:0 0 8px;padding:7px 10px;border-radius:var(--r-sm);background:#fff1f0;border:1px solid #f3b4ae;color:#9b1c13;font-size:13px;font-weight:650;line-height:1.3}
+.sp-dup .i{flex:none;margin-top:1px}
+.sp-dup[hidden]{display:none}
+/* Driver not clocked in (Timeclock): greyer than "no van" */
+.pick.drv.offclock{opacity:.42;filter:grayscale(1)}
+/* The driver said to the mic: first, with a blue ring */
+.pick.drv.said{opacity:1;filter:none;border:2px solid var(--blue,#1f6feb);box-shadow:0 0 0 3px rgba(31,111,235,.16)}
+.drv-tag.said-tag{background:var(--blue,#1f6feb)}
+/* Closing soon chip */
+.chip.closing-chip{font-weight:800}
+/* Day summary: four periods in one row */
+.board-days span{font-size:13px;padding:2px 4px}
+.board-total small{font-size:12px;color:var(--ink-3)}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -1612,6 +1627,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
   <div class="sp-scrim" data-act="nd-pop-close"></div>
   <div class="sp-card" role="dialog" aria-modal="true" aria-labelledby="sp-title">
     <div class="sp-head"><div class="sp-titles"><b id="sp-title">Send</b><span class="sp-to" id="sp-to"></span></div><button class="icon-btn" type="button" data-act="nd-pop-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <p class="sp-dup" id="sp-dup" role="alert" hidden></p>
     <label class="sp-text"><span class="sp-text-head"><span>Driver gets</span><small id="sp-count"></small></span><textarea id="sp-textarea" rows="2" spellcheck="true" enterkeyhint="done" aria-label="Text the driver gets. Change it here if needed."></textarea></label>
     <div class="sp-map"><div class="sp-canvas" id="sp-canvas"></div><p class="sp-msg" id="sp-msg" hidden></p><button class="sp-full" type="button" data-act="sp-full" aria-pressed="false" aria-label="Make the map full screen"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg><span>Full map</span></button><div class="sp-where" id="sp-where" hidden aria-live="polite"></div><div class="sp-fvans" id="sp-fvans" role="group" aria-label="Drivers on the map"></div></div>
     <div class="sp-drivers" id="nd-pop-list"></div>
@@ -1840,6 +1856,9 @@ function dispatchText(r, with_) {
   const head = `${legName(r, 'pickup', with_)} for ${legName(r, 'delivery', with_)}`;
   const hide = r.text_hide || {}; // fields a dispatcher left out of a dispatch they made
   const details = [
+    // Pickup hours the customer gave, so the driver doesn't show up too early or too late
+    r.ready_after && fmtHM(r.ready_after) ? `Ready ${fmtHM(r.ready_after)}` : '',
+    r.closes_at && fmtHM(r.closes_at) ? `Closes ${fmtHM(r.closes_at)}` : '',
     r.items_text,
     r.item_details,
     hide.payment ? '' : r.payment === 'collect' ? 'Collect' : 'Prepaid',
@@ -2634,6 +2653,8 @@ function startListening() {
   // Who has which van today, from Timeclock: GPS vans and vans with no GPS yet (timeclock/vans, ids start with van_)
   listen(db.ref('timeclock/vehicle_claims'), (snap) => { sp.claims = snap.val() || {}; sp.claimsOk = true; spRender(); }, () => { sp.claimsOk = false; });
   listen(db.ref('timeclock/vans'), (snap) => { sp.tcVans = snap.val() || {}; spRender(); }, () => {});
+  // Who's on the clock: each Timeclock employee's newest shift (still open = clocked in)
+  listen(db.ref('timeclock/employees'), (snap) => { clockEmployees(snap.val() || {}); }, () => { tc.ok = false; });
   setTimeout(() => { loadMaps(); spMapReady(); }, 1200);
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
@@ -2662,6 +2683,7 @@ setInterval(() => {
   if (!S.user || $('#view-app').hidden) return;
   if (S.day !== todayStr()) { startListening(); return; }
   $$('[data-age]').forEach((el) => { el.textContent = ago(Number(el.dataset.age)); });
+  checkClosing();
   $$('[data-age-short]').forEach((el) => {
     el.textContent = shortAgo(Number(el.dataset.ageShort));
     if (el.classList.contains('job-age') && !el.hasAttribute('data-noage')) { const c = ageCls(el.dataset.ageShort); el.classList.toggle('late', c === 'late'); el.classList.toggle('fresh', c === 'fresh'); }
@@ -2723,13 +2745,15 @@ function jobCard(id, r) {
     else if (isFuture(r)) chips.push(`<span class="chip warn">${icon('calendar')}${esc(fmtDay(r.scheduled_for))}</span>`);
     else chips.push(`<span class="chip warn">${icon('calendar')}Today</span>`);
   }
+  const closing = closeState(r);
+  if (closing) chips.push(`<span class="chip bad closing-chip">${icon('alert')}<span>${esc(closeText(r))}</span></span>`);
   if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
   const unread = unreadMsgs(id);
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
-  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
+  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) || closing ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
     <div class="job-top">
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
@@ -3166,7 +3190,7 @@ function pickDriver(id) {
   // From the details sheet: the panel takes the sheet's place (and its Back step)
   const swap = sheetOpen && history.state && history.state.sheet;
   if (sheetOpen) _hideSheet();
-  openSendPanel(`Send #${r.ref_no}`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id, routeLabel(r));
+  openSendPanel(`Send #${r.ref_no}`, r.pickup, (did) => { closePop(); sendToDriver(id, did); }, swap, id, routeLabel(r), r);
 }
 // Texts one driver straight from the app (installed app), or opens a new text to them (browser)
 const sendingIds = new Set(); // jobs whose text is on its way
@@ -3187,8 +3211,11 @@ async function sendToDriver(id, did) {
   if (!r || !d) return;
   const text = textFor(id, r);
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-  if (!SmsSender) { inMessages(); markRequestDispatched(id, r, d.name); return; }
   sendingIds.add(id);
+  // Another dispatcher may have just sent it: the database lets only one phone take the job
+  const claim = await claimJob(id);
+  if (!claim.ok) { sendingIds.delete(id); takenToast(r, claim.now); return; }
+  if (!SmsSender) { sendingIds.delete(id); inMessages(); markRequestDispatched(id, r, d.name); return; }
   const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
   const sms = smsSend(cleanPhone(d.phone), text);
   const saved = markRequestDispatched(id, r, d.name);
@@ -3202,6 +3229,33 @@ async function sendToDriver(id, did) {
       if (again) markRequestDispatched(id, again, d.name);
     } });
   } finally { sendingIds.delete(id); done(); }
+}
+/* Two dispatchers, one job: before a text goes out, this phone takes the job in the database
+   (status "dispatched") in one step that only one phone can win. The loser sends nothing and
+   is told who has it. No answer in 5 s (no signal): go ahead as before, so texting still works offline. */
+const CLAIM_WAIT_MS = 5000;
+async function claimJob(id) {
+  if (!db) return { ok: true };
+  const done = (cur) => cur === 'dispatched' || cur === 'cancelled' || cur === 'removed';
+  const tx = db.ref(`requests/${id}/status`).transaction((cur) => (done(cur) ? undefined : 'dispatched'), undefined, false)
+    .then((res) => ({ ok: !!(res && res.committed) }))
+    .catch(() => ({ ok: true })); // refused or failed: the normal save after the text reports any problem
+  const wait = new Promise((res) => setTimeout(() => res({ ok: true, late: true }), CLAIM_WAIT_MS));
+  const out = await Promise.race([tx, wait]);
+  if (out.ok) return out;
+  let now = null;
+  try { now = (await db.ref(`requests/${id}`).once('value')).val(); } catch (e) { /* the message works without it */ }
+  return { ok: false, now };
+}
+function takenToast(r, now) {
+  const n = now || {};
+  const by = n.dispatched_by_email ? staffName(n.dispatched_by_email) : '';
+  const msg = n.status === 'cancelled' ? `#${r.ref_no} was cancelled by the customer. Nothing was sent.`
+    : n.status === 'removed' ? `#${r.ref_no} was removed from the queue${n.removed_by_email ? ` by ${staffName(n.removed_by_email)}` : ''}. Nothing was sent.`
+      : `#${r.ref_no} was already sent${n.dispatched_to ? ` to ${n.dispatched_to}` : ''}${by ? ` by ${by}` : ''}. Nothing was sent.`;
+  closePop();
+  toast(msg, 'error', 9000);
+  if (navigator.vibrate) { try { navigator.vibrate([80, 60, 80]); } catch (e) { /* ignore */ } }
 }
 // Big green check for about a second, so it's obvious the dispatch worked
 let sentTimer = null;
@@ -3279,6 +3333,7 @@ function openDetails(id, refresh) {
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
     ${kind === 'done' ? `<div class="sheet-actions">
+      <button class="btn btn-primary" type="button" data-act="do-again" data-id="${esc(id)}">${icon('plus', 'sm')}Do again</button>
       <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('send', 'sm')}Send again</button>
       <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
     </div>` : ''}
@@ -3321,6 +3376,52 @@ const fmtHM = (hm) => {
 };
 // Pickup time window from the customer: "Ready 2:00 pm · Closes 4:00 pm"
 const windowText = (r) => [r.ready_after ? `Ready ${fmtHM(r.ready_after)}` : '', r.closes_at ? `Closes ${fmtHM(r.closes_at)}` : ''].filter(Boolean).join(' · ');
+
+/* Closing soon: a waiting job whose pickup closes within 30 minutes today (or already closed)
+   turns red, and the phone chimes once for it. Jobs for a later day don't count yet. */
+const CLOSE_WARN_MIN = 30;
+function closeMs(r) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String((r && r.closes_at) || ''));
+  if (!m) return null;
+  const d = new Date(); d.setHours(+m[1], +m[2], 0, 0);
+  return d.getTime();
+}
+// '' | 'soon' | 'closed'
+function closeState(r) {
+  if (!r || isFuture(r) || ['dispatched', 'cancelled', 'removed'].includes(r.status)) return '';
+  const at = closeMs(r);
+  if (at == null) return '';
+  const min = (at - Date.now()) / 60000;
+  return min <= 0 ? 'closed' : min <= CLOSE_WARN_MIN ? 'soon' : '';
+}
+function closeText(r) {
+  const at = closeMs(r);
+  if (at == null) return '';
+  const min = Math.ceil((at - Date.now()) / 60000);
+  return min <= 0 ? `Closed at ${fmtHM(r.closes_at)}` : `Closes in ${min} min`;
+}
+const closeSeen = {}; // job id -> the state last drawn, so the queue redraws (and chimes) only when it changes
+function checkClosing() {
+  let redraw = false, chime = null;
+  Object.entries(S.pending || {}).forEach(([id, r]) => {
+    const st = closeState(r), was = closeSeen[id] || '';
+    if (st !== was) {
+      if (st && !was) chime = chime || r; // chimes once, when a job first starts closing
+      closeSeen[id] = st;
+      redraw = true;
+    }
+    // The minutes left tick down on the chip
+    const card = $$('.job').find((c) => c.dataset.id === id);
+    const el = card && $('.closing-chip > span', card);
+    if (el && st) el.textContent = closeText(r);
+  });
+  if (redraw) renderQueue();
+  if (chime) {
+    playChime('new');
+    buzz([200, 100, 200]);
+    toast(`#${chime.ref_no} ${closeText(chime).replace(/^C/, 'c')} and isn’t sent yet.`, 'error', 9000);
+  }
+}
 
 /* Messages (messages/): a customer can write from a request in Request Pickup, and dispatch answers
    here, with a quick reply or typed.
@@ -3768,11 +3869,33 @@ async function delQuick(id) {
    ========================================================= */
 let boardDay = 'today';
 let boardView = 'driver';
-function boardRows() {
+const BOARD_DAYS = [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This week'], ['month', 'This month']];
+// Start (and end) of the period: the week starts on Monday
+function boardSpan(key) {
   const t0 = new Date(); t0.setHours(0, 0, 0, 0);
-  const from = boardDay === 'today' ? t0.getTime() : t0.getTime() - 86400000;
-  const to = boardDay === 'today' ? Infinity : t0.getTime();
-  return Object.entries(S.done || {}).filter(([, r]) => (r.dispatched_at || 0) >= from && (r.dispatched_at || 0) < to)
+  if (key === 'yesterday') return { from: t0.getTime() - 86400000, to: t0.getTime() };
+  if (key === 'week') { const d = new Date(t0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return { from: d.getTime(), to: Infinity }; }
+  if (key === 'month') { const d = new Date(t0); d.setDate(1); return { from: d.getTime(), to: Infinity }; }
+  return { from: t0.getTime(), to: Infinity };
+}
+/* Week and month go back further than the Done list keeps, so they're read from the database once
+   (by dispatched_at) when picked, and again after a minute. */
+const boardHist = {}; // key -> { at, items, busy, err }
+function boardLoad(key) {
+  const h = boardHist[key] || (boardHist[key] = { at: 0, items: null, busy: false, err: '' });
+  if (h.busy || (h.items && Date.now() - h.at < 60000) || !db) return;
+  h.busy = true;
+  h.err = '';
+  db.ref('requests').orderByChild('dispatched_at').startAt(boardSpan(key).from).once('value')
+    .then((snap) => { h.items = snap.val() || {}; h.at = Date.now(); })
+    .catch((err) => { h.err = friendlyError(err); })
+    .finally(() => { h.busy = false; const el = $('#board'); if (el && boardDay === key) el.outerHTML = boardHtml(); });
+}
+function boardRows() {
+  const { from, to } = boardSpan(boardDay);
+  const h = boardHist[boardDay];
+  const src = Object.assign({}, h && h.items ? h.items : {}, S.done || {});
+  return Object.entries(src).filter(([, r]) => r && r.status === 'dispatched' && (r.dispatched_at || 0) >= from && (r.dispatched_at || 0) < to)
     .sort((a, b) => (a[1].dispatched_at || 0) - (b[1].dispatched_at || 0));
 }
 const customerOf = (r) => (r.source === 'dispatcher' || r.company_id === 'dispatcher' ? `${oneLine(r.pickup && r.pickup.name) || 'Dispatcher'} (dispatcher job)` : r.company_name || 'Unknown customer');
@@ -3785,15 +3908,21 @@ function boardGroups() {
   return Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 }
 function boardHtml() {
+  const long = boardDay === 'week' || boardDay === 'month';
+  const h = boardHist[boardDay];
+  if (long) boardLoad(boardDay);
   const groups = boardGroups();
   const total = groups.reduce((n, [, l]) => n + l.length, 0);
-  const label = boardDay === 'today' ? 'today' : 'yesterday';
+  const label = { today: 'today', yesterday: 'yesterday', week: 'this week', month: 'this month' }[boardDay];
+  const loading = long && !(h && h.items);
   return `<div class="board" id="board">
-      <div class="seg board-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="board-day" value="today"${boardDay === 'today' ? ' checked' : ''}><span>Today</span></label><label><input type="radio" name="board-day" value="yesterday"${boardDay === 'yesterday' ? ' checked' : ''}><span>Yesterday</span></label></div>
+      <div class="seg board-seg board-days" role="radiogroup" aria-label="Day">${BOARD_DAYS.map(([v, l]) => `<label><input type="radio" name="board-day" value="${v}"${boardDay === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div>
+      ${long && h && h.err ? `<p class="board-total">Couldn’t load ${label}: ${esc(h.err)}</p>` : ''}
+      ${loading && !(h && h.err) ? `<p class="board-total">Loading ${label}…</p>` : ''}
       <div class="seg board-seg" role="radiogroup" aria-label="Group by"><label><input type="radio" name="board-view" value="driver"${boardView === 'driver' ? ' checked' : ''}><span>By driver</span></label><label><input type="radio" name="board-view" value="customer"${boardView === 'customer' ? ' checked' : ''}><span>By customer</span></label></div>
-      <p class="board-total"><b>${total}</b> ${total === 1 ? 'job' : 'jobs'} dispatched ${label}</p>
-      ${groups.length ? groups.map(([k, list]) => `<div class="board-group"><div class="board-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.map(([id, r]) => `<button class="board-row" type="button" data-act="details" data-id="${esc(id)}"><span class="req-no">#${esc(r.ref_no)}</span><span class="grow">${esc(r.pickup && r.pickup.name)} → ${esc(r.delivery && r.delivery.name)}<small>${esc(fmtTime(r.dispatched_at))}${boardView === 'driver' ? ` · ${esc(customerOf(r))}` : r.dispatched_to ? ` · ${esc(r.dispatched_to)}` : ''}</small></span></button>`).join('')}</div>`).join('')
-        : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing dispatched ${label}</h3><p>Jobs show here once they’re sent to a driver.</p></div>`}
+      ${loading ? '' : `<p class="board-total"><b>${total}</b> ${total === 1 ? 'job' : 'jobs'} dispatched ${label}${long ? ` <small>(${esc(boardSpanText())})</small>` : ''}</p>`}
+      ${groups.length ? groups.map(([k, list]) => `<div class="board-group"><div class="board-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.map(([id, r]) => `<button class="board-row" type="button" data-act="details" data-id="${esc(id)}"><span class="req-no">#${esc(r.ref_no)}</span><span class="grow">${esc(r.pickup && r.pickup.name)} → ${esc(r.delivery && r.delivery.name)}<small>${esc(long ? fmtDateTime(r.dispatched_at) : fmtTime(r.dispatched_at))}${boardView === 'driver' ? ` · ${esc(customerOf(r))}` : r.dispatched_to ? ` · ${esc(r.dispatched_to)}` : ''}</small></span></button>`).join('')}</div>`).join('')
+        : loading ? '' : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing dispatched ${label}</h3><p>Jobs show here once they’re sent to a driver.</p></div>`}
       ${total ? `<div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="board-copy">${icon('copy', 'sm')}Copy the counts</button></div>` : ''}
     </div>`;
 }
@@ -3807,11 +3936,18 @@ function openDayBoard() {
     });
   }, true);
 }
+const boardDayFmt = (ts) => new Date(ts).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+// "Mon, Nov 16 to Thu, Nov 19"
+function boardSpanText() {
+  const { from } = boardSpan(boardDay);
+  return `${boardDayFmt(from)} to ${boardDayFmt(Date.now())}`;
+}
 function boardCopy() {
   const day = new Date(); if (boardDay === 'yesterday') day.setDate(day.getDate() - 1);
   const rows = boardRows();
+  const when = boardDay === 'week' || boardDay === 'month' ? `${boardDay === 'week' ? 'this week' : 'this month'}, ${boardSpanText()}, ${day.getFullYear()}` : day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   const count = (keyOf) => { const m = {}; rows.forEach(([, r]) => { const k = keyOf(r); m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}: ${n}`).join('\n'); };
-  const text = `E&C dispatched jobs, ${day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}\nTotal: ${rows.length}\n\nBy driver\n${count((r) => r.dispatched_to || 'No driver named')}\n\nBy customer\n${count(customerOf)}`;
+  const text = `E&C dispatched jobs, ${when}\nTotal: ${rows.length}\n\nBy driver\n${count((r) => r.dispatched_to || 'No driver named')}\n\nBy customer\n${count(customerOf)}`;
   const ok = copySync(text);
   toast(ok ? 'Counts copied. Paste them anywhere.' : 'Couldn’t copy on this phone.', ok ? 'ok' : 'error');
 }
@@ -3987,9 +4123,45 @@ function openNewDispatch(opts) {
     ndFillAll(body);
     ndAttachPlaces();
     ndUpdate(true);
-    if (byVoice) sheetLift(); // the mic is listening: no keyboard, the form comes straight up
+    if (byVoice || (opts && opts.filled)) sheetLift(); // the mic is listening (or Do again filled it): no keyboard, the form comes straight up
     else ndTypeNow();
   }, 'mid');
+}
+/* Do again: a Done job opens New dispatch already filled in (names, pieces, payment, PO, note), ready to
+   check and send. Only saved customers fill in with their address; a name that isn't saved shows the
+   New customer button, the same as when it's typed. */
+function doAgainItems(text) {
+  const d = ndDefaults().type;
+  const items = String(text || '').split(/,\s*/).map((part) => {
+    const m = /^(\d+)\s+(.+?)(?:\s+([\d.]+)\s+lbs?)?(?:\s+\((.+)\))?$/i.exec(part.trim());
+    if (!m) return null;
+    const word = m[2].toLowerCase();
+    const type = ITEM_TYPES.find((x) => x.id !== 'other' && (x.one === word || x.many === word));
+    return { qty: +m[1], type: type ? type.id : 'other', other: type ? '' : m[2], weight: m[3] || '', dims: m[4] || '' };
+  });
+  return items.length && items.every(Boolean) ? items : [{ qty: 1, type: d, other: '', weight: '' }];
+}
+function doAgain(id) {
+  const r = doneReq(id);
+  if (!r) return;
+  const leg = (L) => {
+    const name = String((L && L.name) || '').trim();
+    const key = Object.keys(S.lookup || {}).find((k) => normName(k) === normName(name)) || '';
+    if (!key) return Object.assign(blankLeg(), { name });
+    const c = S.lookup[key] || {};
+    return { name: key, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+  };
+  ND = Object.assign(blankDraft(), {
+    pickup: leg(r.pickup),
+    delivery: leg(r.delivery),
+    items: doAgainItems(r.items_text),
+    payment: r.payment === 'collect' ? 'collect' : 'prepaid',
+    po: String(r.po || ''),
+    notes: String(r.notes || '')
+  });
+  ndAddrPick = null;
+  saveDraft();
+  openNewDispatch({ filled: true });
 }
 function ndFillLeg(k) {
   const L = ND[k];
@@ -4245,12 +4417,13 @@ function ndUpdate(force) {
   ndAddrUi();
   ndTextUi();
   if (moved) ndKeyboard();
-  const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}`;
+  const said = ND.driver && S.contacts.drivers[ND.driver];
+  const mode = `${ndLater() ? 'later' : 'now'}|${ND.date}|${said ? said.name : ''}`;
   if (mode === ndMode && !force) return;
   ndMode = mode;
   $('#nd-main').innerHTML = ndLater()
     ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
-    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver</button></span>`;
+    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}${said ? `Send to ${esc(String(said.name || '').trim().split(/\s+/)[0])}` : 'Send to driver'}</button></span>`;
 }
 /* One leg: a grey line for an address that's known, the address boxes when one is needed
    (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
@@ -4640,7 +4813,7 @@ let popOpen = false;
 function ndPickDriver() {
   const r = ndValid();
   if (!r) return;
-  openSendPanel('Send to driver', ND.pickup, (did) => ndSendDriver(did), false, null, routeLabel(r));
+  openSendPanel('Send to driver', ND.pickup, (did) => ndSendDriver(did), false, null, routeLabel(r), r, ND.driver && S.contacts.drivers[ND.driver] ? ND.driver : null);
 }
 const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
@@ -4667,13 +4840,32 @@ function spTextUi() {
 }
 $('#sp-textarea').addEventListener('input', (e) => { spTextSet(e.target.value); spTextUi(); });
 $('#sp-textarea').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.blur(); } });
-function openSendPanel(title, pickup, onSend, swap, jobId, route) {
+/* Same trip twice: the same pickup and delivery names sent in the last hour (not this job) */
+const SAME_TRIP_MS = 60 * 60000;
+function sameTrip(r, jobId) {
+  if (!r || !r.pickup || !r.delivery) return null;
+  const p = normName(r.pickup.name), d = normName(r.delivery.name);
+  if (!p || !d) return null;
+  const since = Date.now() - SAME_TRIP_MS;
+  let best = null;
+  Object.entries(S.done || {}).forEach(([id, x]) => {
+    if (id === jobId || !x || x.status !== 'dispatched' || !(x.dispatched_at >= since)) return;
+    if (normName(x.pickup && x.pickup.name) !== p || normName(x.delivery && x.delivery.name) !== d) return;
+    if (!best || x.dispatched_at > best.dispatched_at) best = x;
+  });
+  return best ? { r: best, mins: Math.max(0, Math.floor((Date.now() - best.dispatched_at) / 60000)) } : null;
+}
+function openSendPanel(title, pickup, onSend, swap, jobId, route, trip, said) {
   const known = pickup && pickup.lat != null && pickup.lng != null && isFinite(+pickup.lat);
-  Object.assign(sp, { onSend, pickup, jobId: jobId || null, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : geoCached(pickup), fitted: false, order: '', focus: '' });
+  Object.assign(sp, { said: said || null, onSend, pickup, jobId: jobId || null, at: known ? { lat: +pickup.lat, lng: +pickup.lng } : geoCached(pickup), fitted: false, order: '', focus: '' });
   if (sp.pin) sp.pin.setMap(null);
   spMsg('');
   $('#sp-title').textContent = title;
   $('#sp-to').textContent = route || (pickup && pickup.name ? `Pickup: ${pickup.name}` : '');
+  const dup = sameTrip(trip, jobId);
+  const dupEl = $('#sp-dup');
+  dupEl.hidden = !dup;
+  dupEl.innerHTML = dup ? `${icon('alert', 'sm')}<span>Same trip went to <b>${esc(dup.r.dispatched_to || 'the group')}</b> ${esc(dup.mins < 1 ? 'just now' : `${dup.mins} min ago`)} (#${esc(dup.r.ref_no)}). Sending again?</span>` : '';
   spTextUi();
   const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today</small></span><span class="drv-km"></span></button>`).join('');
   $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
@@ -4765,6 +4957,45 @@ function spList() {
   if (at) { if (used[0]) used[0].rank = 1; if (used[1]) used[1].rank = 2; }
   return used.concat(idle);
 }
+/* Clocked in or not, from Timeclock: timeclock/employees/{ek} has the name, and the newest
+   timeclock/shifts/{ek}/{id} with no "out" means they're on the clock (a shift open more than
+   16 hours is a forgotten punch out). A driver matches an employee by full name, or by first name
+   when only one employee and one driver have it. Unknown (no match, or Timeclock can't be read)
+   leaves the driver as before. */
+const tc = { ok: false, emps: {}, open: {}, offs: {} };
+function clockEmployees(emps) {
+  tc.emps = emps;
+  Object.keys(tc.offs).forEach((ek) => { if (!emps[ek]) { tc.offs[ek](); delete tc.offs[ek]; delete tc.open[ek]; } });
+  Object.entries(emps).forEach(([ek, e]) => {
+    if (tc.offs[ek] || !e || e.removed === true) return;
+    const ref = db.ref(`timeclock/shifts/${ek}`).orderByChild('in').limitToLast(1);
+    const on = (snap) => {
+      const last = Object.values(snap.val() || {})[0];
+      tc.open[ek] = !!(last && typeof last.in === 'number' && typeof last.out !== 'number' && Date.now() - last.in < CLAIM_MAX_MS);
+      tc.ok = true;
+      spRender();
+    };
+    ref.on('value', on, () => { delete tc.open[ek]; });
+    tc.offs[ek] = () => ref.off('value', on);
+    S.listeners.push(() => { if (tc.offs[ek]) { tc.offs[ek](); delete tc.offs[ek]; } });
+  });
+  spRender();
+}
+// true = clocked in, false = not clocked in, null = can't tell
+function clockOf(d) {
+  if (!tc.ok) return null;
+  const n = normName(d && d.name);
+  if (!n) return null;
+  const first = n.split(' ')[0];
+  const emps = Object.entries(tc.emps).filter(([ek, e]) => e && e.removed !== true && ek in tc.open);
+  let hit = emps.find(([, e]) => normName(e.name) === n);
+  if (!hit) {
+    const sameFirst = emps.filter(([, e]) => normName(e.name).split(' ')[0] === first);
+    const drvFirst = Object.values(S.contacts.drivers || {}).filter((x) => normName(x && x.name).split(' ')[0] === first).length;
+    if (sameFirst.length === 1 && drvFirst <= 1) hit = sameFirst[0];
+  }
+  return hit ? tc.open[hit[0]] : null;
+}
 // A driver's van today: the vehicle whose Timeclock nickname is the driver's name (or first name)
 const normName = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
 // Every van a driver has picked in Timeclock today, GPS or not: { id, nick, names[], name }
@@ -4810,26 +5041,30 @@ function spDrivers(list) {
   if (!rows.length) return;
   const info = rows.map((b) => {
     const d = S.contacts.drivers[b.dataset.holdDriver] || {};
-    return { b, d, v: vanOf(d, list) };
+    return { b, d, v: vanOf(d, list), off: clockOf(d) === false };
   });
   const ranked = info.filter((x) => x.v && x.v.km != null).sort((a, b) => a.v.km - b.v.km);
   const best = sp.at && ranked[0] ? ranked[0] : null;
-  info.forEach(({ b, d, v }) => {
+  info.forEach(({ b, d, v, off }) => {
+    const said = b.dataset.holdDriver === sp.said;
     b.classList.toggle('novan', !v);
+    b.classList.toggle('offclock', !v && off);
+    b.classList.toggle('said', said);
     b.classList.toggle('best', best && best.b === b);
     if (v && !v.nogps) b.dataset.van = v.id; else delete b.dataset.van;
     if (v && v.nogps) b.dataset.nogps = v.name || 'This van'; else delete b.dataset.nogps;
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
     name.innerHTML = `<span>${esc(d.name || '')}</span>`;
-    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
+    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : off ? 'Not clocked in' : 'No van today';
 
     // "Closest" sits over the distance, so the name and van keep their full width
-    $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : '';
-    b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
+    const tag = said ? '<span class="drv-tag said-tag">You said</span>' : best && best.b === b ? '<span class="drv-tag">Closest</span>' : '';
+    $('.drv-km', b).innerHTML = v && v.km != null ? `${tag}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : said ? tag : '';
+    b.setAttribute('aria-label', `${d.name || ''}${said ? ', the driver you said' : ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : off ? ', not clocked in' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
   // Order: closest first (top left), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
-  const group = (x) => (!x.v ? 2 : x.v.km == null ? 1 : 0);
+  const group = (x) => (x.b.dataset.holdDriver === sp.said ? -1 : !x.v ? (x.off ? 3 : 2) : x.v.km == null ? 1 : 0);
   const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 0 ? a.v.km - b.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
   rows[0].parentNode.classList.toggle('roomy', rows[0].offsetHeight >= 84);
@@ -5707,6 +5942,7 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'recopy': if (sheetOpen) _hideSheet(); recopy(id); break;
+    case 'do-again': doAgain(id); break;
     case 'remove': askRemove(id); break;
     case 'rem-day': {
       const d = +el.dataset.day;
@@ -6056,7 +6292,20 @@ function voiceParse(text, startLeg) {
   // "triple A" -> "AAA", "1,200" -> "1200"
   const raw = String(text || '').replace(/(\d),(\d{3})/g, '$1$2').replace(/\b(triple|double) ([a-z])\b/gi, (m, n, l) => l.repeat(n.toLowerCase() === 'triple' ? 3 : 2)).split(/\s+/).filter(Boolean);
   const ws = raw.map(vWord);
-  const out = { items: [], payment: '', po: '', note: null };
+  const out = { items: [], payment: '', po: '', note: null, driver: null };
+  // "... send to Mike" / "send it to Mike Smith" at the end: the driver (1 to 3 words), taken off before the rest is read
+  for (let i = ws.length - 2; i >= 0; i--) {
+    if (ws[i] !== 'send' && ws[i] !== 'give') continue;
+    let j = i + 1;
+    if (ws[j] === 'it' || ws[j] === 'this' || ws[j] === 'that') j++;
+    if (!V_TO.test(ws[j] || '')) continue;
+    const who = raw.slice(j + 1).map((w) => w.replace(/[,.;:!?]+$/, '')).filter(Boolean);
+    if (!who.length || who.length > 3) continue;
+    out.driver = who;
+    raw.length = i;
+    ws.length = i;
+    break;
+  }
   // Where the names stop: the first count, kind, weight, payment, PO or note
   const isTail = (i) => {
     const w = ws[i];
@@ -6109,6 +6358,22 @@ function voiceParse(text, startLeg) {
   return out;
 }
 // How much of what was heard matched (to pick the best of the phone's guesses)
+// Spoken driver name -> { did, name } of the closest driver in Settings › Drivers, or null (none close, or two equally close)
+function voiceDriver(words) {
+  const said = vNorm((words || []).join(' '));
+  if (!said) return null;
+  const sw = said.split(' ');
+  const one = (a, b) => wordLikeness(a, b, soundKey(a), soundKey(b));
+  const scored = Object.entries(S.contacts.drivers || {}).map(([did, d]) => {
+    const n = vNorm(d && d.name);
+    if (!n) return null;
+    const nw = n.split(' ');
+    const sc = n === said ? 1.1 : sw.length === 1 ? one(sw[0], nw[0]) : sw.reduce((s, w, i) => s + (nw[i] ? one(w, nw[i]) : 0), 0) / Math.max(sw.length, nw.length);
+    return { did, name: d.name, sc };
+  }).filter((x) => x && x.sc >= 0.75).sort((a, b) => b.sc - a.sc);
+  if (!scored.length || (scored[1] && scored[1].sc === scored[0].sc)) return null;
+  return scored[0];
+}
 const voiceScore = (p) => (p.pickup ? p.pickup.score : 0) + (p.delivery ? p.delivery.score : 0) + p.items.length * 0.2;
 
 /* ---------- The mic button ---------- */
@@ -6258,6 +6523,9 @@ function voiceFill(v, t, alts, final) {
   if (p.payment) ND.payment = p.payment;
   if (p.po) ND.po = p.po;
   if (p.note != null && p.note.trim()) ND.notes = (v.base.notes ? v.base.notes.trim() + ' ' : '') + p.note.trim().replace(/^./, (c) => c.toUpperCase());
+  // "... send to Mike": Send to driver opens with Mike first, ready to hold
+  let drvMissing = '';
+  if (final && p.driver) { const dv = voiceDriver(p.driver); if (dv) ND.driver = dv.did; else drvMissing = p.driver.join(' '); }
   // Show what changed
   ndFillAll($('#sheet-body'));
   if (final) ['pickup', 'delivery'].forEach((k) => ndHideSuggest(k));
@@ -6268,7 +6536,9 @@ function voiceFill(v, t, alts, final) {
   if (ND.payment !== was.payment) flash($('[data-act=nd-pay]'));
   if (ND.notes !== was.notes) flash($('[data-act=nd-x][data-x=notes]'));
   if (ND.po !== was.po) flash($('[data-act=nd-x][data-x=po]'));
+  if (ND.driver && ND.driver !== was.driver) flash($('[data-act=nd-pick-driver]'));
   if (!final) return;
+  if (drvMissing) toast(`Couldn’t find a driver called "${drvMissing}". Pick one when you tap Send.`, 'error', 6000);
   // Like Route Planner: a name that matches no saved customer gets a message instead
   if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
 }

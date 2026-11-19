@@ -498,6 +498,80 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.deepStrictEqual(p3.errors, []);
       await pg.close();
     }
+    // Nov 19 batch: pickup hours in the text, closing soon, same trip twice, clocked in, two dispatchers,
+    // This week in the Day summary, Do again, and the mic picking the driver
+    {
+      const d5 = JSON.parse(JSON.stringify(DATA));
+      const hm = (ms) => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+      Object.assign(d5.requests.r1, { ready_after: '09:00', closes_at: hm(now + 20 * 60000) });
+      d5.requests.r5 = { ref_no: 1195, status: 'dispatched', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co' }, items_text: '1 box', payment: 'prepaid', created_at: now - 15 * 60000, dispatched_at: now - 10 * 60000, dispatched_to: 'Sara' };
+      d5.timeclock = {
+        employees: { 'mike@ec,com': { name: 'Mike' }, 'sara@ec,com': { name: 'Sara Lee' } },
+        shifts: { 'mike@ec,com': { s1: { in: now - 3600000 } }, 'sara@ec,com': { s1: { in: now - 7200000, out: now - 3600000 } } }
+      };
+      const p5 = await open(browser, base, { user: STAFF, data: d5 });
+      const pg = p5.page;
+      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      // 2. Pickup hours go in the driver's text
+      assert.match(await pg.evaluate(() => textFor('r1', S.pending.r1)), /^Acme Supply for Smith Co, Ready 9:00 am, Closes \d{1,2}:\d{2} [ap]m, 2 boxes, Prepaid$/);
+      // 3. Closes in 20 minutes: the card is red with a "Closes in" chip
+      assert.ok(await pg.isVisible('.job[data-id=r1].overdue .closing-chip'), 'closing soon card is red');
+      assert.match(await pg.textContent('.job[data-id=r1] .closing-chip'), /Closes in \d+ min|Closed at/);
+      await shot(pg, 'closing-soon');
+      // 5. Same trip went to Sara 10 minutes ago; 7. Sara isn't clocked in, Mike is (no van)
+      await pg.click('#queue-list .job[data-id=r1] [data-act=pick-driver]');
+      await pg.waitForSelector('#sp-dup:not([hidden])');
+      assert.match(await pg.textContent('#sp-dup'), /Same trip went to Sara 10 min ago \(#1195\)/);
+      await pg.waitForTimeout(400);
+      const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name > span').textContent === nm); return { t: b.querySelector('small').textContent, off: b.classList.contains('offclock') }; }, n);
+      assert.deepStrictEqual(await sub('Sara'), { t: 'Not clocked in', off: true });
+      assert.deepStrictEqual(await sub('Mike'), { t: 'No van today', off: false });
+      await shot(pg, 'same-trip-clock');
+      await pg.click('#nd-pop .sp-head [data-act=nd-pop-close]');
+      await pg.waitForFunction(() => document.getElementById('nd-pop').hidden);
+      // 1. Another dispatcher sent r2 a moment ago (this phone hasn't heard yet): nothing is sent, and it says who has it
+      await pg.evaluate(() => {
+        const keep = S.pending.r2;
+        window.__fakeDb.put('requests/r2/status', 'dispatched');
+        window.__fakeDb.put('requests/r2/dispatched_to', 'Mike');
+        window.__fakeDb.put('requests/r2/dispatched_by_email', 'kim@ec.com');
+        S.pending.r2 = keep;
+        window.__launched = [];
+        launch = (u) => window.__launched.push(u);
+        return sendToDriver('r2', 'd2');
+      });
+      await pg.waitForSelector('.toast:has-text("#1202 was already sent to Mike by Kim. Nothing was sent.")');
+      assert.deepStrictEqual(await pg.evaluate(() => window.__launched), [], 'no text started');
+      assert.strictEqual(await pg.evaluate(() => window.__fakeDb.get('requests/r2/dispatched_to')), 'Mike', "the other dispatcher's send stands");
+      // 8. Day summary: This week (read from the database)
+      await pg.click('.tab[data-tab=done]');
+      await pg.click('#panel-done [data-act=day-board]');
+      await pg.check('#board input[value=week]');
+      await pg.waitForSelector('#board .board-total:has-text("this week")');
+      assert.match(await pg.textContent('#board .board-total'), /^\d+ jobs? dispatched this week \(/);
+      await shot(pg, 'board-week');
+      await pg.keyboard.press('Escape');
+      await pg.waitForFunction(() => !sheetOpen);
+      // 10. Do again: New dispatch filled in from a Done job; Smith Co isn't a saved customer, so it asks to add it
+      await pg.evaluate(() => { openDetails('r5'); });
+      await pg.click('[data-act=do-again]');
+      await pg.waitForSelector('#nd-pickup-name');
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), 'Acme Supply');
+      assert.strictEqual(await pg.inputValue('#nd-delivery-name'), 'Smith Co');
+      assert.strictEqual(await pg.evaluate(() => itemsText(ND.items)), '1 box');
+      await pg.waitForTimeout(600);
+      assert.ok(await pg.isVisible('#nd-delivery-nc-btn'), 'New customer button for a name that is not saved');
+      // 9. Mic: "... send to Sara" picks her, and the button says so
+      const vp = await pg.evaluate(() => voiceParse('Acme Supply to Rosser Warehouse one box send it to Sarah'));
+      assert.deepStrictEqual(vp.driver, ['Sarah']);
+      assert.strictEqual(vp.items.length, 1);
+      assert.strictEqual(await pg.evaluate(() => (voiceDriver(['Sarah']) || {}).did), 'd2');
+      assert.strictEqual(await pg.evaluate(() => voiceDriver(['Zed'])), null);
+      await pg.evaluate(() => { ND.driver = 'd2'; ndUpdate(true); });
+      assert.match(await pg.textContent('[data-act=nd-pick-driver]'), /Send to Sara/);
+      assert.deepStrictEqual(p5.errors, []);
+      await pg.close();
+    }
     // Keyboard up (the window shrinks): Pickup's name box and then Delivery's sit in the same spot right on it,
     // typing a new name doesn't move it, and the pieces' Done button stays above the keyboard
     {
