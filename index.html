@@ -6216,7 +6216,8 @@ function voiceForm(startLeg) {
   // The form opened by the mic has no box to type in: don't leave a focus ring on ✕
   setTimeout(() => { const f = document.activeElement; if (voice === v && f && f.matches && f.matches('[data-act=sheet-close]')) f.blur(); }, 120);
   v.ctl = voiceListen({
-    text: (t, alts) => { if (voice !== v) return; micSay(t); voiceFill(v, t, alts, false); },
+    // While talking, the words only show in the strip. The form fills in all at once when you stop, ready to check and fix.
+    text: (t) => { if (voice !== v) return; micSay(t); },
     end: (t, err, alts) => {
       if (voice !== v) return;
       voice = null;

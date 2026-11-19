@@ -579,13 +579,17 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.click('#mic-fab');
       await pg.waitForSelector('#nd-pickup-name');
       await pg.waitForTimeout(300);
-      await pg.evaluate(() => __say('GNR Electric to', false));
-      await pg.waitForFunction(() => document.getElementById('nd-pickup-name').value === 'GNR Electric');
-      assert.strictEqual(await pg.inputValue('#nd-delivery-name'), '', 'nothing in Delivery yet');
+      await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box', false));
+      await pg.waitForFunction(() => /GNR Electric to AAA Bobcat one box/.test(document.getElementById('mic-hear').textContent));
+      await pg.waitForTimeout(200);
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'nothing fills in while still talking');
+      await shot(pg, 'voice-talking');
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box 25 pounds', true));
       await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
       await pg.waitForFunction(() => !document.getElementById('mic-fab').classList.contains('on'));
       assert.strictEqual(await pg.inputValue('#nd-text'), 'GNR Electric for AAA Bobcat, 1 box 25 lbs, Prepaid');
+      await pg.waitForTimeout(900); // the blue flash has faded
+      await shot(pg, 'voice-filled');
       // Cursor in the note: the words go in there
       await pg.click('[data-act=nd-x][data-x=notes]');
       await pg.focus('#nd-notes');
