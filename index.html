@@ -980,6 +980,20 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-where .icon-btn{flex:none;color:#111}
 .sp-card.mapfull .sp-msg{bottom:auto;top:52px}
 .sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
+/* Live GPS check: driver buttons dimmed and locked under a spinner until fresh spots are in */
+.sp-gps{position:sticky;top:0;z-index:3;flex:none;height:0;display:flex;justify-content:center;overflow:visible;pointer-events:none;transition:opacity .3s ease}
+.sp-gps.gone{opacity:0}
+.gps-pill{display:inline-flex;align-items:center;gap:7px;height:34px;margin-top:10px;padding:0 14px 0 11px;border-radius:99px;background:#111;color:#fff;font-size:14px;font-weight:800;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);animation:riseIn var(--t) var(--out)}
+.gps-pill small{font-size:12px;font-weight:700;opacity:.75}
+.gps-pill .i{width:16px;height:16px}
+.gps-pill.ok{background:#1f8a4c}
+.gps-pill.bad{background:#b45309}
+.gps-spin{flex:none;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#FFD100;border-radius:50%;animation:gpsSpin .7s linear infinite}
+@keyframes gpsSpin{to{transform:rotate(360deg)}}
+.drv-list{transition:opacity .25s ease,filter .25s ease}
+.sp-card.gps-wait .drv-list{opacity:.4;filter:grayscale(.6)}
+.sp-card.gps-wait .drv-tag{visibility:hidden}
+.pick.drv.gps-old small,.pick.drv.gps-old .drv-d{color:#b45309}
 /* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
 .sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -4921,15 +4935,98 @@ function _hidePop() {
 // The vehicles are listened to from sign-in (startListening); while the panel is open, a fresh GPS poll every 15 s
 function spListen() {
   spStop();
-  if (!db || !S.user) return;
+  spGpsWait();
+  if (!db || !S.user) { spGpsDone(false); return; }
   const poll = async () => {
     if (!popOpen || document.hidden || !auth || !auth.currentUser) return;
-    try { const t = await auth.currentUser.getIdToken(); await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } }); } catch (e) { /* next tick tries again */ }
+    const run = sp.gpsRun;
+    let out = null;
+    try {
+      const t = await auth.currentUser.getIdToken();
+      const res = await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } });
+      out = res.ok ? await res.json().catch(() => ({})) : null;
+    } catch (e) { /* next tick tries again */ }
+    if (!popOpen || run !== sp.gpsRun) return; // the panel closed or started over meanwhile
+    if (!out || out.paj === 'failed') { if (sp.gps === 'wait') spGpsDone(false); return; }
+    if (sp.gps === 'live') return;
+    // 'polled': the new spots are already saved and reach this phone a moment later.
+    // 'recent': another phone asked a few seconds ago; wait for its new spots (3 s at most).
+    clearTimeout(sp.gpsTo);
+    if (out.paj === 'recent') { sp.gpsNext = true; sp.gpsTo = setTimeout(() => spGpsDone(true), 3000); }
+    else sp.gpsTo = setTimeout(() => spGpsDone(true), 400);
   };
+  sp.pollFn = poll;
   poll();
   sp.poll = setInterval(poll, 15000);
 }
-function spStop() { clearInterval(sp.poll); sp.poll = 0; }
+function spStop() { clearInterval(sp.poll); sp.poll = 0; sp.pollFn = null; clearTimeout(sp.gpsTo); clearTimeout(sp.gpsHide); sp.gpsRun = (sp.gpsRun || 0) + 1; }
+/* Live GPS check: when the panel opens, the vans on this phone are only as new as the last time
+   anyone asked for GPS. The driver buttons stay locked (dimmed, a spinner on top) until fresh spots
+   come back, so a text never goes out on old spots. If the GPS doesn't answer in 12 s the buttons
+   open anyway (dispatch can't stop) with a warning, and every van shows how old its spot is. */
+const GPS_WAIT_MAX = 12000;
+const GPS_OLD_MS = 10 * 60000; // a spot older than this shows its age on the driver's button
+function spGpsWait() {
+  clearTimeout(sp.gpsTo); clearTimeout(sp.gpsHide);
+  sp.gpsRun = (sp.gpsRun || 0) + 1;
+  Object.assign(sp, { gps: 'wait', gpsT0: performance.now(), gpsNext: false });
+  sp.gpsTo = setTimeout(() => spGpsDone(false), GPS_WAIT_MAX);
+  spGpsUi();
+}
+function spGpsDone(ok) {
+  if (!popOpen) return;
+  clearTimeout(sp.gpsTo);
+  if (ok && !sp.got.vans) { sp.gpsNext = true; sp.gpsTo = setTimeout(() => spGpsDone(false), 4000); return; } // the vans list itself hasn't come yet
+  sp.gpsNext = false;
+  sp.gpsSecs = (performance.now() - sp.gpsT0) / 1000;
+  sp.gps = ok ? 'live' : 'failed';
+  spGpsUi();
+  spRender();
+}
+// New van spots arrived on this phone (each update is a new object)
+function spVansSeen() {
+  if (sp.vans === sp.seenVans) return;
+  sp.seenVans = sp.vans;
+  if (popOpen && sp.gps === 'wait' && sp.gpsNext) { clearTimeout(sp.gpsTo); sp.gpsTo = setTimeout(() => spGpsDone(true), 150); }
+}
+function spGpsUi() {
+  const card = $('.sp-card');
+  if (!card) return;
+  const wait = sp.gps === 'wait';
+  card.classList.toggle('gps-wait', wait);
+  let el = $('#sp-gps');
+  if (!el) { el = document.createElement('div'); el.id = 'sp-gps'; el.className = 'sp-gps'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); }
+  const list = $('#nd-pop-list');
+  if (list && el.parentNode !== list) list.prepend(el);
+  clearTimeout(sp.gpsHide);
+  el.classList.remove('gone');
+  if (wait) el.innerHTML = '<span class="gps-pill"><i class="gps-spin"></i>Getting live GPS\u2026</span>';
+  else if (sp.gps === 'live') el.innerHTML = `<span class="gps-pill ok">${icon('check', 'sm')}Live GPS<small>${esc(sp.gpsSecs.toFixed(1))} s</small></span>`;
+  else el.innerHTML = `<span class="gps-pill bad">${icon('alert', 'sm')}No live GPS. Check each van\u2019s time.</span>`;
+  if (!wait) sp.gpsHide = setTimeout(() => el.classList.add('gone'), sp.gps === 'live' ? 1800 : 5000);
+}
+// How old each van's spot is, on its driver's button: always when live GPS failed, else only when old
+const ageText = (ms) => { const m = Math.max(0, Math.floor(ms / 60000)); return m < 1 ? 'just now' : m < 60 ? `${m} min old` : m < 1440 ? `${Math.floor(m / 60)} h old` : `${Math.floor(m / 1440)} d old`; };
+function spAges() {
+  const now = Date.now();
+  $$('#nd-pop-list [data-hold-driver]').forEach((b) => {
+    const v = b.dataset.van && sp.vans[b.dataset.van];
+    const at = v && v.lastLocation && +v.lastLocation.updatedAt;
+    const age = at > 0 ? now - at : null;
+    const show = sp.gps !== 'wait' && age != null && (sp.gps === 'failed' || age >= GPS_OLD_MS);
+    b.classList.toggle('gps-old', !!show && age >= GPS_OLD_MS);
+    if (!show) return;
+    const small = $('.grow > small', b);
+    if (small) { small.textContent += ` \u00b7 ${ageText(age)}`; drvFit(b); }
+    b.setAttribute('aria-label', (b.getAttribute('aria-label') || '').replace(/\. Hold to send\.$/, `, GPS spot ${ageText(age)}. Hold to send.`));
+  });
+}
+// Back to the app after a while away: the spots are old again, so check again
+let spHiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { spHiddenAt = Date.now(); return; }
+  if (popOpen && sp.pollFn && Date.now() - spHiddenAt > 20000) { spGpsWait(); sp.pollFn(); }
+});
 function spMsg(text) { const m = $('#sp-msg'); if (m) { m.textContent = text || ''; m.hidden = !text; } }
 const spNick = (id) => { const n = sp.nicks && sp.nicks[id]; return typeof n === 'string' && n.trim() ? n.trim() : ''; };
 const kmBetween = (a, b) => {
@@ -5091,9 +5188,11 @@ function drvFit(b) {
 addEventListener('resize', () => { if (popOpen) $$('#nd-pop-list [data-hold-driver]').forEach(drvFit); });
 function spRender() {
   deskRender();
+  spVansSeen();
   if (!popOpen) { if (sp.map && sp.got.vans) spMarkers(spList()); return; }
   const list = spList();
   spDrivers(list);
+  spAges();
   spMarkers(list);
 }
 /* ---------- The map ---------- */
@@ -5337,7 +5436,7 @@ function holdStart(el) {
     el.classList.add('held');
     if (navigator.vibrate) try { navigator.vibrate(18); } catch (e) { /* ignore */ }
     const did = el.dataset.holdDriver, go = sp.onSend;
-    setTimeout(() => { el.classList.remove('held'); path.style.strokeDashoffset = '1'; if (go && popOpen) go(did); }, 90);
+    setTimeout(() => { el.classList.remove('held'); path.style.strokeDashoffset = '1'; if (go && popOpen && sp.gps !== 'wait') go(did); }, 90);
   };
   hold.raf = requestAnimationFrame(step);
 }
@@ -5354,6 +5453,8 @@ function holdCancel() {
 $('#nd-pop-list').addEventListener('pointerdown', (e) => {
   const b = e.target.closest('[data-hold-driver]');
   if (!b || (e.button != null && e.button > 0)) return;
+  // Locked until live GPS is in, so a text never goes out on old spots
+  if (sp.gps === 'wait') { e.preventDefault(); toast('Getting live GPS first. One moment\u2026', 'info', 1800); return; }
   // A finger can still drag the list up and down (the phone then cancels the hold); only a mouse is held in place
   if (e.pointerType === 'mouse') { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } }
   hold.y0 = e.clientY;
