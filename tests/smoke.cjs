@@ -580,8 +580,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForSelector('#nd-pickup-name');
       await pg.waitForTimeout(300);
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box', false));
-      await pg.waitForFunction(() => /GNR Electric to AAA Bobcat one box/.test(document.getElementById('mic-hear').textContent));
-      await pg.waitForTimeout(200);
+      await pg.waitForTimeout(250);
+      assert.ok(await pg.isHidden('#mic-hear'), 'no words beside the mic');
+      assert.ok(await pg.evaluate(() => document.getElementById('mic-fab').classList.contains('on')), 'the mic glows while listening');
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'nothing fills in while still talking');
       await shot(pg, 'voice-talking');
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box 25 pounds', true));

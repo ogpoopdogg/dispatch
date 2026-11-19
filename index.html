@@ -6123,12 +6123,8 @@ function micListening(on) {
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
-function micSay(text, hint) {
-  micHear.hidden = false;
-  micHear.classList.toggle('heard', !!text);
-  micHear.innerHTML = text ? `<b>${esc(text)}</b>` : `<span>${esc(hint || 'Listening…')}</span>`;
-  micPlace();
-}
+// No words beside the mic (Justin's wish): the glowing mic shows it's listening, and the form fills in when you stop
+function micSay() { micHear.hidden = true; }
 // Where the mic sits: above + Dispatch; on the form, just above its Send bar (or at the end of the box
 // being typed in while the keyboard is up). Hidden under other pop-ups.
 function micPlace() {
