@@ -10,6 +10,7 @@
 const { onValueWritten } = require('firebase-functions/v2/database');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onRequest } = require('firebase-functions/v2/https');
+const { beforeUserCreated, HttpsError } = require('firebase-functions/v2/identity');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
@@ -33,6 +34,7 @@ const { describeChange, describeMessage } = require('./alerts');
 const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
 const { historyKey, missingKeys } = require('./history');
 const { customerAlertForRequest, customerAlertForMessage, recipientsFor, generalRecipients } = require('./customer');
+const { isStaffEmail, emailKey, signUpRefusal } = require('./signup');
 
 /** Collects push tokens for staff (staff/<uid> === true), optionally for one person only. */
 async function staffTokens(onlyUid) {
@@ -262,4 +264,28 @@ exports.notifyCustomerOnMessage = onValueWritten('/messages/{id}', async (event)
   if (!request) return;
   const targets = await customerTokens(await pickupRecipients(after.rid, request), request.company_id);
   await sendToCustomers(targets, { ...msg, tag: `msg-${after.rid}`, go: 'messages' });
+});
+
+/* Staff logins (@ec.com) can't be made through the pickup app's public sign-up (signup.js).
+   Needs Firebase Authentication with Identity Platform (APP-SETUP.md). */
+exports.blockStaffEmailSignUp = beforeUserCreated(async (event) => {
+  const email = (event.data && event.data.email) || '';
+  if (!isStaffEmail(email)) return;
+  const allowed = (await admin.database().ref(`config/ec_signup_allow/${emailKey(email)}`).once('value')).val();
+  const why = signUpRefusal(email, allowed);
+  if (!why) return;
+  logger.warn('Refused an @ec.com sign-up', { email, ip: event.ipAddress || '' });
+  throw new HttpsError('permission-denied', why);
+});
+
+// A customer asked to delete their account (Account in the pickup app): tell staff phones
+exports.notifyStaffOnDeletionRequest = onValueWritten('/deletion_requests/{uid}', async (event) => {
+  const after = event.data.after.val();
+  if (!after || event.data.before.exists()) return;
+  await send(await staffTokens(), {
+    title: 'Account deletion request',
+    body: `${after.name || after.email || 'A customer'}${after.company_name ? ` (${after.company_name})` : ''} asked to delete their account. See Settings.`,
+    tag: `delete-${event.params.uid}`,
+    data: { kind: 'deletion' }
+  });
 });
