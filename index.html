@@ -1453,6 +1453,132 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick.drv{gap:6px;padding-left:6px;padding-right:7px}
 .pick.drv .avatar{width:30px;height:30px;font-size:12px}
 .drv-list.roomy .pick.drv .avatar{width:36px;height:36px;font-size:14px}
+
+/* ===== Queue: ONE job fills the page (2026-11-22) =====
+   Sizes follow importance: pickup and delivery biggest, then how long it has waited, the text, and
+   Send to driver as the biggest button by the thumb. The number strip stays pinned when you scroll. */
+.qbar{position:sticky;top:var(--head-h);z-index:25;margin:-10px -12px 6px;padding:8px 12px 8px;background:color-mix(in srgb,var(--bg) 86%,transparent);-webkit-backdrop-filter:saturate(160%) blur(12px);backdrop-filter:saturate(160%) blur(12px)}
+.kpi{min-height:48px;padding:5px 6px 5px 11px}
+.kpi b{font-size:21px}
+.kpi span{font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-3)}
+.kpi.hot{background:linear-gradient(180deg,rgba(255,209,0,.16),rgba(255,209,0,0) 80%)}
+.kpi.hot::before{height:3px}
+.kpi.warn{background:linear-gradient(180deg,var(--danger-bg),transparent 80%)}
+.kpi.warn::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:var(--danger)}
+#panel-queue:not([hidden]) #queue-list{flex:1;display:flex;flex-direction:column;margin-top:0}
+#queue-list>.empty,#queue-list>.cards{margin-top:auto}
+#queue-list .unread{margin:0 0 8px;padding:4px}
+#queue-list .unread-head{padding:2px 4px 4px}
+/* "1 of 3" with dots, and the next job's name: there is more waiting */
+.qpager{display:flex;align-items:center;gap:6px;margin:0 0 8px;animation:tabIn var(--t-slow) var(--out) both}
+.qnav,.qnext{display:inline-flex;align-items:center;justify-content:center;min-height:40px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;box-shadow:var(--sh-1);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) var(--ease),background-color var(--t-fast) ease,opacity var(--t-fast) ease}
+.qnav{width:40px;flex:none;padding:0}
+.qnav .i{transform:rotate(180deg)}
+.qnav:disabled{opacity:.35;cursor:default}
+.qnav:not(:disabled):active,.qnext:active{transform:scale(.95);background:var(--surface-2)}
+.qpos{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.qcount{font-size:13px;font-weight:650;color:var(--ink-2);white-space:nowrap}
+.qcount b{font-stretch:75%;font-size:17px;font-weight:800;color:var(--ink)}
+.qdots{display:flex;gap:4px;align-items:center}
+.qdot{width:6px;height:6px;border-radius:99px;background:var(--line-strong);transition:width .3s var(--out),background-color .3s ease}
+.qdot.late{background:rgba(196,36,30,.45)}
+.qdot.on{width:18px;background:var(--ink)}
+.qdot.on.late{background:var(--danger)}
+.qnext{flex:0 1 46%;min-width:0;gap:4px;padding:0 6px 0 11px;justify-content:space-between;text-align:left}
+.qnext>span{min-width:0;display:flex;flex-direction:column;line-height:1.1}
+.qnext small{font-size:10.5px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.qnext b{font-size:14px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qnext .i{flex:none;color:var(--ink-2)}
+/* The card, with a stack peeking out underneath when more jobs wait */
+.qone{position:relative;flex:1;display:flex;flex-direction:column;--job-sh:drop-shadow(0 2px 3px rgba(0,0,0,.18)) drop-shadow(0 14px 22px rgba(0,0,0,.22))}
+.qone.more{padding-bottom:7px}
+.qone.more2{padding-bottom:13px}
+.qone.more::before,.qone.more2::after{content:'';position:absolute;bottom:6px;left:10px;right:10px;height:30px;border:1px solid var(--line-strong);border-radius:0 0 var(--r-lg) var(--r-lg);background:var(--surface);box-shadow:0 4px 10px -6px rgba(0,0,0,.3);z-index:0;animation:stackIn .4s var(--out) both}
+.qone.more2::before{bottom:6px}
+.qone.more2::after{bottom:0;left:20px;right:20px;opacity:.75}
+.qone.more:not(.more2)::before{bottom:0}
+@keyframes stackIn{from{transform:translateY(-8px);opacity:0}}
+.job.full{flex:1;display:flex;flex-direction:column;z-index:1;padding-bottom:0;will-change:transform}
+.job.full .job-top{flex:1;display:flex;flex-direction:column;padding:12px 14px 0;border-width:1.5px;border-radius:14px}
+[data-theme=light] .job.full .job-top{background:linear-gradient(180deg,#fffcef 0,#fff 64px)}
+[data-theme=light] .job.full.overdue .job-top{background:linear-gradient(180deg,#fff1f0 0,#fff 64px)}
+.job.full .job-head{gap:9px;margin:0 0 8px}
+.job.full .req-no{font-size:21px;padding:2px 9px;border-radius:7px}
+.job.full .job-co{font-size:17px;font-weight:800;font-stretch:90%}
+.job.full .job-tags .chip{height:24px;padding:0 8px;font-size:13px}
+.job.full .job-more{width:44px;height:44px;margin:-8px -10px -8px -2px}
+/* When it was sent in, right on the card */
+.job-when{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 8px 7px 10px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--line)}
+.job-when>.i{flex:none;width:18px;height:18px;color:var(--ink-2)}
+.job-sub{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
+.job-sub small{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.job-sub b{font-size:16px;font-weight:750;overflow:hidden;text-overflow:ellipsis}
+.job.full .job-age{flex:none;gap:6px;height:30px;padding:0 11px 0 10px;border-radius:99px;font-size:15.5px;font-weight:800;font-stretch:87.5%;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink)}
+.job.full .job-age::before{width:8px;height:8px}
+.job.full .job-age.fresh{background:var(--ok-bg);border-color:rgba(17,128,60,.35);color:var(--ok)}
+.job.full .job-age.fresh::before{background:var(--ok);animation:livePulse 2s ease-out infinite}
+.job.full .job-age.late{background:var(--danger-bg);border-color:rgba(196,36,30,.35);color:var(--danger)}
+.job.full .job-age.late::before{background:var(--danger);animation:livePulse 1.4s ease-out infinite}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 currentColor}70%,100%{box-shadow:0 0 0 6px transparent}}
+.job.full .job-chips{margin:-2px 0 10px}
+.job.full .job-chips .chip{height:26px;padding:0 9px;font-size:13.5px}
+.job.full .job-changed{margin:-2px 0 10px;font-size:14px}
+/* Pickup and delivery: the biggest words on the page */
+.job.full .route{gap:12px;margin:0 0 12px;padding:12px 12px 12px 36px;border-radius:12px}
+.job.full .route::before{left:17.5px;top:34px;bottom:44px;border-left-width:2px}
+.job.full .stop{flex-direction:column;align-items:flex-start;gap:1px;line-height:1.2}
+.job.full .stop small{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.job.full .stop b{max-width:100%;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.job.full .stop.to b{font-size:20px;font-weight:750}
+.job.full .stop>span{max-width:100%;font-size:15px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job.full .stop::before{left:-25px;top:19px;width:12px;height:12px}
+.job.full .stop.to::before{left:-24px;top:19px;width:11px;height:11px}
+.job.full .text-edit textarea{font-size:18px;line-height:1.4;padding:10px 12px;border-radius:10px}
+.job.full .job-more-box{margin-bottom:4px}
+/* The buttons sit at the bottom, by the thumb; Send to driver is the biggest thing to tap */
+.job.full .job-actions{margin-top:auto;padding-top:8px;margin-bottom:12px;gap:8px}
+.job.full .job-actions .btn{min-height:58px;border-radius:12px}
+.job.full .job-actions .btn-secondary{font-size:15.5px;padding:0 14px}
+.job.full .job-actions .btn-primary{font-size:19px;font-weight:800;font-stretch:92%;letter-spacing:.005em}
+.job.full .job-actions .btn-primary .i{width:20px;height:20px}
+.job-actions .btn-primary{font-size:16.5px}
+/* Moving between jobs, and the next one coming up from the stack */
+.job.full.from-r{animation:qFromR .32s var(--out) both}
+.job.full.from-l{animation:qFromL .32s var(--out) both}
+.job.full.rise{animation:qRise .42s var(--out) both}
+.job.full.unseen.from-r,.job.full.unseen.from-l,.job.full.unseen.rise{animation-name:var(--qa),jobGlow;animation-duration:.36s,1.8s;animation-timing-function:var(--out),ease-in-out;animation-delay:0s,.36s;animation-iteration-count:1,infinite;animation-direction:normal,alternate;animation-fill-mode:both,none}
+.job.full.unseen.from-r{--qa:qFromR}.job.full.unseen.from-l{--qa:qFromL}.job.full.unseen.rise{--qa:qRise}
+@keyframes qFromR{from{opacity:0;transform:translateX(36px)}}
+@keyframes qFromL{from{opacity:0;transform:translateX(-36px)}}
+@keyframes qRise{from{opacity:0;transform:translateY(18px) scale(.965)}}
+@media (prefers-reduced-motion:reduce){.job.full,.qone::before,.qone::after,.qpager{animation:none!important}}
+
+.job.full .stop>span{flex:none}
+.job-sub{flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
+.job-sub small{font-size:10.5px;letter-spacing:.06em}
+.job-sub b{max-width:100%;font-size:16.5px}
+.kpi span{font-size:12px;font-weight:650;letter-spacing:0;text-transform:none;color:var(--ink-2)}
+/* What, how it's paid, PO: small tiles under the route */
+.job-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin:0 0 10px}
+.fact{min-width:0;display:flex;flex-direction:column;gap:1px;padding:6px 10px 7px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--line)}
+.fact small{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.fact b{display:flex;align-items:center;gap:4px;font-size:16px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fact b .i{width:14px;height:14px;stroke-width:2.8;flex:none}
+.fact.prepaid{background:var(--ok-bg);border-color:rgba(17,128,60,.25)}.fact.prepaid b{color:var(--ok)}
+.fact.collect{background:rgba(234,88,12,.09);border-color:rgba(234,88,12,.3)}.fact.collect b{color:#c2410c}
+.job-note{display:flex;gap:7px;align-items:flex-start;margin:-2px 0 10px;padding:7px 10px;border-radius:var(--r-md);background:var(--warn-bg);border:1px solid var(--yellow-line);font-size:15px;font-weight:600;line-height:1.35}
+.job-note .i{flex:none;margin-top:2px}
+.job.full .job-more-box{flex:1;display:flex;flex-direction:column}
+.job.full .text-edit{flex:1;display:flex;flex-direction:column}
+.job.full .text-edit textarea{flex:1;min-height:76px;max-height:none}
+.kpi{padding:5px 3px 5px 9px}
+.job-facts{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.fact{padding:5px 9px 6px}
+.fact b{font-size:15.5px}
+.job.full .route{gap:9px;padding:10px 12px 10px 36px}
+.job.full .route::before{top:31px;bottom:40px}
+.job.full .stop::before,.job.full .stop.to::before{top:18px}
+.job-when{padding:6px 8px 6px 10px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2710,7 +2836,7 @@ const hasDrivers = () => Object.keys(S.contacts.drivers || {}).length > 0;
 // Main button: pick a driver when drivers are set up, otherwise the share menu
 function sendButtons(id, block) {
   return hasDrivers()
-    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}">${icon('send', 'sm')}Send to driver${icon('caret', 'caret')}</button>`
+    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}">${icon('send', 'sm')}Send to driver</button>`
     : `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>`;
 }
 // Group Chat (share menu: pick the group from the top row) next to Send to driver
@@ -2720,11 +2846,11 @@ const openCards = new Set(); // cards showing their text (tapped "Text")
 let enterIdx = 0;
 /* A small card: number, company, tags, the route and Send to driver. "Text" opens the text and
    the address switch; the ⋯ button holds Details, Schedule for later and Remove. */
-function jobCard(id, r) {
+function jobCard(id, r, full) {
   const unseen = !acked.has(alertKey(id, r));
   const fresh = !shownCards.has(id);
   shownCards.add(id);
-  const enter = fresh ? ` enter" style="animation-delay:${Math.min(enterIdx++, 6) * 45}ms` : '';
+  const enter = full ? (full.anim ? ` ${full.anim}` : '') : fresh ? ` enter" style="animation-delay:${Math.min(enterIdx++, 6) * 45}ms` : '';
   const open = false;
   // Short tags ride on the name line; the longer ones (day, hours, posted, messages) get a line of their own
   const tags = [];
@@ -2743,6 +2869,7 @@ function jobCard(id, r) {
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
   const D = r.delivery || {};
+  if (full) return fullCard(id, r, { unseen, tags, chips, enter });
   return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
     <div class="job-top">
     <div class="job-head">
@@ -2762,6 +2889,106 @@ function jobCard(id, r) {
     </div>
   </article>`;
 }
+/* The queue shows ONE job at a time, filling the page: the dispatcher deals with one thing at a time.
+   Most important first: where it goes (pickup → delivery), how long it has waited, the text, then Send to driver. */
+function submittedText(ts) {
+  if (!ts) return '';
+  const d = new Date(ts); const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const day = ts >= t0.getTime() ? 'Today' : ts >= t0.getTime() - 86400000 ? 'Yesterday' : d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  return `${day}, ${fmtTime(ts)}`;
+}
+function fullCard(id, r, { unseen, tags, chips, enter }) {
+  const P = r.pickup || {};
+  const D = r.delivery || {};
+  const sched = r.when === 'scheduled';
+  const collect = r.payment === 'collect';
+  const fact = (label, val, cls) => `<span class="fact${cls ? ' ' + cls : ''}"><small>${label}</small><b>${val}</b></span>`;
+  const facts = [
+    fact('Items', esc(r.items_text || '–')),
+    fact('Payment', `${icon(collect ? 'cash' : 'check')}${collect ? 'Collect' : 'Prepaid'}`, collect ? 'collect' : 'prepaid'),
+  ];
+  if (r.po) facts.push(fact('PO', esc(r.po)));
+  const stop = (cls, label, x) => `<span class="stop${cls}"><small>${label}</small><b>${esc(x.name || '–')}</b>${x.address ? `<span>${esc(x.address)}</span>` : ''}</span>`;
+  return `<article class="job full${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
+    <div class="job-top">
+    <div class="job-head">
+      <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
+      <span class="job-tags">${tags.filter((t) => !/pay-/.test(t)).join('')}</span>
+      <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
+    </div>
+    <div class="job-when">
+      ${icon('clock', 'sm')}<span class="job-sub"><small>Submitted</small><b>${esc(submittedText(r.created_at))}</b></span>
+      <span class="job-age${sched ? '' : ` ${ageCls(r.created_at)}`}"${sched ? ' data-noage' : ''} data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
+    </div>
+    <div class="chips job-chips">${chips.join('')}</div>
+    ${r.updated_at && changedText(id, r) ? `<p class="job-changed"><b>Changed:</b> ${esc(changedText(id, r))}</p>` : ''}
+    <button class="route" type="button" data-act="details" data-id="${esc(id)}" aria-label="Pickup ${esc(P.name)}, delivery ${esc(D.name)}. Details">
+      ${stop('', 'Pickup', P)}${stop(' to', 'Deliver to', D)}
+    </button>
+    <div class="job-facts">${facts.join('')}</div>
+    ${r.notes ? `<p class="job-note">${icon('alert', 'sm')}<span>${esc(r.notes)}</span></p>` : ''}
+    <div class="job-more-box">${textEditor(id, r, 'card')}</div>
+    <div class="job-actions job-row">${groupChatButton(id)}${sendButtons(id)}</div>
+    </div>
+  </article>`;
+}
+// Which job the queue shows, kept by id so a new arrival never swaps the card under the dispatcher's thumb
+const Q = { id: null, idx: 0, shown: null, anim: '' };
+function qPager(list, idx) {
+  if (list.length < 2) return '';
+  const max = 9;
+  const from = Math.max(0, Math.min(idx - 4, list.length - max));
+  const dots = list.slice(from, from + max).map(([, r], i) => `<span class="qdot${from + i === idx ? ' on' : ''}${isOverdue(r) || ageCls(r.created_at) === 'late' ? ' late' : ''}"></span>`).join('');
+  const next = list[(idx + 1) % list.length][1];
+  return `<div class="qpager" role="group" aria-label="Jobs waiting">
+    <button class="qnav" type="button" data-act="q-prev" aria-label="Previous job"${idx === 0 ? ' disabled' : ''}>${icon('chevron', 'sm')}</button>
+    <div class="qpos"><span class="qcount"><b>${idx + 1}</b> of ${list.length}</span><span class="qdots" aria-hidden="true">${dots}</span></div>
+    <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(next.company_name || '')}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(next.company_name || '#' + next.ref_no)}</b></span>${icon('chevron', 'sm')}</button>
+  </div>`;
+}
+function qShow(id, dir) {
+  if (Q.id === id) return;
+  Q.id = id;
+  Q.anim = dir ? (dir > 0 ? 'from-r' : 'from-l') : 'rise';
+  renderQueue();
+  window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' });
+}
+function qStep(dir) {
+  const list = $('#queue-list').__list || [];
+  if (list.length < 2) return;
+  const i = Math.max(0, list.findIndex(([id]) => id === Q.id));
+  qShow(list[(i + dir + list.length) % list.length][0], dir);
+}
+// Swipe the card left or right for the next or previous job; it follows the finger
+(() => {
+  let x0 = 0; let y0 = 0; let card = null; let on = false; let t0 = 0;
+  const box = () => $('#queue-list');
+  document.addEventListener('touchstart', (e) => {
+    const c = e.target.closest && e.target.closest('#queue-list .job.full');
+    card = null; on = false;
+    if (!c || e.touches.length > 1 || e.target.closest('textarea, input, .addr-sw, .addr-box, [data-addr-box]')) return;
+    if ((box().__list || []).length < 2) return;
+    card = c; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!card) return;
+    const dx = e.touches[0].clientX - x0; const dy = e.touches[0].clientY - y0;
+    if (!on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { card = null; return; } if (Math.abs(dx) < 10) return; on = true; }
+    card.style.transition = 'none';
+    card.style.transform = `translateX(${dx * 0.55}px) rotate(${dx * 0.012}deg)`;
+    card.style.opacity = String(Math.max(0.55, 1 - Math.abs(dx) / 700));
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!card) return;
+    const c = card; card = null;
+    if (!on) return;
+    const dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : x0) - x0;
+    const fast = Math.abs(dx) > 40 && Date.now() - t0 < 250;
+    c.style.transition = 'transform .28s cubic-bezier(.16,1,.3,1), opacity .2s';
+    if (Math.abs(dx) > 80 || fast) { c.style.transform = `translateX(${dx > 0 ? 40 : -40}%)`; c.style.opacity = '0'; setTimeout(() => qStep(dx < 0 ? 1 : -1), 120); }
+    else { c.style.transform = ''; c.style.opacity = ''; }
+  }, { passive: true });
+})();
 // Opens or closes a card's text, with the address switch
 function toggleJobText(id) {
   const r = S.pending[id];
@@ -2835,8 +3062,14 @@ function renderQueue() {
   // Typing in a card's text: keep the cursor there when the list is redrawn
   const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('#queue-list textarea[data-edit]') ? document.activeElement : null;
   const keep = typing && { id: typing.dataset.edit, a: typing.selectionStart, b: typing.selectionEnd, top: typing.getBoundingClientRect().top };
-  // Most urgent last, so it sits right above the bottom bar under the thumb
-  $('#queue-list').innerHTML = (filtering ? '' : unreadBlock()) + (list.length ? `<div class="cards">${list.slice().reverse().map(([id, r]) => jobCard(id, r)).join('')}</div>`
+  // One job fills the page. It stays on the same job by id; when that one leaves, the next in line takes its place.
+  let idx = list.findIndex(([id]) => id === Q.id);
+  if (idx < 0) { idx = Math.min(Q.id ? Q.idx : 0, Math.max(0, list.length - 1)); if (Q.id && Q.shown) Q.anim = Q.anim || 'rise'; }
+  const cur = list[idx];
+  const anim = cur && cur[0] !== Q.shown ? (Q.anim || 'rise') : '';
+  Q.id = cur ? cur[0] : null; Q.idx = idx; Q.shown = Q.id; Q.anim = '';
+  $('#queue-list').__list = list;
+  $('#queue-list').innerHTML = (filtering || cur ? '' : unreadBlock()) + (cur ? `${qPager(list, idx)}<div class="qone${list.length > 1 ? ' more' : ''}${list.length > 2 ? ' more2' : ''}">${jobCard(cur[0], cur[1], { anim })}</div>`
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? caughtUp() : skeletons()));
   if (keep) {
@@ -3086,6 +3319,14 @@ function leaveCard(id) {
   const el = $$('.job').find((c) => c.dataset.id === id);
   if (!el || !el.animate || reduceMotion()) return Promise.resolve();
   el.classList.add('leaving');
+  if (el.classList.contains('full')) {
+    Q.anim = 'rise';
+    return new Promise((resolve) => {
+      const a = el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(60%) rotate(5deg) scale(.96)' }], { duration: 300, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
+      a.onfinish = resolve; a.oncancel = resolve;
+      setTimeout(resolve, 450);
+    });
+  }
   const single = getComputedStyle(el.parentElement).gridTemplateColumns.split(' ').length < 2;
   const h = el.offsetHeight;
   const frames = single
@@ -5788,6 +6029,8 @@ document.addEventListener('click', async (e) => {
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'job-menu': jobMenu(id); break;
+    case 'q-next': qStep(1); break;
+    case 'q-prev': qStep(-1); break;
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
     case 'addr-open': toggleAddrRow(id); break;
