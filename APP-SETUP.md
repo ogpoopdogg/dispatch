@@ -216,6 +216,43 @@ Signing out removes that phone from the alert list.
 
 ---
 
+## Pre-launch security steps (November 2026)
+
+These go with the new database rules and the two new functions.
+
+### Block staff-email sign-ups (`blockStaffEmailSignUp`)
+
+The function refuses any new account whose email ends in `@ec.com`, so nobody
+can make a customer account with a staff address. It is a "blocking" function,
+so the project must first use **Firebase Authentication with Identity
+Platform**:
+
+1. Firebase console > Authentication > Settings > **Upgrade** (to Identity
+   Platform). Existing users and sign-in methods carry over.
+2. Deploy: `firebase deploy --only functions`.
+3. Firebase console > Authentication > Settings > **Blocking functions** >
+   check that `blockStaffEmailSignUp` is set for "Before account creation".
+
+To let one staff address make an account anyway, add this in the database:
+`config/ec_signup_allow/<email key> = true`, where the key is the email in
+lower case with its first `.` changed to `,` (for example
+`jane@ec,com`). Remove it once the account exists.
+
+### Deletion requests (`notifyStaffOnDeletionRequest`)
+
+Customers can ask for their account to be deleted from the customer app. The
+request appears in Settings > **Account deletion requests**, and staff phones
+get an alert. Delete the account by hand (Authentication > Users, and the
+customer's `users/<uid>` record), then tap **Done**.
+
+### Closed days
+
+Settings > **Closed days** shows a calendar. Weekends and Manitoba stat
+holidays are closed by default. Tap a day to close it (with a short note) or
+open it. The customer app reads this list right away.
+
+These Settings cards are part of `index.html`, so phones need the new APK.
+
 ## Changing things later
 
 - **Edit the app:** edit `index.html` as before. The next GitHub build puts the

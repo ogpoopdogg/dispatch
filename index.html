@@ -561,6 +561,19 @@ body.kb-chat #sheet .pin-bottom,body.kb-chat #sheet .remove-far{display:none}
 .empty p{color:var(--ink-2);margin:0 auto;max-width:38ch;font-size:13.5px}
 
 /* ---------- Settings ---------- */
+/* Days closed calendar (Settings) */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--ink-3)}
+.cal-day{min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;cursor:pointer;color:var(--ink)}
+.cal-day.closed{background:#fbebeb;border-color:#e8b4b2;color:#8a1c18}
+.cal-day.set{box-shadow:inset 0 0 0 2px var(--ink)}
+.cal-day.today{outline:2px solid var(--yellow,#FFD100);outline-offset:1px}
+.cal-day:disabled{opacity:.4;cursor:default}
+.cal-key{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:8px 0 0}
+.cal-key .k{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);background:var(--surface);margin-left:6px}
+.cal-key .k.closed{background:#fbebeb;border-color:#e8b4b2}.cal-key .k.set{box-shadow:inset 0 0 0 2px var(--ink)}
+.cal-list{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}
 #settings-body{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start}
 @media (min-width:760px){#settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}#settings-body>.card:first-child{grid-row:span 3}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;box-shadow:var(--sh-2)}
@@ -2781,6 +2794,9 @@ function startListening() {
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
+  // Days closed (Settings) and customers asking to delete their account
+  listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
+  listen(db.ref('deletion_requests'), (snap) => { S.deletions = snap.val() || {}; S.deletionsError = false; refreshSettings(); }, () => { S.deletionsError = true; refreshSettings(); });
   // Messages from customers (Request Pickup), the last 30 days, and which ones this person has read
   watchMsgRead(S.user.uid);
   firstMsgs = true;
@@ -5884,6 +5900,111 @@ async function checkReach(force) {
   const el = $('#alert-reach');
   if (el) { el.className = `reach ${reach.cls}`; el.textContent = reach.text; }
 }
+
+/* ---------------- Days closed (shop_calendar) ----------------
+   The pickup app treats weekends and Manitoba's general holidays as closed. Days set here win:
+   shop_calendar/<YYYY-MM-DD> = { closed: true, note } closes a day (Boxing Day, a storm),
+   { closed: false } opens a weekend or holiday. Customers see it in the pickup app. */
+function easterSunday(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  return new Date(y, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+}
+const nthMonday = (y, month, n) => { const first = new Date(y, month, 1); return new Date(y, month, 1 + ((8 - first.getDay()) % 7) + 7 * (n - 1)); };
+const calAdd = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const holidayCache = {};
+// The same list as the pickup app (requestpickup/index.html, shopHolidays)
+function shopHolidays(y) {
+  if (holidayCache[y]) return holidayCache[y];
+  const may25 = new Date(y, 4, 25);
+  const victoria = new Date(y, 4, 25 - ((may25.getDay() + 6) % 7 || 7));
+  return (holidayCache[y] = {
+    [`${y}-01-01`]: 'New Year’s Day', [localDateStr(nthMonday(y, 1, 3))]: 'Louis Riel Day', [localDateStr(calAdd(easterSunday(y), -2))]: 'Good Friday',
+    [localDateStr(victoria)]: 'Victoria Day', [`${y}-07-01`]: 'Canada Day', [localDateStr(nthMonday(y, 8, 1))]: 'Labour Day',
+    [`${y}-09-30`]: 'Truth and Reconciliation Day', [localDateStr(nthMonday(y, 9, 2))]: 'Thanksgiving', [`${y}-12-25`]: 'Christmas Day'
+  });
+}
+// { closed, why, set } for a day: set = changed here
+function dayState(ds) {
+  const set = (S.calendar || {})[ds];
+  const d = parseLocalDate(ds);
+  const builtIn = d.getDay() === 0 || d.getDay() === 6 ? 'Weekend' : shopHolidays(d.getFullYear())[ds] || '';
+  if (set && set.closed === false) return { closed: false, why: builtIn ? `Open (normally ${builtIn.toLowerCase() === 'weekend' ? 'the weekend' : builtIn})` : 'Open', set: true, builtIn };
+  if (set && set.closed) return { closed: true, why: set.note || 'Closed', set: true, builtIn };
+  return { closed: !!builtIn, why: builtIn, set: false, builtIn };
+}
+let calMonth = null; // first day of the month shown
+function calendarHtml() {
+  const t = new Date();
+  if (!calMonth) calMonth = new Date(t.getFullYear(), t.getMonth(), 1);
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const lead = (new Date(y, m, 1).getDay() + 6) % 7; // Monday first
+  const days = new Date(y, m + 1, 0).getDate();
+  const today = todayStr();
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += '<span></span>';
+  for (let n = 1; n <= days; n++) {
+    const ds = `${y}-${pad(m + 1)}-${pad(n)}`;
+    const st = dayState(ds);
+    const cls = ['cal-day', st.closed ? 'closed' : 'open', st.set ? 'set' : '', ds === today ? 'today' : '', ds < today ? 'past' : ''].filter(Boolean).join(' ');
+    cells += `<button type="button" class="${cls}" data-act="cal-day" data-day="${ds}"${ds < today ? ' disabled' : ''} title="${esc(fmtDay(ds))}${st.why ? `: ${esc(st.why)}` : ''}" aria-label="${esc(fmtDay(ds))}, ${st.closed ? 'closed' : 'open'}${st.why ? `, ${esc(st.why)}` : ''}">${n}</button>`;
+  }
+  const coming = Object.keys(S.calendar || {}).filter((ds) => ds >= today).sort().slice(0, 8)
+    .map((ds) => { const st = dayState(ds); return `<li><b>${esc(fmtDay(ds))}</b> ${st.closed ? 'Closed' : 'Open'}${st.closed && st.why !== 'Closed' ? `: ${esc(st.why)}` : ''}</li>`; }).join('');
+  return `<div id="cal-box"><div class="cal-head"><button class="icon-btn sm" type="button" data-act="cal-move" data-n="-1" aria-label="Previous month"${y === t.getFullYear() && m === t.getMonth() ? ' disabled' : ''}>‹</button><b>${esc(calMonth.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' }))}</b><button class="icon-btn sm" type="button" data-act="cal-move" data-n="1" aria-label="Next month">›</button></div>
+    <div class="cal-grid">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span class="cal-dow">${d}</span>`).join('')}${cells}</div>
+    <p class="cal-key"><span class="k open"></span>Open <span class="k closed"></span>Closed <span class="k set"></span>Changed here</p>
+    ${coming ? `<ul class="cal-list">${coming}</ul>` : ''}</div>`;
+}
+function calendarSettings() {
+  return `<section class="card">
+      <h2>${icon('calendar')}Days closed</h2>
+      <p class="card-note">Weekends and Manitoba holidays are already closed in the pickup app. Tap a day to close it (Boxing Day, a storm) or to open a holiday. Customers see it right away.${S.calendarError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
+      ${calendarHtml()}
+    </section>`;
+}
+const refreshCalendar = () => { const el = $('#cal-box'); if (el) el.outerHTML = calendarHtml(); };
+function openCalDay(ds) {
+  const st = dayState(ds);
+  const set = (S.calendar || {})[ds];
+  const choices = [];
+  if (!st.closed) choices.push(`<form data-cal-close="${ds}"><div class="field"><label for="cal-note">Why (customers see this)</label><input id="cal-note" maxlength="80" placeholder="e.g. Boxing Day" value="${esc((set && set.note) || '')}" autocomplete="off"></div><button class="btn btn-danger block" type="submit">Closed this day</button></form>`);
+  if (st.closed && st.builtIn && !(set && set.closed)) choices.push(`<button class="btn btn-primary block" type="button" data-act="cal-open" data-day="${ds}">Open this day</button>`);
+  if (st.set) choices.push(`<button class="btn btn-secondary block" type="button" data-act="cal-reset" data-day="${ds}" style="margin-top:8px">Back to normal${st.builtIn ? ` (closed: ${esc(st.builtIn)})` : ' (open)'}</button>`);
+  openSheet(fmtDay(ds), `<p class="muted" style="margin-bottom:12px">Now: <b>${st.closed ? 'closed' : 'open'}</b>${st.why ? `, ${esc(st.why)}` : ''}.</p>${choices.join('')}`);
+}
+async function setCalDay(ds, val) {
+  try {
+    await db.ref(`shop_calendar/${ds}`).set(val ? Object.assign(val, { by: (S.user && S.user.email) || '', at: TS }) : null);
+    closeSheet();
+    toast(`${fmtDay(ds)}: ${val ? (val.closed ? 'closed' : 'open') : 'back to normal'}.`, 'ok');
+  } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 10000); }
+}
+document.addEventListener('submit', (e) => {
+  const f = e.target.closest && e.target.closest('form[data-cal-close]');
+  if (!f) return;
+  e.preventDefault();
+  setCalDay(f.dataset.calClose, { closed: true, note: $('#cal-note', f).value.trim().slice(0, 80) || 'Closed' });
+});
+
+/* ---------------- Account deletion requests (deletion_requests/<uid>) ----------------
+   A customer taps "Ask to delete my account" in the pickup app. Delete them in the Firebase console,
+   then tap Done here; the customer's app shows the request until then. */
+function deletionSettings() {
+  const list = Object.entries(S.deletions || {}).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
+  return `<section class="card">
+      <h2>${icon('trash')}Account deletion requests${list.length ? `<em>${list.length}</em>` : ''}</h2>
+      ${S.deletionsError ? '<p class="card-note"><b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b></p>' : ''}
+      ${list.length ? `<p class="card-note">Firebase console → Authentication → search the email → Delete account. Then email them, and tap Done.</p>${list.map(([uid, r]) => `<div class="contact"><span class="grow"><b>${esc(r.name || r.email)}</b><small>${esc(r.email || '')}${r.company_name ? ` · ${esc(r.company_name)}` : ''}${r.phone ? ` · ${esc(formatPhone(r.phone))}` : ''}</small><small>Asked ${esc(fmtDateTime(r.at))}</small></span><button class="btn btn-secondary sm" type="button" data-act="del-done" data-uid="${esc(uid)}">Done</button></div>`).join('')}`
+    : '<p class="card-note">None. Customers ask from Account in the pickup app.</p>'}
+    </section>`;
+}
+async function deletionDone(uid) {
+  const r = (S.deletions || {})[uid] || {};
+  if (!(await confirmSheet('Mark as done?', `Only once ${esc(r.email || 'their account')} is deleted in the Firebase console. This takes the request off the list.`, 'Done'))) return;
+  try { await db.ref(`deletion_requests/${uid}`).remove(); toast('Marked as done.', 'ok'); }
+  catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 10000); }
+}
 function renderSettings() {
   checkReach();
   const st = S.settings;
@@ -5906,6 +6027,8 @@ function renderSettings() {
       <div class="setting"><span class="grow">Pieces</span><select class="set-select" data-nd-def="type" aria-label="Pieces start as">${ITEM_TYPES.filter((t) => t.id !== 'other').map((t) => `<option value="${t.id}"${ndDefaults().type === t.id ? ' selected' : ''}>1 ${t.one}</option>`).join('')}</select></div>
     </section>
     ${remindersSettings()}
+    ${calendarSettings()}
+    ${deletionSettings()}
     <section class="card">
       <h2>${icon('chat')}Quick replies<em>${quickList().length}</em></h2>
       <p class="card-note">One-tap answers to customers, under Messages in a request\u2019s Details. They show in the customer\u2019s app. Shared with every dispatcher.</p>
@@ -6041,6 +6164,11 @@ document.addEventListener('click', async (e) => {
     case 'msg-list': msgView = 'list'; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
     case 'msg-banner': { const a = msgAlert; msgAlert = null; renderMsgUi(); if (a) openMessages(a.cid, a.rid); else openMessages(); break; }
     case 'edit-quick': openSheet('Quick replies', quickEditor()); break;
+    case 'cal-move': calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + Number(el.dataset.n), 1); refreshCalendar(); break;
+    case 'cal-day': openCalDay(el.dataset.day); break;
+    case 'cal-open': setCalDay(el.dataset.day, { closed: false }); break;
+    case 'cal-reset': setCalDay(el.dataset.day, null); break;
+    case 'del-done': deletionDone(el.dataset.uid); break;
     case 'del-quick': delQuick(el.dataset.q); break;
     case 'day-board': openDayBoard(); break;
     case 'board-copy': boardCopy(); break;

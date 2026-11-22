@@ -416,6 +416,33 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(await page.isVisible('[data-act=edit-quick]'), 'quick replies in Settings');
     assert.ok(await page.isVisible('[data-nd-def=type]'), 'Settings picks how a new dispatch starts');
     await shot(page, 'settings');
+    // Days closed: a weekday is closed with a reason; a holiday can be opened; both go back to normal
+    {
+      await page.waitForSelector('#cal-box');
+      for (let i = 0; i < 14 && !(await page.evaluate(() => calMonth.getMonth() === 11)); i++) await page.click('[data-act=cal-move][data-n="1"]');
+      const yr = await page.evaluate(() => calMonth.getFullYear());
+      const xmas = `${yr}-12-25`;
+      assert.match(await page.getAttribute(`.cal-day[data-day="${xmas}"]`, 'class'), /closed/, 'Christmas is closed already');
+      const weekday = await page.evaluate((y) => { for (let d = 1; d < 24; d++) { const ds = `${y}-12-${String(d).padStart(2, '0')}`; if (!dayState(ds).closed && ds > todayStr()) return ds; } return null; }, yr);
+      await page.click(`.cal-day[data-day="${weekday}"]`);
+      await page.fill('#cal-note', 'Staff training');
+      await page.click('form[data-cal-close] button');
+      await page.waitForFunction((ds) => { const v = window.__fakeDb.get(`shop_calendar/${ds}`); return v && v.closed === true && v.note === 'Staff training'; }, weekday);
+      await page.waitForFunction((ds) => /closed/.test(document.querySelector(`.cal-day[data-day="${ds}"]`).className), weekday);
+      await page.click(`.cal-day[data-day="${xmas}"]`);
+      await page.click('[data-act=cal-open]');
+      await page.waitForFunction((ds) => { const v = window.__fakeDb.get(`shop_calendar/${ds}`); return v && v.closed === false; }, xmas);
+      await page.click(`.cal-day[data-day="${xmas}"]`);
+      await page.click('[data-act=cal-reset]');
+      await page.waitForFunction((ds) => window.__fakeDb.get(`shop_calendar/${ds}`) === null, xmas);
+      // A customer asks to delete their account: it's listed until staff tap Done
+      await page.evaluate(() => window.__fakeDb.put('deletion_requests/cu9', { at: Date.now(), email: 'gone@acme.ca', name: 'Gone Person', company_name: 'Acme' }));
+      await page.waitForSelector('[data-act=del-done][data-uid=cu9]');
+      await page.click('[data-act=del-done][data-uid=cu9]');
+      await page.click('#sheet-body [data-c="1"]');
+      await page.waitForFunction(() => window.__fakeDb.get('deletion_requests/cu9') === null);
+      await page.keyboard.press('Escape').catch(() => {});
+    }
     // Done: no "Load 20 more" when there's nothing older, and the day summary
     await page.click('.tab[data-tab=done]');
     await page.waitForSelector('#done-list .row');
