@@ -81,7 +81,20 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Signed in as staff
     const { page, errors } = await open(browser, base, { user: STAFF, data: DATA });
     await page.waitForSelector('#view-app:not([hidden]) .job');
-    assert.strictEqual(await page.locator('#queue-list .job').count(), 2, 'two jobs waiting today');
+    // One job fills the page; "1 of 2" says another is waiting
+    assert.strictEqual(await page.locator('#queue-list .job').count(), 1, 'one job on the page at a time');
+    assert.match(await page.textContent('.qcount'), /1 of 2/, 'shows that two jobs wait');
+    assert.strictEqual(await page.getAttribute('#queue-list .job', 'data-id'), 'r1', 'the oldest job first');
+    assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*Today/, 'when it was sent in is on the card');
+    assert.strictEqual(await page.locator('#queue-list [data-act=pick-driver] .caret').count(), 0, 'no little arrow on Send to driver');
+    // Next shows the other job, and it stays on it
+    await page.click('[data-act=q-next]');
+    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r2');
+    assert.match(await page.textContent('.qcount'), /2 of 2/);
+    await page.click('[data-act=q-prev]');
+    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r1');
+    // The number strip stays pinned under the top bar
+    assert.strictEqual(await page.evaluate(() => getComputedStyle(document.querySelector('.qbar')).position), 'sticky', 'number strip stays in view when scrolling');
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
@@ -92,7 +105,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('[data-act=queue-filter][data-f=collect]');
     await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
     await page.click('[data-act=queue-filter][data-f=all]');
-    await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 2);
+    // Still on the job it was showing (the Collect one), now with both counted
+    await page.waitForFunction(() => /2 of 2/.test((document.querySelector('.qcount') || {}).textContent || ''));
+    await page.evaluate(() => qShow('r1'));
     // 2.5 a customer edit shows what changed
     await page.evaluate(() => { window.__fakeDb.put('requests/r1/pickup/address', '88 Victoria Ave'); window.__fakeDb.put('requests/r1/updated_at', Date.now()); });
     await page.waitForSelector('.job-changed');
@@ -101,6 +116,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await shot(page, 'queue');
     // The text is on every card, ready to edit (no pencil)
     {
+      await page.evaluate(() => qShow('r2'));
+      await page.waitForSelector('#queue-list .job[data-id=r2]');
       const card = '#queue-list .job[data-id=r2]';
       const ta = `${card} textarea[data-edit]`;
       assert.strictEqual(await page.locator(ta).count(), 1, 'the text is on the card');
@@ -155,6 +172,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     }
     // Messages: a customer's message shows on the card, and a quick reply answers it
     {
+      await page.evaluate(() => qShow('r1'));
       await page.evaluate(() => window.__fakeDb.put('messages/m1', { rid: 'r1', company_id: 'c1', from: 'customer', text: 'Can you add a box?', at: Date.now(), by_uid: 'u9', by_name: 'Pat' }));
       await page.waitForSelector('#queue-list .job[data-id=r1] .chip.msg');
       // Like a new job: a banner over the bottom bar and a count on the Messages button
@@ -453,6 +471,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const p3 = await open(browser, base, { user: STAFF, data: data3 });
       const pg = p3.page;
       await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.evaluate(() => qShow('r2'));
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
       await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
       await pg.waitForTimeout(500);
@@ -544,6 +563,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.route(/cloudfunctions\.net\/pollNow/, async (r) => { polls++; await gate; r.fulfill(answer).catch(() => {}); });
       await pg.waitForSelector('#view-app:not([hidden]) .job');
       await pg.evaluate(() => { window.__sent = []; const real = window.sendToDriver; window.sendToDriver = (id, did) => { window.__sent.push(did); }; });
+      await pg.evaluate(() => qShow('r2'));
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
       await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
       assert.ok(await pg.evaluate(() => document.querySelector('.sp-card').classList.contains('gps-wait')), 'buttons locked while GPS loads');
