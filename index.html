@@ -1913,6 +1913,15 @@ body.head-up .toasts{top:calc(var(--head-h) + 8px)}
 .side-tag{position:absolute;left:0;top:0;bottom:0;width:27px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;pointer-events:none}
 .job.by-disp .side-tag{background:var(--yellow);color:#000}
 .job.by-cust .side-tag{background:#2563eb;color:#fff}
+/* Small mic inside the driver text box */
+.text-edit{position:relative}
+body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok .job.full .text-edit textarea{padding-right:48px}
+.te-mic{position:absolute;top:5px;right:5px;z-index:2;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1.5px solid #2563eb;background:var(--surface);color:#2563eb;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 2px 6px -2px rgba(15,23,42,.3)}
+.te-mic .i{width:19px;height:19px;stroke-width:2.3}
+.te-mic:active{transform:scale(.92)}
+.te-mic.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite}
+body:not(.mic-ok) .te-mic{display:none}
+@media (prefers-reduced-motion:reduce){.te-mic.on{animation:none}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2454,6 +2463,7 @@ function textEditor(id, r, where) {
   const chip = card ? `<button class="addr-chip${addrModeOf(id, r).addr !== 'off' || addrModeOf(id, r).map ? ' on' : ''}" type="button" data-act="addr-open" data-id="${esc(id)}" data-addr-chip="${esc(id)}" aria-expanded="${open}">${icon('pin', 'sm')}<span>${esc(addrChipText(id, r))}</span>${icon('caret', 'caret')}</button>` : '';
   return `<div class="text-edit${edited ? ' edited' : ''}${card ? ' on-card' : ''}${open ? ' addr-open' : ''}" data-edit-box="${esc(id)}">
     <textarea data-edit="${esc(id)}" data-where="${where}" rows="2" spellcheck="true" aria-label="Text that gets sent for request ${esc(r.ref_no)}">${esc(text)}</textarea>
+    <button class="te-mic${voice && voice.mode === 'type' && voice.box && voice.box.dataset.edit === id && voice.box.dataset.where === where ? ' on' : ''}" type="button" data-act="te-mic" data-id="${esc(id)}" data-where="${where}" aria-label="Say words to add to the text">${icon('mic')}</button>
     ${card ? '' : addrSwitch(id, r)}
     <div class="text-edit-head"><span data-sms-count>${esc(smsCountText(text))}</span><span class="te-tools"><button type="button" data-act="reset-edit" data-id="${esc(id)}"${edited ? '' : ' hidden'}>Undo changes</button>${chip}</span></div>
     ${card && open ? addrSwitch(id, r) : ''}
@@ -6698,6 +6708,7 @@ document.addEventListener('click', async (e) => {
     case 'pick-driver': pickDriver(id); break;
     case 'resend-driver': resendDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
+    case 'te-mic': teMic(el); break;
     case 'details': openDetails(id); break;
     case 'group-all': openGroupAll(el.dataset.src); break;
     case 'ga-day': gaPickDay(el.dataset.day); break;
@@ -7156,6 +7167,7 @@ function micListening(on) {
   micBtn.setAttribute('aria-pressed', String(on));
   micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
   document.body.classList.toggle('voice-on', on);
+  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(on && voice && voice.mode === 'type' && voice.box && b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where)));
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
@@ -7310,16 +7322,21 @@ function voiceFill(v, t, alts, final) {
 }
 
 /* Say words into a box, at the cursor. The words show in the box as they come. */
-function voiceType(box) {
+function voiceType(box, join) {
   const start = box.selectionStart != null ? box.selectionStart : box.value.length;
   const endSel = box.selectionEnd != null ? box.selectionEnd : start;
   const before = box.value.slice(0, start), after = box.value.slice(endSel);
   const v = { mode: 'type', box };
+  // join: the words are added on as a new part of the driver text (", side door please")
   voice = v;
   micListening(true);
   micSay('', 'Listening… say the words');
   const put = (t) => {
-    if (!box.isConnected) return;
+    if (!box.isConnected) {
+      const nb = box.dataset.edit ? $$('textarea[data-edit]').find((x) => x.dataset.edit === box.dataset.edit && x.dataset.where === box.dataset.where) : null;
+      if (!nb) return;
+      box = nb; v.box = nb;
+    }
     if (box.type === 'number') {
       const ws = String(t).split(/\s+/).map(vWord);
       let num = null;
@@ -7329,7 +7346,7 @@ function voiceType(box) {
     } else {
       let s = String(t).trim();
       if (!before.trim() || /[.!?]\s*$/.test(before)) s = s.replace(/^./, (c) => c.toUpperCase());
-      const gapL = before && !/\s$/.test(before) ? ' ' : '';
+      const gapL = before && !/\s$/.test(before) ? (join && !/[,.;:!?]$/.test(before) ? ', ' : ' ') : '';
       const gapR = after && !/^[\s,.!?]/.test(after) ? ' ' : '';
       box.value = before + gapL + s + gapR + after;
       const at = (before + gapL + s).length;
@@ -7349,6 +7366,20 @@ function voiceType(box) {
     }
   });
 }
+
+/* The small mic inside the driver text box: says words onto the end of the text, no keyboard */
+function teMic(b) {
+  if (voice) { voiceStop(); return; }
+  if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
+  const box = $$('textarea[data-edit]').find((x) => x.dataset.edit === b.dataset.id && x.dataset.where === b.dataset.where);
+  if (!box) return;
+  listenVoiceAliases();
+  // Words go on the end, unless the cursor is already in this box
+  if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
+  voiceType(box, true);
+}
+// Keep the keyboard closed (and the cursor where it is) when the small mic is touched
+document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.te-mic')) { e.preventDefault(); if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* */ } } } });
 
 /* ---------- Teach the mic (Settings › Mic, or the button on the New dispatch form) ----------
    The phone's speech engine can't learn a voice. So: pick the customer, say their name, and every way

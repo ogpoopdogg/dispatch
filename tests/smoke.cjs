@@ -841,6 +841,21 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const pg = p5.page;
       await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.waitForSelector('#mic-fab:not([hidden])');
+      // The small mic inside the driver text box: words go on the end, and the keyboard stays closed
+      await pg.evaluate(() => qShow('r1'));
+      await pg.waitForSelector('#queue-list .job.full .te-mic');
+      const before = await pg.inputValue('#queue-list .job.full textarea[data-edit]');
+      await pg.click('#queue-list .job.full .te-mic');
+      await pg.waitForFunction(() => document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
+      await pg.evaluate(() => __say('side door please', true));
+      await pg.waitForFunction(() => !document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
+      assert.strictEqual(await pg.inputValue('#queue-list .job.full textarea[data-edit]'), `${before}, side door please`);
+      assert.ok(await pg.evaluate(() => !document.activeElement.matches('textarea')), 'no keyboard: the text box was never focused');
+      assert.ok(await pg.evaluate(() => document.querySelector('#queue-list .job.full .text-edit').classList.contains('edited')), 'counts as an edit');
+      await shot(pg, 'text-mic');
+      await pg.evaluate(() => setEdit('r1', null));
+      await pg.evaluate(() => qBack());
+      await pg.waitForSelector('#queue-list .qrow');
       // Reading what was said
       const said = (t) => pg.evaluate((x) => { const p = voiceParse(x, 'pickup'); return [p.pickup && p.pickup.name, p.delivery && p.delivery.name, itemsText(p.items.map((i) => Object.assign({}, i, { type: i.type || 'piece' }))), p.payment, p.po].join('|'); }, t);
       assert.strictEqual(await said('GNR Electric to AAA Bobcat, one box, 25 pounds'), 'GNR Electric|AAA Bobcat|1 box 25 lbs||');
