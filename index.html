@@ -1922,6 +1922,23 @@ body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok
 .te-mic.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite}
 body:not(.mic-ok) .te-mic{display:none}
 @media (prefers-reduced-motion:reduce){.te-mic.on{animation:none}}
+/* Map page */
+.mt-wrap{position:relative}
+.mt-map{height:calc(100vh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 92px);height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 92px);min-height:300px;border-radius:14px;border:1px solid var(--line-strong);overflow:hidden;background:#e8eef3}
+.mt-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);margin:0;padding:10px 14px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);font-weight:700;text-align:center}
+/* Today page: a column per driver, swipe sideways when there are more than three */
+.td-seg{margin:0 0 10px}
+.td-cols{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.td-col{flex:0 0 calc((100% - 16px) / 3);min-width:112px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;padding:8px;min-height:220px}
+.td-head{display:flex;align-items:baseline;gap:6px;padding-bottom:5px;border-bottom:3px solid var(--yellow)}
+.td-head b{flex:1;min-width:0;font-size:15px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-head span{font-size:15px;font-weight:900;color:var(--ink-2)}
+.td-job{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);padding:6px 7px;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.td-job:active{transform:scale(.98)}
+.td-t{display:flex;justify-content:space-between;gap:4px;font-size:12px;font-weight:700;color:var(--ink-3)}
+.td-t{white-space:nowrap}.td-no{font-size:11.5px;font-weight:800;color:var(--ink-3)}
+.td-r{font-size:13px;font-weight:700;line-height:1.3}
+.td-none{font-size:13px;color:var(--ink-3)}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2050,6 +2067,19 @@ body:not(.mic-ok) .te-mic{display:none}
       <div id="done-list"></div>
     </section>
 
+    <!-- Map: every waiting pickup and every van -->
+    <section id="panel-map" hidden>
+      <div class="page-head"><h1>Map</h1><p id="mt-sub">Waiting pickups and vans</p></div>
+      <div class="mt-wrap"><div class="mt-map" id="mt-map"></div><p class="mt-msg" id="mt-msg" hidden></p></div>
+    </section>
+
+    <!-- Today: one column per driver, what each one got -->
+    <section id="panel-today" hidden>
+      <div class="page-head"><h1>Today</h1><p id="td-sub"></p></div>
+      <div class="seg td-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="td-day" value="today" checked><span>Today</span></label><label><input type="radio" name="td-day" value="yesterday"><span>Yesterday</span></label></div>
+      <div id="td-board"></div>
+    </section>
+
     <!-- Settings -->
     <section id="panel-settings" hidden>
       <div class="page-head"><h1>Settings</h1></div>
@@ -2076,8 +2106,8 @@ body:not(.mic-ok) .te-mic{display:none}
     <div class="tabbar-in">
       <button class="tab msg-tab" type="button" data-act="open-msgs" id="msg-btn" aria-label="Messages"><span class="ti"><svg class="i"><use href="#i-chat"/></svg></span>Messages<span class="dot" id="msg-badge" hidden></span></button>
       <button class="tab" type="button" data-tab="done"><span class="ti"><svg class="i"><use href="#i-check"/></svg></span>Done</button>
-      <button class="tab" type="button" data-tab="scheduled"><span class="ti"><svg class="i"><use href="#i-calendar"/></svg></span>Scheduled<span class="dot quiet" id="dot-scheduled" hidden></span></button>
-      <button class="tab tab-q" type="button" data-tab="queue" aria-current="page"><span class="ti"><svg class="i"><use href="#i-inbox"/></svg></span>Queue<span class="dot" id="dot-queue" hidden></span></button>
+      <button class="tab tab-map" type="button" data-tab="map"><span class="ti"><svg class="i"><use href="#i-pin"/></svg></span>Map</button>
+      <button class="tab tab-today" type="button" data-tab="today"><span class="ti"><svg class="i"><use href="#i-list"/></svg></span>Today</button>
       <button class="tab tab-new" type="button" data-act="new-dispatch" aria-label="New dispatch"><span class="ti"><svg class="i"><use href="#i-plus"/></svg></span>Dispatch</button>
     </div>
   </nav>
@@ -3747,9 +3777,8 @@ function renderCounts() {
   const s = scheduledList().length;
   const dq = $('#dot-queue');
   const ds = $('#dot-scheduled');
-  dq.textContent = q; dq.hidden = !q;
-  dq.parentNode.classList.toggle('has-jobs', !!q);
-  ds.textContent = s; ds.hidden = !s;
+  if (dq) { dq.textContent = q; dq.hidden = !q; dq.parentNode.classList.toggle('has-jobs', !!q); }
+  if (ds) { ds.textContent = s; ds.hidden = !s; }
 }
 function renderAll() {
   if ($('#view-app').hidden) return;
@@ -3761,7 +3790,9 @@ function renderAll() {
   if (S.tab === 'queue') renderQueue();
   if (S.tab === 'scheduled') renderScheduled();
   if (S.tab === 'done') renderDone();
+  if (S.tab === 'today') renderToday();
   deskRender();
+  mtRender();
   if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
     if (findReq(openDetailId)) openDetails(openDetailId, true); else closeSheet();
   }
@@ -3773,7 +3804,8 @@ function renderAll() {
 function switchTab(tab) {
   S.tab = tab;
   $$('.tab[data-tab], #set-btn').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  ['queue', 'scheduled', 'done', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  ['queue', 'scheduled', 'done', 'map', 'today', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  if (tab === 'map') mtStart(); else mtStop();
   $('#qbar').hidden = false;
   if (tab === 'settings') renderSettings();
   if (tab === 'queue') queueStick = true;
@@ -4653,6 +4685,10 @@ function deskRender() {
     desk.map = new google.maps.Map($('#desk-map'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy', clickableIcons: false, styles: MAP_STYLE });
     desk.fitted = false;
   }
+  vanMapDraw(desk, (id) => openDetails(id));
+}
+// Vans and waiting pickups on a map (st = desk or the Map page). Returns how many of each are shown.
+function vanMapDraw(st, onPin) {
   const b = new google.maps.LatLngBounds();
   const live = new Set();
   Object.entries(sp.vans || {}).forEach(([id, v]) => {
@@ -4661,24 +4697,24 @@ function deskRender() {
     const nick = spNick(id);
     const van = { id, pos: { lat: +L.lat, lng: +L.lng }, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', heading: headingOf(v.heading) };
     live.add(id);
-    let m = desk.vans[id];
-    if (!m) { m = desk.vans[id] = new google.maps.Marker({ map: desk.map, position: van.pos, optimized: false }); }
+    let m = st.vans[id];
+    if (!m) { m = st.vans[id] = new google.maps.Marker({ map: st.map, position: van.pos, optimized: false }); }
     else glide(m, van.pos);
     const key = `${van.label}|${van.nick ? 1 : 0}|${van.color}|${van.heading}`;
     if (m._key !== key) { m.setIcon(vanIcon(van)); m._key = key; m.setZIndex(van.nick ? 10 : 1); }
     if (nick) b.extend(van.pos);
   });
-  Object.keys(desk.vans).forEach((id) => { if (!live.has(id)) { desk.vans[id].setMap(null); delete desk.vans[id]; } });
+  Object.keys(st.vans).forEach((id) => { if (!live.has(id)) { st.vans[id].setMap(null); delete st.vans[id]; } });
   const pins = new Set();
   queueList().forEach(([id, r]) => {
     const L = r.pickup || {};
     const at = L.lat != null && isFinite(+L.lat) ? { lat: +L.lat, lng: +L.lng } : geoCached(L);
     if (!at) return;
     pins.add(id);
-    let p = desk.pins[id];
+    let p = st.pins[id];
     if (!p) {
-      p = desk.pins[id] = new google.maps.Marker({ map: desk.map, zIndex: 40 });
-      p.addListener('click', () => openDetails(id));
+      p = st.pins[id] = new google.maps.Marker({ map: st.map, zIndex: 40 });
+      p.addListener('click', () => onPin(id));
     }
     p.setPosition(at);
     p.setLabel({ text: `#${r.ref_no}`, fontWeight: '800', fontSize: '11px', color: '#000' });
@@ -4686,9 +4722,67 @@ function deskRender() {
     p.setTitle(`#${r.ref_no} ${L.name || ''}`);
     b.extend(at);
   });
-  Object.keys(desk.pins).forEach((id) => { if (!pins.has(id)) { desk.pins[id].setMap(null); delete desk.pins[id]; } });
-  if (!desk.fitted && !b.isEmpty()) { desk.fitted = true; desk.map.fitBounds(b, 48); google.maps.event.addListenerOnce(desk.map, 'idle', () => { if (desk.map.getZoom() > 14) desk.map.setZoom(14); }); }
+  Object.keys(st.pins).forEach((id) => { if (!pins.has(id)) { st.pins[id].setMap(null); delete st.pins[id]; } });
+  if (!st.fitted && !b.isEmpty()) { st.fitted = true; st.map.fitBounds(b, 48); google.maps.event.addListenerOnce(st.map, 'idle', () => { if (st.map.getZoom() > 14) st.map.setZoom(14); }); }
+  return { vans: live.size, pins: pins.size, waiting: queueList().length };
 }
+
+/* =========================================================
+   Map page (bottom bar): every waiting pickup (yellow, its number) and every van, live.
+   Tap a pickup to open that job. While the page is open, fresh GPS is asked for every 15 s.
+   ========================================================= */
+const mt = { map: null, vans: {}, pins: {}, fitted: false, poll: 0 };
+function mtStart() {
+  mt.fitted = false; mt.err = false;
+  loadMaps();
+  mtRender();
+  clearInterval(mt.poll);
+  const poll = async () => {
+    if (S.tab !== 'map' || document.hidden || !auth || !auth.currentUser) return;
+    try { const t = await auth.currentUser.getIdToken(); await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } }); } catch (e) { /* next tick tries again */ }
+  };
+  poll();
+  mt.poll = setInterval(poll, 15000);
+}
+// Tap a pickup: its regular job card in the Queue
+function mtOpenJob(id) { if (!S.pending[id]) return; switchTab('queue'); qOpen(id); }
+function mtStop() { clearInterval(mt.poll); mt.poll = 0; }
+function mtRender() {
+  if (S.tab !== 'map' || $('#view-app').hidden) return;
+  const msg = $('#mt-msg');
+  const n = queueList().length;
+  if (!mapsUsable()) {
+    msg.hidden = false;
+    msg.textContent = maps === 'failed' || mt.err ? 'The map couldn\u2019t load. Check the internet and open Map again.' : 'Loading the map\u2026';
+    $('#mt-sub').textContent = `${n} waiting`;
+    return;
+  }
+  msg.hidden = true;
+  if (!mt.map) mt.map = new google.maps.Map($('#mt-map'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, zoomControl: true, zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_TOP }, gestureHandling: 'greedy', clickableIcons: false, styles: MAP_STYLE });
+  const c = vanMapDraw(mt, mtOpenJob);
+  const off = n - c.pins;
+  $('#mt-sub').textContent = `${n} waiting \u00b7 ${c.vans} ${c.vans === 1 ? 'van' : 'vans'}${off > 0 ? ` \u00b7 ${off} with no map spot` : ''}`;
+}
+
+/* =========================================================
+   Today page (bottom bar): one column per driver with the jobs they were sent, oldest at the top
+   ========================================================= */
+let tdDay = 'today';
+function renderToday() {
+  const was = boardDay; boardDay = tdDay;
+  const rows = boardRows();
+  boardDay = was;
+  const by = {};
+  rows.forEach(([id, r]) => { const k = r.dispatched_to || 'Group Chat'; (by[k] = by[k] || []).push([id, r]); });
+  // Every driver gets a column, even with nothing yet
+  byName(S.contacts.drivers || {}).forEach(([, d]) => { const k = String(d.name || '').trim(); if (k && !by[k]) by[k] = []; });
+  const cols = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const day = tdDay === 'today' ? 'today' : 'yesterday';
+  $('#td-sub').textContent = `${rows.length} sent ${day}`;
+  $('#td-board').innerHTML = cols.length ? `<div class="td-cols">${cols.map(([k, list]) => `<div class="td-col"><div class="td-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.length ? list.map(([id, r]) => `<button class="td-job" type="button" data-act="details" data-id="${esc(id)}"><span class="td-t">${esc(fmtTime(r.dispatched_at))}</span><span class="td-r">${esc(oneLine(r.pickup && r.pickup.name))} \u2192 ${esc(oneLine(r.delivery && r.delivery.name))}</span><small class="td-no">#${esc(r.ref_no)}</small></button>`).join('') : '<i class="td-none">Nothing yet</i>'}</div>`).join('')}</div>`
+    : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing sent ${day}</h3><p>Jobs show here once they\u2019re sent to a driver.</p></div>`;
+}
+document.addEventListener('change', (e) => { if (e.target.name === 'td-day') { tdDay = e.target.value; renderToday(); } });
 if (window.matchMedia) matchMedia('(min-width:1100px)').addEventListener('change', () => { loadMaps(); deskRender(); });
 
 /* =========================================================
@@ -4731,16 +4825,17 @@ const mapsUsable = () => maps === 'ready';
 function loadMaps() {
   if (maps !== 'idle') return;
   maps = 'loading';
-  window.ecMapsReady = () => { maps = window.google && google.maps && google.maps.places ? 'ready' : 'failed'; ndAttachPlaces(); ndUpdate(); deskRender(); };
+  window.ecMapsReady = () => { maps = window.google && google.maps && google.maps.places ? 'ready' : 'failed'; ndAttachPlaces(); ndUpdate(); deskRender(); mt.err = false; mtRender(); };
   window.gm_authFailure = () => {
     maps = 'failed';
     ndUpdate();
+    mtRender();
     toast('Google address search isn’t working in this app right now. Type the address and city instead.', 'error', 9000);
   };
   const sc = document.createElement('script');
   sc.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places&loading=async&callback=ecMapsReady`;
   sc.async = true;
-  sc.onerror = () => { maps = 'idle'; ndUpdate(); }; // offline: try again next time the form opens
+  sc.onerror = () => { maps = 'idle'; ndUpdate(); mt.err = true; mtRender(); }; // offline: try again next time the form opens
   document.head.appendChild(sc);
 }
 function cityFromComponents(comps) {
