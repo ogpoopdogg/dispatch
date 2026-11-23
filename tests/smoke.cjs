@@ -99,9 +99,21 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForFunction(() => document.body.classList.contains('q-fit'));
     assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'no scrolling with a job on the page');
     assert.ok(await page.evaluate(() => document.querySelector('#queue-list [data-act=pick-driver]').getBoundingClientRect().bottom <= innerHeight), 'Send to driver on screen');
-    await page.click('[data-act=q-back]');
+    // No Back to all jobs bar: the Waiting number has an arrow and pulses harder; one tap goes back
+    assert.strictEqual(await page.locator('.qback, [data-act=q-back]').count(), 0, 'no Back to all jobs button');
+    assert.ok(await page.evaluate(() => { const b = document.querySelector('#queue-kpis .kp-wait'); return b.classList.contains('back') && !!b.querySelector('.kp-arrow') && getComputedStyle(b).animationName.includes('kpBack'); }), 'Waiting shows a back arrow and pulses');
+    assert.match(await page.textContent('#queue-kpis .kp-wait'), /2\s*all jobs/);
+    await shot(page, 'waiting-back');
+    await page.click('#queue-kpis .kp-wait', { force: true });
     await page.waitForSelector('#queue-list .qrow[data-id=r1]:not(.unseen)');
-    assert.strictEqual(await page.locator('#queue-list .qrow.unseen').count(), 1, 'opened once: no more glow');
+    assert.ok(await page.evaluate(() => !document.querySelector('#queue-kpis .kp-wait').classList.contains('back')), 'arrow gone on the list');
+    // The phone's back also goes back to the list
+    await page.evaluate(() => qShow('r2'));
+    await page.waitForSelector('#queue-list .job.full[data-id=r2]');
+    await page.goBack();
+    await page.waitForSelector('#queue-list .qrow[data-id=r2]');
+    assert.ok(await page.evaluate(() => !document.getElementById('view-app').hidden), 'still in the app');
+    assert.strictEqual(await page.locator('#queue-list .qrow.unseen').count(), 0, 'opened once: no more glow (both opened now)');
     // A dispatcher's own job: their name (first letter capital) on the button, solid yellow side line
     await page.evaluate(() => window.__fakeDb.put('requests/r9', { ref_no: 1209, status: 'new', source: 'dispatcher', company_id: 'dispatcher', company_name: 'Dispatcher', requested_by: { name: 'dana', email: 'dana@ec.com' }, pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co', address: '40 Park Ave' }, items_text: '1 box', payment: 'prepaid', when: 'asap', created_at: Date.now() }));
     await page.waitForSelector('#queue-list .qrow[data-id=r9]');
@@ -111,8 +123,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => qShow('r9'));
     await page.waitForSelector('#queue-list .job.full[data-id=r9]');
     assert.match(await page.textContent('#queue-list .src-band'), /made by Dana/);
-    assert.ok(await page.evaluate(() => getComputedStyle(document.querySelector('[data-act=q-back]')).animationName.includes('qbPulse')), 'Back to all jobs pulses');
-    await page.click('[data-act=q-back]');
+    await page.click('#queue-kpis .kp-wait', { force: true });
     await page.evaluate(() => window.__fakeDb.put('requests/r9', null));
     await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 2);
     // The Queue button is the same size as the Dispatch button
@@ -190,7 +201,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => qShow('r6'));
     await page.waitForSelector('#queue-list .job.full[data-id=r6]');
     assert.match(await page.textContent('#queue-list .job-when'), /Scheduled on (Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+, \d+:\d+/);
-    await page.click('[data-act=q-back]');
+    await page.click('#queue-kpis .kp-wait', { force: true });
     // Send all to Group Chat: hold Waiting 1.2 s. Every job one line with a box, quick picks by day
     const hold = async (sel, ms) => { const bb = await page.locator(sel).boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(ms); await page.mouse.up(); };
     await hold('#queue-kpis .kp-wait', 400);
