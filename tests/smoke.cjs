@@ -191,33 +191,32 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForSelector('#queue-list .job.full[data-id=r6]');
     assert.match(await page.textContent('#queue-list .job-when'), /Scheduled on (Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+, \d+:\d+/);
     await page.click('[data-act=q-back]');
-    // Send all to Group Chat: every job one line with a box, quick picks by day, copies a list
-    await page.click('#queue-list [data-act=group-all]');
+    // Send all to Group Chat: hold Waiting 1.2 s. Every job one line with a box, quick picks by day
+    const hold = async (sel, ms) => { const bb = await page.locator(sel).boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(ms); await page.mouse.up(); };
+    await hold('#queue-kpis .kp-wait', 400);
+    await page.waitForTimeout(1200);
+    assert.ok(await page.evaluate(() => document.getElementById('sheet').hidden), 'a short press does not open it');
+    await hold('#queue-kpis .kp-wait', 1400);
     await page.waitForSelector('#sheet .ga-row');
+    assert.strictEqual(await page.locator('[data-act=group-all]').count(), 0, 'no Send all button on the pages any more');
     assert.strictEqual(await page.locator('#sheet .ga-row input:checked').count(), 3, 'queue: all ticked');
     await shot(page, 'group-all-queue');
     await page.locator('#sheet .ga-row:has-text("#1206") input').uncheck();
-    assert.match(await page.textContent('#sheet [data-act=ga-copy]'), /Copy 2 jobs/);
-    await page.evaluate(() => { window.__copied = null; window.copySync = (t) => { window.__copied = t; return true; }; });
+    assert.match(await page.textContent('#sheet [data-act=ga-copy]'), /Send 2 jobs to Group Chat/);
+    await page.evaluate(() => { window.__copied = null; window.__launched = null; window.copySync = (t) => { window.__copied = t; return true; }; window.launch = (u) => { window.__launched = u; }; });
     await page.click('#sheet [data-act=ga-copy]');
-    await page.waitForFunction(() => window.__copied);
+    await page.waitForFunction(() => window.__launched);
     const copied = await page.evaluate(() => window.__copied);
     assert.strictEqual(copied.split('\n').length, 2, 'one line per ticked job');
     assert.ok(/^Acme Supply for Smith Co/.test(copied.split('\n')[0]) && /^Prairie Parts for Dock 4/.test(copied.split('\n')[1]), copied);
+    assert.strictEqual(await page.evaluate(() => window.__launched), `sms:?body=${encodeURIComponent(copied)}`, 'opens Messages with the list typed in, no share menu');
+    await page.waitForFunction(() => document.getElementById('sheet').hidden);
+    assert.strictEqual(await page.locator('.qr-copied, .chip.copied, .ga-was').count(), 0, 'no Copied labels');
     await page.evaluate(() => window.__fakeDb.put('requests/r6', null));
-    await page.waitForFunction(() => document.getElementById('sheet').hidden);
-    // Copied jobs say so (on this phone), so nobody posts them twice
-    await page.waitForSelector('#queue-list .qrow[data-id=r1] .qr-copied');
-    assert.strictEqual(await page.locator('#queue-list .qrow .qr-copied').count(), 2, 'only the copied jobs');
-    await page.click('#queue-list [data-act=group-all]');
-    await page.waitForSelector('#sheet .ga-row .ga-was');
-    assert.strictEqual(await page.locator('#sheet .ga-was').count(), 2);
-    await page.keyboard.press('Escape');
-    await page.waitForFunction(() => document.getElementById('sheet').hidden);
-    // Scheduled: the next day ticked; a day button ticks only that day
-    await page.evaluate(() => switchTab('scheduled'));
-    await page.click('#scheduled-list [data-act=group-all]');
+    // Scheduled: hold Scheduled. The next day ticked; a day button ticks only that day
+    await hold('#queue-kpis .kp-sched', 1400);
     await page.waitForSelector('#sheet .ga-row');
+    assert.ok(await page.evaluate(() => !document.getElementById('panel-queue').hidden), 'holding does not switch pages');
     assert.strictEqual(await page.locator('#sheet .ga-row input:checked').count(), 1);
     assert.match(await page.textContent('#sheet .ga-picks'), /Tomorrow 1/);
     await page.click('#sheet [data-act=ga-day][data-day=none]');
@@ -225,7 +224,6 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(await page.isDisabled('#sheet [data-act=ga-copy]'));
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.querySelector('.app-main').inert);
-    await page.evaluate(() => switchTab('queue'));
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
