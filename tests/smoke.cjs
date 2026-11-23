@@ -80,47 +80,39 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     }
     // Signed in as staff
     const { page, errors } = await open(browser, base, { user: STAFF, data: DATA });
-    await page.waitForSelector('#view-app:not([hidden]) .job');
-    // One job fills the page; "1 of 2" says another is waiting
-    assert.strictEqual(await page.locator('#queue-list .job').count(), 1, 'one job on the page at a time');
-    assert.match(await page.textContent('.qcount'), /1 of 2/, 'shows that two jobs wait');
-    assert.strictEqual(await page.getAttribute('#queue-list .job', 'data-id'), 'r1', 'the oldest job first');
-    assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*(Today|Yesterday)/, 'when it was sent in is on the card');
-    assert.strictEqual(await page.locator('#queue-list [data-act=pick-driver] .caret').count(), 0, 'no little arrow on Send to driver');
-    // Next shows the other job, and it stays on it
-    await page.click('[data-act=q-next]');
-    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r2');
-    assert.match(await page.textContent('.qcount'), /2 of 2/);
-    await page.click('[data-act=q-prev]');
-    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r1');
-    // The numbers sit in the pinned top bar and stay in view while flipping; the page turn leaves nothing behind
+    await page.waitForSelector('#view-app:not([hidden]) .qrow');
+    // The queue is a list of job buttons, oldest at the top; jobs nobody opened yet glow green
+    assert.strictEqual(await page.locator('#queue-list .qrow').count(), 2, 'one button per waiting job');
+    assert.strictEqual(await page.getAttribute('#queue-list .qrow >> nth=0', 'data-id'), 'r1', 'the oldest job at the top');
+    assert.strictEqual(await page.locator('#queue-list .qrow.unseen').count(), 2, 'not opened yet: glowing');
+    assert.match(await page.textContent('#queue-list .qrow >> nth=0'), /(Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+/, 'submitted day of the week on the button');
+    assert.match(await page.textContent('#queue-list .qrow >> nth=0'), /Customer/, 'customer requests are labelled');
+    // The numbers sit in the pinned top bar
     assert.ok(await page.evaluate(() => !!document.querySelector('.app-head #qbar:not([hidden]) .kp-wait')), 'numbers are part of the pinned top');
-    await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
     assert.match(await page.textContent('.kp-wait'), /2\s*waiting/i);
-    assert.match(await page.textContent('#queue-list .src-band'), /Customer request/, 'customer requests are labelled');
-    // A job on the page fits the screen: no scrolling, Send to driver in view
+    // Tap a button: the job opens on the whole page, with Back to the list
+    await page.click('#queue-list .qrow[data-id=r1]');
+    await page.waitForSelector('#queue-list .job.full[data-id=r1]');
+    assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+/, 'day of the week on the card');
+    assert.match(await page.textContent('#queue-list .src-band'), /Customer request/);
+    assert.strictEqual(await page.locator('#queue-list [data-act=pick-driver] .caret').count(), 0, 'no little arrow on Send to driver');
     await page.waitForFunction(() => document.body.classList.contains('q-fit'));
     assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'no scrolling with a job on the page');
     assert.ok(await page.evaluate(() => document.querySelector('#queue-list [data-act=pick-driver]').getBoundingClientRect().bottom <= innerHeight), 'Send to driver on screen');
-    // The arrow beside Next lists every waiting job; tap one to go to it
-    await page.click('[data-act=q-menu]');
-    await page.waitForSelector('#qmenu [data-act=q-pick]');
-    assert.strictEqual(await page.locator('#qmenu [data-act=q-pick]').count(), 2, 'every waiting job in the list');
-    await page.click('#qmenu [data-act=q-pick][data-id=r2]');
-    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r2' && !document.getElementById('qmenu'));
-    await page.evaluate(() => qShow('r1'));
+    await page.click('[data-act=q-back]');
+    await page.waitForSelector('#queue-list .qrow[data-id=r1]:not(.unseen)');
+    assert.strictEqual(await page.locator('#queue-list .qrow.unseen').count(), 1, 'opened once: no more glow');
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
     assert.ok(await page.isVisible('#queue-tools'), 'the magnifier opens search and filters');
     await page.fill('#queue-q', 'prairie');
-    await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
+    await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 1);
     await page.fill('#queue-q', '');
     await page.click('[data-act=queue-filter][data-f=collect]');
-    await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
+    await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 1);
     await page.click('[data-act=queue-filter][data-f=all]');
-    // Still on the job it was showing (the Collect one), now with both counted
-    await page.waitForFunction(() => /2 of 2/.test((document.querySelector('.qcount') || {}).textContent || ''));
+    await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 2);
     await page.evaluate(() => qShow('r1'));
     // 2.5 a customer edit shows what changed
     await page.evaluate(() => { window.__fakeDb.put('requests/r1/pickup/address', '88 Victoria Ave'); window.__fakeDb.put('requests/r1/updated_at', Date.now()); });
@@ -215,7 +207,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
         data2.messages = { m1 };
         data2.dispatch_settings = Object.assign({}, data2.dispatch_settings, { msg_read: { staff1: await page.evaluate(() => window.__fakeDb.get('dispatch_settings/msg_read/staff1')) } });
         const again = await open(browser, base, { user: STAFF, data: data2 });
-        await again.page.waitForSelector('#view-app:not([hidden]) .job');
+        await again.page.waitForSelector('#view-app:not([hidden]) .qrow');
         await again.page.waitForTimeout(400);
         assert.ok(await again.page.isHidden('#msg-badge'), 'a read message is not new again after a reload');
         assert.strictEqual(await again.page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'no "new message" on the card after a reload');
@@ -484,7 +476,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
           van_7: { ek: 'kim', name: 'Kim Day', nickname: 'Kim', vehicleName: 'Van 7', at: Date.now() - 20 * 3600000 } } };
       const p3 = await open(browser, base, { user: STAFF, data: data3 });
       const pg = p3.page;
-      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.evaluate(() => qShow('r2'));
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
       await pg.waitForSelector('#nd-pop-list [data-hold-driver]');
@@ -575,7 +567,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       let polls = 0, release = null;
       let gate = new Promise((ok) => { release = ok; });
       await pg.route(/cloudfunctions\.net\/pollNow/, async (r) => { polls++; await gate; r.fulfill(answer).catch(() => {}); });
-      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.evaluate(() => { window.__sent = []; const real = window.sendToDriver; window.sendToDriver = (id, did) => { window.__sent.push(did); }; });
       await pg.evaluate(() => qShow('r2'));
       await pg.click('#queue-list .job[data-id=r2] [data-act=pick-driver]');
@@ -612,6 +604,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       // GPS fails: the buttons open with a warning and every van's spot age
       answer = { status: 500, body: 'no' };
       await pg.waitForTimeout(300);
+      await pg.evaluate(() => qShow('r1'));
       await pg.click('#queue-list .job[data-id=r1] [data-act=pick-driver]').catch(() => pg.click('#queue-list .job [data-act=pick-driver]'));
       await pg.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
       await pg.waitForFunction(() => !document.querySelector('.sp-card').classList.contains('gps-wait'), null, { timeout: 5000 });
@@ -627,7 +620,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     {
       const p4 = await open(browser, base, { user: STAFF, data: DATA });
       const pg = p4.page;
-      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.click('[data-act=new-dispatch]');
       await pg.waitForSelector('#nd-pickup-name');
       await pg.waitForTimeout(500);
@@ -691,7 +684,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       Object.assign(data.address_lookup, { 'GNR Electric': { address: '1420 Pacific Ave', city: 'Brandon' }, 'AAA Bobcat': { address: '33 Middleton Ave', city: 'Brandon' }, 'Virden Pinnacle': { address: '1 Nelson St', city: 'Virden' } });
       const p5 = await open(browser, base, { user: STAFF, data }, fakeSpeech);
       const pg = p5.page;
-      await pg.waitForSelector('#view-app:not([hidden]) .job');
+      await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.waitForSelector('#mic-fab:not([hidden])');
       // Reading what was said
       const said = (t) => pg.evaluate((x) => { const p = voiceParse(x, 'pickup'); return [p.pickup && p.pickup.name, p.delivery && p.delivery.name, itemsText(p.items.map((i) => Object.assign({}, i, { type: i.type || 'piece' }))), p.payment, p.po].join('|'); }, t);
