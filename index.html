@@ -1908,6 +1908,11 @@ body.head-up .toasts{top:calc(var(--head-h) + 8px)}
 @keyframes kpBack{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,.7),0 4px 12px -4px rgba(185,28,28,.6);filter:brightness(1)}50%{transform:scale(1.06);box-shadow:0 0 0 8px rgba(220,38,38,0),0 6px 22px 0 rgba(185,28,28,.85);filter:brightness(1.18)}}
 @keyframes kpNudge{50%{transform:translateX(-4px)}}
 @media (prefers-reduced-motion:reduce){#queue-kpis .kp-wait.back,#queue-kpis .kp-wait.back .kp-arrow{animation:none}}
+/* Who made it (Scheduled cards): a wide strip down the left edge, yellow = dispatcher, blue = customer app */
+.job.side .job-top{padding-left:38px}
+.side-tag{position:absolute;left:0;top:0;bottom:0;width:27px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;pointer-events:none}
+.job.by-disp .side-tag{background:var(--yellow);color:#000}
+.job.by-cust .side-tag{background:#2563eb;color:#fff}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -3221,8 +3226,10 @@ function jobCard(id, r, full) {
   const P = r.pickup || {};
   const D = r.delivery || {};
   if (full) return fullCard(id, r, { unseen, tags, chips, enter });
-  return `<article class="job${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
+  const disp = byDispatcher(r);
+  return `<article class="job side ${disp ? 'by-disp' : 'by-cust'}${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${open ? ' open' : ''}${enter}" data-id="${esc(id)}">
     <div class="job-top">
+    <span class="side-tag">${disp ? 'Dispatcher' : 'Customer app'}</span>
     <div class="job-head">
       <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
       <span class="job-tags">${tags.join('')}</span>
@@ -3361,6 +3368,10 @@ function fitQueue() {
   if (window.scrollY) window.scrollTo(0, 0);
 }
 window.addEventListener('resize', () => requestAnimationFrame(fitQueue));
+// A job on the page never sits under the numbers bar: we set the scroll ourselves (the browser's
+// back/forward must not put back an old list position), and the page can't drift down while it fits
+try { history.scrollRestoration = 'manual'; } catch (e) { /* ignore */ }
+window.addEventListener('scroll', () => { if (window.scrollY && document.body.classList.contains('q-fit')) window.scrollTo(0, 0); }, { passive: true });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#qmenu')) qMenuClose(); });
 document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#panel-queue')) setTimeout(fitQueue, 120); });
 // Opens or closes a card's text, with the address switch
