@@ -96,9 +96,12 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+/, 'day of the week on the card');
     assert.match(await page.textContent('#queue-list .src-band'), /Customer request/);
     assert.strictEqual(await page.locator('#queue-list [data-act=pick-driver] .caret').count(), 0, 'no little arrow on Send to driver');
-    await page.waitForFunction(() => document.body.classList.contains('q-fit'));
-    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'no scrolling with a job on the page');
-    assert.ok(await page.evaluate(() => document.querySelector('#queue-list [data-act=pick-driver]').getBoundingClientRect().bottom <= innerHeight), 'Send to driver on screen');
+    // The driver text always shows in full: a long text makes the box (and card) taller, never a scroll inside the box
+    assert.ok(await page.evaluate(() => !document.body.classList.contains('q-fit')), 'the card is not squeezed to the screen');
+    await page.evaluate(() => setEdit('r1', 'Acme Supply for Smith Co, 2 boxes, Prepaid, ' + 'use the side door by the loading dock and ask for Dave at the front desk, '.repeat(6)));
+    assert.ok(await page.evaluate(() => { const ta = document.querySelector('#queue-list .job.full textarea[data-edit]'); return ta.scrollHeight <= ta.clientHeight + 2 && ta.clientHeight > 150; }), 'every word of a long driver text shows');
+    await page.evaluate(() => setEdit('r1', null));
+    assert.ok(await page.evaluate(() => { const ta = document.querySelector('#queue-list .job.full textarea[data-edit]'); return ta.scrollHeight <= ta.clientHeight + 2 && ta.clientHeight < 120; }), 'and it shrinks back');
     // No Back to all jobs bar: the Waiting number has an arrow and pulses harder; one tap goes back
     assert.strictEqual(await page.locator('.qback, [data-act=q-back]').count(), 0, 'no Back to all jobs button');
     assert.ok(await page.evaluate(() => { const b = document.querySelector('#queue-kpis .kp-wait'); return b.classList.contains('back') && !!b.querySelector('.kp-arrow') && getComputedStyle(b).animationName.includes('kpBack'); }), 'Waiting shows a back arrow and pulses');
@@ -110,11 +113,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // The phone's back also goes back to the list
     await page.evaluate(() => qShow('r2'));
     await page.waitForSelector('#queue-list .job.full[data-id=r2]');
-    // The open job never slides under the numbers bar, even if something pushes the page down
+    // An opened job starts at the top, below the numbers bar (the browser never puts an old scroll back)
     assert.strictEqual(await page.evaluate(() => history.scrollRestoration), 'manual');
-    await page.evaluate(() => { const d = document.createElement('div'); d.id = 'tall'; d.style.height = '2000px'; document.querySelector('main.app-main').appendChild(d); window.scrollTo(0, 40); });
-    await page.waitForFunction(() => window.scrollY === 0);
-    assert.ok(await page.evaluate(() => { document.getElementById('tall').remove(); return document.querySelector('#queue-list .job.full').getBoundingClientRect().top >= document.getElementById('qbar').getBoundingClientRect().bottom; }), 'job top shows below the numbers bar');
+    assert.ok(await page.evaluate(() => window.scrollY === 0 && document.querySelector('#queue-list .job.full').getBoundingClientRect().top >= document.getElementById('qbar').getBoundingClientRect().bottom), 'job top shows below the numbers bar');
     await page.goBack();
     await page.waitForSelector('#queue-list .qrow[data-id=r2]');
     assert.ok(await page.evaluate(() => !document.getElementById('view-app').hidden), 'still in the app');
@@ -134,12 +135,11 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Bottom bar: Messages, Done, Map, Today, Dispatch (Queue and Scheduled live in the numbers bar at the top)
     assert.deepStrictEqual(await page.evaluate(() => [...document.querySelectorAll('.tabbar .tab')].map((b) => b.textContent.replace(/\d+/g, '').trim())), ['Messages', 'Done', 'Map', 'Today', 'Dispatch']);
     assert.strictEqual(await page.locator('.tabbar [data-tab=queue], .tabbar [data-tab=scheduled]').count(), 0);
-    // Today: a column per driver with what they were sent (Sara has nothing yet)
+    // Today: a column only for drivers who were sent something (Sara has nothing, so no column)
     await page.click('.tabbar [data-tab=today]');
     await page.waitForSelector('#panel-today:not([hidden]) .td-col');
-    assert.deepStrictEqual(await page.evaluate(() => [...document.querySelectorAll('.td-col .td-head b')].map((b) => b.textContent)), ['Mike', 'Sara']);
+    assert.deepStrictEqual(await page.evaluate(() => [...document.querySelectorAll('.td-col .td-head b')].map((b) => b.textContent)), ['Mike']);
     assert.match(await page.textContent('.td-col:first-child .td-job'), /Acme Supply → Smith Co\s*#1190/);
-    assert.match(await page.textContent('.td-col:nth-child(2)'), /Nothing yet/);
     assert.match(await page.textContent('#td-sub'), /1 sent today/);
     await shot(page, 'today');
     await page.click('#panel-today input[value=yesterday]', { force: true });
@@ -168,6 +168,13 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#msg-btn');
     await page.waitForSelector('#sheet:not([hidden]) [data-msgs-view]');
     assert.ok(await page.evaluate(() => { const h = document.querySelector('.app-head').getBoundingClientRect(), sh = document.querySelector('#sheet .sheet').getBoundingClientRect(); return sh.top >= h.bottom - 1; }), 'Messages opens below the numbers bar');
+    await page.waitForTimeout(600); // the sheet has slid up
+    assert.ok(await page.evaluate(() => { const nav = document.querySelector('.tabbar').getBoundingClientRect(), sh = document.querySelector('#sheet .sheet').getBoundingClientRect(); return getComputedStyle(document.querySelector('.tabbar')).display !== 'none' && sh.bottom <= nav.top + 1 && !document.querySelector('.tabbar').inert; }), 'the bottom bar stays under Messages');
+    await shot(page, 'messages-bottom-bar');
+    await page.click('.tabbar [data-tab=done]');
+    await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-done').hidden);
+    await page.click('#msg-btn');
+    await page.waitForSelector('#sheet:not([hidden]) [data-msgs-view]');
     await page.click('.app-head .kp-sched');
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
     // Who made it: a side strip on Scheduled cards (customer app here; a dispatcher job says Dispatcher)
@@ -476,7 +483,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // 3.3 an open sheet is the only thing reachable
     await page.evaluate(() => openDetails(document.querySelector('#queue-list .job').dataset.id));
     await page.waitForSelector('#sheet:not([hidden])');
-    assert.ok(await page.evaluate(() => document.querySelector('.app-main').inert && document.querySelector('.tabbar').inert && !document.querySelector('.app-head').inert), 'page behind the sheet is inert, the numbers bar is not');
+    assert.ok(await page.evaluate(() => document.querySelector('.app-main').inert && !document.querySelector('.tabbar').inert && !document.querySelector('.app-head').inert), 'page behind the sheet is inert, the numbers bar and bottom bar are not');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // New customer: a name that isn't saved shows "New customer +" and an address bar; it only saves once the address is ready

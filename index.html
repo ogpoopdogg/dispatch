@@ -1939,6 +1939,14 @@ body:not(.mic-ok) .te-mic{display:none}
 .td-t{white-space:nowrap}.td-no{font-size:11.5px;font-weight:800;color:var(--ink-3)}
 .td-r{font-size:13px;font-weight:700;line-height:1.3}
 .td-none{font-size:13px;color:var(--ink-3)}
+/* The bottom bar stays in sight over Messages and other sheets (not while typing a message) */
+body.head-up .tabbar{z-index:65}
+body.head-up:not(.kb-chat) #sheet{padding-bottom:calc(var(--nav-h) + var(--safe-b))}
+body.head-up:not(.kb-chat) #sheet .sheet{max-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - 4px);padding-bottom:0}
+body.head-up:not(.kb-chat) #sheet .sheet.tall:not(.mid){height:min(92dvh,calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - 4px))}
+body.head-up.kb-chat .tabbar{display:none}
+/* Driver text: always the whole text, the box grows instead of scrolling */
+textarea[data-edit]{overflow:hidden!important;resize:none!important;field-sizing:content}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2530,12 +2538,21 @@ function setEdit(id, text) {
     else if (ta !== document.activeElement) ta.value = text;
     const c = $('[data-sms-count]', b);
     if (c) c.textContent = smsCountText(ta.value);
+    fitTextBox(ta);
   });
 }
 document.addEventListener('input', (e) => {
   const ta = e.target.closest && e.target.closest('textarea[data-edit]');
-  if (ta) setEdit(ta.dataset.edit, ta.value);
+  if (ta) { setEdit(ta.dataset.edit, ta.value); fitTextBox(ta); }
 });
+// The driver text box is always as tall as its text: every word shows, never a scroll inside the box
+function fitTextBox(ta) {
+  if (!ta || !ta.isConnected || !ta.offsetParent) return;
+  ta.style.height = 'auto';
+  ta.style.height = `${ta.scrollHeight + 2}px`;
+}
+function fitTextBoxes() { $$('textarea[data-edit]').forEach(fitTextBox); }
+window.addEventListener('resize', () => requestAnimationFrame(fitTextBoxes));
 // Tapping into a card's text marks the request seen (it used to happen when the pencil opened it)
 document.addEventListener('focusin', (e) => {
   const ta = e.target.closest && e.target.closest('.job textarea[data-edit]');
@@ -2826,7 +2843,7 @@ function syncLayers() {
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
   // Over a sheet (not the New dispatch form) the top bar with the numbers stays tappable
   const headUp = top === sheet && document.body.classList.contains('head-up');
-  if (app) { if (headUp) app.inert = false; [...app.children].forEach((c) => { c.inert = headUp && !c.classList.contains('app-head'); }); }
+  if (app) { if (headUp) app.inert = false; [...app.children].forEach((c) => { c.inert = headUp && !c.classList.contains('app-head') && !c.classList.contains('tabbar'); }); }
   if (top && !top.contains(document.activeElement)) {
     if (!layerReturn) layerReturn = document.activeElement;
     const f = $('[data-act=sheet-close], [data-act=nd-pop-close]', top) || $('.icon-btn', top) || $('button', top);
@@ -3388,6 +3405,11 @@ function qMenuClose() { const m = $('#qmenu'); if (m) m.remove(); }
 function fitQueue() {
   const panel = $('#panel-queue');
   if (!panel) return;
+  // Justin: the driver text must always show in full, cards grow and the page scrolls. No fitting to the screen.
+  panel.style.height = ''; document.body.classList.remove('q-fit');
+  const fc = $('#queue-list .job.full'); if (fc) fc.classList.remove('tight', 'tighter');
+  fitTextBoxes();
+  return;
   const card = $('#queue-list .job.full');
   const typing = document.activeElement && panel.contains(document.activeElement) && document.activeElement.matches('textarea, input');
   if (S.tab !== 'queue' || !card || panel.hidden) { panel.style.height = ''; document.body.classList.remove('q-fit'); return; }
@@ -3793,6 +3815,7 @@ function renderAll() {
   if (S.tab === 'today') renderToday();
   deskRender();
   mtRender();
+  fitTextBoxes();
   if (sheetOpen && openDetailId && $('#sheet-body [data-detail]')) {
     if (findReq(openDetailId)) openDetails(openDetailId, true); else closeSheet();
   }
@@ -4774,8 +4797,6 @@ function renderToday() {
   boardDay = was;
   const by = {};
   rows.forEach(([id, r]) => { const k = r.dispatched_to || 'Group Chat'; (by[k] = by[k] || []).push([id, r]); });
-  // Every driver gets a column, even with nothing yet
-  byName(S.contacts.drivers || {}).forEach(([, d]) => { const k = String(d.name || '').trim(); if (k && !by[k]) by[k] = []; });
   const cols = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
   const day = tdDay === 'today' ? 'today' : 'yesterday';
   $('#td-sub').textContent = `${rows.length} sent ${day}`;
@@ -6751,7 +6772,7 @@ function testAlert() {
    ========================================================= */
 document.addEventListener('click', async (e) => {
   // The numbers bar stays usable over Messages, Details, etc.: tapping it closes the sheet and goes there
-  if (sheetOpen && e.target.closest && e.target.closest('.app-head [data-tab], .app-head [data-act=q-first], .app-head [data-act=queue-search]')) closeSheet();
+  if (sheetOpen && e.target.closest && e.target.closest('.app-head [data-tab], .app-head [data-act=q-first], .app-head [data-act=queue-search], .tabbar [data-tab]')) closeSheet();
   const tab = e.target.closest('[data-tab]');
   if (tab) { switchTab(tab.dataset.tab); return; }
   const el = e.target.closest('[data-act]');
