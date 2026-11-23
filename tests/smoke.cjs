@@ -154,6 +154,18 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForSelector('#panel-map:not([hidden])');
     await page.waitForFunction(() => /couldn.t load/.test(document.getElementById('mt-msg').textContent));
     assert.match(await page.textContent('#mt-sub'), /^2 waiting/);
+    // Driver buttons under the map (only drivers with a van on the map), tap one: their van and address
+    await page.evaluate(() => { window.__fakeDb.put('developer/dispatch_dashboard/driver_nicknames', { v1: 'Mike' }); window.__fakeDb.put('developer/dispatch_dashboard/drivers', { v1: { name: 'Van 3', color: '#f7c948', lastLocation: { lat: 49.85, lng: -99.95, updatedAt: Date.now() - 60000 } }, v2: { name: 'Van 5', lastLocation: { lat: 49.84, lng: -99.93, updatedAt: Date.now() } } }); });
+    await page.waitForSelector('#mt-drivers .mt-drv[data-driver=d1]');
+    assert.strictEqual(await page.locator('#mt-drivers .mt-drv').count(), 1, 'Sara has no van today, so no button');
+    assert.ok(await page.evaluate(() => { const r = document.querySelector('#mt-drivers .mt-drv').getBoundingClientRect(), m = document.getElementById('mic-fab'); const mr = m.hidden ? null : m.getBoundingClientRect(); return r.height >= 40 && (!mr || r.right <= mr.left); }), 'thumb-sized, and the row stops before the mic');
+    await page.click('#mt-drivers .mt-drv');
+    await page.waitForSelector('#mt-where:not([hidden])');
+    assert.match(await page.textContent('#mt-where'), /Mike\s*Van 3/);
+    assert.ok(await page.evaluate(() => document.querySelector('#mt-drivers .mt-drv').classList.contains('on')));
+    await shot(page, 'map-driver');
+    await page.click('#mt-drivers .mt-drv');
+    await page.waitForSelector('#mt-where', { state: 'hidden' });
     // Tapping a pickup on the map opens its regular job card in the Queue
     await page.evaluate(() => mtOpenJob('r2'));
     await page.waitForSelector('#panel-queue:not([hidden]) .job.full[data-id=r2]');
@@ -600,7 +612,11 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#nd-cal .nd-cal-grid button:not([disabled]) >> nth=2');
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
-    await page.click('#sheet-reset');
+    // Clear sits under the mic, lined up with the chips (bin + word on one line)
+    assert.ok(await page.isHidden('#sheet-reset'), 'no Clear in the top line');
+    assert.match(await page.textContent('#nd-chips .nd-clear'), /^\s*Clear\s*$/);
+    await page.click('#nd-chips .nd-clear');
+    assert.strictEqual(await page.inputValue('#nd-pickup-name'), '', 'Clear empties the form');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // Settings: alert check
@@ -920,7 +936,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
       await shot(pg, 'voice');
       // A name that's not a saved customer never goes in a box (like Route Planner): a message says so instead
-      await pg.click('[data-act=nd-reset]');
+      await pg.click('#nd-chips .nd-clear');
       await pg.waitForTimeout(300);
       await pg.click('#mic-fab');
       await pg.evaluate(() => __say('Brandon hospital to', false));
