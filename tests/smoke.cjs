@@ -206,6 +206,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(/^Acme Supply for Smith Co/.test(copied.split('\n')[0]) && /^Prairie Parts for Dock 4/.test(copied.split('\n')[1]), copied);
     await page.evaluate(() => window.__fakeDb.put('requests/r6', null));
     await page.waitForFunction(() => document.getElementById('sheet').hidden);
+    // Copied jobs say so (on this phone), so nobody posts them twice
+    await page.waitForSelector('#queue-list .qrow[data-id=r1] .qr-copied');
+    assert.strictEqual(await page.locator('#queue-list .qrow .qr-copied').count(), 2, 'only the copied jobs');
+    await page.click('#queue-list [data-act=group-all]');
+    await page.waitForSelector('#sheet .ga-row .ga-was');
+    assert.strictEqual(await page.locator('#sheet .ga-was').count(), 2);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.getElementById('sheet').hidden);
     // Scheduled: the next day ticked; a day button ticks only that day
     await page.evaluate(() => switchTab('scheduled'));
     await page.click('#scheduled-list [data-act=group-all]');

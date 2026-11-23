@@ -1895,6 +1895,9 @@ body.head-up .toasts{top:calc(var(--head-h) + 8px)}
 .ga-text{flex:1;min-width:0;font-size:14px;font-weight:650;line-height:1.25}
 .ga-bar{position:sticky;bottom:0;margin:0 -2px;padding:8px 2px calc(4px + var(--safe-b));background:linear-gradient(transparent,var(--surface) 30%)}
 .job-sub b.sch-on{font-size:14.5px;font-stretch:90%}
+.chip.copied{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+.qr-meta .qr-copied{background:#eff6ff;color:#1e40af}
+.ga-was{display:block;margin-top:2px;font-size:12px;font-weight:700;color:#1e40af}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2754,6 +2757,17 @@ function tick(message) {
 let sheetOpen = false;
 // Send all to Group Chat (Queue or Scheduled): which jobs are ticked
 const GA = { open: false, src: 'queue', picked: new Set() };
+// Jobs copied with Send all, kept on this phone only (id -> time), so nobody posts them twice
+let gaCopied = {};
+try { gaCopied = JSON.parse(localStorage.getItem('ecd_ga_copied') || '{}') || {}; } catch (e) { gaCopied = {}; }
+const copiedAt = (id) => gaCopied[id] || 0;
+function gaMarkCopied(ids) {
+  const now = Date.now();
+  ids.forEach((id) => { gaCopied[id] = now; });
+  // Forget ones older than 30 days
+  Object.keys(gaCopied).forEach((k) => { if (now - gaCopied[k] > 30 * 86400000) delete gaCopied[k]; });
+  try { localStorage.setItem('ecd_ga_copied', JSON.stringify(gaCopied)); } catch (e) { /* this screen still shows it */ }
+}
 // A customer's request history (⋯ › Request history): { cid, items, loading, error, range, from, to, days }
 const CH = { cid: '', items: null, loading: false, error: '', range: '30', from: '', to: '', days: [] };
 let vlOpen = false, vlReturn = null; // Teach the mic overlay, on top of everything
@@ -3203,6 +3217,7 @@ function jobCard(id, r, full) {
   }
   if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
+  if (copiedAt(id)) chips.push(`<span class="chip copied">📋 Copied ${esc(fmtTime(copiedAt(id)))}</span>`);
   const unread = unreadMsgs(id);
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
@@ -3292,7 +3307,7 @@ function qList(list, anim) {
     return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
       <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
       <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
-      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
+      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}${copiedAt(id) ? '<span class="qr-copied">📋 Copied</span>' : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
     </button>`;
   }).join('');
   return `<button class="ga-open" type="button" data-act="group-all" data-src="queue">${icon('users', 'sm')}Send all to Group Chat<small>${list.length}</small></button><div class="qlist${anim}" role="list">${rows}</div>`;
@@ -3461,7 +3476,7 @@ function renderGroupAll() {
   jobs.forEach(([id, r]) => {
     const k = gaDayKey(r);
     if (k !== day && days.length > 1) { day = k; html += `<div class="ga-day">${esc(gaDayLabel(k))}</div>`; }
-    html += `<label class="ga-row${GA.picked.has(id) ? ' on' : ''}"><input type="checkbox" data-ga-id="${esc(id)}"${GA.picked.has(id) ? ' checked' : ''}><span class="ga-no">#${esc(r.ref_no)}</span><span class="ga-text">${esc(gaLine(id, r))}</span></label>`;
+    html += `<label class="ga-row${GA.picked.has(id) ? ' on' : ''}"><input type="checkbox" data-ga-id="${esc(id)}"${GA.picked.has(id) ? ' checked' : ''}><span class="ga-no">#${esc(r.ref_no)}</span><span class="ga-text">${esc(gaLine(id, r))}${copiedAt(id) ? `<small class="ga-was">📋 Copied ${esc(fmtDayShort(copiedAt(id)) === fmtDayShort(Date.now()) ? fmtTime(copiedAt(id)) : fmtDateTime(copiedAt(id)))}</small>` : ''}</span></label>`;
   });
   html += '</div>';
   if (!jobs.length) html = `<p class="msgs-empty">Nothing ${GA.src === 'scheduled' ? 'scheduled' : 'waiting'} right now.</p>`;
@@ -3475,7 +3490,9 @@ function gaCopy() {
   if (!jobs.length) return;
   const text = jobs.map(([id, r]) => gaLine(id, r)).join('\n');
   const ok = copySync(text);
+  gaMarkCopied(jobs.map(([id]) => id));
   closeSheet();
+  renderAll();
   if (ok) toast(`Copied ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}. Paste in the group chat.`, 'info', 7000, canShare() ? { label: 'Share', run: () => shareText(text).catch(() => {}) } : null);
   else if (canShare()) shareText(text).catch(() => {});
   else toast('Couldn\u2019t copy. Try again.', 'error');
