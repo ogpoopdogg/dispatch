@@ -131,9 +131,35 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#queue-kpis .kp-wait', { force: true });
     await page.evaluate(() => window.__fakeDb.put('requests/r9', null));
     await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 2);
-    // The Queue button is the same size as the Dispatch button
-    const tabSize = (q) => page.evaluate((s) => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; }, q);
-    assert.deepStrictEqual(await tabSize('[data-tab=queue] .ti'), await tabSize('.tab-new .ti'), 'Queue button matches Dispatch');
+    // Bottom bar: Messages, Done, Map, Today, Dispatch (Queue and Scheduled live in the numbers bar at the top)
+    assert.deepStrictEqual(await page.evaluate(() => [...document.querySelectorAll('.tabbar .tab')].map((b) => b.textContent.replace(/\d+/g, '').trim())), ['Messages', 'Done', 'Map', 'Today', 'Dispatch']);
+    assert.strictEqual(await page.locator('.tabbar [data-tab=queue], .tabbar [data-tab=scheduled]').count(), 0);
+    // Today: a column per driver with what they were sent (Sara has nothing yet)
+    await page.click('.tabbar [data-tab=today]');
+    await page.waitForSelector('#panel-today:not([hidden]) .td-col');
+    assert.deepStrictEqual(await page.evaluate(() => [...document.querySelectorAll('.td-col .td-head b')].map((b) => b.textContent)), ['Mike', 'Sara']);
+    assert.match(await page.textContent('.td-col:first-child .td-job'), /Acme Supply → Smith Co\s*#1190/);
+    assert.match(await page.textContent('.td-col:nth-child(2)'), /Nothing yet/);
+    assert.match(await page.textContent('#td-sub'), /1 sent today/);
+    await shot(page, 'today');
+    await page.click('#panel-today input[value=yesterday]', { force: true });
+    await page.waitForFunction(() => /0 sent yesterday/.test(document.getElementById('td-sub').textContent));
+    await page.click('#panel-today input[value=today]', { force: true });
+    await page.click('.td-job');
+    await page.waitForSelector('#sheet:not([hidden]) [data-detail]');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => document.getElementById('sheet').hidden);
+    // Map: the waiting count; Google Maps is blocked in the test, so it says the map couldn't load
+    await page.click('.tabbar [data-tab=map]');
+    await page.waitForSelector('#panel-map:not([hidden])');
+    await page.waitForFunction(() => /couldn.t load/.test(document.getElementById('mt-msg').textContent));
+    assert.match(await page.textContent('#mt-sub'), /^2 waiting/);
+    // Tapping a pickup on the map opens its regular job card in the Queue
+    await page.evaluate(() => mtOpenJob('r2'));
+    await page.waitForSelector('#panel-queue:not([hidden]) .job.full[data-id=r2]');
+    // Back to the queue with the Waiting number
+    await page.click('#queue-kpis .kp-wait', { force: true });
+    await page.waitForSelector('#panel-queue:not([hidden]) .qrow');
     // The numbers bar stays on every page, and over Messages it still works
     for (const tb of ['scheduled', 'done', 'settings', 'queue']) {
       await page.evaluate((x) => switchTab(x), tb);
@@ -841,6 +867,21 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const pg = p5.page;
       await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.waitForSelector('#mic-fab:not([hidden])');
+      // The small mic inside the driver text box: words go on the end, and the keyboard stays closed
+      await pg.evaluate(() => qShow('r1'));
+      await pg.waitForSelector('#queue-list .job.full .te-mic');
+      const before = await pg.inputValue('#queue-list .job.full textarea[data-edit]');
+      await pg.click('#queue-list .job.full .te-mic');
+      await pg.waitForFunction(() => document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
+      await pg.evaluate(() => __say('side door please', true));
+      await pg.waitForFunction(() => !document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
+      assert.strictEqual(await pg.inputValue('#queue-list .job.full textarea[data-edit]'), `${before}, side door please`);
+      assert.ok(await pg.evaluate(() => !document.activeElement.matches('textarea')), 'no keyboard: the text box was never focused');
+      assert.ok(await pg.evaluate(() => document.querySelector('#queue-list .job.full .text-edit').classList.contains('edited')), 'counts as an edit');
+      await shot(pg, 'text-mic');
+      await pg.evaluate(() => setEdit('r1', null));
+      await pg.evaluate(() => qBack());
+      await pg.waitForSelector('#queue-list .qrow');
       // Reading what was said
       const said = (t) => pg.evaluate((x) => { const p = voiceParse(x, 'pickup'); return [p.pickup && p.pickup.name, p.delivery && p.delivery.name, itemsText(p.items.map((i) => Object.assign({}, i, { type: i.type || 'piece' }))), p.payment, p.po].join('|'); }, t);
       assert.strictEqual(await said('GNR Electric to AAA Bobcat, one box, 25 pounds'), 'GNR Electric|AAA Bobcat|1 box 25 lbs||');
