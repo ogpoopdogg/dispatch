@@ -172,6 +172,52 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => window.__fakeDb.put('requests/r8', null));
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
+    // Removed and cancelled jobs also get Group Chat and Send to driver, above Move back to queue
+    await page.evaluate(() => window.__fakeDb.put('requests/r7', { ref_no: 1177, status: 'removed', removed_at: Date.now(), removed_by_email: 'dana@ec.com', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Park Road' }, items_text: '1 box', payment: 'prepaid', created_at: Date.now() - 600000 }));
+    await page.waitForFunction(() => !!removedReq('r7'));
+    await page.evaluate(() => openDetails('r7'));
+    await page.waitForSelector('#sheet [data-act=resend-driver]');
+    assert.ok(await page.evaluate(() => { const a = document.querySelector('#sheet .again-row').getBoundingClientRect(), b = document.querySelector('#sheet [data-act=restore]').getBoundingClientRect(); return a.bottom <= b.top; }), 'buttons above Move back to queue');
+    await page.click('#sheet [data-act=resend-driver]');
+    await page.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
+    assert.match(await page.inputValue('#sp-textarea'), /Park Road/);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#nd-pop', { state: 'hidden' });
+    await page.evaluate(() => window.__fakeDb.put('requests/r7', null));
+    // A scheduled job in the queue says when it was scheduled
+    await page.evaluate(() => window.__fakeDb.put('requests/r6', { ref_no: 1206, status: 'new', company_id: 'c2', company_name: 'Prairie Parts', pickup: { name: 'Prairie Parts', address: '9 Rosser Ave' }, delivery: { name: 'Dock 4' }, items_text: '1 box', payment: 'prepaid', when: 'scheduled', scheduled_for: new Date().toLocaleDateString('en-CA'), created_at: Date.now() - 2 * 86400000 }));
+    await page.waitForSelector('#queue-list .qrow[data-id=r6]');
+    await page.evaluate(() => qShow('r6'));
+    await page.waitForSelector('#queue-list .job.full[data-id=r6]');
+    assert.match(await page.textContent('#queue-list .job-when'), /Scheduled on (Sun|Mon|Tue|Wed|Thu|Fri|Sat) [A-Z][a-z]{2} \d+, \d+:\d+/);
+    await page.click('[data-act=q-back]');
+    // Send all to Group Chat: every job one line with a box, quick picks by day, copies a list
+    await page.click('#queue-list [data-act=group-all]');
+    await page.waitForSelector('#sheet .ga-row');
+    assert.strictEqual(await page.locator('#sheet .ga-row input:checked').count(), 3, 'queue: all ticked');
+    await shot(page, 'group-all-queue');
+    await page.locator('#sheet .ga-row:has-text("#1206") input').uncheck();
+    assert.match(await page.textContent('#sheet [data-act=ga-copy]'), /Copy 2 jobs/);
+    await page.evaluate(() => { window.__copied = null; window.copySync = (t) => { window.__copied = t; return true; }; });
+    await page.click('#sheet [data-act=ga-copy]');
+    await page.waitForFunction(() => window.__copied);
+    const copied = await page.evaluate(() => window.__copied);
+    assert.strictEqual(copied.split('\n').length, 2, 'one line per ticked job');
+    assert.ok(/^Acme Supply for Smith Co/.test(copied.split('\n')[0]) && /^Prairie Parts for Dock 4/.test(copied.split('\n')[1]), copied);
+    await page.evaluate(() => window.__fakeDb.put('requests/r6', null));
+    await page.waitForFunction(() => document.getElementById('sheet').hidden);
+    // Scheduled: the next day ticked; a day button ticks only that day
+    await page.evaluate(() => switchTab('scheduled'));
+    await page.click('#scheduled-list [data-act=group-all]');
+    await page.waitForSelector('#sheet .ga-row');
+    assert.strictEqual(await page.locator('#sheet .ga-row input:checked').count(), 1);
+    assert.match(await page.textContent('#sheet .ga-picks'), /Tomorrow 1/);
+    await page.click('#sheet [data-act=ga-day][data-day=none]');
+    assert.strictEqual(await page.locator('#sheet .ga-row input:checked').count(), 0);
+    assert.ok(await page.isDisabled('#sheet [data-act=ga-copy]'));
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('.app-main').inert);
+    await page.evaluate(() => switchTab('queue'));
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
@@ -357,7 +403,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
       // Details: this pickup's messages, and a way to the whole conversation
-      await page.click('#queue-list .job[data-id=r1] .route');
+      assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .route[data-act]').count(), 0, 'tapping pickup/delivery does nothing (Details is in ⋯)');
+      await page.evaluate(() => openDetails('r1'));
       await page.waitForSelector('#sheet .msgs .msg.them');
       // Keyboard up in the details: the typing bar sits right on top of it, title still in sight
       await page.focus('#sheet .msgs .msg-form textarea');
@@ -376,7 +423,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     }
     // 3.3 an open sheet is the only thing reachable
-    await page.click('#queue-list .job [data-act=details] >> nth=0');
+    await page.evaluate(() => openDetails(document.querySelector('#queue-list .job').dataset.id));
     await page.waitForSelector('#sheet:not([hidden])');
     assert.ok(await page.evaluate(() => document.querySelector('.app-main').inert && document.querySelector('.tabbar').inert && !document.querySelector('.app-head').inert), 'page behind the sheet is inert, the numbers bar is not');
     await page.keyboard.press('Escape');
