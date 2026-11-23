@@ -1971,7 +1971,21 @@ body:not(.mic-ok) .nd-mic-slot{display:none}
 .mic-fab.slot.on::before,.mic-fab.slot.on::after{border-radius:12px}
 /* The mic is inside the form now: no extra room above the Send bar, so the driver text sits right under the buttons */
 body.mic-ok .nd-mic-gap{display:none}
-@media (max-width:719px){body.mic-ok .sheet.tall.mid.big:not(.kb){height:var(--nd-big-h,75dvh)}
+/* New dispatch (filled in): the form reaches up to the Waiting / Scheduled numbers and is tighter, so the mic and
+   Clear are always in sight without scrolling (Justin picked mockup 4) */
+.sheet.big .sheet-head h2{font-size:19px}
+.sheet.big .sheet-head{padding-top:0;padding-bottom:2px}
+.sheet.big .nd-route .nd-leg{padding-top:5px}
+.sheet.big .nd-route .nd-leg>h3{margin-bottom:3px;height:18px}
+.sheet.big .nd-leg .field input{height:40px;min-height:40px;padding-top:0;padding-bottom:0}
+.sheet.big .addr-line{min-height:30px;margin:0 0 2px}
+.sheet.big .addr-line .link-btn{min-height:30px}
+.sheet.big .nd-route{margin-bottom:6px}
+.sheet.big #nd-text.nd-preview{min-height:0;padding:8px 40px 8px 12px;font-size:20px}
+.sheet.big .nd-pen{top:12px}
+.sheet.big .nd-text-box{margin-bottom:6px}
+.sheet.big .nd-send{padding-top:6px}
+@media (max-width:719px){#sheet .sheet.tall.mid.big:not(.kb){height:var(--nd-big-h,auto);max-height:calc(100dvh - var(--head-h) - 4px)} /* as tall as it needs (or where the keyboard left it), never over the numbers */
   .sheet.tall.mid:not(.big):not(.kb){height:calc(max(45dvh,calc(92dvh - 330px)) + 50px)} /* room for the second row of buttons */}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -5128,7 +5142,7 @@ function ndGrow(ta) {
   if (!ta || !ta.offsetParent) return;
   ta.style.height = 'auto';
   const big = !!ta.closest('.sheet.big');
-  ta.style.height = `${big ? Math.max(96, Math.min(ta.scrollHeight + 2, 200)) : Math.min(ta.scrollHeight + 2, 112)}px`;
+  ta.style.height = `${big ? Math.max(44, Math.min(ta.scrollHeight + 2, 200)) : Math.min(ta.scrollHeight + 2, 112)}px`;
 }
 function ndTextUi() {
   const ta = $('#nd-text');
