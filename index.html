@@ -1878,6 +1878,26 @@ body.head-up .toasts{top:calc(var(--head-h) + 8px)}
 .ch-st.new,.ch-st.seen{background:#fef3c7;color:#92400e}
 .ch-route{font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ch-meta{font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route.no-tap{cursor:default}
+/* Send all to Group Chat */
+.ga-open{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;margin:0 0 8px;padding:0 12px;border:1.5px solid #93c5fd;border-radius:12px;background:#eff6ff;color:#1e40af;font:inherit;font-size:15px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ga-open small{margin-left:auto;padding:1px 8px;border-radius:99px;background:#1e40af;color:#fff;font-size:12.5px;font-weight:850}
+.ga-open:active{background:#dbeafe}
+.ga-picks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ga-picks button{min-height:36px;padding:0 12px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.ga-picks button[aria-pressed=true]{background:#111;color:var(--yellow);border-color:#111}
+.ga-list{display:flex;flex-direction:column;gap:4px;padding-bottom:70px}
+.ga-day{margin:8px 2px 2px;font-size:12.5px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.ga-row{display:flex;align-items:center;gap:10px;min-height:46px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
+.ga-row.on{border-color:#2563eb;background:#eff6ff}
+.ga-row input{flex:none;width:22px;height:22px;accent-color:#2563eb}
+.ga-no{flex:none;padding:1px 6px;border-radius:6px;background:var(--yellow);color:#000;font-size:13px;font-weight:850}
+.ga-text{flex:1;min-width:0;font-size:14px;font-weight:650;line-height:1.25}
+.ga-bar{position:sticky;bottom:0;margin:0 -2px;padding:8px 2px calc(4px + var(--safe-b));background:linear-gradient(transparent,var(--surface) 30%)}
+.job-sub b.sch-on{font-size:14.5px;font-stretch:90%}
+.chip.copied{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+.qr-meta .qr-copied{background:#eff6ff;color:#1e40af}
+.ga-was{display:block;margin-top:2px;font-size:12px;font-weight:700;color:#1e40af}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2735,6 +2755,19 @@ function tick(message) {
 }
 
 let sheetOpen = false;
+// Send all to Group Chat (Queue or Scheduled): which jobs are ticked
+const GA = { open: false, src: 'queue', picked: new Set() };
+// Jobs copied with Send all, kept on this phone only (id -> time), so nobody posts them twice
+let gaCopied = {};
+try { gaCopied = JSON.parse(localStorage.getItem('ecd_ga_copied') || '{}') || {}; } catch (e) { gaCopied = {}; }
+const copiedAt = (id) => gaCopied[id] || 0;
+function gaMarkCopied(ids) {
+  const now = Date.now();
+  ids.forEach((id) => { gaCopied[id] = now; });
+  // Forget ones older than 30 days
+  Object.keys(gaCopied).forEach((k) => { if (now - gaCopied[k] > 30 * 86400000) delete gaCopied[k]; });
+  try { localStorage.setItem('ecd_ga_copied', JSON.stringify(gaCopied)); } catch (e) { /* this screen still shows it */ }
+}
 // A customer's request history (⋯ › Request history): { cid, items, loading, error, range, from, to, days }
 const CH = { cid: '', items: null, loading: false, error: '', range: '30', from: '', to: '', days: [] };
 let vlOpen = false, vlReturn = null; // Teach the mic overlay, on top of everything
@@ -3184,6 +3217,7 @@ function jobCard(id, r, full) {
   }
   if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
+  if (copiedAt(id)) chips.push(`<span class="chip copied">📋 Copied ${esc(fmtTime(copiedAt(id)))}</span>`);
   const unread = unreadMsgs(id);
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
@@ -3245,14 +3279,14 @@ function fullCard(id, r, { unseen, tags, chips, enter }) {
       <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
     <div class="job-when">
-      ${icon('clock', 'sm')}<span class="job-sub"><small>Submitted</small><b>${esc(submittedText(r.created_at))}</b></span>
+      ${icon('clock', 'sm')}<span class="job-sub">${r.when === 'scheduled' ? `<b class="sch-on">Scheduled on ${esc(submittedText(r.created_at))}</b>` : `<small>Submitted</small><b>${esc(submittedText(r.created_at))}</b>`}</span>
       <span class="job-age${sched ? '' : ` ${ageCls(r.created_at)}`}"${sched ? ' data-noage' : ''} data-age-short="${esc(r.created_at || 0)}" title="${esc(ago(r.created_at))}">${esc(shortAgo(r.created_at))}</span>
     </div>
     <div class="chips job-chips">${chips.join('')}</div>
     ${r.updated_at && changedText(id, r) ? `<p class="job-changed"><b>Changed:</b> ${esc(changedText(id, r))}</p>` : ''}
-    <button class="route" type="button" data-act="details" data-id="${esc(id)}" aria-label="Pickup ${esc(P.name)}, delivery ${esc(D.name)}. Details">
+    <div class="route no-tap" aria-label="Pickup ${esc(P.name)}, delivery ${esc(D.name)}">
       ${stop('', 'Pickup', P)}${stop(' to', 'Deliver to', D)}
-    </button>
+    </div>
     <div class="job-facts">${facts.join('')}</div>
     ${r.notes ? `<p class="job-note">${icon('alert', 'sm')}<span>${esc(r.notes)}</span></p>` : ''}
     <div class="job-more-box">${textEditor(id, r, 'card')}</div>
@@ -3273,10 +3307,10 @@ function qList(list, anim) {
     return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
       <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
       <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
-      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
+      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}${copiedAt(id) ? '<span class="qr-copied">📋 Copied</span>' : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
     </button>`;
   }).join('');
-  return `<div class="qlist${anim}" role="list">${rows}</div>`;
+  return `<button class="ga-open" type="button" data-act="group-all" data-src="queue">${icon('users', 'sm')}Send all to Group Chat<small>${list.length}</small></button><div class="qlist${anim}" role="list">${rows}</div>`;
 }
 function qBackBar(list) {
   const others = list.length - 1;
@@ -3401,6 +3435,68 @@ document.addEventListener('change', (e) => {
   if (e.target.id === 'ch-from') { CH.from = e.target.value; renderCustHistory(); }
   if (e.target.id === 'ch-to') { CH.to = e.target.value; renderCustHistory(); }
 });
+/* ---------- Send all to Group Chat ----------
+   Every job zoomed out to one line with a box to tick. Quick picks at the top tick a whole day.
+   The ticked jobs are copied as a list, one driver text per line, ready to paste in the group chat. */
+const gaJobs = () => (GA.src === 'scheduled' ? scheduledList() : queueList());
+const gaDayKey = (r) => (GA.src === 'scheduled' ? r.scheduled_for : new Date(r.created_at || Date.now()).toLocaleDateString('en-CA'));
+const gaDayLabel = (key) => { const t = todayStr(); if (key === t) return 'Today'; if (key === dayStrAgo(-1)) return 'Tomorrow'; if (key === dayStrAgo(1)) return 'Yesterday'; return fmtDay(key); };
+const gaLine = (id, r) => String(textFor(id, r) || '').replace(/\s*\n+\s*/g, ', ').trim();
+function openGroupAll(src) {
+  GA.src = src === 'scheduled' ? 'scheduled' : 'queue';
+  const jobs = gaJobs();
+  // Queue: everything ticked. Scheduled: the next day's jobs.
+  const first = jobs[0] && gaDayKey(jobs[0][1]);
+  GA.picked = new Set(jobs.filter(([, r]) => GA.src === 'queue' || gaDayKey(r) === first).map(([id]) => id));
+  GA.open = true;
+  openSheet(GA.src === 'scheduled' ? 'Scheduled to Group Chat' : 'Queue to Group Chat', '<div data-ga></div>', (body) => {
+    body.addEventListener('change', (e) => { const c = e.target.closest('[data-ga-id]'); if (!c) return; if (c.checked) GA.picked.add(c.dataset.gaId); else GA.picked.delete(c.dataset.gaId); renderGroupAll(); });
+  }, true);
+  renderGroupAll();
+}
+function gaPickDay(day) {
+  const jobs = gaJobs();
+  if (day === 'all') GA.picked = new Set(jobs.map(([id]) => id));
+  else if (day === 'none') GA.picked = new Set();
+  else GA.picked = new Set(jobs.filter(([, r]) => gaDayKey(r) === day).map(([id]) => id));
+  renderGroupAll();
+}
+function renderGroupAll() {
+  const box = $('#sheet-body [data-ga]');
+  if (!box) { GA.open = false; return; }
+  const jobs = gaJobs();
+  GA.picked.forEach((id) => { if (!jobs.some(([j]) => j === id)) GA.picked.delete(id); });
+  const days = [];
+  jobs.forEach(([, r]) => { const k = gaDayKey(r); if (!days.includes(k)) days.push(k); });
+  const dayAll = (k) => { const ids = jobs.filter(([, r]) => gaDayKey(r) === k).map(([id]) => id); return ids.length && ids.every((id) => GA.picked.has(id)) && GA.picked.size === ids.length; };
+  const n = GA.picked.size;
+  let html = `<div class="ga-picks" role="group" aria-label="Quick pick"><button type="button" data-act="ga-day" data-day="all" aria-pressed="${n === jobs.length && n > 0}">All ${jobs.length}</button>${days.map((k) => `<button type="button" data-act="ga-day" data-day="${esc(k)}" aria-pressed="${dayAll(k)}">${esc(gaDayLabel(k))} ${jobs.filter(([, r]) => gaDayKey(r) === k).length}</button>`).join('')}<button type="button" data-act="ga-day" data-day="none" aria-pressed="false">None</button></div>`;
+  let day = '';
+  html += '<div class="ga-list">';
+  jobs.forEach(([id, r]) => {
+    const k = gaDayKey(r);
+    if (k !== day && days.length > 1) { day = k; html += `<div class="ga-day">${esc(gaDayLabel(k))}</div>`; }
+    html += `<label class="ga-row${GA.picked.has(id) ? ' on' : ''}"><input type="checkbox" data-ga-id="${esc(id)}"${GA.picked.has(id) ? ' checked' : ''}><span class="ga-no">#${esc(r.ref_no)}</span><span class="ga-text">${esc(gaLine(id, r))}${copiedAt(id) ? `<small class="ga-was">📋 Copied ${esc(fmtDayShort(copiedAt(id)) === fmtDayShort(Date.now()) ? fmtTime(copiedAt(id)) : fmtDateTime(copiedAt(id)))}</small>` : ''}</span></label>`;
+  });
+  html += '</div>';
+  if (!jobs.length) html = `<p class="msgs-empty">Nothing ${GA.src === 'scheduled' ? 'scheduled' : 'waiting'} right now.</p>`;
+  html += `<div class="ga-bar"><button class="btn btn-primary block" type="button" data-act="ga-copy"${n ? '' : ' disabled'}><span class="em" aria-hidden="true">📋</span>Copy ${n} ${n === 1 ? 'job' : 'jobs'} for Group Chat</button></div>`;
+  const y = $('#sheet-body').scrollTop;
+  box.innerHTML = html;
+  $('#sheet-body').scrollTop = y;
+}
+function gaCopy() {
+  const jobs = gaJobs().filter(([id]) => GA.picked.has(id));
+  if (!jobs.length) return;
+  const text = jobs.map(([id, r]) => gaLine(id, r)).join('\n');
+  const ok = copySync(text);
+  gaMarkCopied(jobs.map(([id]) => id));
+  closeSheet();
+  renderAll();
+  if (ok) toast(`Copied ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}. Paste in the group chat.`, 'info', 7000, canShare() ? { label: 'Share', run: () => shareText(text).catch(() => {}) } : null);
+  else if (canShare()) shareText(text).catch(() => {});
+  else toast('Couldn\u2019t copy. Try again.', 'error');
+}
 // The ⋯ menu on a card
 function jobMenu(id) {
   const r = S.pending[id];
@@ -3478,6 +3574,7 @@ function renderQueue() {
     : list.length ? qList(list, listAnim)
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? caughtUp() : skeletons()));
+  if (GA.open && GA.src === 'queue') renderGroupAll();
   if (keep) {
     const ta = $$('#queue-list textarea[data-edit]').find((t) => t.dataset.edit === keep.id);
     if (ta) {
@@ -3524,7 +3621,7 @@ function renderScheduled() {
   const list = S.schedQ.trim() ? all.filter(([, r]) => matchesQ(r, S.schedQ)) : all;
   if (!list.length && all.length) { $('#scheduled-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try another name or request number.</p></div>`; return; }
   if (!list.length) { $('#scheduled-list').innerHTML = S.loaded ? `<div class="empty"><span class="empty-ic">${icon('calendar')}</span><h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>` : skeletons(); return; }
-  let html = '';
+  let html = `<button class="ga-open" type="button" data-act="group-all" data-src="scheduled">${icon('users', 'sm')}Send all to Group Chat<small>${all.length}</small></button>`;
   let day = '';
   list.forEach(([id, r]) => {
     if (r.scheduled_for !== day) {
@@ -3536,6 +3633,7 @@ function renderScheduled() {
     html += jobCard(id, r);
   });
   $('#scheduled-list').innerHTML = html + '</div>';
+  if (GA.open && GA.src === 'scheduled') renderGroupAll();
 }
 function doneRow({ id, r, t, kind }) {
   const by = (e) => (e ? ` · ${esc(e.split('@')[0])}` : '');
@@ -3891,18 +3989,18 @@ async function undoDispatch(id) {
 }
 // A done job sent again to a driver (the same one or another): texts them; it stays in Done, now under that driver
 function resendDriver(id) {
-  const r = doneReq(id);
+  const f = findReq(id), r = f && f.r;
   if (!r) return;
   const swap = sheetOpen && history.state && history.state.sheet;
   if (sheetOpen) _hideSheet();
   openSendPanel(`Send #${r.ref_no} again`, r.pickup, (did) => { closePop(); resendTo(id, did); }, swap, id, routeLabel(r));
 }
 async function resendTo(id, did) {
-  const r = doneReq(id), d = S.contacts.drivers[did];
+  const f = findReq(id), r = f && f.r, d = S.contacts.drivers[did];
   if (!r || !d) return;
   const text = textFor(id, r);
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-  const note = () => { if (db && S.user && r.dispatched_to !== d.name) db.ref(`requests/${id}`).update({ dispatched_to: d.name }).catch(() => { /* the text went anyway */ }); };
+  const note = () => { if (f.kind === 'done' && db && S.user && r.dispatched_to !== d.name) db.ref(`requests/${id}`).update({ dispatched_to: d.name }).catch(() => { /* the text went anyway */ }); };
   if (!SmsSender) { inMessages(); note(); return; }
   const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
   try { await smsSend(cleanPhone(d.phone), text); showSent(`Sent to ${d.name}`); note(); }
@@ -3910,7 +4008,7 @@ async function resendTo(id, did) {
   finally { done(); }
 }
 function recopy(id) {
-  const r = doneReq(id);
+  const f = findReq(id), r = f && f.r;
   if (!r) return;
   const text = textFor(id, r);
   if (canShare()) shareText(text).catch(() => {});
@@ -3961,10 +4059,10 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
+    ${kind !== 'pending' ? `<div class="sheet-actions again-row"><button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>${hasDrivers() ? `<button class="btn btn-primary" type="button" data-act="resend-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>` : ''}</div>` : ''}
+    ${kind === 'done' ? `<div class="sheet-actions"><button class="btn btn-secondary block" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
+    ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary block" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
     ${msgThread(id, r)}
-    ${kind === 'done' ? `<button class="btn btn-secondary remove-far" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
-    <div class="sheet-actions pin-bottom"><button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>${hasDrivers() ? `<button class="btn btn-primary" type="button" data-act="resend-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>` : ''}</div>` : ''}
     ${kind === 'pending' ? `<button class="btn btn-danger-soft remove-far" type="button" data-act="remove" data-id="${esc(id)}">${icon('trash', 'sm')}Remove from queue</button>
     <div class="sheet-actions pin-bottom">${sendButtons(id)}</div>` : ''}</div>`;
   if (refresh) {
@@ -6566,6 +6664,9 @@ document.addEventListener('click', async (e) => {
     case 'resend-driver': resendDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
+    case 'group-all': openGroupAll(el.dataset.src); break;
+    case 'ga-day': gaPickDay(el.dataset.day); break;
+    case 'ga-copy': gaCopy(); break;
     case 'cust-history': openCustHistory(el.dataset.cid); break;
     case 'ch-range': CH.range = el.dataset.r; if (CH.range === 'custom' && !CH.from) { CH.to = todayStr(); CH.from = dayStrAgo(30); } renderCustHistory(); break;
     case 'ch-day': { const d = +el.dataset.d; CH.days = CH.days.includes(d) ? CH.days.filter((x) => x !== d) : CH.days.concat(d); renderCustHistory(); break; }
