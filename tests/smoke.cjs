@@ -540,6 +540,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.inputValue('#nd-text'), /Back door$/);
     // Tapping the buttons leaves the form where it is (it used to jump back to the top of Pickup)
     await page.click('[data-x=notes]');
+    await page.evaluate(() => { document.querySelector('#sheet .sheet').style.maxHeight = '420px'; }); // like a short screen, so the (now tighter) form has to scroll
+    await page.waitForTimeout(300);
     await page.evaluate(() => { const b = document.getElementById('sheet-body'); b.scrollTop = b.scrollHeight; });
     const keep = await page.evaluate(() => document.getElementById('sheet-body').scrollTop);
     assert.ok(keep > 20, 'the form can scroll');
@@ -551,6 +553,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(await page.isVisible('#nd-x-items'), 'the box button opens pieces');
     assert.match(await page.textContent('[data-x=items]'), /2 boxes/);
     await page.tap('[data-x=items]');
+    await page.evaluate(() => { document.querySelector('#sheet .sheet').style.maxHeight = ''; });
     // The driver text can be typed over, and that text is what gets used
     await page.fill('#nd-text', 'Acme for Rosser, rush please');
     assert.ok(await page.isVisible('[data-act=nd-text-reset]'), 'a way back to the automatic text');
@@ -613,6 +616,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
     // Clear sits under the mic, lined up with the chips (bin + word on one line)
+    assert.ok(await page.evaluate(() => { const sh = document.querySelector('#sheet .sheet'); if (!sh.classList.contains('big') || sh.classList.contains('kb') || innerWidth >= 720) return true; return sh.getBoundingClientRect().top >= document.querySelector('.app-head').getBoundingClientRect().bottom + 2 && document.getElementById('mic-fab').classList.contains('slot'); }), 'the filled-in form never covers the numbers, and the mic sits in its spot');
     assert.ok(await page.isHidden('#sheet-reset'), 'no Clear in the top line');
     assert.match(await page.textContent('#nd-chips .nd-clear'), /^\s*Clear\s*$/);
     await page.click('#nd-chips .nd-clear');
@@ -873,7 +877,8 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.click('[data-act=nd-done]');
       await pg.setViewportSize({ width: 390, height: 844 });
       await pg.waitForTimeout(900);
-      assert.ok(Math.abs(await pg.evaluate(() => document.querySelector('#sheet .sheet').getBoundingClientRect().top) - topK) <= 2, "the form doesn't shrink back after Done");
+      // Keeps its height, but never over the Waiting / Scheduled numbers (Justin, mockup 4)
+      assert.ok(await pg.evaluate((topK) => { const top = document.querySelector('#sheet .sheet').getBoundingClientRect().top, hb = document.querySelector('.app-head').getBoundingClientRect().bottom; return Math.abs(top - Math.max(topK, hb + 4)) <= 2; }, topK), "the form doesn't shrink back after Done, and stops under the numbers");
       assert.ok(await bottom('[data-act=nd-pick-driver]') > 700, 'Send to driver at the bottom');
       assert.deepStrictEqual(p4.errors, []);
       await pg.close();
