@@ -1895,9 +1895,11 @@ body.head-up .toasts{top:calc(var(--head-h) + 8px)}
 .ga-text{flex:1;min-width:0;font-size:14px;font-weight:650;line-height:1.25}
 .ga-bar{position:sticky;bottom:0;margin:0 -2px;padding:8px 2px calc(4px + var(--safe-b));background:linear-gradient(transparent,var(--surface) 30%)}
 .job-sub b.sch-on{font-size:14.5px;font-stretch:90%}
-.chip.copied{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
-.qr-meta .qr-copied{background:#eff6ff;color:#1e40af}
-.ga-was{display:block;margin-top:2px;font-size:12px;font-weight:700;color:#1e40af}
+/* Holding Waiting / Scheduled: a bar fills across the button, then Send all opens */
+#queue-kpis .kp{position:relative;overflow:hidden;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#queue-kpis .kp::after{content:'';position:absolute;left:0;bottom:0;height:4px;width:0;background:rgba(255,255,255,.95);border-radius:0 2px 2px 0}
+#queue-kpis .kp-sched::after{background:#6d28d9}
+#queue-kpis .kp.holding::after{width:100%;transition:width 1.2s linear}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2757,17 +2759,6 @@ function tick(message) {
 let sheetOpen = false;
 // Send all to Group Chat (Queue or Scheduled): which jobs are ticked
 const GA = { open: false, src: 'queue', picked: new Set() };
-// Jobs copied with Send all, kept on this phone only (id -> time), so nobody posts them twice
-let gaCopied = {};
-try { gaCopied = JSON.parse(localStorage.getItem('ecd_ga_copied') || '{}') || {}; } catch (e) { gaCopied = {}; }
-const copiedAt = (id) => gaCopied[id] || 0;
-function gaMarkCopied(ids) {
-  const now = Date.now();
-  ids.forEach((id) => { gaCopied[id] = now; });
-  // Forget ones older than 30 days
-  Object.keys(gaCopied).forEach((k) => { if (now - gaCopied[k] > 30 * 86400000) delete gaCopied[k]; });
-  try { localStorage.setItem('ecd_ga_copied', JSON.stringify(gaCopied)); } catch (e) { /* this screen still shows it */ }
-}
 // A customer's request history (⋯ › Request history): { cid, items, loading, error, range, from, to, days }
 const CH = { cid: '', items: null, loading: false, error: '', range: '30', from: '', to: '', days: [] };
 let vlOpen = false, vlReturn = null; // Teach the mic overlay, on top of everything
@@ -3217,7 +3208,6 @@ function jobCard(id, r, full) {
   }
   if (r.ready_after || r.closes_at) chips.push(`<span class="chip warn">${icon('clock')}${esc(windowText(r))}</span>`);
   if (r.posted_at) chips.push(`<span class="chip posted">${icon('users')}Posted</span>`);
-  if (copiedAt(id)) chips.push(`<span class="chip copied">📋 Copied ${esc(fmtTime(copiedAt(id)))}</span>`);
   const unread = unreadMsgs(id);
   if (unread) chips.push(`<button class="chip msg" type="button" data-act="open-msgs" data-cid="${esc(r.company_id || '')}" data-id="${esc(id)}">${icon('chat')}${unread} new ${unread === 1 ? 'message' : 'messages'}</button>`);
   const P = r.pickup || {};
@@ -3307,10 +3297,10 @@ function qList(list, anim) {
     return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
       <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
       <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
-      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}${copiedAt(id) ? '<span class="qr-copied">📋 Copied</span>' : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
+      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
     </button>`;
   }).join('');
-  return `<button class="ga-open" type="button" data-act="group-all" data-src="queue">${icon('users', 'sm')}Send all to Group Chat<small>${list.length}</small></button><div class="qlist${anim}" role="list">${rows}</div>`;
+  return `<div class="qlist${anim}" role="list">${rows}</div>`;
 }
 function qBackBar(list) {
   const others = list.length - 1;
@@ -3435,6 +3425,29 @@ document.addEventListener('change', (e) => {
   if (e.target.id === 'ch-from') { CH.from = e.target.value; renderCustHistory(); }
   if (e.target.id === 'ch-to') { CH.to = e.target.value; renderCustHistory(); }
 });
+/* Hold Waiting (Queue) or Scheduled in the numbers bar for 1.2 s: Send all to Group Chat for those jobs.
+   A quick tap still goes to that page. */
+const KP_HOLD_MS = 1200;
+let kpHold = null, kpHeldAt = 0;
+function kpHoldStop() { if (!kpHold) return; clearTimeout(kpHold.t); $$('.kp.holding').forEach((b) => b.classList.toggle('holding', false)); kpHold = null; }
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest && e.target.closest('#queue-kpis .kp-wait, #queue-kpis .kp-sched');
+  if (!b) return;
+  kpHoldStop();
+  const src = b.classList.contains('kp-sched') ? 'scheduled' : 'queue';
+  b.classList.add('holding');
+  kpHold = { x: e.clientX, y: e.clientY, t: setTimeout(() => {
+    kpHoldStop();
+    kpHeldAt = Date.now();
+    if (navigator.vibrate) { try { navigator.vibrate(30); } catch (err) { /* */ } }
+    openGroupAll(src);
+  }, KP_HOLD_MS) };
+});
+document.addEventListener('pointermove', (e) => { if (kpHold && Math.hypot(e.clientX - kpHold.x, e.clientY - kpHold.y) > 12) kpHoldStop(); });
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, kpHoldStop));
+// The click that ends a hold doesn't also switch pages; no long-press menu on the numbers
+document.addEventListener('click', (e) => { if (kpHeldAt && Date.now() - kpHeldAt < 1500 && e.target.closest && e.target.closest('#queue-kpis')) { e.preventDefault(); e.stopImmediatePropagation(); kpHeldAt = 0; } }, true);
+document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('#queue-kpis')) e.preventDefault(); });
 /* ---------- Send all to Group Chat ----------
    Every job zoomed out to one line with a box to tick. Quick picks at the top tick a whole day.
    The ticked jobs are copied as a list, one driver text per line, ready to paste in the group chat. */
@@ -3476,11 +3489,11 @@ function renderGroupAll() {
   jobs.forEach(([id, r]) => {
     const k = gaDayKey(r);
     if (k !== day && days.length > 1) { day = k; html += `<div class="ga-day">${esc(gaDayLabel(k))}</div>`; }
-    html += `<label class="ga-row${GA.picked.has(id) ? ' on' : ''}"><input type="checkbox" data-ga-id="${esc(id)}"${GA.picked.has(id) ? ' checked' : ''}><span class="ga-no">#${esc(r.ref_no)}</span><span class="ga-text">${esc(gaLine(id, r))}${copiedAt(id) ? `<small class="ga-was">📋 Copied ${esc(fmtDayShort(copiedAt(id)) === fmtDayShort(Date.now()) ? fmtTime(copiedAt(id)) : fmtDateTime(copiedAt(id)))}</small>` : ''}</span></label>`;
+    html += `<label class="ga-row${GA.picked.has(id) ? ' on' : ''}"><input type="checkbox" data-ga-id="${esc(id)}"${GA.picked.has(id) ? ' checked' : ''}><span class="ga-no">#${esc(r.ref_no)}</span><span class="ga-text">${esc(gaLine(id, r))}</span></label>`;
   });
   html += '</div>';
   if (!jobs.length) html = `<p class="msgs-empty">Nothing ${GA.src === 'scheduled' ? 'scheduled' : 'waiting'} right now.</p>`;
-  html += `<div class="ga-bar"><button class="btn btn-primary block" type="button" data-act="ga-copy"${n ? '' : ' disabled'}><span class="em" aria-hidden="true">📋</span>Copy ${n} ${n === 1 ? 'job' : 'jobs'} for Group Chat</button></div>`;
+  html += `<div class="ga-bar"><button class="btn btn-primary block" type="button" data-act="ga-copy"${n ? '' : ' disabled'}><span class="em" aria-hidden="true">💬</span>Send ${n} ${n === 1 ? 'job' : 'jobs'} to Group Chat</button></div>`;
   const y = $('#sheet-body').scrollTop;
   box.innerHTML = html;
   $('#sheet-body').scrollTop = y;
@@ -3489,13 +3502,11 @@ function gaCopy() {
   const jobs = gaJobs().filter(([id]) => GA.picked.has(id));
   if (!jobs.length) return;
   const text = jobs.map(([id, r]) => gaLine(id, r)).join('\n');
-  const ok = copySync(text);
-  gaMarkCopied(jobs.map(([id]) => id));
+  // Straight into the phone's Messages app with the list typed in: pick the group chat and send.
+  // Also on the clipboard, in case it needs pasting again.
+  copySync(text);
   closeSheet();
-  renderAll();
-  if (ok) toast(`Copied ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}. Paste in the group chat.`, 'info', 7000, canShare() ? { label: 'Share', run: () => shareText(text).catch(() => {}) } : null);
-  else if (canShare()) shareText(text).catch(() => {});
-  else toast('Couldn\u2019t copy. Try again.', 'error');
+  launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 // The ⋯ menu on a card
 function jobMenu(id) {
@@ -3621,7 +3632,7 @@ function renderScheduled() {
   const list = S.schedQ.trim() ? all.filter(([, r]) => matchesQ(r, S.schedQ)) : all;
   if (!list.length && all.length) { $('#scheduled-list').innerHTML = `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>Try another name or request number.</p></div>`; return; }
   if (!list.length) { $('#scheduled-list').innerHTML = S.loaded ? `<div class="empty"><span class="empty-ic">${icon('calendar')}</span><h3>Nothing scheduled</h3><p>Requests booked for a later date wait here and move to the queue on their day.</p></div>` : skeletons(); return; }
-  let html = `<button class="ga-open" type="button" data-act="group-all" data-src="scheduled">${icon('users', 'sm')}Send all to Group Chat<small>${all.length}</small></button>`;
+  let html = '';
   let day = '';
   list.forEach(([id, r]) => {
     if (r.scheduled_for !== day) {
