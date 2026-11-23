@@ -1592,6 +1592,100 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .job.full .route::before{top:31px;bottom:40px}
 .job.full .stop::before,.job.full .stop.to::before{top:18px}
 .job-when{padding:6px 8px 6px 10px}
+
+/* ===== Queue fits the screen, no scrolling (2026-11-22 b) ===== */
+body.q-fit{overflow:hidden}
+body.q-fit #panel-queue:not([hidden]){min-height:0}
+body.q-fit .qbar{position:relative;top:0}
+body.q-fit #queue-list{min-height:0}
+body.q-fit .qone{min-height:0}
+body.q-fit .job.full{min-height:0}
+body.q-fit .job.full .job-top{min-height:0;overflow:hidden}
+body.q-fit .job.full .job-more-box,body.q-fit .job.full .text-edit{min-height:0}
+body.q-fit .job.full .text-edit textarea{flex:1 1 0;min-height:52px;resize:none;overflow-y:auto}
+/* slightly smaller everywhere, so a normal job fits a normal phone */
+.job.full .job-top{padding:10px 12px 0}
+.job.full .job-head{margin:0 0 7px}
+.job.full .req-no{font-size:19px}
+.job.full .job-co{font-size:16.5px}
+.job-when{margin:0 0 8px;padding:5px 8px 5px 10px}
+.job-sub b{font-size:15.5px}
+.job.full .job-age{height:28px;font-size:15px}
+.job.full .route{gap:7px;margin:0 0 8px;padding:8px 10px 8px 34px}
+.job.full .stop b{font-size:20px}
+.job.full .stop.to b{font-size:18.5px}
+.job.full .stop>span{font-size:14px}
+.job.full .stop small{font-size:10.5px}
+.job.full .route::before{left:16.5px;top:28px;bottom:36px}
+.job.full .stop::before{left:-24px;top:17px}
+.job.full .stop.to::before{left:-23px;top:17px}
+.job-facts{margin:0 0 8px}
+.fact{padding:4px 9px 5px}
+.fact b{font-size:15px}
+.job-note{margin:-1px 0 8px;padding:6px 10px;font-size:14px}
+.job.full .text-edit textarea{font-size:17px;padding:8px 11px}
+.job.full .job-actions{padding-top:6px;margin-bottom:10px}
+.job.full .job-actions .btn{min-height:54px}
+.job.full .job-actions .btn-primary{font-size:18.5px}
+/* tight: a long job or a short screen */
+.job.full.tight .job-head{margin-bottom:5px}
+.job.full.tight .req-no{font-size:17px;padding:1px 7px}
+.job.full.tight .job-co{font-size:15px}
+.job.full.tight .job-when{margin-bottom:6px;padding:3px 8px}
+.job.full.tight .job-sub small{display:none}
+.job.full.tight .job-age{height:24px;font-size:13.5px}
+.job.full.tight .route{gap:4px;padding:6px 10px 6px 32px;margin-bottom:6px}
+.job.full.tight .stop b{font-size:17.5px}
+.job.full.tight .stop.to b{font-size:16.5px}
+.job.full.tight .stop>span{font-size:13px}
+.job.full.tight .stop small{display:none}
+.job.full.tight .route::before{top:16px;bottom:22px}
+.job.full.tight .stop::before,.job.full.tight .stop.to::before{top:5px}
+.job.full.tight .job-facts,.job.full.tight .job-note,.job.full.tight .job-chips,.job.full.tight .job-changed{margin-bottom:6px}
+.job.full.tight .fact{flex-direction:row;align-items:baseline;gap:5px;padding:3px 8px}
+.job.full.tight .fact b{font-size:14px}
+.job.full.tight .text-edit textarea{font-size:16px;padding:6px 10px}
+.job.full.tight .job-actions .btn{min-height:48px}
+.job.full.tight .job-actions .btn-primary{font-size:17px}
+/* tighter: last step before anything would be cut */
+.job.full.tighter .stop{flex-direction:row;align-items:baseline;gap:6px}
+.job.full.tighter .stop b{max-width:58%;font-size:16px}
+.job.full.tighter .stop>span{flex:1 1 0;min-width:0}
+.job.full.tighter .fact small{display:none}
+.job.full.tighter .job-note{padding:4px 8px;font-size:13px}
+.job.full.tighter .text-edit-head{margin-top:3px}
+.job.full.tighter .addr-chip{min-height:28px}
+/* Next with a little arrow: tap Next for the next job, the arrow for the whole list */
+.qsplit{flex:0 1 52%;min-width:0;display:flex;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);box-shadow:var(--sh-1);overflow:hidden}
+.qsplit .qnext{flex:1;border:0;border-radius:0;box-shadow:none}
+.qdrop{flex:none;width:44px;display:grid;place-items:center;border:0;border-left:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color var(--t-fast) ease}
+.qdrop .i{width:16px;height:16px;stroke-width:2.6;transition:transform .25s var(--out)}
+.qdrop:active{background:var(--surface-3)}
+.qdrop.open{background:var(--ink);color:var(--bg)}
+.qdrop.open .i{transform:rotate(180deg)}
+#qmenu-bg{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.18);animation:fadeIn .15s ease both}
+#qmenu{position:fixed;left:12px;right:12px;z-index:81;max-height:min(62vh,520px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;transform-origin:top right;animation:qmIn .2s var(--out) both}
+@keyframes qmIn{from{opacity:0;transform:translateY(-8px) scale(.97)}}
+@keyframes fadeIn{from{opacity:0}}
+.qm-head{padding:9px 14px 7px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line)}
+.qm-list{overflow-y:auto;padding:4px}
+.qm-row{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:7px 10px;border:0;border-radius:10px;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:qmRow .22s var(--out) both}
+@keyframes qmRow{from{opacity:0;transform:translateX(8px)}}
+.qm-row+.qm-row{margin-top:2px}
+.qm-row:active{background:var(--surface-2)}
+.qm-row.on{background:var(--yellow-soft);box-shadow:inset 3px 0 0 var(--yellow)}
+.qm-n{flex:none;width:24px;height:24px;display:grid;place-items:center;border-radius:99px;background:var(--surface-3);font-size:12.5px;font-weight:800}
+.qm-row.on .qm-n{background:var(--yellow);color:#000}
+.qm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.qm-top{display:flex;gap:6px;align-items:baseline;min-width:0}
+.qm-top b{flex:none;font-stretch:75%;font-size:16px;font-weight:800}
+.qm-top span{min-width:0;font-weight:750;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qm-route{font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qm-age{flex:none;font-size:13.5px;font-weight:800}
+.qm-age.late{color:var(--danger)}.qm-age.fresh{color:var(--ok)}
+.job.full.tight .fact small{display:none}
+.job.full.tight .fact{justify-content:center}
+.job.full .text-edit-head [data-sms-count]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2135,6 +2229,7 @@ function textEditor(id, r, where) {
 function toggleAddrRow(id) {
   const r = S.pending[id] || doneReq(id);
   if (!r) return;
+  requestAnimationFrame(fitQueue);
   if (addrOpen.has(id)) addrOpen.delete(id); else addrOpen.add(id);
   $$('.job [data-edit-box]').filter((b) => b.dataset.editBox === id).forEach((b) => {
     const open = addrOpen.has(id);
@@ -2959,7 +3054,10 @@ function qPager(list, idx) {
   return `<div class="qpager" role="group" aria-label="Jobs waiting">
     <button class="qnav" type="button" data-act="q-prev" aria-label="Previous job"${idx === 0 ? ' disabled' : ''}>${icon('chevron', 'sm')}</button>
     <div class="qpos"><span class="qcount"><b>${idx + 1}</b> of ${list.length}</span><span class="qdots" aria-hidden="true">${dots}</span></div>
-    <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(next.company_name || '')}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(next.company_name || '#' + next.ref_no)}</b></span>${icon('chevron', 'sm')}</button>
+    <div class="qsplit">
+      <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(next.company_name || '')}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(next.company_name || '#' + next.ref_no)}</b></span>${icon('chevron', 'sm')}</button>
+      <button class="qdrop" type="button" data-act="q-menu" aria-label="Pick a job from the list" aria-haspopup="true" aria-expanded="false">${icon('caret')}</button>
+    </div>
   </div>`;
 }
 function qShow(id, dir) {
@@ -2967,8 +3065,60 @@ function qShow(id, dir) {
   Q.id = id;
   Q.anim = dir ? (dir > 0 ? 'from-r' : 'from-l') : 'rise';
   renderQueue();
-  window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' });
 }
+// The little arrow beside Next: every waiting job in a list, tap one to go straight to it
+function qMenu(btn) {
+  const old = $('#qmenu');
+  if (old) { qMenuClose(); return; }
+  const list = $('#queue-list').__list || [];
+  if (!list.length) return;
+  const r0 = btn.closest('.qsplit').getBoundingClientRect();
+  const rows = list.map(([id, r], i) => {
+    const late = isOverdue(r) || ageCls(r.created_at) === 'late';
+    return `<button type="button" class="qm-row${id === Q.id ? ' on' : ''}" data-act="q-pick" data-id="${esc(id)}" style="animation-delay:${Math.min(i, 8) * 25}ms">
+      <span class="qm-n">${i + 1}</span>
+      <span class="qm-main"><span class="qm-top"><b>#${esc(r.ref_no)}</b><span>${esc(r.company_name || '')}</span></span><span class="qm-route">${esc((r.pickup && r.pickup.name) || '–')} → ${esc((r.delivery && r.delivery.name) || '–')}</span></span>
+      <span class="qm-age${late ? ' late' : ' fresh'}">${esc(shortAgo(r.created_at))}</span>
+    </button>`;
+  }).join('');
+  document.body.insertAdjacentHTML('beforeend', `<div id="qmenu-bg" data-act="q-menu-close"></div><div id="qmenu" role="menu" style="top:${Math.round(r0.bottom + 6)}px"><div class="qm-head">${list.length} waiting · pick one</div><div class="qm-list">${rows}</div></div>`);
+  btn.setAttribute('aria-expanded', 'true');
+  btn.classList.add('open');
+}
+function qMenuClose() {
+  const m = $('#qmenu'); const bg = $('#qmenu-bg');
+  $$('.qdrop.open').forEach((b) => { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); });
+  if (bg) bg.remove();
+  if (!m) return;
+  if (m.animate && !reduceMotion()) { const a = m.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px) scale(.98)' }], { duration: 140, easing: 'ease-in' }); a.onfinish = () => m.remove(); } else m.remove();
+}
+/* No scrolling with a job on the page: the queue is exactly as tall as the screen, the text box
+   gives up room first, and if it still doesn't fit the card steps down a size (tight, then tighter). */
+function fitQueue() {
+  const panel = $('#panel-queue');
+  if (!panel) return;
+  const card = $('#queue-list .job.full');
+  const typing = document.activeElement && panel.contains(document.activeElement) && document.activeElement.matches('textarea, input');
+  if (S.tab !== 'queue' || !card || panel.hidden) { panel.style.height = ''; document.body.classList.remove('q-fit'); return; }
+  if (typing) { panel.style.height = ''; document.body.classList.remove('q-fit'); return; } // keyboard up: the page may scroll so the text can be seen
+  const main = $('main.app-main');
+  const padB = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+  if (window.scrollY) window.scrollTo(0, 0);
+  const h = Math.floor(window.innerHeight - (panel.getBoundingClientRect().top + window.scrollY) - padB);
+  document.body.classList.add('q-fit');
+  panel.style.height = `${Math.max(320, h)}px`;
+  const box = $('.job-top', card);
+  card.classList.remove('tight', 'tighter');
+  const mb = $('.job-more-box', card); const ta = $('textarea', card);
+  // Too tall when anything is cut off, or the driver text doesn't fully show in its box
+  const over = () => box.scrollHeight > box.clientHeight + 1 || (mb && mb.scrollHeight > mb.clientHeight + 1) || (ta && ta.scrollHeight > ta.clientHeight + 1);
+  if (over()) card.classList.add('tight');
+  if (over()) card.classList.add('tighter');
+  if (window.scrollY) window.scrollTo(0, 0);
+}
+window.addEventListener('resize', () => requestAnimationFrame(fitQueue));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#qmenu')) qMenuClose(); });
+document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#panel-queue')) setTimeout(fitQueue, 120); });
 function qStep(dir) {
   const list = $('#queue-list').__list || [];
   if (list.length < 2) return;
@@ -3097,7 +3247,7 @@ function renderQueue() {
       return;
     }
   }
-  if (stick) scrollToBottom();
+  if ($('#queue-list .job.full')) requestAnimationFrame(fitQueue); else { fitQueue(); if (stick) scrollToBottom(); }
 }
 // Unread customer messages, in the free space above the jobs (tap one to open the conversation)
 function unreadBlock() {
@@ -3243,7 +3393,7 @@ function switchTab(tab) {
   if (tab === 'settings') renderSettings();
   if (tab === 'queue') queueStick = true;
   renderAll();
-  if (tab !== 'queue') window.scrollTo(0, 0);
+  if (tab !== 'queue') { window.scrollTo(0, 0); fitQueue(); qMenuClose(); }
 }
 
 /* =========================================================
@@ -6154,6 +6304,9 @@ document.addEventListener('click', async (e) => {
     case 'job-menu': jobMenu(id); break;
     case 'q-next': qStep(1); break;
     case 'q-prev': qStep(-1); break;
+    case 'q-menu': qMenu(el); break;
+    case 'q-menu-close': qMenuClose(); break;
+    case 'q-pick': { const list = $('#queue-list').__list || []; const from = list.findIndex(([x]) => x === Q.id); const to = list.findIndex(([x]) => x === id); qMenuClose(); qShow(id, to >= from ? 1 : -1); break; }
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
     case 'addr-open': toggleAddrRow(id); break;
@@ -6290,6 +6443,7 @@ const dock = $('#dock');
 const setDockH = () => {
   const stick = S.tab === 'queue' && nearBottom();
   document.documentElement.style.setProperty('--dock-h', `${dock.offsetHeight}px`);
+  requestAnimationFrame(fitQueue);
   if (stick) scrollToBottom();
 };
 if (window.ResizeObserver) new ResizeObserver(setDockH).observe(dock);

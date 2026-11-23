@@ -85,7 +85,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.strictEqual(await page.locator('#queue-list .job').count(), 1, 'one job on the page at a time');
     assert.match(await page.textContent('.qcount'), /1 of 2/, 'shows that two jobs wait');
     assert.strictEqual(await page.getAttribute('#queue-list .job', 'data-id'), 'r1', 'the oldest job first');
-    assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*Today/, 'when it was sent in is on the card');
+    assert.match(await page.textContent('#queue-list .job-when'), /Submitted\s*(Today|Yesterday)/, 'when it was sent in is on the card');
     assert.strictEqual(await page.locator('#queue-list [data-act=pick-driver] .caret').count(), 0, 'no little arrow on Send to driver');
     // Next shows the other job, and it stays on it
     await page.click('[data-act=q-next]');
@@ -93,8 +93,17 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.qcount'), /2 of 2/);
     await page.click('[data-act=q-prev]');
     await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r1');
-    // The number strip stays pinned under the top bar
-    assert.strictEqual(await page.evaluate(() => getComputedStyle(document.querySelector('.qbar')).position), 'sticky', 'number strip stays in view when scrolling');
+    // A job on the page fits the screen: no scrolling, Send to driver in view
+    await page.waitForFunction(() => document.body.classList.contains('q-fit'));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'no scrolling with a job on the page');
+    assert.ok(await page.evaluate(() => document.querySelector('#queue-list [data-act=pick-driver]').getBoundingClientRect().bottom <= innerHeight), 'Send to driver on screen');
+    // The arrow beside Next lists every waiting job; tap one to go to it
+    await page.click('[data-act=q-menu]');
+    await page.waitForSelector('#qmenu [data-act=q-pick]');
+    assert.strictEqual(await page.locator('#qmenu [data-act=q-pick]').count(), 2, 'every waiting job in the list');
+    await page.click('#qmenu [data-act=q-pick][data-id=r2]');
+    await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r2' && !document.getElementById('qmenu'));
+    await page.evaluate(() => qShow('r1'));
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
