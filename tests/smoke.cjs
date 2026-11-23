@@ -154,6 +154,18 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForSelector('#panel-map:not([hidden])');
     await page.waitForFunction(() => /couldn.t load/.test(document.getElementById('mt-msg').textContent));
     assert.match(await page.textContent('#mt-sub'), /^2 waiting/);
+    // Driver buttons under the map (only drivers with a van on the map), tap one: their van and address
+    await page.evaluate(() => { window.__fakeDb.put('developer/dispatch_dashboard/driver_nicknames', { v1: 'Mike' }); window.__fakeDb.put('developer/dispatch_dashboard/drivers', { v1: { name: 'Van 3', color: '#f7c948', lastLocation: { lat: 49.85, lng: -99.95, updatedAt: Date.now() - 60000 } }, v2: { name: 'Van 5', lastLocation: { lat: 49.84, lng: -99.93, updatedAt: Date.now() } } }); });
+    await page.waitForSelector('#mt-drivers .mt-drv[data-driver=d1]');
+    assert.strictEqual(await page.locator('#mt-drivers .mt-drv').count(), 1, 'Sara has no van today, so no button');
+    assert.ok(await page.evaluate(() => { const r = document.querySelector('#mt-drivers .mt-drv').getBoundingClientRect(), m = document.getElementById('mic-fab'); const mr = m.hidden ? null : m.getBoundingClientRect(); return r.height >= 40 && (!mr || r.right <= mr.left); }), 'thumb-sized, and the row stops before the mic');
+    await page.click('#mt-drivers .mt-drv');
+    await page.waitForSelector('#mt-where:not([hidden])');
+    assert.match(await page.textContent('#mt-where'), /Mike\s*Van 3/);
+    assert.ok(await page.evaluate(() => document.querySelector('#mt-drivers .mt-drv').classList.contains('on')));
+    await shot(page, 'map-driver');
+    await page.click('#mt-drivers .mt-drv');
+    await page.waitForSelector('#mt-where', { state: 'hidden' });
     // Tapping a pickup on the map opens its regular job card in the Queue
     await page.evaluate(() => mtOpenJob('r2'));
     await page.waitForSelector('#panel-queue:not([hidden]) .job.full[data-id=r2]');

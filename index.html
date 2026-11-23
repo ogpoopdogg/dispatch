@@ -1923,8 +1923,16 @@ body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok
 body:not(.mic-ok) .te-mic{display:none}
 @media (prefers-reduced-motion:reduce){.te-mic.on{animation:none}}
 /* Map page */
-.mt-wrap{position:relative}
-.mt-map{height:calc(100vh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 92px);height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 92px);min-height:300px;border-radius:14px;border:1px solid var(--line-strong);overflow:hidden;background:#e8eef3}
+#panel-map:not([hidden]){display:flex;flex-direction:column;height:calc(100vh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px);height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px)}
+#panel-map .page-head{flex:none}
+.mt-wrap{position:relative;flex:1;min-height:240px;display:flex}
+.mt-map{flex:1;min-height:240px;border-radius:14px;border:1px solid var(--line-strong);overflow:hidden;background:#e8eef3}
+.mt-where:not([hidden]){position:absolute;left:8px;right:8px;bottom:8px;z-index:3;display:flex;align-items:flex-start;gap:6px;padding:10px 4px 10px 12px;border-radius:14px;background:#fff;color:#111;box-shadow:0 4px 18px rgba(0,0,0,.28);animation:riseIn var(--t) var(--out)}
+.mt-drivers{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0 0;min-height:62px}
+body.mic-ok .mt-drivers{padding-right:68px} /* the row stops before the mic; more drivers go on a new line */
+.mt-drv{min-height:42px;padding:0 12px 0 9px;font-size:14.5px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.mt-drv small{font-size:11.5px}
+.mt-none{align-self:center;font-size:13.5px;font-weight:650;color:var(--ink-3)}
 .mt-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);margin:0;padding:10px 14px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);font-weight:700;text-align:center}
 /* Today page: a column per driver, swipe sideways when there are more than three */
 .td-seg{margin:0 0 10px}
@@ -2078,7 +2086,8 @@ textarea[data-edit]{overflow:hidden!important;resize:none!important;field-sizing
     <!-- Map: every waiting pickup and every van -->
     <section id="panel-map" hidden>
       <div class="page-head"><h1>Map</h1><p id="mt-sub">Waiting pickups and vans</p></div>
-      <div class="mt-wrap"><div class="mt-map" id="mt-map"></div><p class="mt-msg" id="mt-msg" hidden></p></div>
+      <div class="mt-wrap"><div class="mt-map" id="mt-map"></div><p class="mt-msg" id="mt-msg" hidden></p><div class="sp-where mt-where" id="mt-where" hidden></div></div>
+      <div class="mt-drivers" id="mt-drivers" role="group" aria-label="Drivers: tap one to see where they are"></div>
     </section>
 
     <!-- Today: one column per driver, what each one got -->
@@ -3179,8 +3188,8 @@ function startListening() {
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
   // Vehicles for the Send to driver map, kept up to date so the panel opens instantly
-  listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); }, () => {});
-  listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); }, () => {});
+  listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); mtRender(); }, () => {});
+  listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); mtRender(); }, () => {});
   // Who has which van today, from Timeclock: GPS vans and vans with no GPS yet (timeclock/vans, ids start with van_)
   listen(db.ref('timeclock/vehicle_claims'), (snap) => { sp.claims = snap.val() || {}; sp.claimsOk = true; spRender(); }, () => { sp.claimsOk = false; });
   listen(db.ref('timeclock/vans'), (snap) => { sp.tcVans = snap.val() || {}; spRender(); }, () => {});
@@ -4711,7 +4720,7 @@ function deskRender() {
   vanMapDraw(desk, (id) => openDetails(id));
 }
 // Vans and waiting pickups on a map (st = desk or the Map page). Returns how many of each are shown.
-function vanMapDraw(st, onPin) {
+function vanMapDraw(st, onPin, onVan) {
   const b = new google.maps.LatLngBounds();
   const live = new Set();
   Object.entries(sp.vans || {}).forEach(([id, v]) => {
@@ -4721,7 +4730,7 @@ function vanMapDraw(st, onPin) {
     const van = { id, pos: { lat: +L.lat, lng: +L.lng }, nick, label: nick || (v.name ? String(v.name) : 'Vehicle'), color: v.color || '#f7c948', heading: headingOf(v.heading) };
     live.add(id);
     let m = st.vans[id];
-    if (!m) { m = st.vans[id] = new google.maps.Marker({ map: st.map, position: van.pos, optimized: false }); }
+    if (!m) { m = st.vans[id] = new google.maps.Marker({ map: st.map, position: van.pos, optimized: false }); if (onVan) m.addListener('click', () => onVan(id)); }
     else glide(m, van.pos);
     const key = `${van.label}|${van.nick ? 1 : 0}|${van.color}|${van.heading}`;
     if (m._key !== key) { m.setIcon(vanIcon(van)); m._key = key; m.setZIndex(van.nick ? 10 : 1); }
@@ -4754,7 +4763,7 @@ function vanMapDraw(st, onPin) {
    Map page (bottom bar): every waiting pickup (yellow, its number) and every van, live.
    Tap a pickup to open that job. While the page is open, fresh GPS is asked for every 15 s.
    ========================================================= */
-const mt = { map: null, vans: {}, pins: {}, fitted: false, poll: 0 };
+const mt = { map: null, vans: {}, pins: {}, fitted: false, poll: 0, sel: '', glide: 0 };
 function mtStart() {
   mt.fitted = false; mt.err = false;
   loadMaps();
@@ -4769,11 +4778,81 @@ function mtStart() {
 }
 // Tap a pickup: its regular job card in the Queue
 function mtOpenJob(id) { if (!S.pending[id]) return; switchTab('queue'); qOpen(id); }
+/* Driver buttons under the map: tap one and the map glides to their van and shows its street address
+   with the city. Tap it again (or ✕) to see everyone. Only drivers with a van on the map today. */
+function mtDrivers() {
+  const list = spList();
+  return byName(S.contacts.drivers || {}).map(([did, d]) => {
+    const v = vanOf(d, list);
+    if (!v || !v.pos) return null;
+    const g = sp.vans[v.id] || {};
+    return { did, name: String(d.name || ''), van: v.id, vname: v.name || g.name || 'Van', color: v.color || g.color || '', pos: v.pos, at: g.lastLocation && +g.lastLocation.updatedAt };
+  }).filter(Boolean);
+}
+function mtDriversRender() {
+  const box = $('#mt-drivers');
+  if (!box) return;
+  const list = mtDrivers();
+  if (mt.sel && !list.some((x) => x.did === mt.sel)) mtHideWhere(true);
+  const key = list.map((x) => `${x.did}|${x.van}|${x.color}|${x.vname}|${mt.sel === x.did ? 1 : 0}`).join(',');
+  if (box._key === key) return;
+  box._key = key;
+  box.innerHTML = list.length
+    ? list.map((x) => `<button type="button" class="sp-fvan mt-drv${mt.sel === x.did ? ' on' : ''}" data-act="mt-drv" data-driver="${esc(x.did)}" style="--c:${esc(x.color)}" aria-pressed="${mt.sel === x.did}" aria-label="${esc(x.name)}, ${esc(x.vname)}. Show where they are"><i></i><span>${esc(x.name.split(' ')[0] || x.name)}<small>${esc(x.vname)}</small></span></button>`).join('')
+    : '<span class="mt-none">No driver vans on the map right now.</span>';
+}
+// Glide: pan first, then zoom one step at a time so it moves smoothly instead of jumping
+function mtGlide(pos, zoom) {
+  if (!mt.map) return;
+  clearTimeout(mt.glide);
+  mt.map.panTo(pos);
+  const step = () => {
+    const z = mt.map.getZoom();
+    if (z === zoom) return;
+    mt.map.setZoom(z + (zoom > z ? 1 : -1));
+    mt.map.panTo(pos);
+    mt.glide = setTimeout(step, 170);
+  };
+  mt.glide = setTimeout(step, 350);
+}
+function mtShowDriver(did) {
+  const x = mtDrivers().find((f) => f.did === did);
+  if (!x) return;
+  if (mt.sel === did) { mtHideWhere(); return; }
+  mt.sel = did;
+  mtDriversRender();
+  const pct = Math.max(30, Math.min(100, +S.settings.vanZoom || 65));
+  mtGlide(x.pos, Math.max(15, Math.round(3 + pct / 100 * 18)));
+  const m = mt.vans[x.van];
+  if (m && window.google && google.maps.Animation) { m.setAnimation(google.maps.Animation.BOUNCE); setTimeout(() => m.setAnimation(null), 720); }
+  const box = $('#mt-where');
+  box.hidden = false;
+  box.innerHTML = `<div class="grow"><b>${esc(x.name)}</b> <small>${esc(x.vname)}${x.at ? ` \u00b7 ${esc(ago(x.at))}` : ''}</small><p class="wait" id="mt-where-a">Finding the address\u2026</p></div><button class="icon-btn sm" type="button" data-act="mt-where-x" aria-label="Close">${icon('x')}</button>`;
+  const put = (t, ok) => { if (mt.sel !== did) return; const el = $('#mt-where-a'); if (el) { el.textContent = t; el.classList.toggle('wait', !ok); } };
+  const k = `${x.pos.lat.toFixed(4)},${x.pos.lng.toFixed(4)}`; // about 10 m
+  if (revGeo[k]) { put(revGeo[k], true); return; }
+  if (!mapsUsable()) { put('The address can\u2019t be looked up without the map.', false); return; }
+  try {
+    new google.maps.Geocoder().geocode({ location: x.pos }, (res, status) => {
+      if (status === 'OK' && res && res[0]) { revGeo[k] = String(res[0].formatted_address || '').replace(/,\s*Canada$/i, ''); put(revGeo[k], true); }
+      else put('No street address found for this spot.', false);
+    });
+  } catch (e) { put('The address couldn\u2019t be looked up.', false); }
+}
+function mtHideWhere(quiet) {
+  mt.sel = '';
+  const box = $('#mt-where');
+  if (box) box.hidden = true;
+  if (quiet) return;
+  mtDriversRender();
+  if (mt.map) { mt.fitted = false; mtRender(); }
+}
 function mtStop() { clearInterval(mt.poll); mt.poll = 0; }
 function mtRender() {
   if (S.tab !== 'map' || $('#view-app').hidden) return;
   const msg = $('#mt-msg');
   const n = queueList().length;
+  mtDriversRender();
   if (!mapsUsable()) {
     msg.hidden = false;
     msg.textContent = maps === 'failed' || mt.err ? 'The map couldn\u2019t load. Check the internet and open Map again.' : 'Loading the map\u2026';
@@ -4782,7 +4861,7 @@ function mtRender() {
   }
   msg.hidden = true;
   if (!mt.map) mt.map = new google.maps.Map($('#mt-map'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, zoomControl: true, zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_TOP }, gestureHandling: 'greedy', clickableIcons: false, styles: MAP_STYLE });
-  const c = vanMapDraw(mt, mtOpenJob);
+  const c = vanMapDraw(mt, mtOpenJob, (id) => { const x = mtDrivers().find((f) => f.van === id); if (x) mtShowDriver(x.did); });
   const off = n - c.pins;
   $('#mt-sub').textContent = `${n} waiting \u00b7 ${c.vans} ${c.vans === 1 ? 'van' : 'vans'}${off > 0 ? ` \u00b7 ${off} with no map spot` : ''}`;
 }
@@ -6825,6 +6904,8 @@ document.addEventListener('click', async (e) => {
     case 'resend-driver': resendDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'te-mic': teMic(el); break;
+    case 'mt-drv': mtShowDriver(el.dataset.driver); break;
+    case 'mt-where-x': mtHideWhere(); break;
     case 'details': openDetails(id); break;
     case 'group-all': openGroupAll(el.dataset.src); break;
     case 'ga-day': gaPickDay(el.dataset.day); break;
