@@ -190,6 +190,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Done isn't lit any more once you've left its page for Messages
     await page.mouse.move(5, 300); await page.waitForTimeout(400);
     { const bg = await page.evaluate(() => [getComputedStyle(document.querySelector('.tab[data-tab=done] .ti')).backgroundColor, document.body.classList.contains('layer-up')]); assert.ok(bg[0] === 'rgba(0, 0, 0, 0)', 'Done not lit while Messages is open ' + bg); }
+    assert.ok(await page.evaluate(() => getComputedStyle(document.querySelector('#msg-btn .ti')).backgroundColor !== 'rgba(0, 0, 0, 0)'), 'Messages is lit while it is open');
     await page.click('.app-head .kp-sched');
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
     // Who made it: a side strip on Scheduled cards (customer app here; a dispatcher job says Dispatcher)
@@ -200,7 +201,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => openDetails('r4'));
     await page.waitForSelector('#sheet [data-act=resend-driver]');
     assert.ok(await page.isVisible('#sheet [data-act=recopy]:has-text("Group Chat")'));
-    assert.match(await page.textContent('#sheet [data-act=resend-driver]'), /💬\s*Send to driver/);
+    assert.match(await page.textContent('#sheet [data-act=resend-driver]'), /💬\s*Send to Driver/);
     await page.click('#sheet [data-act=resend-driver]');
     await page.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
     assert.match(await page.textContent('#sp-title'), /Send #1190 again/);
@@ -695,9 +696,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await sub('Mike'), /^Van 1$/, 'GPS van');
       assert.match(await sub('Sara'), /^Van 9 · no GPS$/, 'van with no GPS unit, picked in Timeclock');
       assert.match(await sub('Jen'), /^Van 4 · no GPS$/, 'GPS van that has no position yet');
-      assert.match(await sub('Tom'), /^No van today$/);
-      assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
-      assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
+      assert.match(await sub('Tom'), /^No van$/);
+      assert.match(await sub('Mike Jones'), /^No van$/, "two Mikes: the other Mike doesn't get Mike's van");
+      assert.match(await sub('Kim'), /^No van$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
       assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
       // Order: the closest driver is the first button (top left), then the next closest; no GPS, then no van, last
       const order = await pg.evaluate(() => {
