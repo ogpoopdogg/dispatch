@@ -93,6 +93,11 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('.qcount'), /2 of 2/);
     await page.click('[data-act=q-prev]');
     await page.waitForFunction(() => document.querySelector('#queue-list .job').dataset.id === 'r1');
+    // The numbers sit in the pinned top bar and stay in view while flipping; the page turn leaves nothing behind
+    assert.ok(await page.evaluate(() => !!document.querySelector('.app-head #qbar:not([hidden]) .kp-wait')), 'numbers are part of the pinned top');
+    await page.waitForFunction(() => document.querySelectorAll('#queue-list .job').length === 1);
+    assert.match(await page.textContent('.kp-wait'), /2\s*waiting/i);
+    assert.match(await page.textContent('#queue-list .src-band'), /Customer request/, 'customer requests are labelled');
     // A job on the page fits the screen: no scrolling, Send to driver in view
     await page.waitForFunction(() => document.body.classList.contains('q-fit'));
     assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'no scrolling with a job on the page');

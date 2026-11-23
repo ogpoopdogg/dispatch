@@ -1686,6 +1686,79 @@ body.q-fit .job.full .text-edit textarea{flex:1 1 0;min-height:52px;resize:none;
 .job.full.tight .fact small{display:none}
 .job.full.tight .fact{justify-content:center}
 .job.full .text-edit-head [data-sms-count]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* ===== Round 3 (2026-11-23): pinned numbers, who made it, page turns ===== */
+.qbar-wrap{position:relative;padding:8px 12px 6px;background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:saturate(160%) blur(12px);backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--glass-line)}
+.qbar-wrap[hidden]{display:none}
+.qbar-wrap .qbar{position:static;max-width:1080px;margin:0 auto;padding:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.q-fit .qbar{position:static}
+@media (min-width:1100px){.qbar-wrap{margin-right:44vw}}
+.kpis{display:grid;grid-template-columns:1.25fr 1fr minmax(0,.95fr);gap:6px;background:none;box-shadow:none;border-radius:0;overflow:visible}
+.kp{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:4px 10px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) var(--ease)}
+.kp:active{transform:scale(.97)}
+.kp-n{font-stretch:75%;font-size:30px;font-weight:850;line-height:1;letter-spacing:-.02em}
+.kp span{font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.1;color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kp-n.bump,.kp-mini b.bump{display:inline-block;animation:bump .4s var(--spring)}
+.kp-wait.hot{border-color:#b91c1c;background:linear-gradient(160deg,#ef4444,#c81e1e);color:#fff;animation:waitFlash 1.1s ease-in-out infinite}
+.kp-wait.hot span{color:rgba(255,255,255,.92)}
+@keyframes waitFlash{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.55),0 4px 12px -4px rgba(185,28,28,.6);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(220,38,38,0),0 4px 16px -2px rgba(185,28,28,.8);filter:brightness(1.12)}}
+.kp-wait:not(.hot){background:var(--ok-bg);border-color:rgba(17,128,60,.3)}
+.kp-wait:not(.hot) .kp-n{color:var(--ok)}
+.kp-sched .kp-n{color:var(--ink-3)}
+.kp-sched.on{border-color:rgba(124,58,237,.45);background:linear-gradient(160deg,rgba(124,58,237,.12),rgba(124,58,237,.05))}
+.kp-sched.on .kp-n,.kp-sched.on span{color:#6d28d9}
+.kp-side{display:flex;flex-direction:column;gap:3px;min-width:0;margin-left:4px;padding-left:9px;border-left:2px dashed var(--line-strong)}
+.kp-mini{display:flex;align-items:baseline;gap:5px;min-width:0;min-height:23px;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:default;white-space:nowrap}
+button.kp-mini{cursor:pointer}
+.kp-mini b{font-stretch:80%;font-size:16px;font-weight:800}
+.kp-mini span{font-size:11.5px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
+.kp-mini.warn b{color:var(--danger)}
+.qbar .qsearch{width:42px;min-height:50px;border-radius:12px}
+@media (prefers-reduced-motion:reduce){.kp-wait.hot{animation:none}}
+/* No re-running entrance effects on every redraw: that was the jumpy look */
+.qpager{animation:none}
+.qone.more::before,.qone.more2::after{animation:none}
+.qone.turning{isolation:isolate}
+/* Who made it: a band across the top of the card */
+.src-band{display:flex;align-items:center;gap:6px;margin:-10px -12px 9px;padding:5px 12px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid transparent}
+.src-band .i{width:15px;height:15px;stroke-width:2.4;flex:none}
+.src-band b{font-weight:850}
+.src-band span{margin-left:auto;font-weight:650;letter-spacing:0;text-transform:none;font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src-band.cust{background:linear-gradient(90deg,#dbeafe,#eff6ff);color:#1e40af;border-color:#bfdbfe}
+.src-band.disp{background:repeating-linear-gradient(135deg,#111 0 10px,#1c1c1c 10px 20px);color:var(--yellow);border-color:#000}
+.job.full.by-disp{--job-line:#111}
+.job.full.by-disp .job-top{border-width:2px}
+[data-theme=light] .job.full.by-disp .job-top{background:linear-gradient(180deg,#fffbe6 0,#fff 90px)}
+[data-theme=light] .job.full.by-cust .job-top{background:linear-gradient(180deg,#f5f9ff 0,#fff 90px)}
+.job.full.by-disp .req-no{background:#111;color:var(--yellow);box-shadow:none}
+.job.full.tight .src-band{margin-bottom:6px;padding:3px 12px}
+.qm-src{flex:none;margin-left:auto;padding:1px 6px;border-radius:5px;font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+.qm-src.cust{background:#dbeafe;color:#1e40af}
+.qm-src.disp{background:#111;color:var(--yellow)}
+/* Arrow on the left, Next takes the rest (easier to hit) */
+.qdrop{border-left:0;border-right:1px solid var(--line)}
+.qsplit{flex:0 1 56%}
+.kpis{grid-template-columns:1.15fr 1fr 1fr}
+.kp{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:4px 10px}
+.kp-wait.hot,.kp-wait{flex-direction:row;align-items:center;gap:8px}
+.kp-n{font-size:27px}
+.kp-sched span{font-size:11.5px}
+.kp-side{margin-left:2px;padding-left:8px}
+.kp-mini{flex-direction:column;align-items:flex-start;gap:0;min-height:0;line-height:1.05}
+.kp-side{justify-content:center;gap:4px}
+.kp-mini b{font-size:15px}
+.kp-mini span{font-size:11px}
+.kp-side{display:grid;grid-template-columns:1fr 1fr;align-items:center}
+.kpis{grid-template-columns:1fr .95fr 1.2fr}
+.kp-wait .kp-n{font-size:30px}
+.kp-wait span{font-size:12px}
+.kp-wait.hot,.kp-wait{flex-direction:column;align-items:flex-start;gap:2px}
+.kp-wait .kp-n{font-size:27px}
+.kp-wait span{font-size:11.5px}
+.kpis{grid-template-columns:1fr 1fr 1.15fr}
+.qbar .qsearch{width:40px}
+.kp-mini span{font-size:10.5px}
+.kp-side{padding-left:7px;gap:2px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -1703,6 +1776,8 @@ body.q-fit .job.full .text-edit textarea{flex:1 1 0;min-height:52px;resize:none;
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3"/></symbol>
+  <symbol id="i-headset" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="6" rx="1.5"/><rect x="17.5" y="13" width="4" height="6" rx="1.5"/><path d="M19.5 19a3 3 0 0 1-3 3H13"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
@@ -1760,13 +1835,14 @@ body.q-fit .job.full .text-edit textarea{flex:1 1 0;min-height:52px;resize:none;
         <button class="icon-btn set-btn" type="button" data-tab="settings" id="set-btn" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
       </div>
     </header>
+    <!-- Queue numbers: part of the pinned top, so they never leave the screen -->
+    <div class="qbar-wrap" id="qbar" hidden><div class="qbar"><div class="kpis" id="queue-kpis" aria-live="polite"></div><button class="icon-btn qsearch" type="button" data-act="queue-search" aria-label="Search and filter the queue" aria-expanded="false"><svg class="i"><use href="#i-search"/></svg></button></div></div>
   </div>
 
   <main class="app-main">
     <!-- Queue -->
     <section id="panel-queue">
       <h1 class="sr-only">Queue</h1>
-      <div class="qbar"><div class="kpis" id="queue-kpis" aria-live="polite"></div><button class="icon-btn qsearch" type="button" data-act="queue-search" aria-label="Search and filter the queue" aria-expanded="false"><svg class="i"><use href="#i-search"/></svg></button></div>
       <p class="queue-sub" id="queue-sub"></p>
       <div class="queue-tools" id="queue-tools" hidden>
         <div class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="queue-q" type="search" placeholder="Search company, name or request #" aria-label="Search the queue" autocomplete="off"></div>
@@ -3008,6 +3084,15 @@ function submittedText(ts) {
   const day = ts >= t0.getTime() ? 'Today' : ts >= t0.getTime() - 86400000 ? 'Yesterday' : d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
   return `${day}, ${fmtTime(ts)}`;
 }
+// Dispatcher-made jobs vs customer requests, told apart at a glance
+const byDispatcher = (r) => r.source === 'dispatcher' || r.company_id === 'dispatcher';
+const madeBy = (r) => { const q = r.requested_by; const n = q && typeof q === 'object' ? (q.name || (q.email || '').split('@')[0]) : ''; return n || 'dispatch'; };
+const jobName = (r) => (byDispatcher(r) ? (r.pickup && r.pickup.name) || 'Dispatcher job' : r.company_name || `#${r.ref_no}`);
+function sourceBand(r) {
+  return byDispatcher(r)
+    ? `<div class="src-band disp">${icon('headset', 'sm')}<b>Dispatcher job</b><span>made by ${esc(madeBy(r))}</span></div>`
+    : `<div class="src-band cust">${icon('building', 'sm')}<b>Customer request</b><span>from the app</span></div>`;
+}
 function fullCard(id, r, { unseen, tags, chips, enter }) {
   const P = r.pickup || {};
   const D = r.delivery || {};
@@ -3020,10 +3105,11 @@ function fullCard(id, r, { unseen, tags, chips, enter }) {
   ];
   if (r.po) facts.push(fact('PO', esc(r.po)));
   const stop = (cls, label, x) => `<span class="stop${cls}"><small>${label}</small><b>${esc(x.name || '–')}</b>${x.address ? `<span>${esc(x.address)}</span>` : ''}</span>`;
-  return `<article class="job full${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
+  return `<article class="job full ${byDispatcher(r) ? 'by-disp' : 'by-cust'}${unseen ? ' unseen' : ''}${isOverdue(r) ? ' overdue' : ''}${enter}" data-id="${esc(id)}">
     <div class="job-top">
+    ${sourceBand(r)}
     <div class="job-head">
-      <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(r.company_name)}</span>
+      <span class="req-no">#${esc(r.ref_no)}</span><span class="job-co">${esc(jobName(r))}</span>
       <span class="job-tags">${tags.filter((t) => !/pay-/.test(t)).join('')}</span>
       <button class="icon-btn job-more" type="button" data-act="job-menu" data-id="${esc(id)}" aria-label="More for request ${esc(r.ref_no)}: details, schedule, remove" title="More">${icon('dots')}</button>
     </div>
@@ -3055,16 +3141,48 @@ function qPager(list, idx) {
     <button class="qnav" type="button" data-act="q-prev" aria-label="Previous job"${idx === 0 ? ' disabled' : ''}>${icon('chevron', 'sm')}</button>
     <div class="qpos"><span class="qcount"><b>${idx + 1}</b> of ${list.length}</span><span class="qdots" aria-hidden="true">${dots}</span></div>
     <div class="qsplit">
-      <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(next.company_name || '')}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(next.company_name || '#' + next.ref_no)}</b></span>${icon('chevron', 'sm')}</button>
       <button class="qdrop" type="button" data-act="q-menu" aria-label="Pick a job from the list" aria-haspopup="true" aria-expanded="false">${icon('caret')}</button>
+      <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(jobName(next))}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(jobName(next))}</b></span>${icon('chevron', 'sm')}</button>
     </div>
   </div>`;
 }
+/* Switching jobs turns a page: forward, the current card lifts off its left edge and turns away,
+   showing the next one already lying underneath; back, the earlier card turns in over it. Quick, ~0.34 s. */
 function qShow(id, dir) {
   if (Q.id === id) return;
+  const old = $('#queue-list .job.full');
+  const motion = old && dir && old.animate && !reduceMotion();
+  const rect = motion && old.getBoundingClientRect();
+  const ghost = motion && old.cloneNode(true);
   Q.id = id;
-  Q.anim = dir ? (dir > 0 ? 'from-r' : 'from-l') : 'rise';
+  Q.anim = motion ? '' : dir ? (dir > 0 ? 'from-r' : 'from-l') : 'rise';
   renderQueue();
+  if (!motion) return;
+  const one = $('#queue-list .qone'); const now = $('#queue-list .job.full');
+  if (!one || !now) return;
+  const base = one.getBoundingClientRect();
+  ghost.classList.remove('enter', 'rise', 'from-r', 'from-l', 'unseen', 'leaving');
+  ghost.removeAttribute('data-id');
+  $$('[id]', ghost).forEach((e) => e.removeAttribute('id'));
+  ghost.setAttribute('aria-hidden', 'true');
+  ghost.style.cssText = `position:absolute;left:${rect.left - base.left}px;top:${rect.top - base.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;pointer-events:none;transform-origin:left center;backface-visibility:hidden;z-index:${dir > 0 ? 5 : 0}`;
+  one.classList.add('turning');
+  one.appendChild(ghost);
+  const ease = 'cubic-bezier(.45,.05,.25,1)';
+  let a;
+  if (dir > 0) {
+    a = ghost.animate([{ transform: 'perspective(1400px) rotateY(0deg)', filter: 'brightness(1)', opacity: 1 },
+      { transform: 'perspective(1400px) rotateY(-62deg)', filter: 'brightness(.88)', opacity: 1, offset: 0.65 },
+      { transform: 'perspective(1400px) rotateY(-96deg)', filter: 'brightness(.8)', opacity: 0 }], { duration: 340, easing: ease, fill: 'forwards' });
+    now.animate([{ filter: 'brightness(.93)' }, { filter: 'brightness(1)' }], { duration: 340, easing: 'ease-out' });
+  } else {
+    now.style.transformOrigin = 'left center';
+    a = now.animate([{ transform: 'perspective(1400px) rotateY(-96deg)', filter: 'brightness(.8)', opacity: 0 },
+      { transform: 'perspective(1400px) rotateY(-50deg)', filter: 'brightness(.9)', opacity: 1, offset: 0.35 },
+      { transform: 'perspective(1400px) rotateY(0deg)', filter: 'brightness(1)', opacity: 1 }], { duration: 340, easing: ease });
+  }
+  const done = () => { ghost.remove(); one.classList.remove('turning'); now.style.transformOrigin = ''; };
+  a.onfinish = done; a.oncancel = done; setTimeout(done, 600);
 }
 // The little arrow beside Next: every waiting job in a list, tap one to go straight to it
 function qMenu(btn) {
@@ -3077,7 +3195,7 @@ function qMenu(btn) {
     const late = isOverdue(r) || ageCls(r.created_at) === 'late';
     return `<button type="button" class="qm-row${id === Q.id ? ' on' : ''}" data-act="q-pick" data-id="${esc(id)}" style="animation-delay:${Math.min(i, 8) * 25}ms">
       <span class="qm-n">${i + 1}</span>
-      <span class="qm-main"><span class="qm-top"><b>#${esc(r.ref_no)}</b><span>${esc(r.company_name || '')}</span></span><span class="qm-route">${esc((r.pickup && r.pickup.name) || '–')} → ${esc((r.delivery && r.delivery.name) || '–')}</span></span>
+      <span class="qm-main"><span class="qm-top"><b>#${esc(r.ref_no)}</b><span>${esc(jobName(r))}</span><i class="qm-src ${byDispatcher(r) ? 'disp' : 'cust'}">${byDispatcher(r) ? 'Dispatcher' : 'Customer'}</i></span><span class="qm-route">${esc((r.pickup && r.pickup.name) || '–')} → ${esc((r.delivery && r.delivery.name) || '–')}</span></span>
       <span class="qm-age${late ? ' late' : ' fresh'}">${esc(shortAgo(r.created_at))}</span>
     </button>`;
   }).join('');
@@ -3151,7 +3269,7 @@ function qStep(dir) {
     const dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : x0) - x0;
     const fast = Math.abs(dx) > 40 && Date.now() - t0 < 250;
     c.style.transition = 'transform .28s cubic-bezier(.16,1,.3,1), opacity .2s';
-    if (Math.abs(dx) > 80 || fast) { c.style.transform = `translateX(${dx > 0 ? 40 : -40}%)`; c.style.opacity = '0'; setTimeout(() => qStep(dx < 0 ? 1 : -1), 120); }
+    if (Math.abs(dx) > 80 || fast) { c.style.transition = 'none'; c.style.transform = ''; c.style.opacity = ''; qStep(dx < 0 ? 1 : -1); }
     else { c.style.transform = ''; c.style.opacity = ''; }
   }, { passive: true });
 })();
@@ -3194,6 +3312,7 @@ const lastKpi = {};
 function renderKpis() {
   const box = $('#queue-kpis');
   if (!box) return;
+  const bar = $('#qbar'); if (bar) bar.hidden = S.tab !== 'queue';
   if (!S.loaded) { box.hidden = true; return; }
   const list = queueList();
   const oldest = list.reduce((m, [, r]) => Math.min(m, r.created_at || Infinity), Infinity);
@@ -3208,10 +3327,16 @@ function renderKpis() {
     return `<${tag} class="kpi${cls ? ' ' + cls : ''}"${tab === 'board' ? ' type="button" data-act="day-board" aria-label="Day summary"' : tab ? ` type="button" data-tab="${tab}"` : ''}><b${bump}${key === 'oldest' && oldest !== Infinity ? ` data-age-short="${oldest}"` : ''}>${esc(val)}</b><span>${label}</span></${tag}>`;
   };
   box.hidden = false;
-  box.innerHTML = tile('waiting', list.length, 'waiting', list.length ? 'hot' : '')
-    + tile('oldest', oldest === Infinity ? '–' : shortAgo(oldest), 'oldest', old ? 'warn' : '')
-    + tile('sched', sched, 'later', '', 'scheduled')
-    + tile('done', doneToday, 'sent today', '', 'board');
+  /* What the dispatcher needs first: how many wait (flashing red) and how many are scheduled.
+     Oldest and sent today sit to the side, smaller. */
+  const n = list.length;
+  const bump = (key, val) => { const b = lastKpi[key] !== undefined && lastKpi[key] !== String(val); lastKpi[key] = String(val); return b ? ' bump' : ''; };
+  box.innerHTML = `<button class="kp kp-wait${n ? ' hot' : ''}" type="button" data-act="q-first" aria-label="${n} waiting"><b class="kp-n${bump('waiting', n)}">${n}</b><span>${n ? 'waiting' : 'none waiting'}</span></button>
+    <button class="kp kp-sched${sched ? ' on' : ''}" type="button" data-tab="scheduled" aria-label="${sched} scheduled"><b class="kp-n${bump('sched', sched)}">${sched}</b><span>scheduled</span></button>
+    <div class="kp-side">
+      <div class="kp-mini${old ? ' warn' : ''}"><b${oldest !== Infinity ? ` data-age-short="${oldest}"` : ''}>${esc(oldest === Infinity ? '–' : shortAgo(oldest))}</b><span>oldest</span></div>
+      <button class="kp-mini" type="button" data-act="day-board" aria-label="Day summary"><b class="${bump('done', doneToday).trim()}">${doneToday}</b><span>sent today</span></button>
+    </div>`;
 }
 function renderQueue() {
   enterIdx = 0;
@@ -3247,7 +3372,7 @@ function renderQueue() {
       return;
     }
   }
-  if ($('#queue-list .job.full')) requestAnimationFrame(fitQueue); else { fitQueue(); if (stick) scrollToBottom(); }
+  if ($('#queue-list .job.full')) fitQueue(); else { fitQueue(); if (stick) scrollToBottom(); }
 }
 // Unread customer messages, in the free space above the jobs (tap one to open the conversation)
 function unreadBlock() {
@@ -3390,6 +3515,7 @@ function switchTab(tab) {
   S.tab = tab;
   $$('.tab[data-tab], #set-btn').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   ['queue', 'scheduled', 'done', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
+  $('#qbar').hidden = tab !== 'queue';
   if (tab === 'settings') renderSettings();
   if (tab === 'queue') queueStick = true;
   renderAll();
@@ -6304,6 +6430,7 @@ document.addEventListener('click', async (e) => {
     case 'job-menu': jobMenu(id); break;
     case 'q-next': qStep(1); break;
     case 'q-prev': qStep(-1); break;
+    case 'q-first': { if (S.tab !== 'queue') switchTab('queue'); const l = $('#queue-list').__list || []; if (l.length && l[0][0] !== Q.id) qShow(l[0][0], -1); break; }
     case 'q-menu': qMenu(el); break;
     case 'q-menu-close': qMenuClose(); break;
     case 'q-pick': { const list = $('#queue-list').__list || []; const from = list.findIndex(([x]) => x === Q.id); const to = list.findIndex(([x]) => x === id); qMenuClose(); qShow(id, to >= from ? 1 : -1); break; }
