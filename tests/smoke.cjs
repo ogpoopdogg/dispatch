@@ -612,7 +612,11 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('#nd-cal .nd-cal-grid button:not([disabled]) >> nth=2');
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
-    await page.click('#sheet-reset');
+    // Clear sits under the mic, lined up with the chips (bin + word on one line)
+    assert.ok(await page.isHidden('#sheet-reset'), 'no Clear in the top line');
+    assert.match(await page.textContent('#nd-chips .nd-clear'), /^\s*Clear\s*$/);
+    await page.click('#nd-chips .nd-clear');
+    assert.strictEqual(await page.inputValue('#nd-pickup-name'), '', 'Clear empties the form');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // Settings: alert check
@@ -932,7 +936,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
       await shot(pg, 'voice');
       // A name that's not a saved customer never goes in a box (like Route Planner): a message says so instead
-      await pg.click('[data-act=nd-reset]');
+      await pg.click('#nd-chips .nd-clear');
       await pg.waitForTimeout(300);
       await pg.click('#mic-fab');
       await pg.evaluate(() => __say('Brandon hospital to', false));
