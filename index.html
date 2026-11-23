@@ -1844,6 +1844,40 @@ button.kp-mini{cursor:pointer}
 @media (max-width:360px){.head-teach{font-size:12.5px;padding:0 8px 0 6px}}
 @keyframes vlFade{from{background:rgba(0,0,0,0)}}
 @keyframes vlIn{from{opacity:0;transform:translateY(-12px) scale(.98)}}
+/* Numbers bar on every page: sheets open below the top bar, which stays above the dim */
+body.head-up .app-head{z-index:65}
+body.head-up #sheet{padding-top:var(--head-h)}
+body.head-up #sheet .sheet{max-height:calc(100dvh - var(--head-h) - 4px)}
+body.head-up #sheet .sheet.tall:not(.mid){height:min(92dvh,calc(100dvh - var(--head-h) - 4px))}
+body.head-up .toasts{top:calc(var(--head-h) + 8px)}
+/* Emojis on the ⋯ menu and Send to driver */
+.em{flex:none;display:inline-grid;place-items:center;width:24px;font-size:20px;line-height:1;font-style:normal}
+.btn .em{width:auto;font-size:18px;margin-right:2px}
+/* A customer's request history */
+.ch-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.ch-seg{display:flex;gap:4px;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.ch-seg button{flex:1;min-height:38px;border:0;border-radius:9px;background:none;color:var(--ink-2);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.ch-seg button[aria-checked=true]{background:var(--yellow);color:#000;box-shadow:var(--sh-1)}
+.ch-dates{display:flex;gap:8px}
+.ch-dates label{flex:1;display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:800;color:var(--ink-2)}
+.ch-dates input{min-height:42px;padding:0 8px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px}
+.ch-days{display:flex;gap:4px}
+.ch-days button{flex:1;min-height:34px;border:1px solid var(--line-strong);border-radius:99px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.ch-days button[aria-pressed=true]{background:#111;color:var(--yellow);border-color:#111}
+.ch-sum{margin:4px 2px 8px;font-size:14px;color:var(--ink-2)}
+.ch-sum b{color:var(--ink);font-size:16px}
+.ch-list{display:flex;flex-direction:column;gap:6px}
+.ch-row{display:flex;flex-direction:column;gap:3px;width:100%;padding:9px 12px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.ch-row:active{background:var(--surface-2)}
+.ch-top{display:flex;align-items:center;gap:8px;min-width:0}
+.ch-no{flex:none;padding:1px 6px;border-radius:6px;background:var(--yellow);color:#000;font-size:14px;font-weight:850}
+.ch-when{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-st{flex:none;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:800;background:var(--surface-3);color:var(--ink-2);max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-st.dispatched{background:var(--ok-bg);color:var(--ok)}
+.ch-st.cancelled,.ch-st.removed{background:var(--danger-bg);color:var(--danger)}
+.ch-st.new,.ch-st.seen{background:#fef3c7;color:#92400e}
+.ch-route{font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-meta{font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2701,6 +2735,8 @@ function tick(message) {
 }
 
 let sheetOpen = false;
+// A customer's request history (⋯ › Request history): { cid, items, loading, error, range, from, to, days }
+const CH = { cid: '', items: null, loading: false, error: '', range: '30', from: '', to: '', days: [] };
 let vlOpen = false, vlReturn = null; // Teach the mic overlay, on top of everything
 let sheetResolver = null;
 /* Whatever is on top (map, Send panel or sheet) is the only thing Tab and screen readers can reach.
@@ -2711,6 +2747,9 @@ function syncLayers() {
   if (vlOpen) { [app, sheet, pop, map].forEach((el) => { if (el) el.inert = true; }); micSoon(); return; }
   const top = mapOpen ? map : popOpen ? pop : sheetOpen ? sheet : null;
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
+  // Over a sheet (not the New dispatch form) the top bar with the numbers stays tappable
+  const headUp = top === sheet && document.body.classList.contains('head-up');
+  if (app) { if (headUp) app.inert = false; [...app.children].forEach((c) => { c.inert = headUp && !c.classList.contains('app-head'); }); }
   if (top && !top.contains(document.activeElement)) {
     if (!layerReturn) layerReturn = document.activeElement;
     const f = $('[data-act=sheet-close], [data-act=nd-pop-close]', top) || $('.icon-btn', top) || $('button', top);
@@ -2727,6 +2766,7 @@ function openSheet(title, html, onMount, tall) {
   if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
   $('#sheet-reset').hidden = tall !== 'mid'; // New dispatch: Clear sits right after the title, away from ✕
   $('#sheet-teach').hidden = tall !== 'mid' || !voiceCan(); // ...and Teach the mic between Clear and ✕
+  document.body.classList.toggle('head-up', tall !== 'mid'); // the top bar and numbers stay in sight above the sheet
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-back').hidden = true;
@@ -2766,7 +2806,7 @@ function _hideSheet() {
   const el = $('#sheet');
   clearTimeout(liftTimer);
   el.classList.remove('open', 'hold', 'lift');
-  document.body.classList.remove('no-scroll');
+  document.body.classList.remove('no-scroll', 'head-up');
   syncLayers();
   micFollow();
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
@@ -2926,9 +2966,10 @@ function loadHistory() {
   watch('removed_at', 'removed', 'removed');
 }
 const moreReq = (id, kind) => S.more && S.more.items[id] && S.more.items[id].kind === kind ? S.more.items[id].r : null;
-const doneReq = (id) => S.done[id] || (S.hist && S.hist.done[id]) || moreReq(id, 'done');
-const cancelledReq = (id) => S.cancelled[id] || (S.hist && S.hist.cancelled[id]) || moreReq(id, 'cancelled');
-const removedReq = (id) => S.removed[id] || (S.hist && S.hist.removed[id]) || moreReq(id, 'removed');
+const chReq = (id, status) => (CH.items && CH.items[id] && CH.items[id].status === status ? CH.items[id] : null);
+const doneReq = (id) => S.done[id] || (S.hist && S.hist.done[id]) || moreReq(id, 'done') || chReq(id, 'dispatched');
+const cancelledReq = (id) => S.cancelled[id] || (S.hist && S.hist.cancelled[id]) || moreReq(id, 'cancelled') || chReq(id, 'cancelled');
+const removedReq = (id) => S.removed[id] || (S.hist && S.hist.removed[id]) || moreReq(id, 'removed') || chReq(id, 'removed');
 // Done tab kinds, the request status each one shows, and the time it's sorted by
 const KINDS = { done: ['dispatched', 'dispatched_at'], cancelled: ['cancelled', 'cancelled_at'], removed: ['removed', 'removed_at'] };
 // Fetches the next MORE_STEP requests (dispatched, cancelled or removed) older than anything shown so far
@@ -3114,7 +3155,7 @@ const hasDrivers = () => Object.keys(S.contacts.drivers || {}).length > 0;
 // Main button: pick a driver when drivers are set up, otherwise the share menu
 function sendButtons(id, block) {
   return hasDrivers()
-    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}">${icon('send', 'sm')}Send to driver</button>`
+    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>`
     : `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>`;
 }
 // Group Chat (share menu: pick the group from the top row) next to Send to driver
@@ -3303,6 +3344,63 @@ function toggleJobText(id) {
   } else { box.hidden = true; box.innerHTML = ''; }
   ack(id);
 }
+/* ---------- A customer's whole request history (⋯ › Request history) ----------
+   Like the customer sees it in Request Pickup. Read with the company_id index that's already in the
+   rules (staff can read requests), once when it opens, not kept live, then filtered on the phone:
+   last 7 / 30 / 90 days, all, or a custom range (one day = same start and end), and only certain weekdays. */
+const dayStrAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toLocaleDateString('en-CA'); };
+const CH_RANGES = [['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['all', 'All'], ['custom', 'Custom']];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function openCustHistory(cid) {
+  if (!cid) return;
+  if (CH.cid !== cid) Object.assign(CH, { cid, items: null, error: '', days: [] });
+  openSheet(`${coName(cid)} \u00b7 history`, '<div data-ch></div>', null, true);
+  renderCustHistory();
+  if (CH.items || CH.loading || !db) return;
+  CH.loading = true;
+  db.ref('requests').orderByChild('company_id').equalTo(cid).once('value')
+    .then((snap) => { if (CH.cid === cid) { CH.items = snap.val() || {}; CH.error = ''; } })
+    .catch((err) => { if (CH.cid === cid) CH.error = friendlyError(err); })
+    .finally(() => { CH.loading = false; renderCustHistory(); });
+}
+function custHistoryShown() {
+  const all = Object.entries(Object.assign({}, CH.items || {}, Object.fromEntries(Object.entries(S.pending).filter(([, r]) => r.company_id === CH.cid))));
+  let from = -Infinity, to = Infinity;
+  if (CH.range === 'custom') {
+    if (CH.from) from = new Date(`${CH.from}T00:00:00`).getTime();
+    if (CH.to) to = new Date(`${CH.to}T00:00:00`).getTime() + 86400000;
+  } else if (CH.range !== 'all') { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (+CH.range - 1)); from = d.getTime(); }
+  return all.filter(([, r]) => { const t = r.created_at || 0; return t >= from && t < to && (!CH.days.length || CH.days.includes(new Date(t).getDay())); })
+    .sort((a, b) => (b[1].created_at || 0) - (a[1].created_at || 0));
+}
+function renderCustHistory() {
+  const box = $('#sheet-body [data-ch]');
+  if (!box) return;
+  const list = CH.items ? custHistoryShown() : [];
+  const n = (k) => list.filter(([, r]) => statusKey(r) === k).length;
+  const sent = n('dispatched'), cancelled = n('cancelled'), waiting = n('new') + n('seen');
+  const row = ([id, r]) => {
+    const k = statusKey(r);
+    const st = k === 'dispatched' ? `Sent${r.dispatched_to ? ` to ${esc(r.dispatched_to)}` : ''}` : esc(STATUS_SHORT[k]);
+    return `<button class="ch-row" type="button" data-act="details" data-id="${esc(id)}">
+      <span class="ch-top"><b class="ch-no">#${esc(r.ref_no || '?')}</b><span class="ch-when">${esc(fmtDateTime(r.created_at))}</span><span class="ch-st ${k}">${st}</span></span>
+      <span class="ch-route">${esc(routeLabel(r) || 'No addresses')}</span>
+      <span class="ch-meta">${esc([r.items_text, r.payment === 'collect' ? 'Collect' : 'Prepaid', r.po ? `PO ${r.po}` : ''].filter(Boolean).join(' \u00b7 '))}</span>
+    </button>`;
+  };
+  box.innerHTML = `<div class="ch-filters">
+      <div class="seg ch-seg" role="radiogroup" aria-label="How far back">${CH_RANGES.map(([v, l]) => `<button type="button" role="radio" aria-checked="${CH.range === v}" data-act="ch-range" data-r="${v}">${l}</button>`).join('')}</div>
+      ${CH.range === 'custom' ? `<div class="ch-dates"><label>From<input type="date" id="ch-from" value="${esc(CH.from)}" max="${esc(todayStr())}"></label><label>To<input type="date" id="ch-to" value="${esc(CH.to)}" max="${esc(todayStr())}"></label></div><p class="card-note">For one day, pick the same day in both.</p>` : ''}
+      <div class="ch-days" role="group" aria-label="Only these days">${WEEKDAYS.map((w, i) => `<button type="button" data-act="ch-day" data-d="${i}" aria-pressed="${CH.days.includes(i)}">${w}</button>`).join('')}</div>
+    </div>
+    ${CH.error ? `<p class="notice-err">Couldn\u2019t load the history: ${esc(CH.error)}</p>` : ''}
+    ${!CH.items && !CH.error ? '<p class="ch-sum">Loading\u2026</p>' : CH.items ? `<p class="ch-sum"><b>${list.length}</b> request${list.length === 1 ? '' : 's'}${list.length ? ` \u00b7 ${sent} sent${cancelled ? ` \u00b7 ${cancelled} cancelled` : ''}${waiting ? ` \u00b7 ${waiting} waiting` : ''}` : ''}</p>
+      <div class="ch-list">${list.map(row).join('') || '<p class="msgs-empty">No requests in these days.</p>'}</div>` : ''}`;
+}
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'ch-from') { CH.from = e.target.value; renderCustHistory(); }
+  if (e.target.id === 'ch-to') { CH.to = e.target.value; renderCustHistory(); }
+});
 // The ⋯ menu on a card
 function jobMenu(id) {
   const r = S.pending[id];
@@ -3310,12 +3408,13 @@ function jobMenu(id) {
   ack(id);
   const later = isFuture(r);
   openSheet(`#${r.ref_no} ${r.company_name || ''}`, `<div class="menu-list">
-      <button type="button" data-act="details" data-id="${esc(id)}">${icon('more')}<span>Details<small>Everything on the request${hasMsgs(id) ? ', and messages' : ''}</small></span></button>
-      ${r.company_id && r.source !== 'dispatcher' ? `<button type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(id)}">${icon('chat')}<span>Message ${esc(clampText(r.company_name || 'the customer', 24))}<small>Write to them in their app${hasMsgs(id) ? '. You have messages about this one.' : ''}</small></span></button>` : ''}
+      <button type="button" data-act="details" data-id="${esc(id)}"><span class="em" aria-hidden="true">📋</span><span>Details<small>Everything on the request${hasMsgs(id) ? ', and messages' : ''}</small></span></button>
+      ${r.company_id && r.source !== 'dispatcher' ? `<button type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(id)}"><span class="em" aria-hidden="true">✉️</span><span>Message ${esc(clampText(r.company_name || 'the customer', 24))}<small>Write to them in their app${hasMsgs(id) ? '. You have messages about this one.' : ''}</small></span></button>
+      <button type="button" data-act="cust-history" data-cid="${esc(r.company_id)}" data-id="${esc(id)}"><span class="em" aria-hidden="true">📜</span><span>Request history<small>Every request from ${esc(clampText(r.company_name || 'this customer', 24))}</small></span></button>` : ''}
       ${later
-        ? `<button type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox')}<span>Send to queue<small>Do it today instead</small></span></button>`
-        : `<button type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar')}<span>Schedule for later<small>Pick another day</small></span></button>`}
-      <button type="button" class="danger" data-act="remove" data-id="${esc(id)}">${icon('trash')}<span>Remove from queue<small>It won’t be dispatched. You can bring it back from Done.</small></span></button>
+        ? `<button type="button" data-act="to-queue" data-id="${esc(id)}"><span class="em" aria-hidden="true">📥</span><span>Send to queue<small>Do it today instead</small></span></button>`
+        : `<button type="button" data-act="schedule-later" data-id="${esc(id)}"><span class="em" aria-hidden="true">📅</span><span>Schedule for later<small>Pick another day</small></span></button>`}
+      <button type="button" class="danger" data-act="remove" data-id="${esc(id)}"><span class="em" aria-hidden="true">🗑️</span><span>Remove from queue<small>It won’t be dispatched. You can bring it back from Done.</small></span></button>
     </div>`);
 }
 const skeletons = () => '<div class="cards" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
@@ -3324,7 +3423,8 @@ const lastKpi = {};
 function renderKpis() {
   const box = $('#queue-kpis');
   if (!box) return;
-  const bar = $('#qbar'); if (bar) bar.hidden = S.tab !== 'queue';
+  const bar = $('#qbar'); if (bar) bar.hidden = false; // on every page, never out of sight
+  const qs0 = $('[data-act=queue-search]'); if (qs0 && S.tab !== 'queue') qs0.hidden = true;
   if (!S.loaded) { box.hidden = true; return; }
   const list = queueList();
   const oldest = list.reduce((m, [, r]) => Math.min(m, r.created_at || Infinity), Infinity);
@@ -3356,7 +3456,7 @@ function renderQueue() {
   const filtering = !!S.queueQ.trim() || S.queueFilter !== 'all';
   $('#queue-tools').hidden = !(S.queueSearch || filtering);
   const qs = $('[data-act=queue-search]');
-  if (qs) { qs.hidden = !filtering && all.length < 2 && !S.queueSearch; qs.setAttribute('aria-expanded', String(S.queueSearch || filtering)); qs.classList.toggle('on', S.queueSearch || filtering); }
+  if (qs) { qs.hidden = S.tab !== 'queue' || (!filtering && all.length < 2 && !S.queueSearch); qs.setAttribute('aria-expanded', String(S.queueSearch || filtering)); qs.classList.toggle('on', S.queueSearch || filtering); }
   const list = filtering ? all.filter(([, r]) => matchesQ(r, S.queueQ) && queueFilterOk(r)) : all;
   $('#queue-sub').textContent = !S.loaded ? 'Connecting…' : S.fromCache ? 'Saved copy · connecting…' : '';
   renderKpis();
@@ -3531,7 +3631,7 @@ function switchTab(tab) {
   S.tab = tab;
   $$('.tab[data-tab], #set-btn').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   ['queue', 'scheduled', 'done', 'settings'].forEach((t) => { $('#panel-' + t).hidden = t !== tab; });
-  $('#qbar').hidden = tab !== 'queue';
+  $('#qbar').hidden = false;
   if (tab === 'settings') renderSettings();
   if (tab === 'queue') queueStick = true;
   renderAll();
@@ -3789,6 +3889,26 @@ async function undoDispatch(id) {
     if (S.more && S.more.items[id]) { delete S.more.items[id]; renderDone(); }
   } catch (err) { toast(friendlyError(err), 'error'); }
 }
+// A done job sent again to a driver (the same one or another): texts them; it stays in Done, now under that driver
+function resendDriver(id) {
+  const r = doneReq(id);
+  if (!r) return;
+  const swap = sheetOpen && history.state && history.state.sheet;
+  if (sheetOpen) _hideSheet();
+  openSendPanel(`Send #${r.ref_no} again`, r.pickup, (did) => { closePop(); resendTo(id, did); }, swap, id, routeLabel(r));
+}
+async function resendTo(id, did) {
+  const r = doneReq(id), d = S.contacts.drivers[did];
+  if (!r || !d) return;
+  const text = textFor(id, r);
+  const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
+  const note = () => { if (db && S.user && r.dispatched_to !== d.name) db.ref(`requests/${id}`).update({ dispatched_to: d.name }).catch(() => { /* the text went anyway */ }); };
+  if (!SmsSender) { inMessages(); note(); return; }
+  const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
+  try { await smsSend(cleanPhone(d.phone), text); showSent(`Sent to ${d.name}`); note(); }
+  catch (err) { toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => { inMessages(); note(); } }); }
+  finally { done(); }
+}
 function recopy(id) {
   const r = doneReq(id);
   if (!r) return;
@@ -3841,12 +3961,10 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    ${kind === 'done' ? `<div class="sheet-actions">
-      <button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('send', 'sm')}Send again</button>
-      <button class="btn btn-secondary" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
-    </div>` : ''}
     ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
     ${msgThread(id, r)}
+    ${kind === 'done' ? `<button class="btn btn-secondary remove-far" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button>
+    <div class="sheet-actions pin-bottom"><button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>${hasDrivers() ? `<button class="btn btn-primary" type="button" data-act="resend-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>` : ''}</div>` : ''}
     ${kind === 'pending' ? `<button class="btn btn-danger-soft remove-far" type="button" data-act="remove" data-id="${esc(id)}">${icon('trash', 'sm')}Remove from queue</button>
     <div class="sheet-actions pin-bottom">${sendButtons(id)}</div>` : ''}</div>`;
   if (refresh) {
@@ -4815,7 +4933,7 @@ function ndUpdate(force) {
   ndMode = mode;
   $('#nd-main').innerHTML = ndLater()
     ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
-    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver">${icon('send', 'sm')}Send to driver</button></span>`;
+    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver"><span class="em" aria-hidden="true">💬</span>Send to driver</button></span>`;
 }
 /* One leg: a grey line for an address that's known, the address boxes when one is needed
    (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
@@ -5215,7 +5333,7 @@ const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {
 const routeLabel = (r) => [r && r.pickup && r.pickup.name, r && r.delivery && r.delivery.name].filter(Boolean).join(' \u2192 ');
 // The panel's text box: a job's text (same as its card), or the New dispatch text
 function spTextGet() {
-  if (sp.jobId) { const r = S.pending[sp.jobId]; return r ? textFor(sp.jobId, r) : ''; }
+  if (sp.jobId) { const f = findReq(sp.jobId); return f ? textFor(sp.jobId, f.r) : ''; }
   const ta = $('#nd-text');
   return ta ? (ta.value || '') : '';
 }
@@ -6394,6 +6512,8 @@ function testAlert() {
    One click handler
    ========================================================= */
 document.addEventListener('click', async (e) => {
+  // The numbers bar stays usable over Messages, Details, etc.: tapping it closes the sheet and goes there
+  if (sheetOpen && e.target.closest && e.target.closest('.app-head [data-tab], .app-head [data-act=q-first], .app-head [data-act=queue-search]')) closeSheet();
   const tab = e.target.closest('[data-tab]');
   if (tab) { switchTab(tab.dataset.tab); return; }
   const el = e.target.closest('[data-act]');
@@ -6443,8 +6563,12 @@ document.addEventListener('click', async (e) => {
     case 'ack-all': ackAll(); switchTab(scheduledList().length && !queueList().length ? 'scheduled' : 'queue'); break;
     case 'dispatch': if (sheetOpen) _hideSheet(); dispatch(id); break;
     case 'pick-driver': pickDriver(id); break;
+    case 'resend-driver': resendDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
+    case 'cust-history': openCustHistory(el.dataset.cid); break;
+    case 'ch-range': CH.range = el.dataset.r; if (CH.range === 'custom' && !CH.from) { CH.to = todayStr(); CH.from = dayStrAgo(30); } renderCustHistory(); break;
+    case 'ch-day': { const d = +el.dataset.d; CH.days = CH.days.includes(d) ? CH.days.filter((x) => x !== d) : CH.days.concat(d); renderCustHistory(); break; }
     case 'job-menu': jobMenu(id); break;
     case 'q-open': qOpen(id); break;
     case 'q-back': qBack(); break;

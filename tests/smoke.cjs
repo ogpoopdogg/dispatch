@@ -118,6 +118,60 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // The Queue button is the same size as the Dispatch button
     const tabSize = (q) => page.evaluate((s) => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; }, q);
     assert.deepStrictEqual(await tabSize('[data-tab=queue] .ti'), await tabSize('.tab-new .ti'), 'Queue button matches Dispatch');
+    // The numbers bar stays on every page, and over Messages it still works
+    for (const tb of ['scheduled', 'done', 'settings', 'queue']) {
+      await page.evaluate((x) => switchTab(x), tb);
+      assert.ok(await page.isVisible('.app-head #qbar .kp-wait'), `numbers bar on ${tb}`);
+    }
+    await page.click('#msg-btn');
+    await page.waitForSelector('#sheet:not([hidden]) [data-msgs-view]');
+    assert.ok(await page.evaluate(() => { const h = document.querySelector('.app-head').getBoundingClientRect(), sh = document.querySelector('#sheet .sheet').getBoundingClientRect(); return sh.top >= h.bottom - 1; }), 'Messages opens below the numbers bar');
+    await page.click('.app-head .kp-sched');
+    await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
+    await page.evaluate(() => switchTab('queue'));
+    // A done job's details: Group Chat and Send to driver
+    await page.evaluate(() => openDetails('r4'));
+    await page.waitForSelector('#sheet [data-act=resend-driver]');
+    assert.ok(await page.isVisible('#sheet [data-act=recopy]:has-text("Group Chat")'));
+    assert.match(await page.textContent('#sheet [data-act=resend-driver]'), /💬\s*Send to driver/);
+    await page.click('#sheet [data-act=resend-driver]');
+    await page.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
+    assert.match(await page.textContent('#sp-title'), /Send #1190 again/);
+    assert.match(await page.inputValue('#sp-textarea'), /Smith Co/, 'the done job\'s text is in the panel');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#nd-pop', { state: 'hidden' });
+    // ⋯ menu: an emoji on every button, and the customer's whole request history with date filters
+    await page.evaluate(() => jobMenu('r1'));
+    await page.waitForSelector('#sheet .menu-list');
+    assert.strictEqual(await page.locator('#sheet .menu-list button').count(), await page.locator('#sheet .menu-list button .em').count(), 'every ⋯ button has an emoji');
+    await page.click('#sheet [data-act=cust-history]');
+    await page.waitForSelector('#sheet .ch-row');
+    assert.strictEqual(await page.locator('#sheet .ch-row').count(), 3, 'all of Acme Supply\'s requests in 30 days (waiting, scheduled and sent)');
+    assert.match(await page.textContent('#sheet .ch-row[data-id=r4]'), /Sent to Mike/);
+    await page.evaluate(() => window.__fakeDb.put('requests/r8', { ref_no: 1100, status: 'cancelled', company_id: 'c1', company_name: 'Acme Supply', pickup: { name: 'Acme Supply' }, delivery: { name: 'Old Place' }, items_text: '1 box', payment: 'prepaid', created_at: Date.now() - 50 * 86400000 }));
+    await page.evaluate(() => { CH.items = null; CH.cid = ''; openCustHistory('c1'); });
+    await page.waitForSelector('#sheet .ch-row');
+    assert.strictEqual(await page.locator('#sheet .ch-row').count(), 3, '30 days leaves out the 50-day-old one');
+    await page.click('#sheet [data-act=ch-range][data-r="90"]');
+    assert.strictEqual(await page.locator('#sheet .ch-row').count(), 4, '90 days has it');
+    await page.click('#sheet [data-act=ch-range][data-r="7"]');
+    assert.strictEqual(await page.locator('#sheet .ch-row').count(), 3);
+    await page.click('#sheet [data-act=ch-range][data-r=custom]');
+    const old = await page.evaluate(() => new Date(Date.now() - 50 * 86400000).toLocaleDateString('en-CA'));
+    await page.fill('#ch-from', old); await page.dispatchEvent('#ch-from', 'change');
+    await page.fill('#ch-to', old); await page.dispatchEvent('#ch-to', 'change');
+    assert.strictEqual(await page.locator('#sheet .ch-row').count(), 1, 'one day only');
+    assert.match(await page.textContent('#sheet .ch-row'), /Cancelled/);
+    await page.click('#sheet [data-act=ch-range][data-r=all]');
+    const wd = await page.evaluate(() => new Date(Date.now() - 50 * 86400000).getDay());
+    await page.click(`#sheet [data-act=ch-day][data-d="${(wd + 1) % 7}"]`);
+    assert.ok(await page.locator('#sheet .ch-row[data-id=r8]').count() === 0, 'weekday filter leaves out other days');
+    await page.click(`#sheet [data-act=ch-day][data-d="${wd}"]`);
+    assert.ok(await page.locator('#sheet .ch-row[data-id=r8]').count() === 1, 'and keeps the picked days');
+    await shot(page, 'cust-history');
+    await page.evaluate(() => window.__fakeDb.put('requests/r8', null));
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
@@ -190,7 +244,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await page.isVisible('.menu-list [data-act=remove]'));
       await shot(page, 'menu');
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     }
     // Messages: a customer's message shows on the card, and a quick reply answers it
     {
@@ -293,14 +347,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.fill('#msg-q', 'zzzz');
       await page.waitForSelector('#sheet [data-act=msg-q-clear]');
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
       await page.click('#msg-btn');
       await page.waitForSelector('#sheet .msg-co');
       assert.strictEqual(await page.inputValue('#msg-q'), '', 'search starts empty');
       assert.strictEqual(await page.locator('#sheet .msg-co').count(), 7, 'every chat shows');
       await page.evaluate(() => { for (let i = 0; i < 6; i++) window.__fakeDb.put(`messages/y${i}`, null); });
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
       // Details: this pickup's messages, and a way to the whole conversation
       await page.click('#queue-list .job[data-id=r1] .route');
@@ -319,14 +373,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.click('#sheet .msgs [data-act=open-msgs]');
       await page.waitForSelector('#sheet [data-msgs-view=thread]');
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     }
     // 3.3 an open sheet is the only thing reachable
     await page.click('#queue-list .job [data-act=details] >> nth=0');
     await page.waitForSelector('#sheet:not([hidden])');
-    assert.ok(await page.evaluate(() => document.getElementById('view-app').inert), 'page behind the sheet is inert');
+    assert.ok(await page.evaluate(() => document.querySelector('.app-main').inert && document.querySelector('.tabbar').inert && !document.querySelector('.app-head').inert), 'page behind the sheet is inert, the numbers bar is not');
     await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.getElementById('view-app').inert);
+    await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // New customer: a name that isn't saved shows "New customer +" and an address bar; it only saves once the address is ready
     await page.click('[data-act=new-dispatch]');
     await page.waitForSelector('#nd-pickup-name');
@@ -443,7 +497,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('[data-x=when]');
     await page.click('#sheet-reset');
     await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.getElementById('view-app').inert);
+    await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
     // Settings: alert check
     await page.click('#set-btn');
     await page.waitForFunction(() => /2 phones/.test((document.getElementById('alert-reach') || {}).textContent || ''));
@@ -782,7 +836,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), 'Acme Supply', 'the form kept what was typed');
       assert.ok(await pg.evaluate(() => !document.getElementById('sheet').inert), 'the form works again');
       await pg.keyboard.press('Escape');
-      await pg.waitForFunction(() => !document.getElementById('view-app').inert);
+      await pg.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
       // Teach the mic (Settings › Mic): pick a customer, say the name, it's saved for this person; ✕ forgets
       await pg.click('#set-btn');
       await pg.click('[data-act=teach-mic]');
