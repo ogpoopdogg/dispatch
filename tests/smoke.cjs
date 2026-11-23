@@ -110,6 +110,11 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // The phone's back also goes back to the list
     await page.evaluate(() => qShow('r2'));
     await page.waitForSelector('#queue-list .job.full[data-id=r2]');
+    // The open job never slides under the numbers bar, even if something pushes the page down
+    assert.strictEqual(await page.evaluate(() => history.scrollRestoration), 'manual');
+    await page.evaluate(() => { const d = document.createElement('div'); d.id = 'tall'; d.style.height = '2000px'; document.querySelector('main.app-main').appendChild(d); window.scrollTo(0, 40); });
+    await page.waitForFunction(() => window.scrollY === 0);
+    assert.ok(await page.evaluate(() => { document.getElementById('tall').remove(); return document.querySelector('#queue-list .job.full').getBoundingClientRect().top >= document.getElementById('qbar').getBoundingClientRect().bottom; }), 'job top shows below the numbers bar');
     await page.goBack();
     await page.waitForSelector('#queue-list .qrow[data-id=r2]');
     assert.ok(await page.evaluate(() => !document.getElementById('view-app').hidden), 'still in the app');

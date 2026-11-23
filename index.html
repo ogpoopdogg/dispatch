@@ -3361,6 +3361,10 @@ function fitQueue() {
   if (window.scrollY) window.scrollTo(0, 0);
 }
 window.addEventListener('resize', () => requestAnimationFrame(fitQueue));
+// A job on the page never sits under the numbers bar: we set the scroll ourselves (the browser's
+// back/forward must not put back an old list position), and the page can't drift down while it fits
+try { history.scrollRestoration = 'manual'; } catch (e) { /* ignore */ }
+window.addEventListener('scroll', () => { if (window.scrollY && document.body.classList.contains('q-fit')) window.scrollTo(0, 0); }, { passive: true });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#qmenu')) qMenuClose(); });
 document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#panel-queue')) setTimeout(fitQueue, 120); });
 // Opens or closes a card's text, with the address switch
