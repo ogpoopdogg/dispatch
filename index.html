@@ -1759,6 +1759,57 @@ button.kp-mini{cursor:pointer}
 .qbar .qsearch{width:40px}
 .kp-mini span{font-size:10.5px}
 .kp-side{padding-left:7px;gap:2px}
+
+/* ===== Queue as a list of job buttons (2026-11-23 b) ===== */
+.qlist{display:flex;flex-direction:column;gap:8px;padding-bottom:6px}
+.qrow{position:relative;display:flex;flex-direction:column;gap:5px;width:100%;padding:10px 12px 10px 14px;border:1.5px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08),0 6px 14px -8px rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease),box-shadow .2s ease;animation:qrIn .32s var(--out) both;animation-delay:calc(var(--i) * 35ms)}
+.qrow:active{transform:scale(.985);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.qrow::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:#3b82f6}
+.qrow.by-disp::before{background:repeating-linear-gradient(180deg,#111 0 6px,var(--yellow) 6px 12px)}
+.qrow.overdue{border-color:var(--danger)}
+@keyframes qrIn{from{opacity:0;transform:translateY(10px)}}
+.qlist.back .qrow{animation:qrBack .26s var(--out) both;animation-delay:calc(var(--i) * 20ms)}
+@keyframes qrBack{from{opacity:0;transform:translateX(-14px)}}
+/* Not opened yet: green glow that pulses */
+.qrow.unseen{border-color:#16a34a;animation:qrIn .32s var(--out) both,qrGlow 1.5s ease-in-out infinite;animation-delay:calc(var(--i) * 35ms),0s}
+@keyframes qrGlow{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.55),0 0 10px 0 rgba(22,163,74,.35)}50%{box-shadow:0 0 0 5px rgba(22,163,74,0),0 0 18px 3px rgba(22,163,74,.55)}}
+.qr-top{display:flex;align-items:center;gap:8px;min-width:0}
+.qrow .req-no{flex:none;font-size:17px;padding:1px 7px;border-radius:6px;background:var(--yellow);color:#000;font-stretch:75%;font-weight:850}
+.qrow.by-disp .req-no{background:#111;color:var(--yellow)}
+.qr-name{flex:1;min-width:0;font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr-new{flex:none;padding:2px 7px;border-radius:99px;background:#16a34a;color:#fff;font-size:11.5px;font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+.qr-age{flex:none;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:99px;font-size:14px;font-weight:850;font-stretch:87.5%}
+.qr-age.late{background:var(--danger-bg);color:var(--danger)}
+.qr-age.fresh{background:var(--ok-bg);color:var(--ok)}
+.qr-route{display:flex;align-items:center;gap:6px;min-width:0;font-size:15.5px}
+.qr-route b{min-width:0;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr-route b:first-of-type{flex:0 1 auto}
+.qr-arrow{flex:none;color:var(--ink-3);font-weight:700}
+.qr-dot{flex:none;width:9px;height:9px;border-radius:50%}
+.qr-dot.p{border:2.5px solid var(--yellow);box-sizing:border-box}
+.qr-dot.d{border-radius:2px;background:#2563eb}
+.qr-meta{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:nowrap;overflow:hidden;font-size:12.5px;font-weight:700}
+.qr-meta>span{flex:none;display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 7px;border-radius:6px;white-space:nowrap}
+.qr-meta .i{width:12px;height:12px;stroke-width:2.6}
+.qr-src.cust{background:#dbeafe;color:#1e40af}
+.qr-src.disp{background:#111;color:var(--yellow)}
+.qr-pay.prepaid{background:var(--ok-bg);color:var(--ok)}
+.qr-pay.collect{background:rgba(234,88,12,.1);color:#c2410c}
+.qr-items{background:var(--surface-2);color:var(--ink-2);flex:0 1 auto!important;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.qr-flag{background:var(--warn-bg);color:var(--ink)}
+.qr-flag.bad{background:var(--danger-bg);color:var(--danger)}
+.qr-msg{background:#e8f1ff;color:#0b4fb3}
+.qr-when{margin-left:auto;padding:0!important;color:var(--ink-3);font-weight:650}
+/* Back to the list */
+.qback-bar{margin:0 0 8px}
+.qback{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 12px 0 8px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:var(--sh-1);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
+.qback:active{transform:scale(.98);background:var(--surface-2)}
+.qback .i{transform:rotate(180deg);width:20px;height:20px;stroke-width:2.6}
+.qback b{margin-left:auto;padding:3px 9px;border-radius:99px;background:var(--danger-bg);color:var(--danger);font-size:13px;font-weight:850}
+.job.full.opening{animation:qOpenIn .3s var(--out) both}
+@keyframes qOpenIn{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.qr-meta .qr-items{display:block;flex:0 1 auto;min-width:24px;line-height:22px;overflow:hidden;text-overflow:ellipsis}
+.qr-when{flex:none;padding-left:4px!important;background:none}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2049,7 +2100,9 @@ const parseLocalDate = (s) => { const [y, m, d] = String(s).split('-').map(Numbe
 const todayStr = () => localDateStr(new Date());
 const fmtDay = (s) => (s ? parseLocalDate(s).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 const fmtTime = (ts) => (ts ? new Date(ts).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : '');
-const fmtDateTime = (ts) => (ts ? new Date(ts).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+// "Wed Nov 18, 11:41 a.m.": the day of the week is always there
+const fmtDayShort = (ts) => { const d = new Date(ts); return `${d.toLocaleDateString('en-CA', { weekday: 'short' })} ${d.toLocaleDateString('en-CA', { month: 'short' })} ${d.getDate()}`.replace(/\./g, ''); };
+const fmtDateTime = (ts) => (ts ? `${fmtDayShort(ts)}, ${fmtTime(ts)}` : '');
 const phoneDigits = (v) => String(v || '').replace(/\D/g, '');
 // (204) 555-0111, the same as Request Pickup
 function formatPhone(v) {
@@ -3081,8 +3134,7 @@ function jobCard(id, r, full) {
 function submittedText(ts) {
   if (!ts) return '';
   const d = new Date(ts); const t0 = new Date(); t0.setHours(0, 0, 0, 0);
-  const day = ts >= t0.getTime() ? 'Today' : ts >= t0.getTime() - 86400000 ? 'Yesterday' : d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
-  return `${day}, ${fmtTime(ts)}`;
+  return fmtDateTime(ts);
 }
 // Dispatcher-made jobs vs customer requests, told apart at a glance
 const byDispatcher = (r) => r.source === 'dispatcher' || r.company_id === 'dispatcher';
@@ -3131,85 +3183,44 @@ function fullCard(id, r, { unseen, tags, chips, enter }) {
 }
 // Which job the queue shows, kept by id so a new arrival never swaps the card under the dispatcher's thumb
 const Q = { id: null, idx: 0, shown: null, anim: '' };
-function qPager(list, idx) {
-  if (list.length < 2) return '';
-  const max = 9;
-  const from = Math.max(0, Math.min(idx - 4, list.length - max));
-  const dots = list.slice(from, from + max).map(([, r], i) => `<span class="qdot${from + i === idx ? ' on' : ''}${isOverdue(r) || ageCls(r.created_at) === 'late' ? ' late' : ''}"></span>`).join('');
-  const next = list[(idx + 1) % list.length][1];
-  return `<div class="qpager" role="group" aria-label="Jobs waiting">
-    <button class="qnav" type="button" data-act="q-prev" aria-label="Previous job"${idx === 0 ? ' disabled' : ''}>${icon('chevron', 'sm')}</button>
-    <div class="qpos"><span class="qcount"><b>${idx + 1}</b> of ${list.length}</span><span class="qdots" aria-hidden="true">${dots}</span></div>
-    <div class="qsplit">
-      <button class="qdrop" type="button" data-act="q-menu" aria-label="Pick a job from the list" aria-haspopup="true" aria-expanded="false">${icon('caret')}</button>
-      <button class="qnext" type="button" data-act="q-next" aria-label="Next job: #${esc(next.ref_no)} ${esc(jobName(next))}"><span><small>${idx + 1 === list.length ? 'Back to first' : 'Next'}</small><b>${esc(jobName(next))}</b></span>${icon('chevron', 'sm')}</button>
-    </div>
-  </div>`;
-}
-/* Switching jobs turns a page: forward, the current card lifts off its left edge and turns away,
-   showing the next one already lying underneath; back, the earlier card turns in over it. Quick, ~0.34 s. */
-function qShow(id, dir) {
-  if (Q.id === id) return;
-  const old = $('#queue-list .job.full');
-  const motion = old && dir && old.animate && !reduceMotion();
-  const rect = motion && old.getBoundingClientRect();
-  const ghost = motion && old.cloneNode(true);
-  Q.id = id;
-  Q.anim = motion ? '' : dir ? (dir > 0 ? 'from-r' : 'from-l') : 'rise';
-  renderQueue();
-  if (!motion) return;
-  const one = $('#queue-list .qone'); const now = $('#queue-list .job.full');
-  if (!one || !now) return;
-  const base = one.getBoundingClientRect();
-  ghost.classList.remove('enter', 'rise', 'from-r', 'from-l', 'unseen', 'leaving');
-  ghost.removeAttribute('data-id');
-  $$('[id]', ghost).forEach((e) => e.removeAttribute('id'));
-  ghost.setAttribute('aria-hidden', 'true');
-  ghost.style.cssText = `position:absolute;left:${rect.left - base.left}px;top:${rect.top - base.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;pointer-events:none;transform-origin:left center;backface-visibility:hidden;z-index:${dir > 0 ? 5 : 0}`;
-  one.classList.add('turning');
-  one.appendChild(ghost);
-  const ease = 'cubic-bezier(.45,.05,.25,1)';
-  let a;
-  if (dir > 0) {
-    a = ghost.animate([{ transform: 'perspective(1400px) rotateY(0deg)', filter: 'brightness(1)', opacity: 1 },
-      { transform: 'perspective(1400px) rotateY(-62deg)', filter: 'brightness(.88)', opacity: 1, offset: 0.65 },
-      { transform: 'perspective(1400px) rotateY(-96deg)', filter: 'brightness(.8)', opacity: 0 }], { duration: 340, easing: ease, fill: 'forwards' });
-    now.animate([{ filter: 'brightness(.93)' }, { filter: 'brightness(1)' }], { duration: 340, easing: 'ease-out' });
-  } else {
-    now.style.transformOrigin = 'left center';
-    a = now.animate([{ transform: 'perspective(1400px) rotateY(-96deg)', filter: 'brightness(.8)', opacity: 0 },
-      { transform: 'perspective(1400px) rotateY(-50deg)', filter: 'brightness(.9)', opacity: 1, offset: 0.35 },
-      { transform: 'perspective(1400px) rotateY(0deg)', filter: 'brightness(1)', opacity: 1 }], { duration: 340, easing: ease });
-  }
-  const done = () => { ghost.remove(); one.classList.remove('turning'); now.style.transformOrigin = ''; };
-  a.onfinish = done; a.oncancel = done; setTimeout(done, 600);
-}
-// The little arrow beside Next: every waiting job in a list, tap one to go straight to it
-function qMenu(btn) {
-  const old = $('#qmenu');
-  if (old) { qMenuClose(); return; }
-  const list = $('#queue-list').__list || [];
-  if (!list.length) return;
-  const r0 = btn.closest('.qsplit').getBoundingClientRect();
+function qList(list, anim) {
   const rows = list.map(([id, r], i) => {
+    const unseen = !acked.has(alertKey(id, r));
+    const disp = byDispatcher(r);
+    const collect = r.payment === 'collect';
+    const unread = unreadMsgs(id);
     const late = isOverdue(r) || ageCls(r.created_at) === 'late';
-    return `<button type="button" class="qm-row${id === Q.id ? ' on' : ''}" data-act="q-pick" data-id="${esc(id)}" style="animation-delay:${Math.min(i, 8) * 25}ms">
-      <span class="qm-n">${i + 1}</span>
-      <span class="qm-main"><span class="qm-top"><b>#${esc(r.ref_no)}</b><span>${esc(jobName(r))}</span><i class="qm-src ${byDispatcher(r) ? 'disp' : 'cust'}">${byDispatcher(r) ? 'Dispatcher' : 'Customer'}</i></span><span class="qm-route">${esc((r.pickup && r.pickup.name) || '–')} → ${esc((r.delivery && r.delivery.name) || '–')}</span></span>
-      <span class="qm-age${late ? ' late' : ' fresh'}">${esc(shortAgo(r.created_at))}</span>
+    const sched = r.when === 'scheduled' && r.scheduled_for;
+    return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
+      <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
+      <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
+      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${icon(disp ? 'headset' : 'building')}${disp ? 'Dispatcher' : 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
     </button>`;
   }).join('');
-  document.body.insertAdjacentHTML('beforeend', `<div id="qmenu-bg" data-act="q-menu-close"></div><div id="qmenu" role="menu" style="top:${Math.round(r0.bottom + 6)}px"><div class="qm-head">${list.length} waiting · pick one</div><div class="qm-list">${rows}</div></div>`);
-  btn.setAttribute('aria-expanded', 'true');
-  btn.classList.add('open');
+  return `<div class="qlist${anim}" role="list">${rows}</div>`;
 }
-function qMenuClose() {
-  const m = $('#qmenu'); const bg = $('#qmenu-bg');
-  $$('.qdrop.open').forEach((b) => { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); });
-  if (bg) bg.remove();
-  if (!m) return;
-  if (m.animate && !reduceMotion()) { const a = m.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px) scale(.98)' }], { duration: 140, easing: 'ease-in' }); a.onfinish = () => m.remove(); } else m.remove();
+function qBackBar(list) {
+  const others = list.length - 1;
+  return `<div class="qback-bar"><button class="qback" type="button" data-act="q-back">${icon('chevron', 'sm')}<span>Back to all jobs</span>${others ? `<b>${others} more waiting</b>` : ''}</button></div>`;
 }
+function qOpen(id) {
+  if (!S.pending[id]) return;
+  Q.listY = window.scrollY;
+  Q.id = id; Q.anim = 'opening';
+  // Opening it counts as seen: the green glow stops
+  markSeen(id);
+  const r = S.pending[id];
+  if (!acked.has(alertKey(id, r))) { acked.add(alertKey(id, r)); saveAcked(); refreshAlarm(); }
+  renderAll();
+  window.scrollTo(0, 0);
+}
+function qBack() {
+  Q.id = null; Q.anim = 'back';
+  renderQueue();
+  window.scrollTo(0, Q.listY || 0);
+}
+function qShow(id) { qOpen(id); }
+function qMenuClose() { const m = $('#qmenu'); if (m) m.remove(); }
 /* No scrolling with a job on the page: the queue is exactly as tall as the screen, the text box
    gives up room first, and if it still doesn't fit the card steps down a size (tight, then tighter). */
 function fitQueue() {
@@ -3237,42 +3248,6 @@ function fitQueue() {
 window.addEventListener('resize', () => requestAnimationFrame(fitQueue));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#qmenu')) qMenuClose(); });
 document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('#panel-queue')) setTimeout(fitQueue, 120); });
-function qStep(dir) {
-  const list = $('#queue-list').__list || [];
-  if (list.length < 2) return;
-  const i = Math.max(0, list.findIndex(([id]) => id === Q.id));
-  qShow(list[(i + dir + list.length) % list.length][0], dir);
-}
-// Swipe the card left or right for the next or previous job; it follows the finger
-(() => {
-  let x0 = 0; let y0 = 0; let card = null; let on = false; let t0 = 0;
-  const box = () => $('#queue-list');
-  document.addEventListener('touchstart', (e) => {
-    const c = e.target.closest && e.target.closest('#queue-list .job.full');
-    card = null; on = false;
-    if (!c || e.touches.length > 1 || e.target.closest('textarea, input, .addr-sw, .addr-box, [data-addr-box]')) return;
-    if ((box().__list || []).length < 2) return;
-    card = c; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
-  }, { passive: true });
-  document.addEventListener('touchmove', (e) => {
-    if (!card) return;
-    const dx = e.touches[0].clientX - x0; const dy = e.touches[0].clientY - y0;
-    if (!on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { card = null; return; } if (Math.abs(dx) < 10) return; on = true; }
-    card.style.transition = 'none';
-    card.style.transform = `translateX(${dx * 0.55}px) rotate(${dx * 0.012}deg)`;
-    card.style.opacity = String(Math.max(0.55, 1 - Math.abs(dx) / 700));
-  }, { passive: true });
-  document.addEventListener('touchend', (e) => {
-    if (!card) return;
-    const c = card; card = null;
-    if (!on) return;
-    const dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : x0) - x0;
-    const fast = Math.abs(dx) > 40 && Date.now() - t0 < 250;
-    c.style.transition = 'transform .28s cubic-bezier(.16,1,.3,1), opacity .2s';
-    if (Math.abs(dx) > 80 || fast) { c.style.transition = 'none'; c.style.transform = ''; c.style.opacity = ''; qStep(dx < 0 ? 1 : -1); }
-    else { c.style.transform = ''; c.style.opacity = ''; }
-  }, { passive: true });
-})();
 // Opens or closes a card's text, with the address switch
 function toggleJobText(id) {
   const r = S.pending[id];
@@ -3353,14 +3328,17 @@ function renderQueue() {
   // Typing in a card's text: keep the cursor there when the list is redrawn
   const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('#queue-list textarea[data-edit]') ? document.activeElement : null;
   const keep = typing && { id: typing.dataset.edit, a: typing.selectionStart, b: typing.selectionEnd, top: typing.getBoundingClientRect().top };
-  // One job fills the page. It stays on the same job by id; when that one leaves, the next in line takes its place.
-  let idx = list.findIndex(([id]) => id === Q.id);
-  if (idx < 0) { idx = Math.min(Q.id ? Q.idx : 0, Math.max(0, list.length - 1)); if (Q.id && Q.shown) Q.anim = Q.anim || 'rise'; }
-  const cur = list[idx];
-  const anim = cur && cur[0] !== Q.shown ? (Q.anim || 'rise') : '';
-  Q.id = cur ? cur[0] : null; Q.idx = idx; Q.shown = Q.id; Q.anim = '';
+  /* Two views: the list of job buttons (oldest at the top), and one job open on the whole page with
+     Back to the list. An open job that leaves the queue (sent, removed, cancelled) goes back to the list. */
+  const idx = Q.id ? list.findIndex(([id]) => id === Q.id) : -1;
+  const cur = idx >= 0 ? list[idx] : null;
+  if (!cur && Q.id) { Q.id = null; Q.anim = 'back'; }
+  const anim = cur && cur[0] !== Q.shown ? (Q.anim || 'opening') : '';
+  const listAnim = !cur && (Q.shown || Q.anim === 'back') ? ' back' : '';
+  Q.shown = Q.id; Q.anim = '';
   $('#queue-list').__list = list;
-  $('#queue-list').innerHTML = (filtering || cur ? '' : unreadBlock()) + (cur ? `${qPager(list, idx)}<div class="qone${list.length > 1 ? ' more' : ''}${list.length > 2 ? ' more2' : ''}">${jobCard(cur[0], cur[1], { anim })}</div>`
+  $('#queue-list').innerHTML = (filtering || cur ? '' : unreadBlock()) + (cur ? `${qBackBar(list)}<div class="qone">${jobCard(cur[0], cur[1], { anim })}</div>`
+    : list.length ? qList(list, listAnim)
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? caughtUp() : skeletons()));
   if (keep) {
@@ -3372,7 +3350,8 @@ function renderQueue() {
       return;
     }
   }
-  if ($('#queue-list .job.full')) fitQueue(); else { fitQueue(); if (stick) scrollToBottom(); }
+  fitQueue();
+  if (!cur && stick && listAnim) window.scrollTo(0, Q.listY || 0);
 }
 // Unread customer messages, in the free space above the jobs (tap one to open the conversation)
 function unreadBlock() {
@@ -3612,7 +3591,7 @@ function leaveCard(id) {
   if (!el || !el.animate || reduceMotion()) return Promise.resolve();
   el.classList.add('leaving');
   if (el.classList.contains('full')) {
-    Q.anim = 'rise';
+    Q.anim = 'back';
     return new Promise((resolve) => {
       const a = el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(60%) rotate(5deg) scale(.96)' }], { duration: 300, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
       a.onfinish = resolve; a.oncancel = resolve;
@@ -6428,12 +6407,9 @@ document.addEventListener('click', async (e) => {
     case 'reset-edit': setEdit(id, null); break;
     case 'details': openDetails(id); break;
     case 'job-menu': jobMenu(id); break;
-    case 'q-next': qStep(1); break;
-    case 'q-prev': qStep(-1); break;
-    case 'q-first': { if (S.tab !== 'queue') switchTab('queue'); const l = $('#queue-list').__list || []; if (l.length && l[0][0] !== Q.id) qShow(l[0][0], -1); break; }
-    case 'q-menu': qMenu(el); break;
-    case 'q-menu-close': qMenuClose(); break;
-    case 'q-pick': { const list = $('#queue-list').__list || []; const from = list.findIndex(([x]) => x === Q.id); const to = list.findIndex(([x]) => x === id); qMenuClose(); qShow(id, to >= from ? 1 : -1); break; }
+    case 'q-open': qOpen(id); break;
+    case 'q-back': qBack(); break;
+    case 'q-first': { if (S.tab !== 'queue') switchTab('queue'); if (Q.id) qBack(); break; }
     case 'job-text': toggleJobText(id); break;
     case 'addr-mode': setAddrMode(id, { addr: el.dataset.mode }); break;
     case 'addr-open': toggleAddrRow(id); break;
@@ -6571,7 +6547,7 @@ const setDockH = () => {
   const stick = S.tab === 'queue' && nearBottom();
   document.documentElement.style.setProperty('--dock-h', `${dock.offsetHeight}px`);
   requestAnimationFrame(fitQueue);
-  if (stick) scrollToBottom();
+  if (stick && Q.id) scrollToBottom();
 };
 if (window.ResizeObserver) new ResizeObserver(setDockH).observe(dock);
 setDockH();
