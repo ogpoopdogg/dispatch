@@ -144,6 +144,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(await page.evaluate(() => { const h = document.querySelector('.app-head').getBoundingClientRect(), sh = document.querySelector('#sheet .sheet').getBoundingClientRect(); return sh.top >= h.bottom - 1; }), 'Messages opens below the numbers bar');
     await page.click('.app-head .kp-sched');
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
+    // Who made it: a side strip on Scheduled cards (customer app here; a dispatcher job says Dispatcher)
+    assert.strictEqual((await page.textContent('#scheduled-list .job[data-id=r3] .side-tag')).trim(), 'Customer app');
+    assert.ok(await page.evaluate(() => /side-tag">Dispatcher</.test(jobCard('x', { ref_no: 1, source: 'dispatcher', company_id: 'dispatcher', company_name: 'Dispatcher', when: 'scheduled', scheduled_for: '2030-01-01', pickup: {}, delivery: {} }))));
     await page.evaluate(() => switchTab('queue'));
     // A done job's details: Group Chat and Send to driver
     await page.evaluate(() => openDetails('r4'));
