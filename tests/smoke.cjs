@@ -102,6 +102,22 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('[data-act=q-back]');
     await page.waitForSelector('#queue-list .qrow[data-id=r1]:not(.unseen)');
     assert.strictEqual(await page.locator('#queue-list .qrow.unseen').count(), 1, 'opened once: no more glow');
+    // A dispatcher's own job: their name (first letter capital) on the button, solid yellow side line
+    await page.evaluate(() => window.__fakeDb.put('requests/r9', { ref_no: 1209, status: 'new', source: 'dispatcher', company_id: 'dispatcher', company_name: 'Dispatcher', requested_by: { name: 'dana', email: 'dana@ec.com' }, pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co', address: '40 Park Ave' }, items_text: '1 box', payment: 'prepaid', when: 'asap', created_at: Date.now() }));
+    await page.waitForSelector('#queue-list .qrow[data-id=r9]');
+    assert.strictEqual((await page.textContent('#queue-list .qrow[data-id=r9] .qr-src')).trim(), 'Dana', "the dispatcher's name, not 'Dispatcher'");
+    assert.strictEqual(await page.locator('#queue-list .qrow[data-id=r9] .qr-src svg').count(), 0, 'no headset icon');
+    assert.ok(await page.evaluate(() => !/gradient/.test(getComputedStyle(document.querySelector('#queue-list .qrow[data-id=r9]'), '::before').backgroundImage)), 'solid yellow, no stripes');
+    await page.evaluate(() => qShow('r9'));
+    await page.waitForSelector('#queue-list .job.full[data-id=r9]');
+    assert.match(await page.textContent('#queue-list .src-band'), /made by Dana/);
+    assert.ok(await page.evaluate(() => getComputedStyle(document.querySelector('[data-act=q-back]')).animationName.includes('qbPulse')), 'Back to all jobs pulses');
+    await page.click('[data-act=q-back]');
+    await page.evaluate(() => window.__fakeDb.put('requests/r9', null));
+    await page.waitForFunction(() => document.querySelectorAll('#queue-list .qrow').length === 2);
+    // The Queue button is the same size as the Dispatch button
+    const tabSize = (q) => page.evaluate((s) => { const e = document.querySelector(s); return [e.offsetWidth, e.offsetHeight]; }, q);
+    assert.deepStrictEqual(await tabSize('[data-tab=queue] .ti'), await tabSize('.tab-new .ti'), 'Queue button matches Dispatch');
     // 2.6 search and filter
     assert.ok(await page.isHidden('#queue-tools'), 'search stays out of the way until asked for');
     await page.click('[data-act=queue-search]');
@@ -271,6 +287,18 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForSelector('#sheet .msg-co');
       assert.match(await page.textContent('#sheet .msg-co'), /Acme Supply/);
       await shot(page, 'messages-list');
+      // A search left in the box never hides chats the next time Messages opens
+      await page.evaluate(() => { for (let i = 0; i < 6; i++) window.__fakeDb.put(`messages/y${i}`, { rid: 'general', company_id: `cx${i}`, from: 'dispatch', text: `Hello ${i}`, at: Date.now() - 5000, by_uid: 'staff1', by_name: 'dana' }); });
+      await page.waitForSelector('#msg-q');
+      await page.fill('#msg-q', 'zzzz');
+      await page.waitForSelector('#sheet [data-act=msg-q-clear]');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.click('#msg-btn');
+      await page.waitForSelector('#sheet .msg-co');
+      assert.strictEqual(await page.inputValue('#msg-q'), '', 'search starts empty');
+      assert.strictEqual(await page.locator('#sheet .msg-co').count(), 7, 'every chat shows');
+      await page.evaluate(() => { for (let i = 0; i < 6; i++) window.__fakeDb.put(`messages/y${i}`, null); });
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !document.getElementById('view-app').inert);
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
@@ -587,9 +615,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(!(await btn.evaluate((b) => b.classList.contains('holding') || b.classList.contains('held'))), 'no hold ring while locked');
       assert.deepStrictEqual(await pg.evaluate(() => window.__sent), [], 'nothing sent while locked');
       release();
-      // GPS answers: unlocked, a green "Live GPS" note with how long it took
+      // GPS answers: unlocked, a small "Live" in the top line (no green pill over the buttons)
       await pg.waitForFunction(() => !document.querySelector('.sp-card').classList.contains('gps-wait'), null, { timeout: 5000 });
-      assert.match(await pg.textContent('#sp-gps'), /Live GPS\s*\d+\.\d s/);
+      assert.strictEqual((await pg.textContent('#sp-gps')).trim(), 'Live');
+      assert.ok(await pg.evaluate(() => !!document.querySelector('.sp-head #sp-gps') && !document.querySelector('.gps-pill')), 'status sits in the top line');
       const sub = (n) => pg.evaluate((nm) => { const b = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].find((x) => x.querySelector('.drv-name > span').textContent === nm); return { t: b.querySelector('small').textContent, old: b.classList.contains('gps-old') }; }, n);
       assert.deepStrictEqual(await sub('Mike'), { t: 'Van 1', old: false }, 'a fresh spot shows no age');
       assert.deepStrictEqual(await sub('Sara'), { t: 'Van 2 · 25 min old', old: true }, 'an old spot shows its age');
@@ -729,27 +758,45 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'and after');
       assert.match(await pg.textContent('.toasts'), /Couldn.t find "Brandon Hospital"/);
       await shot(pg, 'voice-missing');
-      // Picking the right customer after the mic missed teaches it (shared with Route Planner)
+      // Picking the right customer after the mic missed teaches it, for this person only
       await pg.fill('#nd-pickup-name', 'Acme');
       await pg.click('.ac-item:has-text("Acme Supply")');
-      await pg.waitForFunction(() => (window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['brandon hospital'] === 'Acme Supply');
+      await pg.waitForFunction(() => (window.__fakeDb.get('dispatch_settings/voice_aliases/staff1') || {})['brandon hospital'] === 'Acme Supply');
+      assert.ok(!(await pg.evaluate(() => window.__fakeDb.get('developer/route_planner/voice_aliases'))), 'the shared Route Planner list is never written');
       assert.strictEqual(await said('Brandon hospital to AAA Bobcat'), 'Acme Supply|AAA Bobcat|||', 'the mic now finds them');
+      // Route Planner's shared list is still read, but a person's own teaching wins
+      await pg.evaluate(() => window.__fakeDb.put('developer/route_planner/voice_aliases', { 'gee and are': 'GNR Electric', 'brandon hospital': 'AAA Bobcat' }));
+      await pg.waitForTimeout(200);
+      assert.strictEqual(await said('gee and are to brandon hospital'), 'GNR Electric|Acme Supply|||', 'shared list read, own list first');
+      // Teach the mic from the New dispatch form: an overlay on top, closing it goes straight back to the form
+      assert.ok(await pg.isVisible('#sheet-teach'), 'Teach the mic sits in the form top line');
+      await pg.click('#sheet-teach');
+      await pg.waitForSelector('#vl-ov:not([hidden]) #vl-name');
+      assert.ok(await pg.isVisible('#sheet .sheet'), 'the form stays open underneath');
+      await pg.evaluate(() => { document.querySelector('.toasts').innerHTML = ''; });
+      await pg.waitForTimeout(350);
+      assert.ok(await pg.evaluate(() => { const t = document.getElementById('sheet-title'); return t.scrollWidth <= t.clientWidth + 1; }), 'New dispatch title not cut off');
+      await shot(pg, 'voice-teach-overlay');
+      await pg.click('[data-act=vl-close]');
+      await pg.waitForSelector('#vl-ov', { state: 'hidden' });
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), 'Acme Supply', 'the form kept what was typed');
+      assert.ok(await pg.evaluate(() => !document.getElementById('sheet').inert), 'the form works again');
       await pg.keyboard.press('Escape');
       await pg.waitForFunction(() => !document.getElementById('view-app').inert);
-      // Teach the mic (Settings › Mic): pick a customer, say the name, it's saved for both apps; ✕ forgets
+      // Teach the mic (Settings › Mic): pick a customer, say the name, it's saved for this person; ✕ forgets
       await pg.click('#set-btn');
       await pg.click('[data-act=teach-mic]');
       await pg.fill('#vl-name', 'Virden');
       await pg.click('#vl-ac .ac-item:has-text("Virden Pinnacle")');
       await pg.click('#vl-rec');
       await pg.evaluate(() => __say('burden pinnacle', true));
-      await pg.waitForFunction(() => (window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['burden pinnacle'] === 'Virden Pinnacle');
+      await pg.waitForFunction(() => (window.__fakeDb.get('dispatch_settings/voice_aliases/staff1') || {})['burden pinnacle'] === 'Virden Pinnacle');
       await pg.waitForSelector('#vl-known .vl-chip:has-text("burden pinnacle")');
       assert.match(await pg.textContent('#vl-status'), /Saved/);
       await pg.evaluate(() => { document.querySelector('.toasts').innerHTML = ''; }); // the earlier message, out of the picture
       await shot(pg, 'voice-teach');
       await pg.click('[data-act=vl-forget][data-heard="burden pinnacle"]');
-      await pg.waitForFunction(() => !(window.__fakeDb.get('developer/route_planner/voice_aliases') || {})['burden pinnacle']);
+      await pg.waitForFunction(() => !(window.__fakeDb.get('dispatch_settings/voice_aliases/staff1') || {})['burden pinnacle']);
       // Another customer's own name is never taught
       await pg.click('#vl-rec');
       await pg.evaluate(() => __say('AAA Bobcat', true));

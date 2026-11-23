@@ -221,7 +221,7 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 
 /* ---------- Bottom navigation ---------- */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--glass);-webkit-backdrop-filter:saturate(170%) blur(16px);backdrop-filter:saturate(170%) blur(16px);border-top:1px solid var(--glass-line);padding-bottom:var(--safe-b)}
-.tabbar-in{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.15fr);height:var(--nav-h);padding:0 4px}
+.tabbar-in{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.15fr) minmax(0,1.15fr);height:var(--nav-h);padding:0 4px}
 .tab{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--ink-3);font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color var(--t-fast) ease}
 .tab .ti{display:grid;place-items:center;width:48px;height:28px;border-radius:99px;transition:background-color var(--t) var(--ease),color var(--t-fast) ease,transform var(--t-slow) var(--spring)}
 .tab .i{width:19px;height:19px}
@@ -247,6 +247,12 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 .tab-new .i{width:22px;height:22px;stroke-width:2.8}
 .tab-new:hover .ti{background:var(--yellow-hi)}
 .tab-new:active .ti{transform:scale(.94)}
+/* Queue: same size and shape as the Dispatch button */
+.tab-q .ti{width:auto;min-width:54px;height:34px;padding:0 12px;border-radius:12px}
+.tab-q .i{width:22px;height:22px;stroke-width:2.6}
+.tab.tab-q.has-jobs .ti{animation-name:tabGlowQ}
+.tab.tab-q:not(.has-jobs) .ti,.tab.tab-q[aria-current=page]:not(.has-jobs) .ti{background:var(--surface-3);box-shadow:inset 0 0 0 1px var(--line-strong)}
+@keyframes tabGlowQ{0%{box-shadow:0 0 0 0 rgba(255,190,0,.85),0 0 4px rgba(255,190,0,.4);transform:scale(1)}50%{box-shadow:0 0 0 7px rgba(255,190,0,0),0 0 22px 3px rgba(255,190,0,.95);transform:scale(1.05)}100%{box-shadow:0 0 0 0 rgba(255,190,0,0),0 0 4px rgba(255,190,0,.4);transform:scale(1)}}
 /* Alert banners: pinned just above the bottom bar */
 .dock{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:29;display:flex;flex-direction:column}
 .dock .banner{border-top:1px solid var(--glass-line);animation:slideUp var(--t-slow) var(--out)}
@@ -1765,7 +1771,7 @@ button.kp-mini{cursor:pointer}
 .qrow{position:relative;display:flex;flex-direction:column;gap:5px;width:100%;padding:10px 12px 10px 14px;border:1.5px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08),0 6px 14px -8px rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease),box-shadow .2s ease;animation:qrIn .32s var(--out) both;animation-delay:calc(var(--i) * 35ms)}
 .qrow:active{transform:scale(.985);box-shadow:0 1px 2px rgba(0,0,0,.1)}
 .qrow::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:#3b82f6}
-.qrow.by-disp::before{background:repeating-linear-gradient(180deg,#111 0 6px,var(--yellow) 6px 12px)}
+.qrow.by-disp::before{background:var(--yellow)}
 .qrow.overdue{border-color:var(--danger)}
 @keyframes qrIn{from{opacity:0;transform:translateY(10px)}}
 .qlist.back .qrow{animation:qrBack .26s var(--out) both;animation-delay:calc(var(--i) * 20ms)}
@@ -1805,11 +1811,39 @@ button.kp-mini{cursor:pointer}
 .qback{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 12px 0 8px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:var(--sh-1);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
 .qback:active{transform:scale(.98);background:var(--surface-2)}
 .qback .i{transform:rotate(180deg);width:20px;height:20px;stroke-width:2.6}
+.qback{border:2px solid #2563eb;animation:qbPulse 1.4s ease-in-out infinite}
+.qback .i{color:#2563eb;animation:qbNudge 1.4s ease-in-out infinite}
+@keyframes qbPulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.55),var(--sh-1)}50%{box-shadow:0 0 0 5px rgba(37,99,235,0),0 0 16px 2px rgba(37,99,235,.45)}}
+@keyframes qbNudge{50%{transform:rotate(180deg) translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.qback,.qback .i{animation:none}}
 .qback b{margin-left:auto;padding:3px 9px;border-radius:99px;background:var(--danger-bg);color:var(--danger);font-size:13px;font-weight:850}
 .job.full.opening{animation:qOpenIn .3s var(--out) both}
 @keyframes qOpenIn{from{opacity:0;transform:translateY(14px) scale(.98)}}
 .qr-meta .qr-items{display:block;flex:0 1 auto;min-width:24px;line-height:22px;overflow:hidden;text-overflow:ellipsis}
 .qr-when{flex:none;padding-left:4px!important;background:none}
+/* Send to driver: GPS status in the top line (round 5) */
+.sp-gps{position:static;flex:none;height:auto;display:inline-flex;align-items:center;gap:6px;max-width:52%;padding:0 10px;height:30px;border-radius:99px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;pointer-events:none;animation:none;opacity:1}
+.sp-gps.wait{background:#111;color:#fff}
+.sp-gps.live{padding:0 4px;color:#15803d}
+.sp-gps.bad{background:#fef3c7;color:#92400e}
+.sp-gps .i{width:15px;height:15px}
+.sp-gps .gps-spin{width:14px;height:14px}
+.gps-dot{width:9px;height:9px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.2)}
+/* Teach the mic button (New dispatch top line) and its overlay, over whatever is open */
+.head-teach{flex:none;display:inline-flex;align-items:center;gap:4px;min-height:32px;margin-right:4px;padding:0 10px 0 8px;border:1.5px solid #2563eb;border-radius:99px;background:var(--surface);color:#2563eb;font:inherit;font-size:13.5px;font-weight:800;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.head-teach .i{width:15px;height:15px;stroke-width:2.6}
+.head-teach:active{background:#dbeafe}
+.vl-ov{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:calc(var(--safe-t) + 10px) 10px calc(var(--kb,0px) + 10px);background:rgba(0,0,0,.55);animation:vlFade .18s ease}
+.vl-card{width:100%;max-width:560px;max-height:100%;display:flex;flex-direction:column;background:var(--surface);border:1.5px solid #2563eb;border-radius:16px;box-shadow:0 20px 50px -10px rgba(0,0,0,.5);animation:vlIn .22s var(--out)}
+.vl-head{flex:none;display:flex;align-items:center;gap:8px;padding:8px 8px 4px 14px}
+.vl-head h2{flex:1;display:flex;align-items:center;gap:7px;margin:0;font-size:18px;font-weight:850}
+.vl-head h2 .i{width:20px;height:20px;color:#2563eb}
+.vl-body{flex:1;min-height:0;overflow:auto;padding:4px 14px 14px}
+.sheet.mid .sheet-titles{flex:none}
+.sheet.mid #sheet-title{font-size:18px;font-stretch:85%;overflow:visible}
+@media (max-width:360px){.head-teach{font-size:12.5px;padding:0 8px 0 6px}}
+@keyframes vlFade{from{background:rgba(0,0,0,0)}}
+@keyframes vlIn{from{opacity:0;transform:translateY(-12px) scale(.98)}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -1965,7 +1999,7 @@ button.kp-mini{cursor:pointer}
       <button class="tab msg-tab" type="button" data-act="open-msgs" id="msg-btn" aria-label="Messages"><span class="ti"><svg class="i"><use href="#i-chat"/></svg></span>Messages<span class="dot" id="msg-badge" hidden></span></button>
       <button class="tab" type="button" data-tab="done"><span class="ti"><svg class="i"><use href="#i-check"/></svg></span>Done</button>
       <button class="tab" type="button" data-tab="scheduled"><span class="ti"><svg class="i"><use href="#i-calendar"/></svg></span>Scheduled<span class="dot quiet" id="dot-scheduled" hidden></span></button>
-      <button class="tab" type="button" data-tab="queue" aria-current="page"><span class="ti"><svg class="i"><use href="#i-inbox"/></svg></span>Queue<span class="dot" id="dot-queue" hidden></span></button>
+      <button class="tab tab-q" type="button" data-tab="queue" aria-current="page"><span class="ti"><svg class="i"><use href="#i-inbox"/></svg></span>Queue<span class="dot" id="dot-queue" hidden></span></button>
       <button class="tab tab-new" type="button" data-act="new-dispatch" aria-label="New dispatch"><span class="ti"><svg class="i"><use href="#i-plus"/></svg></span>Dispatch</button>
     </div>
   </nav>
@@ -1974,11 +2008,12 @@ button.kp-mini{cursor:pointer}
 <div class="overlay" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sheet-head"><button class="icon-btn sheet-back" type="button" data-act="msg-list" id="sheet-back" aria-label="All customers" hidden><svg class="i"><use href="#i-back"/></svg></button><div class="sheet-titles"><h2 id="sheet-title"></h2><div class="sheet-sub" id="sheet-sub" hidden></div></div><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Clear</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-head"><button class="icon-btn sheet-back" type="button" data-act="msg-list" id="sheet-back" aria-label="All customers" hidden><svg class="i"><use href="#i-back"/></svg></button><div class="sheet-titles"><h2 id="sheet-title"></h2><div class="sheet-sub" id="sheet-sub" hidden></div></div><button class="head-link" type="button" data-act="nd-reset" id="sheet-reset" hidden>Clear</button><button class="head-teach" type="button" data-act="teach-mic" id="sheet-teach" hidden><svg class="i"><use href="#i-mic"/></svg>Teach the mic</button><button class="icon-btn sm" type="button" data-act="sheet-close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body" id="sheet-body"></div>
   </div>
 </div>
 <!-- Mic: say a dispatch (above + Dispatch, or on the form), or say words into the box being typed in -->
+<div class="vl-ov" id="vl-ov" hidden><div class="vl-card" role="dialog" aria-modal="true" aria-labelledby="vl-title"><div class="vl-head"><h2 id="vl-title"><svg class="i"><use href="#i-mic"/></svg>Teach the mic</h2><button class="icon-btn sm" type="button" data-act="vl-close" aria-label="Close and go back"><svg class="i"><use href="#i-x"/></svg></button></div><div class="vl-body" id="vl-body"></div></div></div>
 <button class="mic-fab" id="mic-fab" type="button" aria-pressed="false" aria-label="Say a dispatch, or say words into the box you are typing in" hidden><svg class="i"><use href="#i-mic"/></svg></button>
 <div class="mic-hear" id="mic-hear" role="status" aria-live="polite" hidden></div>
 <!-- Send to driver: vehicles and their distance to the pickup, the live map, then the drivers (hold to send) -->
@@ -2666,12 +2701,14 @@ function tick(message) {
 }
 
 let sheetOpen = false;
+let vlOpen = false, vlReturn = null; // Teach the mic overlay, on top of everything
 let sheetResolver = null;
 /* Whatever is on top (map, Send panel or sheet) is the only thing Tab and screen readers can reach.
    Toasts stay reachable so their Undo buttons work. */
 let layerReturn = null;
 function syncLayers() {
   const app = $('#view-app'), sheet = $('#sheet'), pop = $('#nd-pop'), map = $('#map-overlay');
+  if (vlOpen) { [app, sheet, pop, map].forEach((el) => { if (el) el.inert = true; }); micSoon(); return; }
   const top = mapOpen ? map : popOpen ? pop : sheetOpen ? sheet : null;
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
   if (top && !top.contains(document.activeElement)) {
@@ -2689,6 +2726,7 @@ function openSheet(title, html, onMount, tall) {
   $('#sheet .sheet').classList.remove('big');
   if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
   $('#sheet-reset').hidden = tall !== 'mid'; // New dispatch: Clear sits right after the title, away from ✕
+  $('#sheet-teach').hidden = tall !== 'mid' || !voiceCan(); // ...and Teach the mic between Clear and ✕
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-back').hidden = true;
@@ -2734,7 +2772,7 @@ function _hideSheet() {
   setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
-window.addEventListener('popstate', () => { if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
+window.addEventListener('popstate', () => { if (vlOpen) { _hideVoiceLearner(); return; } if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) _hideSheet(); });
 /* A tap on the dimmed area closes the sheet, but only if the finger went down there too:
    the form can slide down under the finger while the keyboard closes. */
 let sheetDownOnBack = false;
@@ -2756,7 +2794,7 @@ document.addEventListener('click', (e) => {
   doneTouched = 0;
   if (fresh) { e.preventDefault(); e.stopPropagation(); }
 }, true);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (mapOpen) closeMap(); else if (popOpen && $('.sp-card').classList.contains('mapfull')) spFull(false); else if (popOpen) closePop(); else closeSheet(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (vlOpen) closeVoiceLearner(); else if (mapOpen) closeMap(); else if (popOpen && $('.sp-card').classList.contains('mapfull')) spFull(false); else if (popOpen) closePop(); else closeSheet(); } });
 function confirmSheet(title, body, ok, danger) {
   return new Promise((resolve) => {
     openSheet(title, `<p class="muted">${body}</p><div class="btn-row"><button class="btn btn-secondary" type="button" data-c="0">Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" type="button" data-c="1">${esc(ok)}</button></div>`);
@@ -3138,7 +3176,7 @@ function submittedText(ts) {
 }
 // Dispatcher-made jobs vs customer requests, told apart at a glance
 const byDispatcher = (r) => r.source === 'dispatcher' || r.company_id === 'dispatcher';
-const madeBy = (r) => { const q = r.requested_by; const n = q && typeof q === 'object' ? (q.name || (q.email || '').split('@')[0]) : ''; return n || 'dispatch'; };
+const madeBy = (r) => { const q = r.requested_by; let n = q && typeof q === 'object' ? (q.name || (q.email || '').split('@')[0]) : ''; n = String(n || 'dispatch').trim(); return n.charAt(0).toUpperCase() + n.slice(1); };
 const jobName = (r) => (byDispatcher(r) ? (r.pickup && r.pickup.name) || 'Dispatcher job' : r.company_name || `#${r.ref_no}`);
 function sourceBand(r) {
   return byDispatcher(r)
@@ -3194,7 +3232,7 @@ function qList(list, anim) {
     return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
       <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
       <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
-      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${icon(disp ? 'headset' : 'building')}${disp ? 'Dispatcher' : 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
+      <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
     </button>`;
   }).join('');
   return `<div class="qlist${anim}" role="list">${rows}</div>`;
@@ -3274,7 +3312,6 @@ function jobMenu(id) {
   openSheet(`#${r.ref_no} ${r.company_name || ''}`, `<div class="menu-list">
       <button type="button" data-act="details" data-id="${esc(id)}">${icon('more')}<span>Details<small>Everything on the request${hasMsgs(id) ? ', and messages' : ''}</small></span></button>
       ${r.company_id && r.source !== 'dispatcher' ? `<button type="button" data-act="open-msgs" data-cid="${esc(r.company_id)}" data-id="${esc(id)}">${icon('chat')}<span>Message ${esc(clampText(r.company_name || 'the customer', 24))}<small>Write to them in their app${hasMsgs(id) ? '. You have messages about this one.' : ''}</small></span></button>` : ''}
-      ${hasDrivers() ? `<button type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users')}<span>Group Chat<small>Share the text. It stays in the queue.</small></span></button>` : ''}
       ${later
         ? `<button type="button" data-act="to-queue" data-id="${esc(id)}">${icon('inbox')}<span>Send to queue<small>Do it today instead</small></span></button>`
         : `<button type="button" data-act="schedule-later" data-id="${esc(id)}">${icon('calendar')}<span>Schedule for later<small>Pick another day</small></span></button>`}
@@ -3811,7 +3848,7 @@ function openDetails(id, refresh) {
     ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
     ${msgThread(id, r)}
     ${kind === 'pending' ? `<button class="btn btn-danger-soft remove-far" type="button" data-act="remove" data-id="${esc(id)}">${icon('trash', 'sm')}Remove from queue</button>
-    <div class="sheet-actions pin-bottom">${groupChatButton(id)}${sendButtons(id)}</div>` : ''}</div>`;
+    <div class="sheet-actions pin-bottom">${sendButtons(id)}</div>` : ''}</div>`;
   if (refresh) {
     // Keep a half-typed message and the scroll spot when the request or its messages update
     const input = $('#sheet-body form[data-msg-form] [name=text]');
@@ -4151,7 +4188,8 @@ function msgsHtml() {
     const cos = msgCompanies();
     const err = S.msgsError ? `<p class="notice-err">Messages couldn’t load: ${esc(S.msgsError)}</p>` : '';
     if (!cos.length) return `<div data-msgs-view="list">${err}<div class="empty"><h3>No messages yet</h3><p>When a customer writes from Request Pickup, it shows here and on their card. The last ${MSG_DAYS} days are kept here.</p></div></div>`;
-    const q = msgSearch.trim().toLowerCase();
+    // The search only applies while its box shows (more than 5 customers), so it can never hide chats unseen
+    const q = cos.length > 5 ? msgSearch.trim().toLowerCase() : '';
     const shown = q ? cos.filter((c) => coName(c.cid).toLowerCase().includes(q) || coMsgs(c.cid).some(([, m]) => String(m.text || '').toLowerCase().includes(q) || String(msgRef(m)).includes(q))) : cos;
     const search = cos.length > 5 ? `<div class="searchbox msg-search">${icon('search')}<input id="msg-q" type="search" value="${esc(msgSearch)}" placeholder="Search customers or messages" aria-label="Search messages" autocomplete="off"></div>` : '';
     return `<div data-msgs-view="list">${err}${search}<div class="list msg-cos">${shown.map((c) => {
@@ -4162,7 +4200,7 @@ function msgsHtml() {
         <span class="grow"><span class="msg-co-top"><b>${esc(name)}</b>${owe ? '<span class="chip warn needs">Needs reply</span>' : ''}<small>${esc(msgDayLabel(m.at) === 'Today' ? fmtTime(m.at) : msgDayLabel(m.at))}</small></span>
         <span class="msg-co-last">${m.from === 'dispatch' ? 'You: ' : ''}${msgRef(m) ? `#${esc(msgRef(m))} · ` : ''}${esc(m.text)}</span></span>
         ${c.unread ? `<span class="msg-count" aria-label="${c.unread} new">${c.unread}</span>` : ''}</button>`;
-    }).join('') || '<p class="msgs-empty">No match.</p>'}</div></div>`;
+    }).join('') || `<p class="msgs-empty">No match for \u201c${esc(msgSearch.trim())}\u201d. <button class="head-link" type="button" data-act="msg-q-clear">Show all</button></p>`}</div></div>`;
   }
   const cid = msgView, name = coName(cid);
   const list = coMsgs(cid);
@@ -4213,6 +4251,7 @@ document.addEventListener('scroll', (e) => {
 }, true);
 function openMessages(cid, rid) {
   loadCompanyBooks();
+  msgSearch = ''; // a search left from last time hid chats until the app restarted
   msgView = cid || 'list';
   if (rid) msgAbout = rid;
   openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); msgWatch(); }, true);
@@ -5314,16 +5353,16 @@ function spGpsUi() {
   if (!card) return;
   const wait = sp.gps === 'wait';
   card.classList.toggle('gps-wait', wait);
+  // Status sits in the panel's top line, never over the driver buttons
   let el = $('#sp-gps');
   if (!el) { el = document.createElement('div'); el.id = 'sp-gps'; el.className = 'sp-gps'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); }
-  const list = $('#nd-pop-list');
-  if (list && el.parentNode !== list) list.prepend(el);
+  const head = $('.sp-head');
+  if (head && el.parentNode !== head) head.insertBefore(el, $('.icon-btn', head));
   clearTimeout(sp.gpsHide);
-  el.classList.remove('gone');
-  if (wait) el.innerHTML = '<span class="gps-pill"><i class="gps-spin"></i>Getting live GPS\u2026</span>';
-  else if (sp.gps === 'live') el.innerHTML = `<span class="gps-pill ok">${icon('check', 'sm')}Live GPS<small>${esc(sp.gpsSecs.toFixed(1))} s</small></span>`;
-  else el.innerHTML = `<span class="gps-pill bad">${icon('alert', 'sm')}No live GPS. Check each van\u2019s time.</span>`;
-  if (!wait) sp.gpsHide = setTimeout(() => el.classList.add('gone'), sp.gps === 'live' ? 1800 : 5000);
+  el.className = 'sp-gps ' + (wait ? 'wait' : sp.gps === 'live' ? 'live' : 'bad');
+  if (wait) el.innerHTML = '<i class="gps-spin"></i>Getting live GPS\u2026';
+  else if (sp.gps === 'live') el.innerHTML = '<i class="gps-dot"></i>Live';
+  else el.innerHTML = `${icon('alert', 'sm')}No live GPS`;
 }
 // How old each van's spot is, on its driver's button: always when live GPS failed, else only when old
 const ageText = (ms) => { const m = Math.max(0, Math.floor(ms / 60000)); return m < 1 ? 'just now' : m < 60 ? `${m} min old` : m < 1440 ? `${Math.floor(m / 60)} h old` : `${Math.floor(m / 1440)} d old`; };
@@ -6078,13 +6117,13 @@ function contactsSettings() {
       <button class="btn btn-secondary block" type="button" data-act="edit-drivers">${icon('phone', 'sm')}Edit drivers</button>
     </section>`;
 }
-// The mic: teach it customers it gets wrong (shared with Route Planner's "Teach the mic")
+// The mic: teach it customers it gets wrong (saved for each person, since everyone says names differently)
 function micSettings() {
   if (!voiceCan()) return '';
   listenVoiceAliases();
   return `<section class="card">
       <h2>${icon('mic')}Mic</h2>
-      <p class="card-note">Teach the mic a customer it keeps getting wrong. It's the same list as Route Planner's \u201cTeach the mic\u201d, so teaching one teaches both.</p>
+      <p class="card-note">Teach the mic a customer it keeps getting wrong. It's saved for you only, the way you say it. You can also teach it from the New dispatch form.</p>
       <button class="btn btn-secondary block" type="button" data-act="teach-mic">${icon('mic', 'sm')}Teach the mic</button>
     </section>`;
 }
@@ -6417,6 +6456,7 @@ document.addEventListener('click', async (e) => {
     case 'quick-reply': quickFill(el); break;
     case 'open-msgs': openMessages(el.dataset.cid || '', id); break;
     case 'msg-co': msgView = el.dataset.cid; msgAbout = ''; refreshMsgs(); msgScrollEnd(); markCoSeen(msgView); break;
+    case 'msg-q-clear': msgSearch = ''; refreshMsgs(); break;
     case 'msg-list': msgView = 'list'; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
     case 'msg-banner': { const a = msgAlert; msgAlert = null; renderMsgUi(); if (a) openMessages(a.cid, a.rid); else openMessages(); break; }
     case 'edit-quick': openSheet('Quick replies', quickEditor()); break;
@@ -6510,6 +6550,7 @@ document.addEventListener('click', async (e) => {
     }
     case 'edit-drivers': openSheet('Drivers', driversEditor()); break;
     case 'teach-mic': openVoiceLearner(); break;
+    case 'vl-close': closeVoiceLearner(); break;
     case 'vl-rec': voiceLearnRecord(); break;
     case 'vl-pick': voiceLearnPick(el.dataset.name); break;
     case 'vl-forget': voiceForget(el.dataset.heard); break;
@@ -6584,7 +6625,7 @@ document.addEventListener('DOMContentLoaded', startFirebase);
    as you talk. With the cursor in a text box (driver text, note, PO, a card's text) the
    words go into that box instead, where the cursor is.
    Customer names are matched the same way Route Planner's mic does it (spelling, sound-alike,
-   and the phrases taught in Route Planner's "Teach the mic", developer/route_planner/voice_aliases).
+   and the phrases each person taught: dispatch_settings/voice_aliases/<uid>, then Route Planner's shared list).
    The phone's own speech engine is used in the app (@capacitor-community/speech-recognition);
    in a browser it's the browser's.
    ========================================================= */
@@ -6646,12 +6687,18 @@ function voiceListen(h) {
 }
 
 /* ---------- Matching a spoken name to a saved customer (same as Route Planner's mic) ---------- */
-const VOICE_ALIASES_PATH = 'developer/route_planner/voice_aliases';
-let voiceAliases = {}, voiceAliasesOn = false;
+// Each person teaches the mic for their own voice: dispatch_settings/voice_aliases/<their uid>
+// (dispatch_settings is already open to staff, so no rules change). Route Planner's shared list
+// (developer/route_planner/voice_aliases) is still read as a fallback, never written.
+const VOICE_SHARED_PATH = 'developer/route_planner/voice_aliases';
+const myVoicePath = () => `dispatch_settings/voice_aliases/${S.user.uid}`;
+let voiceAliases = {}, voiceMine = {}, voiceShared = {}, voiceAliasesOn = false;
+const voiceMerge = () => { voiceAliases = Object.assign({}, voiceShared, voiceMine); voiceLearnKnown(); };
 function listenVoiceAliases() {
   if (voiceAliasesOn || !db || !S.user) return;
   voiceAliasesOn = true;
-  db.ref(VOICE_ALIASES_PATH).on('value', (snap) => { voiceAliases = snap.val() || {}; voiceLearnKnown(); }, () => { voiceAliasesOn = false; });
+  db.ref(myVoicePath()).on('value', (snap) => { voiceMine = snap.val() || {}; voiceMerge(); }, () => { voiceAliasesOn = false; });
+  db.ref(VOICE_SHARED_PATH).on('value', (snap) => { voiceShared = snap.val() || {}; voiceMerge(); }, () => {});
 }
 function vNorm(t) {
   return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -6859,7 +6906,7 @@ function micSay() { micHear.hidden = true; }
 function micPlace() {
   const appOn = !$('#view-app').hidden && S.user;
   const nd = ndOpen();
-  const hide = !appOn || !voiceCan() || mapOpen || popOpen || (sheetOpen && !nd);
+  const hide = !appOn || !voiceCan() || vlOpen || mapOpen || popOpen || (sheetOpen && !nd);
   micBtn.hidden = hide;
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
   if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
@@ -7043,10 +7090,10 @@ function voiceType(box) {
   });
 }
 
-/* ---------- Teach the mic (Settings › Mic), like Route Planner's ----------
+/* ---------- Teach the mic (Settings › Mic, or the button on the New dispatch form) ----------
    The phone's speech engine can't learn a voice. So: pick the customer, say their name, and every way
-   the phone wrote it down is saved as meaning that customer, in developer/route_planner/voice_aliases,
-   the same list Route Planner uses. Both apps' mics find them from then on. */
+   the phone wrote it down is saved as meaning that customer, for this person only, in
+   dispatch_settings/voice_aliases/<uid>. Their mic finds them from then on. */
 // Heard words can mean this customer: not empty or too long, not just their own name, and never another
 // customer's whole name (that customer would be lost to the mic). Same rule as Route Planner.
 function canTeachVoice(heard, name) {
@@ -7057,34 +7104,51 @@ function canTeachVoice(heard, name) {
 function voiceTeach(heardList, name) {
   if (!db || !S.lookup[name]) return Promise.resolve(0);
   const updates = {};
-  heardList.map(vNorm).forEach((h) => { if (canTeachVoice(h, name)) { updates[h] = name; voiceAliases[h] = name; } });
+  heardList.map(vNorm).forEach((h) => { if (canTeachVoice(h, name)) { updates[h] = name; voiceMine[h] = name; voiceAliases[h] = name; } });
   const n = Object.keys(updates).length;
-  return n ? db.ref(VOICE_ALIASES_PATH).update(updates).then(() => n) : Promise.resolve(0);
+  return n && S.user ? db.ref(myVoicePath()).update(updates).then(() => n) : Promise.resolve(0);
 }
 function voiceForget(heard) {
   if (!heard || /[.#$[\]/]/.test(heard)) return;
-  delete voiceAliases[heard];
-  db.ref(`${VOICE_ALIASES_PATH}/${heard}`).remove().catch((e) => voiceLearnStatus(`Couldn’t remove it: ${e.message}`, 'err'));
+  if (!S.user) return;
+  delete voiceMine[heard];
+  if (voiceShared[heard]) voiceAliases[heard] = voiceShared[heard]; else delete voiceAliases[heard];
+  db.ref(`${myVoicePath()}/${heard}`).remove().catch((e) => voiceLearnStatus(`Couldn’t remove it: ${e.message}`, 'err'));
   voiceLearnKnown();
 }
 let vlRec = null;
 const vlName = () => { const t = ($('#vl-name') && $('#vl-name').value.trim().toLowerCase()) || ''; return Object.keys(S.lookup).find((n) => n.toLowerCase() === t) || ''; };
 function openVoiceLearner() {
   listenVoiceAliases();
-  openSheet('Teach the mic', `<div class="vl" data-vl>
+  const ov = $('#vl-ov');
+  $('#vl-body').innerHTML = `<div class="vl" data-vl>
       <label class="vl-label" for="vl-name">1 · Customer</label>
       <div class="field"><input id="vl-name" placeholder="Start typing a customer name" autocomplete="off" autocapitalize="words" enterkeyhint="done"><div class="ac-list" id="vl-ac" role="listbox" hidden></div></div>
       <label class="vl-label" style="margin-top:12px">2 · Say their name</label>
       <button class="vl-rec" id="vl-rec" type="button" data-act="vl-rec">${icon('mic')}<span id="vl-rec-t">Tap to record</span></button>
       <p class="vl-status" id="vl-status" role="status" hidden></p>
       <div class="vl-known" id="vl-known" hidden></div>
-      <p class="card-note" style="margin-top:10px">Record 2 or 3 times. Everything the phone hears is saved for this customer, here and in Route Planner, so the mic finds them next time.</p>
-    </div>`, (body) => {
-    const input = $('#vl-name', body);
-    input.addEventListener('input', () => { voiceLearnSuggest(); voiceLearnKnown(); voiceLearnStatus(''); });
-    setTimeout(() => input.focus(), 80);
-  });
+      <p class="card-note" style="margin-top:10px">Record 2 or 3 times. Everything the phone hears is saved for this customer, for you only (the way you say it), so the mic finds them next time.</p>
+    </div>`;
+  ov.hidden = false;
+  if (!vlOpen) { vlOpen = true; vlReturn = document.activeElement; history.pushState({ vl: true }, ''); }
+  syncLayers();
+  const input = $('#vl-name');
+  input.addEventListener('input', () => { voiceLearnSuggest(); voiceLearnKnown(); voiceLearnStatus(''); });
+  setTimeout(() => input.focus(), 80);
 }
+// Close: straight back to whatever was open (the New dispatch form keeps everything typed)
+function _hideVoiceLearner() {
+  if (!vlOpen) return;
+  vlOpen = false;
+  if (vlRec) { vlRec.stop(); vlRec = null; }
+  $('#vl-ov').hidden = true;
+  $('#vl-body').innerHTML = '';
+  syncLayers();
+  const back = vlReturn; vlReturn = null;
+  if (back && back.isConnected && back.focus && !back.closest('[inert]')) back.focus({ preventScroll: true });
+}
+function closeVoiceLearner() { if (!vlOpen) return; if (history.state && history.state.vl) history.back(); else _hideVoiceLearner(); }
 function voiceLearnSuggest() {
   const box = $('#vl-ac');
   if (!box) return;
@@ -7105,7 +7169,7 @@ function voiceLearnKnown() {
   const box = $('#vl-known');
   if (!box) return;
   const name = vlName();
-  const heard = name ? Object.keys(voiceAliases).filter((k) => voiceAliases[k] === name) : [];
+  const heard = name ? Object.keys(voiceMine).filter((k) => voiceMine[k] === name) : [];
   box.hidden = !heard.length;
   box.innerHTML = heard.length ? `<div class="vl-label">Already taught</div><div class="vl-chips">${heard.map((k) => `<span class="vl-chip">${esc(k)}<button type="button" data-act="vl-forget" data-heard="${esc(k)}" aria-label="Forget ${esc(k)}">✕</button></span>`).join('')}</div>` : '';
 }
