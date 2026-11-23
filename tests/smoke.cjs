@@ -187,6 +187,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-done').hidden);
     await page.click('#msg-btn');
     await page.waitForSelector('#sheet:not([hidden]) [data-msgs-view]');
+    // Done isn't lit any more once you've left its page for Messages
+    await page.mouse.move(5, 300); await page.waitForTimeout(400);
+    { const bg = await page.evaluate(() => [getComputedStyle(document.querySelector('.tab[data-tab=done] .ti')).backgroundColor, document.body.classList.contains('layer-up')]); assert.ok(bg[0] === 'rgba(0, 0, 0, 0)', 'Done not lit while Messages is open ' + bg); }
     await page.click('.app-head .kp-sched');
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
     // Who made it: a side strip on Scheduled cards (customer app here; a dispatcher job says Dispatcher)
