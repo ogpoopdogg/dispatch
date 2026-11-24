@@ -6912,6 +6912,7 @@ function renderSettings() {
     <section class="card">
       <h2>${icon('check')}Account</h2>
       <div class="kv"><span>Signed in as</span><span>${esc(S.user && S.user.email)}</span></div>
+      <div class="kv"><span>App build</span><span>${esc(RUN.build || '?')}${CAP && window.__ecdNative ? ` <button class="link-btn" type="button" data-act="live-check">Check for update</button>` : ''}</span></div>
       <button class="btn btn-danger block" type="button" data-act="signout-ask">Sign out</button>
     </section>`;
   $$('input[name=map-type]', body).forEach((x) => x.addEventListener('change', () => { S.settings.mapType = x.value; saveSettings(); if (sp.map) spStyleMap(); }));
@@ -6977,6 +6978,13 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'signout': signOut(); break;
+    case 'live-check': {
+      const was = liveWaiting;
+      toast('Checking for an update…', 'info', 2000);
+      await liveCheck(true);
+      if (!liveWaiting || liveWaiting === was) { if (!liveWaiting) toast(`Up to date (build ${RUN.build}).`, 'ok', 3000); else liveSwitch(); }
+      break;
+    }
     case 'signout-ask': if (await confirmSheet('Sign out?', 'New requests won\u2019t alert on this phone while you\u2019re signed out.', 'Sign out', true)) signOut(); break;
     case 'recheck': handleUser(auth.currentUser); break;
     case 'copy-uid': toast(copySync(S.user.uid) ? 'Account ID copied.' : 'Couldn\u2019t copy. Press and hold the ID instead.', 'info'); break;
@@ -7203,47 +7211,67 @@ document.addEventListener('DOMContentLoaded', startFirebase);
 
 /* ---------- Updates without a new APK ----------
    Every merge to main publishes the app's screens to the repo's `live` branch (the GitHub workflow,
-   only after the tests pass). The phone app checks for them, keeps the newest in Cache Storage, and
-   switches to it the next time it starts or when it's been in the background a while, so nobody is
-   interrupted. The starter page (scripts/live-loader.html) picks which screens to run. */
-const LIVE_URL = 'https://raw.githubusercontent.com/ogpoopdogg/dispatch/live/app.html';
+   only after the tests pass). The phone app checks when it opens, each time it comes back to the
+   front and every 10 minutes, keeps the newest in Cache Storage, and switches right away if it was
+   just opened and nothing is open; otherwise the next time it's left for 5 s. The starter page (scripts/live-loader.html) picks which screens to run. */
+const LIVE_BASE = 'https://raw.githubusercontent.com/ogpoopdogg/dispatch/live/';
 const metaNum = (html, name) => { const m = String(html || '').match(new RegExp(`<meta name="${name}" content="(\\d+)"`)); return m ? +m[1] : 0; };
 const RUN = window.__ecdRun || { build: +((document.querySelector('meta[name=ecd-build]') || {}).content || 0), live: false };
-let liveWaiting = 0, liveChecked = 0, liveNeedsApk = 0;
+let liveWaiting = 0, liveChecked = 0, liveNeedsApk = 0, liveBusy = false, liveFront = Date.now();
 // Started fine: the starter page won't treat this version as broken
 function liveReady() { try { localStorage.removeItem('ecd_live_boot'); } catch (e) { /* ignore */ } }
 document.addEventListener('DOMContentLoaded', () => setTimeout(liveReady, 0));
-async function liveCheck() {
-  if (!CAP || !window.caches || !window.__ecdNative) return; // only the phone app, with the starter page
-  if (Date.now() - liveChecked < 10 * 60000) return;
+const liveFetch = (f) => fetch(`${LIVE_BASE}${f}?t=${Date.now()}`, { cache: 'no-store' });
+// Checks for newer screens: first the tiny version.json, then the screens themselves only if newer
+async function liveCheck(force) {
+  if (!(CAP || window.__ecdLiveTest) || !window.caches || !window.__ecdNative || liveBusy) return; // only the phone app, with the starter page (tests/live-update.cjs sets __ecdLiveTest)
+  if (!force && Date.now() - liveChecked < 20000) return;
   liveChecked = Date.now();
+  liveBusy = true;
   try {
-    const res = await fetch(`${LIVE_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    let v = null;
+    try { const r = await liveFetch('version.json'); if (r.ok) v = await r.json(); } catch (e) { /* older publish: no version.json */ }
+    const have = Math.max(RUN.build || 0, liveWaiting);
+    if (v && v.build && v.build <= have) return;
+    if (v && v.native > window.__ecdNative) { liveApk(v.build); return; }
+    const res = await liveFetch('app.html');
     if (!res.ok) return;
     const html = await res.text();
     const build = metaNum(html, 'ecd-build');
-    if (!build || build <= Math.max(RUN.build || 0, liveWaiting) || !html.includes('</html>')) return;
-    if (metaNum(html, 'ecd-native') > window.__ecdNative) {
-      // These screens need a newer APK: say so once
-      if (liveNeedsApk !== build) { liveNeedsApk = build; toast('A new version of the app needs installing. Ask for the latest APK.', 'info', 10000); }
-      return;
-    }
+    if (!build || build <= have || !html.includes('</html>')) return;
+    if (metaNum(html, 'ecd-native') > window.__ecdNative) { liveApk(build); return; }
     const c = await caches.open('ecd-live');
     await c.put('live-app.html', new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
     liveWaiting = build;
-  } catch (e) { /* no internet: next time */ }
+    liveSwitch();
+  } catch (e) { /* no internet: next time */ } finally { liveBusy = false; }
 }
-// Switches only while the app is in the background and nothing is mid-send, so nobody loses their place
+// These screens need a newer APK: say so once
+function liveApk(build) { if (liveNeedsApk !== build) { liveNeedsApk = build; toast('A new version of the app needs installing. Ask for the latest APK.', 'info', 10000); } }
+// Nothing open, nothing being typed or sent
+const liveIdle = () => !sheetOpen && !popOpen && !mapOpen && !voice && !sendingIds.size && !flushing
+  && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('input,textarea,select'));
+// Just opened (or back to the front) and idle: switch now, it takes a second. Otherwise offer it, and switch the next time the app is left
+function liveSwitch() {
+  if (!liveWaiting) return;
+  if (!document.hidden && Date.now() - liveFront < 60000 && liveIdle()) {
+    toast('Updating the app…', 'info', 3000);
+    setTimeout(() => { if (liveIdle()) location.reload(); else liveSwitch(); }, 700);
+    return;
+  }
+  toast(`Update ready (build ${liveWaiting}).`, 'ok', 12000, { label: 'Restart now', run: () => location.reload() });
+}
+// Switches while the app is in the background (after 5 s, with nothing mid-send), so nobody loses their place
 let liveHideTimer = 0;
 document.addEventListener('visibilitychange', () => {
   clearTimeout(liveHideTimer);
-  if (!document.hidden) { liveCheck(); return; }
+  if (!document.hidden) { liveFront = Date.now(); liveCheck(); return; }
   if (!liveWaiting) return;
   liveHideTimer = setTimeout(() => {
     if (document.hidden && liveWaiting && !sendingIds.size && !flushing) location.reload();
-  }, 30000);
+  }, 5000);
 });
-if (CAP) { setTimeout(liveCheck, 8000); setInterval(liveCheck, 30 * 60000); }
+if (CAP || window.__ecdLiveTest) { setTimeout(() => liveCheck(true), 1500); setInterval(() => liveCheck(), 10 * 60000); }
 // After switching, say so once
 if (RUN.live) {
   let seen = 0; try { seen = +localStorage.getItem('ecd_live_seen') || 0; } catch (e) { /* ignore */ }

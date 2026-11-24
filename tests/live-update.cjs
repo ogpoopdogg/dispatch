@@ -81,6 +81,28 @@ const version = (build, native = NATIVE, extra = '') => APP
     await started();
     assert.strictEqual((await running()).live, false, 'the broken one stays skipped');
 
+    // 6. The app finds a newer version online by itself: just opened and idle, so it switches at once
+    const online = { build: BUILT + 5 };
+    await ctx.unroute(/googleapis\.com|gstatic\.com|cloudfunctions\.net|raw\.githubusercontent\.com/);
+    await ctx.route(/googleapis\.com|gstatic\.com|cloudfunctions\.net/, (r) => r.abort());
+    let asked = 0;
+    await ctx.route(/raw\.githubusercontent\.com\/ogpoopdogg\/dispatch\/live\//, (r) => {
+      asked++;
+      const u = r.request().url();
+      if (/version\.json/.test(u)) r.fulfill({ contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ build: online.build, native: NATIVE }) });
+      else r.fulfill({ contentType: 'text/plain', headers: { 'Access-Control-Allow-Origin': '*' }, body: version(online.build) });
+    });
+    await page.evaluate(() => caches.delete('ecd-live'));
+    await page.addInitScript(() => { window.__ecdLiveTest = true; });
+    await page.reload();
+    await page.waitForFunction((b) => { try { return RUN.build === b && S.loaded; } catch (e) { return false; } }, online.build, { timeout: 20000 });
+    assert.deepStrictEqual(await running(), { build: online.build, live: true, mark: String(online.build), mode: 'CSS1Compat' });
+    // Already the newest: Settings says so, and only the small version file is asked for
+    const before = asked;
+    await page.evaluate(() => { liveChecked = 0; return liveCheck(true); });
+    assert.strictEqual(asked - before, 1, 'only version.json when nothing is newer');
+    assert.strictEqual(await page.evaluate(() => liveWaiting), 0);
+
     assert.deepStrictEqual(errors.filter((e) => !/broken on purpose/.test(e)), []);
     console.log('live update test passed');
   } finally {

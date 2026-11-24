@@ -57,9 +57,12 @@ jobs:
           D="$RUNNER_TEMP/live"
           rm -rf "$D" && mkdir -p "$D"
           cp www/app.html "$D/app.html"
+          # Tiny file the phones check first, so they only download the screens when there's a newer build
+          NATIVE=$(sed -n 's/.*<meta name="ecd-native" content="\([0-9]*\)".*/\1/p' www/app.html | head -1)
+          printf '{"build":%s,"native":%s}\n' "${{ github.run_number }}" "$NATIVE" > "$D/version.json"
           cd "$D"
           git init -q -b live
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" add app.html
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" add app.html version.json
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Screens from build ${{ github.run_number }} (${{ github.sha }})"
           git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" live
           echo "Published build ${{ github.run_number }} to the live branch"
