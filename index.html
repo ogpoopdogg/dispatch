@@ -1730,6 +1730,11 @@ body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok
 .te-mic:active{transform:scale(.92)}
 .te-mic.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite}
 body:not(.mic-ok) .te-mic{display:none}
+/* New dispatch driver text: the same small round mic, bottom right under the pencil. It only adds words to this text. */
+.nd-te-mic{top:auto;bottom:8px;right:8px;box-shadow:0 4px 10px -6px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14)} /* same look as the big mic, smaller */
+body.mic-ok .nd-text-box .nd-preview{padding-right:48px;min-height:84px}
+.sheet.kb .nd-te-mic{display:none} /* typing: the mic at the end of the box takes over */
+body.mic-ok .sheet.big #nd-text.nd-preview{padding-right:48px;min-height:84px}
 @media (prefers-reduced-motion:reduce){.te-mic.on{animation:none}}
 /* Map page */
 #panel-map:not([hidden]){display:flex;flex-direction:column;height:calc(100vh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px);height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 22px)}
@@ -5118,7 +5123,7 @@ function openNewDispatch(opts) {
       <div class="nd-more" id="nd-more" hidden></div>
       <div class="nd-label"><span>Driver gets</span><span class="nd-label-r"><small id="nd-count"></small><button class="addr-chip" type="button" id="nd-addr-chip" data-act="nd-addr-open" aria-expanded="false" aria-controls="nd-addr-row">${icon('pin', 'sm')}<span></span>${icon('caret', 'caret')}</button></span></div>
       <div class="nd-addr-row" id="nd-addr-row" hidden></div>
-      <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button></div>
+      <div class="nd-text-box"><textarea class="nd-preview" id="nd-text" rows="1" spellcheck="true" enterkeyhint="done" placeholder="Type the pickup and delivery names." aria-label="Text that gets sent to the driver"></textarea><span class="nd-pen" aria-hidden="true">${icon('edit', 'sm')}</span><button class="nd-text-reset" type="button" data-act="nd-text-reset" aria-label="Go back to the automatic text" hidden>${icon('undo', 'sm')}</button><button class="te-mic nd-te-mic${voice && voice.mode === 'type' && voice.box && voice.box.id === 'nd-text' ? ' on' : ''}" type="button" data-act="nd-te-mic" aria-label="Say words to add to the driver text (doesn't start a new dispatch)">${icon('mic')}</button></div>
       <div class="nd-go"><span id="nd-main"></span><button class="btn btn-secondary nd-dots" type="button" data-act="nd-more" aria-label="More: save to queue or schedule for later" aria-expanded="false">${icon('dots')}</button></div>
     </div>
   </form>`;
@@ -7075,6 +7080,7 @@ document.addEventListener('click', async (e) => {
     case 'resend-driver': resendDriver(id); break;
     case 'reset-edit': setEdit(id, null); break;
     case 'te-mic': teMic(el); break;
+    case 'nd-te-mic': ndTeMic(); break;
     case 'mt-drv': mtShowDriver(el.dataset.driver); break;
     case 'mt-where-x': mtHideWhere(); break;
     case 'details': openDetails(id); break;
@@ -7621,7 +7627,7 @@ function micListening(on) {
   micBtn.setAttribute('aria-pressed', String(on));
   micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
   document.body.classList.toggle('voice-on', on);
-  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(on && voice && voice.mode === 'type' && voice.box && b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where)));
+  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(on && voice && voice.mode === 'type' && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text' : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
@@ -7902,6 +7908,16 @@ function teMic(b) {
   if (!box) return;
   listenVoiceAliases();
   // Words go on the end, unless the cursor is already in this box
+  if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
+  voiceType(box, true);
+}
+// New dispatch: the small mic in the driver text only adds words to that text (never fills in a new dispatch)
+function ndTeMic() {
+  if (voice) { voiceStop(); return; }
+  if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
+  const box = $('#nd-text');
+  if (!box) return;
+  listenVoiceAliases();
   if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
   voiceType(box, true);
 }

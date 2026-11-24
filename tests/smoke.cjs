@@ -645,6 +645,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Clear sits under the mic, lined up with the chips (bin + word on one line)
     assert.ok(await page.evaluate(() => { const sh = document.querySelector('#sheet .sheet'); if (!sh.classList.contains('big') || sh.classList.contains('kb') || innerWidth >= 720) return true; return sh.getBoundingClientRect().top >= document.querySelector('.app-head').getBoundingClientRect().bottom + 2 && (() => { const m = document.getElementById('mic-fab').getBoundingClientRect(), r = document.querySelector('#nd-chips .nd-mic-slot').getBoundingClientRect(); return Math.round(m.width) === 56 && Math.round(m.height) === 56 && m.left >= r.left - 4 && m.right <= r.right + 4; })(); }), 'the filled-in form never covers the numbers, and the round mic sits in its spot');
     assert.ok(await page.isHidden('#sheet-reset'), 'no Clear in the top line');
+    // The small mic in the driver text only adds words to that text: it never fills in a new dispatch
+    if (await page.evaluate(() => document.body.classList.contains('mic-ok'))) {
+      assert.ok(await page.evaluate(() => { const m = document.querySelector('.nd-text-box .nd-te-mic').getBoundingClientRect(), t = document.getElementById('nd-text').getBoundingClientRect(); return m.width >= 30 && m.right <= t.right - 2 && m.bottom <= t.bottom - 2 && m.top > t.top + t.height / 2 - 20; }), 'small mic sits at the bottom right of the driver text');
+      await page.click('.nd-text-box .nd-te-mic');
+      assert.ok(await page.evaluate(() => !!voice && voice.mode === 'type' && voice.box && voice.box.id === 'nd-text'), 'it types into the driver text only');
+      assert.ok(await page.evaluate(() => document.querySelector('.nd-te-mic').classList.contains('on')), 'it glows while listening');
+      await page.evaluate(() => voiceStop(true));
+    }
     assert.match(await page.textContent('.nd-route .nd-clear'), /^\s*Clear\s*$/);
     await page.click('.nd-route .nd-clear');
     assert.strictEqual(await page.inputValue('#nd-pickup-name'), '', 'Clear empties the form');
