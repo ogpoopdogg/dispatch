@@ -187,6 +187,27 @@ The older way (four secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWO
 
 ---
 
+## Updates without a new APK
+
+Phones with the app get new screens by themselves after a merge to `main`:
+
+1. The GitHub workflow tests the app, then publishes the screens (`www/app.html`) to the
+   `live` branch of this repo. Never edit that branch by hand.
+2. The app checks for them when it opens, when it comes back to the front, and every 30 minutes.
+   It keeps the newest copy on the phone.
+3. It switches to them the next time it starts, or after it has been in the background for
+   30 seconds with nothing being sent. It then shows "App updated (build N)" once.
+
+Safety:
+- A version that doesn't start properly is never used again. Within 15 seconds the phone goes
+  back to the screens packed in its APK.
+- With no internet, the phone keeps using what it has.
+
+**When a new APK is still needed:** any change to `android/`, a new Capacitor plugin, or a new
+permission. Raise `NATIVE_API` by 1 in `scripts/copy-web.mjs` in that same change. Phones with an
+older APK keep their current screens and show "A new version of the app needs installing" until
+the new APK is installed.
+
 ## Getting the app onto phones
 
 Every push to GitHub builds the app (see the **Actions** tab → *Build Android

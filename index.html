@@ -7105,6 +7105,55 @@ initPushListeners();
 if (CAP) { const g = $('[data-act=google]'); if (g) g.hidden = true; }
 renderAll();
 document.addEventListener('DOMContentLoaded', startFirebase);
+
+/* ---------- Updates without a new APK ----------
+   Every merge to main publishes the app's screens to the repo's `live` branch (the GitHub workflow,
+   only after the tests pass). The phone app checks for them, keeps the newest in Cache Storage, and
+   switches to it the next time it starts or when it's been in the background a while, so nobody is
+   interrupted. The starter page (scripts/live-loader.html) picks which screens to run. */
+const LIVE_URL = 'https://raw.githubusercontent.com/ogpoopdogg/dispatch/live/app.html';
+const metaNum = (html, name) => { const m = String(html || '').match(new RegExp(`<meta name="${name}" content="(\\d+)"`)); return m ? +m[1] : 0; };
+const RUN = window.__ecdRun || { build: +((document.querySelector('meta[name=ecd-build]') || {}).content || 0), live: false };
+let liveWaiting = 0, liveChecked = 0, liveNeedsApk = 0;
+// Started fine: the starter page won't treat this version as broken
+function liveReady() { try { localStorage.removeItem('ecd_live_boot'); } catch (e) { /* ignore */ } }
+document.addEventListener('DOMContentLoaded', () => setTimeout(liveReady, 0));
+async function liveCheck() {
+  if (!CAP || !window.caches || !window.__ecdNative) return; // only the phone app, with the starter page
+  if (Date.now() - liveChecked < 10 * 60000) return;
+  liveChecked = Date.now();
+  try {
+    const res = await fetch(`${LIVE_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const build = metaNum(html, 'ecd-build');
+    if (!build || build <= Math.max(RUN.build || 0, liveWaiting) || !html.includes('</html>')) return;
+    if (metaNum(html, 'ecd-native') > window.__ecdNative) {
+      // These screens need a newer APK: say so once
+      if (liveNeedsApk !== build) { liveNeedsApk = build; toast('A new version of the app needs installing. Ask for the latest APK.', 'info', 10000); }
+      return;
+    }
+    const c = await caches.open('ecd-live');
+    await c.put('live-app.html', new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
+    liveWaiting = build;
+  } catch (e) { /* no internet: next time */ }
+}
+// Switches only while the app is in the background and nothing is mid-send, so nobody loses their place
+let liveHideTimer = 0;
+document.addEventListener('visibilitychange', () => {
+  clearTimeout(liveHideTimer);
+  if (!document.hidden) { liveCheck(); return; }
+  if (!liveWaiting) return;
+  liveHideTimer = setTimeout(() => {
+    if (document.hidden && liveWaiting && !sendingIds.size && !flushing) location.reload();
+  }, 30000);
+});
+if (CAP) { setTimeout(liveCheck, 8000); setInterval(liveCheck, 30 * 60000); }
+// After switching, say so once
+if (RUN.live) {
+  let seen = 0; try { seen = +localStorage.getItem('ecd_live_seen') || 0; } catch (e) { /* ignore */ }
+  if (seen !== RUN.build) { try { localStorage.setItem('ecd_live_seen', String(RUN.build)); } catch (e) { /* ignore */ } setTimeout(() => toast(`App updated (build ${RUN.build}).`, 'ok', 4000), 1500); }
+}
 /* =========================================================
    MIC: say a dispatch, or say words into a box
    Tap the round mic (above + Dispatch, or on the New dispatch form) and say it like

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E&amp;C Dispatch</title>
+<style>html,body{margin:0;background:#000}</style>
+</head>
+<body>
+<script>
+/* Starter page for the phone app (scripts/copy-web.mjs puts it in www/index.html).
+   It runs the newest screens this phone has: the ones packed in the APK (app.html), or newer
+   ones the app downloaded after a merge to main (kept in Cache Storage "ecd-live").
+   A downloaded version runs only if this APK is new enough for it (ecd-native), and one that
+   doesn't start properly is never used again: the phone goes back to the packed screens. */
+(function () {
+  'use strict';
+  var BUILT = __BUILD__;   // build number of the screens packed in this APK
+  var NATIVE = __NATIVE__; // what this APK can do (NATIVE_API in scripts/copy-web.mjs)
+  var LIVE_KEY = 'live-app.html';
+  var meta = function (html, name) { var m = html.match(new RegExp('<meta name="' + name + '" content="(\\d+)"')); return m ? +m[1] : 0; };
+  var get = function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
+  var set = function (k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
+  window.__ecdNative = NATIVE;
+  window.__ecdBuilt = BUILT;
+
+  // Last time a downloaded version started, it never said it was ready: it's broken, skip it for good
+  var bad = get('ecd_live_bad', {});
+  var boot = get('ecd_live_boot', null);
+  if (boot && boot.build) { bad[boot.build] = 1; set('ecd_live_bad', bad); set('ecd_live_boot', null); }
+
+  function run(html, info) {
+    window.__ecdRun = info; // { build, live }
+    if (info.live) {
+      set('ecd_live_boot', { build: info.build, at: Date.now() });
+      // No "ready" in 15 s: back to the packed screens now
+      setTimeout(function () {
+        var b = get('ecd_live_boot', null);
+        if (b && b.build === info.build) { bad[info.build] = 1; set('ecd_live_bad', bad); set('ecd_live_boot', null); location.reload(); }
+      }, 15000);
+    }
+    document.open();
+    document.write(html);
+    document.close();
+  }
+  function packed() {
+    return fetch('app.html').then(function (r) { return r.text(); }).then(function (html) { run(html, { build: BUILT, live: false }); });
+  }
+  var live = window.caches ? caches.open('ecd-live').then(function (c) { return c.match(LIVE_KEY); }).then(function (r) { return r ? r.text() : ''; }) : Promise.resolve('');
+  live.then(function (html) {
+    var b = html ? meta(html, 'ecd-build') : 0;
+    if (b > BUILT && meta(html, 'ecd-native') <= NATIVE && !bad[b] && html.indexOf('</html>') > 0) run(html, { build: b, live: true });
+    else return packed();
+  }).catch(function () { return packed(); });
+})();
+</script>
+</body>
+</html>
