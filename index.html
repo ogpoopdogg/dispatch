@@ -778,6 +778,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-line .grow small{flex:none;font-size:12px;color:var(--ink-3)}
 .addr-line .i{flex:none;width:14px;height:14px;color:var(--ink-3)}
 .addr-line .link-btn{min-height:36px;padding:0 4px 0 10px;font-size:14px}
+.ed-tag{flex:none;display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 7px;margin-left:2px;border:1px solid #d9a400;border-radius:11px;background:#fff6d6;color:#6b4e00;font:600 11.5px/1 inherit;cursor:pointer}
+.ed-tag span{font-size:10px;opacity:.7}
+.ed-tag.off{border-color:var(--line,#ccc);background:transparent;color:var(--ink-2)}
 .addr-ok.err{color:var(--danger)}
 /* A name that isn't a saved customer: "New customer +" with a Google address bar under it */
 .nc-row{display:flex;align-items:center;gap:8px;margin:-2px 0 6px;animation:riseIn var(--t) var(--out)}
@@ -1998,6 +2001,17 @@ body.mic-ok .nd-mic-gap{display:none}
 body.layer-up .tab[aria-current=page] .ti{background:none!important;box-shadow:none!important;transform:none!important;animation:none!important}
 body.layer-up .tab[aria-current=page]{color:var(--ink-3)}
 body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
+/* Messages in the bottom bar: lit (blue) while Messages is open, like Done and Map */
+body.msgs-up .msg-tab{color:var(--ink)}
+body.msgs-up .msg-tab .ti{background:var(--blue,#1f6feb);color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(31,111,235,.6);animation:tabPop .38s var(--spring)}
+body.msgs-up .msg-tab .i{color:#fff;stroke-width:2.3}
+/* Send to Driver: a touch smaller so the words sit centered with room */
+.nd-pair .btn-primary.nd-big{font-size:15px;gap:6px;padding:0 6px}
+.nd-pair .btn-primary.nd-big .em{font-size:17px}
+/* Send to Driver map (small map): the driver's address shows over the bottom of the map */
+.sp-card:not(.mapfull) .sp-where:not([hidden]){position:absolute;left:6px;right:6px;bottom:6px;z-index:3;display:flex;align-items:flex-start;gap:4px;padding:7px 2px 7px 10px;border-radius:12px;background:#fff;color:#111;box-shadow:0 3px 14px rgba(0,0,0,.28);animation:riseIn var(--t) var(--out)}
+.sp-card:not(.mapfull) .sp-where b{font-size:14.5px}
+.sp-card:not(.mapfull) .sp-where p{font-size:14px;margin-top:1px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></symbol>
@@ -2276,6 +2290,7 @@ const S = {
   msgs: {},         // messages with customers, the last 7 days (messages/)
   quick: null,      // quick replies (dispatch_settings/quick_replies); null = the starting ones
   addrPrefs: {},    // address switch per customer (dispatch_settings/addr_prefs)
+  edited: {},       // addresses dispatchers changed (dispatch_settings/edited_addresses), never written into address_lookup
   queueSearch: false, // search and filters open on the Queue
   settings: loadSettings()
 };
@@ -2893,6 +2908,7 @@ function syncLayers() {
   if (vlOpen) { [app, sheet, pop, map].forEach((el) => { if (el) el.inert = true; }); micSoon(); return; }
   const top = mapOpen ? map : popOpen ? pop : sheetOpen ? sheet : null;
   document.body.classList.toggle('layer-up', !!top); // you've left the page: its bottom-bar button stops being lit
+  document.body.classList.toggle('msgs-up', top === sheet && !!$('#sheet [data-msgs-view]')); // Messages is lit while it's open
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
   // Over a sheet (not the New dispatch form) the top bar with the numbers stays tappable
   const headUp = top === sheet && document.body.classList.contains('head-up');
@@ -3243,6 +3259,7 @@ function startListening() {
     () => { S.remindersError = true; refreshSettings(); });
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
+  listen(db.ref('dispatch_settings/edited_addresses'), (snap) => { S.edited = snap.val() || {}; ndRefreshTags(); if (ndOpen()) ndUpdate(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
   // Days closed (Settings) and customers asking to delete their account
   listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
@@ -3302,7 +3319,7 @@ const hasDrivers = () => Object.keys(S.contacts.drivers || {}).length > 0;
 // Main button: pick a driver when drivers are set up, otherwise the share menu
 function sendButtons(id, block) {
   return hasDrivers()
-    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>`
+    ? `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="pick-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to Driver</button>`
     : `<button class="btn btn-primary${block ? ' block' : ''}" type="button" data-act="dispatch" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>`;
 }
 // Group Chat (share menu: pick the group from the top row) next to Send to driver
@@ -4212,7 +4229,7 @@ function openDetails(id, refresh) {
       ${r.po ? `<dt>PO / ref</dt><dd>${esc(r.po)}</dd>` : ''}
       ${r.notes ? `<dt>Driver notes</dt><dd>${esc(r.notes)}</dd>` : ''}
     </dl>
-    ${kind !== 'pending' ? `<div class="sheet-actions again-row"><button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>${hasDrivers() ? `<button class="btn btn-primary" type="button" data-act="resend-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to driver</button>` : ''}</div>` : ''}
+    ${kind !== 'pending' ? `<div class="sheet-actions again-row"><button class="btn btn-secondary" type="button" data-act="recopy" data-id="${esc(id)}">${icon('users', 'sm')}Group Chat</button>${hasDrivers() ? `<button class="btn btn-primary" type="button" data-act="resend-driver" data-id="${esc(id)}"><span class="em" aria-hidden="true">💬</span>Send to Driver</button>` : ''}</div>` : ''}
     ${kind === 'done' ? `<div class="sheet-actions"><button class="btn btn-secondary block" type="button" data-act="undo" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
     ${kind === 'removed' ? `<div class="sheet-actions"><button class="btn btn-secondary block" type="button" data-act="restore" data-id="${esc(id)}">${icon('undo', 'sm')}Move back to queue</button></div>` : ''}
     ${msgThread(id, r)}
@@ -4794,7 +4811,7 @@ function vanMapDraw(st, onPin, onVan) {
     }
     p.setPosition(at);
     p.setLabel({ text: `#${r.ref_no}`, fontWeight: '800', fontSize: '11px', color: '#000' });
-    p.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 15, fillColor: isOverdue(r) ? '#ff6461' : '#FFD100', fillOpacity: 1, strokeColor: '#000', strokeWeight: 1.5 });
+    p.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 21, fillColor: isOverdue(r) ? '#ff6461' : '#FFD100', fillOpacity: 1, strokeColor: '#000', strokeWeight: 1.5 });
     p.setTitle(`#${r.ref_no} ${L.name || ''}`);
     b.extend(at);
   });
@@ -4960,6 +4977,19 @@ const itemsText = (items) => (items || []).filter((it) => Number(it.qty) > 0).ma
 const clampText = (s, max) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
 const lookupKey = (name) => String(name || '').replace(/[.#$[\]/]/g, '').trim(); // how Route Planner keys address_lookup
 const meName = () => String((S.user && S.user.email) || '').split('@')[0];
+/* Edited addresses: when a dispatcher changes a saved customer's address and taps "Save this one?",
+   it's kept in dispatch_settings/edited_addresses (shared by every dispatcher) and never written into
+   address_lookup, which Route Planner uses. Next time the customer is picked, the edited one is used. */
+const editedFor = (name) => { const e = S.edited && S.edited[lookupKey(name)]; return e && String(e.address || '').trim() ? e : null; };
+const sameAddr = (a, b) => String((a && a.address) || '').trim() === String((b && b.address) || '').trim() && String((a && a.city) || '').trim() === String((b && b.city) || '').trim();
+// A saved customer as a form leg: their edited address if there is one (unless useLookup), else address lookup's
+function savedLeg(name, useLookup) {
+  const base = S.lookup[name] || S.lookup[lookupKey(name)] || {};
+  const ed = useLookup ? null : editedFor(name);
+  const c = ed || base;
+  const num = (v) => (typeof v === 'number' ? v : null);
+  return { name, address: c.address || '', city: c.city || '', lat: num(c.lat), lng: num(c.lng), ok: !!c.address, from: c.address ? 'saved' : '', edited: !!ed, useLookup: !!useLookup && !!editedFor(name) };
+}
 
 /* ---------- Google Maps: loads the first time the form opens ---------- */
 const MAPS_KEY = 'AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI'; // same key as Route Planner and Request Pickup
@@ -5030,7 +5060,7 @@ function openNewDispatch(opts) {
       <div class="nc-row" id="nd-${k}-nc" hidden><span class="grow" id="nd-${k}-nc-t"></span><button class="nc-btn" type="button" id="nd-${k}-nc-btn" data-act="nd-add-customer" data-leg="${k}" aria-disabled="true">${icon('user-plus')}New customer<span class="nc-plus" aria-hidden="true">+</span></button></div>
       <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
       <div class="field addr-box" id="nd-${k}-box" hidden><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
-      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
+      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one for next time?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
     <div class="nd-route">${leg('pickup', 'Pickup')}${leg('delivery', 'Delivery')}</div>
@@ -5276,7 +5306,7 @@ function ndValid() {
     const L = ND[k];
     L.bad = false;
     if (!L.name.trim()) bad.push(`#nd-${k}-name`);
-    else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
+    else if (!L.address.trim() || (mapsUsable() && !L.ok && !isSavedName(L))) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
     else if (ndIsNew(L)) bad.push(`#nd-${k}-nc-btn`); // only saved customers go out: add it first
   });
   if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
@@ -5319,7 +5349,7 @@ function ndUpdate(force) {
   ndMode = mode;
   $('#nd-main').innerHTML = ndLater()
     ? `<button class="btn btn-primary nd-big" type="button" data-act="nd-save">${icon('calendar', 'sm')}${ND.date ? `Schedule for ${esc(fmtDay(ND.date))}` : 'Pick a day'}</button>`
-    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver"><span class="em" aria-hidden="true">💬</span>Send to driver</button></span>`;
+    : `<span class="nd-pair"><button class="btn btn-secondary nd-big" type="button" data-act="nd-group">${icon('users', 'sm')}Group Chat</button><button class="btn btn-primary nd-big" type="button" data-act="nd-pick-driver"><span class="em" aria-hidden="true">💬</span>Send to Driver</button></span>`;
 }
 /* One leg: a grey line for an address that's known, the address boxes when one is needed
    (a new customer, Change, or something missing), and "Save this one?" when it differs from the saved one.
@@ -5335,10 +5365,15 @@ function ndLegUi(k) {
   const showBox = !showLine && !typingSaved && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
   const was = [line.hidden, box.hidden, diff.hidden, $(`#nd-${k}-nc`).hidden].join();
   line.hidden = !showLine;
-  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
+  // An edited address says so, with one tap back to the address lookup one (and one tap to the edited one again)
+  const edTag = L.from === 'saved' && L.edited ? `<button class="ed-tag" type="button" data-act="nd-use-lookup" data-leg="${k}" aria-label="Edited address. Tap to use the address lookup address instead">Edited<span aria-hidden="true">✕</span></button>`
+    : L.from === 'saved' && L.useLookup && editedFor(L.name) ? `<button class="ed-tag off" type="button" data-act="nd-use-edited" data-leg="${k}" aria-label="Use the edited address">Use edited</button>` : '';
+  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}${edTag}`;
   box.hidden = !showBox;
   if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${esc([L.from === 'saved' ? 'Saved customer' : 'Checked with Google', mapsUsable() ? L.city.trim() : ''].filter(Boolean).join(' · '))}`; }
+  else if (L.address.trim() && mapsUsable() && isSavedName(L)) { ok.className = 'addr-ok'; ok.textContent = 'Typed as is (not from Google). Fine for plus codes and docks.'; }
   else if (L.address.trim() && mapsUsable()) { ok.className = `addr-ok${L.bad ? ' err' : ''}`; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
+  else if (L.address.trim() && ndIsNew(L) && !mapsUsable()) { ok.className = 'addr-ok err'; ok.textContent = 'Google isn’t working right now. A new customer needs a Google address.'; }
   else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
   else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
   diff.hidden = customerAction(k) !== 'update' || !!L.keep;
@@ -5389,27 +5424,75 @@ function customerAction(k) {
   const c = S.lookup[key];
   if (!c) return L.addPending ? '' : 'add';
   const addr = L.address.trim();
-  if (!addr || !c.address || L.from === 'saved') return '';
-  if (mapsUsable() && !L.ok) return ''; // only once the new address is picked
-  return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
+  if (!addr || L.from === 'saved') return '';
+  // Compared with the address this customer gets when picked: the edited one, or address lookup's
+  const now = (!L.useLookup && editedFor(L.name)) || c;
+  if (!now.address) return '';
+  return addr !== String(now.address).trim() || (L.city.trim() && L.city.trim() !== String(now.city || '').trim()) ? 'update' : '';
+}
+// The name is a saved customer (in address lookup)
+const isSavedName = (L) => !!lookupKey(L.name) && !!S.lookup[lookupKey(L.name)];
+/* "Save this one?" Yes: kept in the dispatchers' own section, never in address_lookup.
+   Changed back to exactly the address lookup one: the edited one is forgotten. */
+function saveEditedNow(k) {
+  const L = ND[k];
+  const key = lookupKey(L.name);
+  const base = S.lookup[key];
+  if (!key || !base || !db || !S.user) return;
+  const name = L.name.trim();
+  const ref = db.ref(`dispatch_settings/edited_addresses/${key}`);
+  const fail = (err) => toast(`${name}’s address couldn’t be saved: ${friendlyError(err)}`, 'error', 10000);
+  if (sameAddr(L, base)) {
+    S.edited = Object.assign({}, S.edited); delete S.edited[key];
+    Object.assign(L, { from: 'saved', ok: true, edit: false, edited: false, useLookup: false, keep: false });
+    ndUpdate();
+    ref.remove().then(() => toast(`${name} is back to the address lookup address.`, 'ok')).catch(fail);
+    return;
+  }
+  const rec = { address: L.address.trim(), city: L.city.trim(), by: meName(), at: TS, lookup_address: [base.address, base.city].filter(Boolean).join(', ') };
+  if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; }
+  S.edited = Object.assign({}, S.edited, { [key]: Object.assign({}, rec, { at: Date.now() }) });
+  Object.assign(L, { from: 'saved', ok: true, edit: false, edited: true, useLookup: false, keep: false });
+  ndUpdate();
+  ref.set(rec).then(() => toast(`${name}’s edited address is saved for every dispatcher. Address lookup isn’t changed.`, 'ok', 6000)).catch(fail);
+}
+// The Edited tag: this job goes back to the address lookup address (the edited one stays saved)
+function ndUseLookup(k, useLookup) {
+  const L = ND && ND[k];
+  if (!L || !isSavedName(L)) return;
+  ND[k] = Object.assign(savedLeg(lookupKey(L.name), useLookup), { name: L.name, voiceHeard: L.voiceHeard });
+  ndFillLeg(k);
+  ndUpdate();
+  const ta = $('#nd-text');
+  if (ta && !ndEdited()) { ta.value = ndAutoText(); ndTextUi(); }
+  if (useLookup) toast('Using the address lookup address for this job.', 'ok', 7000, { label: 'Forget edited', run: () => forgetEdited(L.name) });
+}
+function forgetEdited(name) {
+  const key = lookupKey(name);
+  if (!key || !db || !S.user) return;
+  S.edited = Object.assign({}, S.edited); delete S.edited[key];
+  if (ndOpen()) ndUpdate();
+  db.ref(`dispatch_settings/edited_addresses/${key}`).remove().then(() => toast(`${name.trim()}’s edited address is forgotten.`, 'ok')).catch((err) => toast(friendlyError(err), 'error'));
 }
 // Typed a name that isn't a saved customer (or one of a customer's own contacts)
 const ndIsNew = (L) => !!lookupKey(L.name) && !S.lookup[lookupKey(L.name)] && L.from !== 'company';
 // Address good enough to save: picked from Google or the map, or typed when Google isn't available
-const legAddrReady = (L) => !!L.address.trim() && (L.ok || !mapsUsable());
+// New customers only go into address lookup with a proper Google address (picked from Google's list or the map)
+const legAddrReady = (L) => !!L.address.trim() && !!L.ok && L.lat != null && L.from === 'google';
 function saveCustomerNow(k) {
   const L = ND[k];
   const key = lookupKey(L.name);
   if (!key || !db || !S.user) return;
   const was = S.lookup[key];
-  const rec = { address: L.address.trim(), city: L.city.trim(), last_edit_by: meName() };
-  if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; } else if (was) { rec.lat = null; rec.lng = null; }
+  if (was) return; // a saved customer is never changed here: edits go to the dispatchers' own section
+  if (!legAddrReady(L)) return;
+  const rec = { address: L.address.trim(), city: L.city.trim(), last_edit_by: meName(), lat: L.lat, lng: L.lng };
   L.addPending = false;
   // Shown as saved straight away; the live list confirms it a moment later
   S.lookup = Object.assign({}, S.lookup, { [key]: Object.assign({}, was || {}, rec) });
   ndUpdate();
   db.ref('address_lookup').child(key).update(rec)
-    .then(() => toast(was ? `${L.name.trim()}’s address updated.` : `${L.name.trim()} added as a customer.`, 'ok'))
+    .then(() => toast(`${L.name.trim()} added as a customer.`, 'ok'))
     .catch((err) => toast(`${L.name.trim()} couldn’t be saved: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
 }
 // Add +: saves now if the address is ready, otherwise as soon as it's picked
@@ -5481,8 +5564,9 @@ function ndSuggest(k) {
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
   };
   list.innerHTML = found.map((x, i) => {
-    const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
-    const where = [c.address, c.city].filter(Boolean).join(', ') || 'No address saved';
+    const ed = x.src === 'saved' ? editedFor(x.name) : null;
+    const c = x.src === 'saved' ? ed || S.lookup[x.name] || {} : x;
+    const where = (ed ? 'Edited · ' : '') + ([c.address, c.city].filter(Boolean).join(', ') || 'No address saved');
     return `<button class="ac-item${i === 0 ? ' on' : ''}${x.src === 'company' ? ' co' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-i="${i}"><b>${hl(x.name)}</b><small>${x.src === 'company' ? `<em>${esc(x.company || 'Customer')}’s contact</em> · ` : ''}${esc(where)}</small></button>`;
   }).join('');
   const was = list.hidden;
@@ -5519,8 +5603,8 @@ function ndPick(k, i) {
   // The mic put the wrong customer here (or no one): what was said now means this customer, in Route Planner too
   const heard = ND[k].voiceHeard;
   if (heard && x.src === 'saved' && x.name !== ND[k].name) voiceTeach([heard], x.name);
-  const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
-  ND[k] = { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
+  const c = x.src === 'saved' ? editedFor(x.name) || S.lookup[x.name] || {} : x;
+  ND[k] = x.src === 'saved' ? savedLeg(x.name) : { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
   if (x.src === 'company') ND[k].company = x.company || '';
   ndFillLeg(k);
   ndHideSuggest(k);
@@ -5641,15 +5725,15 @@ async function nextRefNo() {
 }
 /* New customers go into the shared list when the job is saved, like Route Planner does.
    A saved customer's address is never changed here: a one-off job to another address would
-   otherwise change it for everyone. "Save this one?" in the form does that on purpose. */
+   otherwise change it for everyone. "Save this one?" keeps it in dispatch_settings/edited_addresses instead. */
 function saveCustomers(r) {
   [r.pickup, r.delivery].forEach((L) => {
     const key = lookupKey(L.name);
     if (!key || !L.address) return;
     const was = S.lookup[key];
-    if (was && was.address) return;
-    const rec = { address: L.address, city: L.city || '', last_edit_by: meName() };
-    if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; }
+    if (was) return; // never written over: an edited address goes to dispatch_settings/edited_addresses
+    if (L.lat == null || L.lng == null) return; // only with a proper Google address
+    const rec = { address: L.address, city: L.city || '', last_edit_by: meName(), lat: L.lat, lng: L.lng };
     db.ref('address_lookup').child(key).update(rec)
       .catch((err) => toast(`${L.name} couldn’t be saved as a customer: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
   });
@@ -5709,7 +5793,7 @@ let popOpen = false;
 function ndPickDriver() {
   const r = ndValid();
   if (!r) return;
-  openSendPanel('Send to driver', ND.pickup, (did) => ndSendDriver(did), false, null, routeLabel(r));
+  openSendPanel('Send to Driver', ND.pickup, (did) => ndSendDriver(did), false, null, routeLabel(r));
 }
 const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'Hybrid'], ['terrain', 'Terrain']];
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
@@ -5974,7 +6058,7 @@ function spDrivers(list) {
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
     name.innerHTML = `<span>${esc(d.name || '')}</span>`;
-    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
+    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van';
 
     // "Closest" sits over the distance, so the name and van keep their full width
     $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : '';
@@ -6057,6 +6141,8 @@ function geoCached(L) {
   if (!L) return null;
   const c = S.lookup && S.lookup[lookupKey(L.name)];
   if (c && c.lat != null && isFinite(+c.lat) && (c.address || '') === (L.address || '')) return { lat: +c.lat, lng: +c.lng };
+  const ed = editedFor(L.name);
+  if (ed && ed.lat != null && isFinite(+ed.lat) && (ed.address || '') === (L.address || '')) return { lat: +ed.lat, lng: +ed.lng };
   return geoCache[geoQuery(L)] || null;
 }
 function geoRemember(L, at) {
@@ -6067,6 +6153,8 @@ function geoRemember(L, at) {
   const pos = { lat: +at.lat.toFixed(6), lng: +at.lng.toFixed(6) };
   const key = lookupKey(L.name), c = S.lookup && S.lookup[key];
   if (key && c && (c.address || '') === (L.address || '')) db.ref(`address_lookup/${key}`).update(pos).catch(() => {});
+  const ed = key && editedFor(L.name);
+  if (ed && (ed.address || '') === (L.address || '')) db.ref(`dispatch_settings/edited_addresses/${key}`).update(pos).catch(() => {});
   if (sp.jobId && S.pending[sp.jobId]) db.ref(`requests/${sp.jobId}/pickup`).update(pos).catch(() => {});
   if (ND && L === ND.pickup) Object.assign(ND.pickup, pos); // a new dispatch saves it with the job
 }
@@ -6086,15 +6174,26 @@ function spPickup() {
 const svgUrl = (svg) => `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 // Heading rounded to 15°, or null when the GPS doesn't say (RouteWatcher does the same)
 const headingOf = (h) => (h === null || h === undefined || h === '' || !isFinite(+h) ? null : (Math.round((((+h % 360) + 360) % 360) / 15) * 15) % 360);
+// Black or white text, whichever reads better on a color
+function inkOn(c) {
+  let h = String(c || '').trim().replace('#', '');
+  if (h.length === 3 || h.length === 4) h = h.slice(0, 3).split('').map((x) => x + x).join('');
+  const n = parseInt(h.slice(0, 6), 16);
+  if (!isFinite(n)) return '#111111';
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#111111' : '#ffffff';
+}
 function vanIcon(v) {
-  const w = Math.max(44, Math.min(200, v.label.length * 7.4 + 26));
+  const w = Math.max(44, Math.min(200, v.label.length * 7.4 + 30));
   const green = v.rank === 1;
-  const fill = green ? '#26a356' : v.nick ? '#ffffff' : '#f4f4f4';
-  const ink = green ? '#ffffff' : v.nick ? '#111111' : '#777777';
+  const own = v.nick && /^#?[0-9a-f]{3,8}$/i.test(String(v.color || '').trim());
+  const fill = own ? v.color : v.nick ? '#ffffff' : '#f4f4f4';
+  const ink = own ? inkOn(v.color) : v.nick ? '#111111' : '#777777';
+  const ring = green ? '#16a34a' : 'rgba(0,0,0,.3)'; // closest van: a thick green ring instead of a green fill
   // Pill with the name, and under it a dot with a small arrow pointing the way the van is heading
   const cx = w / 2, cy = 40;
   const arrow = v.heading == null ? '' : `<path d="M${cx} ${cy - 13} l5 7 h-10 z" fill="${esc(v.color)}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" transform="rotate(${v.heading} ${cx} ${cy})"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="54"><rect x="1" y="1" width="${w - 2}" height="24" rx="12" fill="${fill}" stroke="rgba(0,0,0,.25)"/><text x="${cx}" y="17.5" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text>${arrow}<circle cx="${cx}" cy="${cy}" r="6.5" fill="${esc(v.color)}" stroke="#fff" stroke-width="2.5"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="54"><rect x="${green ? 2 : 1}" y="${green ? 2 : 1}" width="${w - (green ? 4 : 2)}" height="${green ? 22 : 24}" rx="11.5" fill="${esc(fill)}" stroke="${ring}" stroke-width="${green ? 3 : 1}"/><text x="${cx}" y="17.5" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text>${arrow}<circle cx="${cx}" cy="${cy}" r="6.5" fill="${esc(v.color)}" stroke="#fff" stroke-width="2.5"/></svg>`;
   return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, 54), anchor: new google.maps.Point(cx, cy) };
 }
 // A van slides to its new spot over about a second instead of jumping
@@ -6185,7 +6284,8 @@ const revGeo = {};
 function spShowDriver(did, id) {
   const x = (sp.fv || []).find((f) => f.did === did && f.van === id);
   const v = spList().find((f) => f.id === id);
-  if (!sp.map || !x || !v) return;
+  if (!sp.map || !x || !v) { if (sp.map && id) spZoomTo(id); return; }
+  if (sp.fsel === did) { spHideWhere(); sp.focus = id; spZoomTo(id); return; } // tapped again: back to everyone
   sp.fsel = did;
   spFullVans();
   sp.focus = '';
@@ -6212,7 +6312,7 @@ function spHideWhere() {
 // A van tapped on the map: on the full map it shows that driver's address too
 function spMarkerTap(id) {
   const full = $('.sp-card') && $('.sp-card').classList.contains('mapfull');
-  const x = full && (sp.fv || []).find((f) => f.van === id);
+  const x = (sp.fv || []).find((f) => f.van === id);
   if (x) spShowDriver(x.did, id); else spZoomTo(id);
 }
 // Tapping a vehicle (chip or map) only zooms to it (zoom level in Settings), with a little bounce.
@@ -6287,7 +6387,7 @@ $('#nd-pop-list').addEventListener('pointerup', () => {
   // A quick tap (not a hold) shows that driver's van on the map
   const el = hold.el;
   if (el && performance.now() - hold.t0 < 250) {
-    if (el.dataset.van) spZoomTo(el.dataset.van);
+    if (el.dataset.van) spShowDriver(el.dataset.holdDriver, el.dataset.van);
     else if (el.dataset.nogps) toast(`${el.dataset.nogps} has no GPS yet, so it isn't on the map.`, 'info', 2500);
     else if (el.classList.contains('novan')) toast('No van picked in Timeclock today.', 'info', 2500);
   }
@@ -7031,7 +7131,12 @@ document.addEventListener('click', async (e) => {
     case 'nd-diff': {
       const L = ND && ND[el.dataset.leg];
       if (!L) break;
-      if (el.dataset.v === 'yes') saveCustomerNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      if (el.dataset.v === 'yes') saveEditedNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      break;
+    }
+    case 'nd-use-lookup': ndUseLookup(el.dataset.leg, true); break;
+    case 'nd-use-edited': {
+      ndUseLookup(el.dataset.leg, false);
       break;
     }
     case 'nd-add-customer': ndAddCustomer(el.dataset.leg); break;
@@ -7552,8 +7657,7 @@ function voiceFill(v, t, alts, final) {
     if (!r.src) { if (final) { v.missing.push(r.name); ND[k].voiceHeard = r.heard || ''; } return; }
     if (vNorm(r.name) === vNorm(v.base[k].name)) return;
     if (r.src === 'saved') {
-      const c = S.lookup[r.name] || {};
-      ND[k] = { name: r.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+      ND[k] = savedLeg(r.name);
     } else if (r.src === 'company') {
       const c = r.co;
       ND[k] = { name: c.name, address: c.address || '', city: c.city || '', lat: c.lat, lng: c.lng, ok: !!c.address, from: c.address ? 'company' : '', company: c.company || '' };

@@ -190,6 +190,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // Done isn't lit any more once you've left its page for Messages
     await page.mouse.move(5, 300); await page.waitForTimeout(400);
     { const bg = await page.evaluate(() => [getComputedStyle(document.querySelector('.tab[data-tab=done] .ti')).backgroundColor, document.body.classList.contains('layer-up')]); assert.ok(bg[0] === 'rgba(0, 0, 0, 0)', 'Done not lit while Messages is open ' + bg); }
+    assert.ok(await page.evaluate(() => getComputedStyle(document.querySelector('#msg-btn .ti')).backgroundColor !== 'rgba(0, 0, 0, 0)'), 'Messages is lit while it is open');
     await page.click('.app-head .kp-sched');
     await page.waitForFunction(() => document.getElementById('sheet').hidden && !document.getElementById('panel-scheduled').hidden);
     // Who made it: a side strip on Scheduled cards (customer app here; a dispatcher job says Dispatcher)
@@ -200,7 +201,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => openDetails('r4'));
     await page.waitForSelector('#sheet [data-act=resend-driver]');
     assert.ok(await page.isVisible('#sheet [data-act=recopy]:has-text("Group Chat")'));
-    assert.match(await page.textContent('#sheet [data-act=resend-driver]'), /💬\s*Send to driver/);
+    assert.match(await page.textContent('#sheet [data-act=resend-driver]'), /💬\s*Send to Driver/);
     await page.click('#sheet [data-act=resend-driver]');
     await page.waitForSelector('#nd-pop:not([hidden]) #nd-pop-list [data-hold-driver]');
     assert.match(await page.textContent('#sp-title'), /Send #1190 again/);
@@ -516,6 +517,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(!(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire'))), 'nothing saved without an address');
     await page.fill('#nd-pickup-address', '200 18th St');
     await page.fill('#nd-pickup-city', 'Brandon');
+    await page.waitForTimeout(200);
+    assert.strictEqual(await page.getAttribute('#nd-pickup-nc-btn', 'aria-disabled'), 'true', 'a typed address is not enough: new customers need a Google address');
+    // Google is blocked in this browser: act as if the address was picked from Google's list
+    await page.evaluate(() => { Object.assign(ND.pickup, { address: '200 18th St', city: 'Brandon', lat: 49.84, lng: -99.95, ok: true, from: 'google', edit: false, bad: false }); ndFillLeg('pickup'); ndUpdate(); });
     await page.waitForSelector('#nd-pickup-nc-btn.ready');
     assert.ok(await page.isVisible('#nd-pickup-box') && await page.isHidden('#nd-pickup-line'), 'a new customer keeps the address box to tap');
     await page.click('#nd-pickup-nc-btn');
@@ -532,6 +537,24 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.fill('#nd-delivery-address', '3 Other Dock Rd');
     await page.waitForSelector('#nd-delivery-diff:not([hidden])');
     assert.ok(await page.isHidden('#nd-delivery-add'), 'no Add + for a saved customer');
+    // Yes keeps it in the dispatchers' own section (shared), never in address_lookup
+    await page.click('#nd-delivery-diff [data-v=yes]');
+    await page.waitForFunction(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply'));
+    assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply').address), '3 Other Dock Rd');
+    assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Acme Supply').address), '12 Main St', 'address lookup not changed by Yes');
+    assert.ok(await page.isHidden('#nd-delivery-diff'), 'question goes away once saved');
+    // Next time the customer is picked, the edited address is used, with an Edited tag
+    await page.fill('#nd-delivery-name', 'Acm');
+    await page.click('.ac-item:has-text("Acme Supply")');
+    assert.match(await page.textContent('#nd-delivery-line'), /3 Other Dock Rd/);
+    assert.ok(await page.isVisible('#nd-delivery-line .ed-tag'), 'Edited tag shows');
+    // One tap goes back to the address lookup address for this job, one tap to the edited one again
+    await page.click('#nd-delivery-line [data-act=nd-use-lookup]');
+    assert.match(await page.textContent('#nd-delivery-line'), /12 Main St/);
+    assert.ok(await page.isHidden('#nd-delivery-diff'), 'no question when using the lookup address');
+    await page.click('#nd-delivery-line [data-act=nd-use-edited]');
+    assert.match(await page.textContent('#nd-delivery-line'), /3 Other Dock Rd/);
+    assert.ok(await page.evaluate(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply')), 'edited address still saved');
     // Tap buttons start on the usual answers; Prepaid flips to Collect; + Note opens just that box
     assert.match(await page.textContent('[data-x=items]'), /1 box/);
     assert.match(await page.textContent('[data-x=when]'), /Now/);
@@ -695,9 +718,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await sub('Mike'), /^Van 1$/, 'GPS van');
       assert.match(await sub('Sara'), /^Van 9 · no GPS$/, 'van with no GPS unit, picked in Timeclock');
       assert.match(await sub('Jen'), /^Van 4 · no GPS$/, 'GPS van that has no position yet');
-      assert.match(await sub('Tom'), /^No van today$/);
-      assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
-      assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
+      assert.match(await sub('Tom'), /^No van$/);
+      assert.match(await sub('Mike Jones'), /^No van$/, "two Mikes: the other Mike doesn't get Mike's van");
+      assert.match(await sub('Kim'), /^No van$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
       assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
       // Order: the closest driver is the first button (top left), then the next closest; no GPS, then no van, last
       const order = await pg.evaluate(() => {
