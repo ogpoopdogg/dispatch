@@ -939,12 +939,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await pg.evaluate(() => document.getElementById('mic-fab').classList.contains('on')), 'the mic glows while listening');
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'nothing fills in while still talking');
       await shot(pg, 'voice-talking');
+      // Note every box the mic lights up (the check doesn't depend on how fast the test machine is)
+      await pg.evaluate(() => { window.__lit = []; const real = voiceBurst; voiceBurst = (l) => { real(l); l.forEach((e) => { if (e && e.classList.contains('vfill')) window.__lit.push({ q: e.id || e.dataset.x, rings: document.querySelectorAll('.vfx .vfx-ring').length, dots: document.querySelectorAll('.vfx .vfx-dot').length, anim: getComputedStyle(e).animationName }); }); }; });
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box 25 pounds', true));
       await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
       // Everything the mic filled lights up green (top to bottom), with a ring and sparks bursting out
-      assert.ok(await pg.evaluate(() => ['#nd-pickup-name', '#nd-delivery-name', '[data-act=nd-x][data-x=items]', '#nd-text'].every((q) => document.querySelector(q).classList.contains('vfill'))), 'filled boxes flash green');
-      assert.ok(await pg.evaluate(() => getComputedStyle(document.getElementById('nd-delivery-name')).animationName === 'vfill' && document.querySelectorAll('.vfx .vfx-ring').length >= 4 && document.querySelectorAll('.vfx .vfx-dot').length >= 48), 'a burst for each box');
-      await pg.waitForTimeout(260);
+      const lit = await pg.evaluate(() => window.__lit);
+      assert.deepStrictEqual(['nd-pickup-name', 'nd-delivery-name', 'items', 'nd-text'].filter((q) => !lit.some((x) => x.q === q)), [], `filled boxes flash green: ${JSON.stringify(lit)}`);
+      assert.ok(lit.every((x) => x.anim === 'vfill' && x.rings >= 1 && x.dots >= 12), 'a green pulse and a burst for each box');
       await shot(pg, 'voice-green');
       await pg.waitForFunction(() => !document.querySelector('.vfx') && !document.querySelector('.vfill'), null, { timeout: 4000 });
       await pg.waitForFunction(() => !document.getElementById('mic-fab').classList.contains('on'));
