@@ -732,7 +732,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
       assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
       assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
-      // Order: the closest driver is the first button (top left), then the next closest; no GPS, then no van, last
+      // Order: the closest driver is the first button (top right), then the next closest; no GPS, then no van, last
       const order = await pg.evaluate(() => {
         sp.at = { lat: 49.85, lng: -99.0 };
         sp.vans.g2 = { name: 'Van 2', color: '#2f9e44', lastLocation: { lat: 49.85, lng: -99.1 } }; // ~7 km
@@ -744,6 +744,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
         return [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].map((b) => b.querySelector('.drv-name > span').textContent);
       });
       assert.deepStrictEqual(order.slice(0, 3), ['Bob', 'Ann', 'Mike'], `closest first: ${order.slice(0, 5)}`);
+      assert.ok(await pg.evaluate(() => { const [one, two] = [...document.querySelectorAll('#nd-pop-list [data-hold-driver]')].map((x) => x.getBoundingClientRect()); return Math.abs(one.top - two.top) < 2 && one.left > two.left; }), 'the closest driver sits top RIGHT (right thumb), the next one to its left');
       assert.deepStrictEqual(order.slice(3, 5).sort(), ['Jen', 'Sara'], 'vans with no GPS next');
       assert.ok(order.indexOf('Tom') > 4, 'drivers with no van after every van');
       await shot(pg, 'send-closest-first');

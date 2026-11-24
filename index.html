@@ -893,7 +893,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .pick.drv.gps-old small,.pick.drv.gps-old .drv-d{color:#b45309}
 /* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits first, top left, then the next closest, and so on. */
+   The closest sits first, top right (right thumb), then the next closest to its left, and so on. */
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* Big buttons (few drivers): bigger name, van and distance */
 /* Hold to send: a green ring runs clockwise round the button */
@@ -959,12 +959,14 @@ body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - 
 .mic-hear span{opacity:.8;font-weight:600}
 .mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
-/* Every box the mic just filled gives a light green pop with a thin ring pulsing out (one box after another,
-   top to bottom), so you can see which boxes it filled. Kept soft on purpose (Justin). */
-.vfill{animation:vfill .9s var(--out) var(--vd,0ms) both}
-@keyframes vfill{0%{box-shadow:0 0 0 0 rgba(34,197,94,.45);background-color:rgba(187,247,208,.55);transform:scale(1)}
-  18%{box-shadow:0 0 0 4px rgba(34,197,94,.18);background-color:rgba(187,247,208,.5);transform:scale(1.012)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0);transform:scale(1)}}
+/* Every box the mic just filled is outlined in green with a soft green tint (one box after another, top to
+   bottom): it comes in quickly with one soft ring pulsing out, stays about a second and a half so you can
+   see which boxes were filled, then slowly fades away. No sparks (Justin wants it professional). */
+.vfill{animation:vfill 3.4s cubic-bezier(.4,0,.2,1) var(--vd,0ms) both}
+@keyframes vfill{0%{box-shadow:0 0 0 0 rgba(22,163,74,0),0 0 0 0 rgba(34,197,94,0)}
+  7%{box-shadow:0 0 0 2px #16a34a,0 0 0 6px rgba(34,197,94,.22);background-color:#ecfdf3;border-color:#16a34a}
+  48%{box-shadow:0 0 0 2px #16a34a,0 0 0 6px rgba(34,197,94,.16);background-color:#ecfdf3;border-color:#16a34a}
+  100%{box-shadow:0 0 0 2px rgba(22,163,74,0),0 0 0 6px rgba(34,197,94,0)}}
 .vfx{position:fixed;inset:0;z-index:130;pointer-events:none;overflow:hidden}
 .vfx-ring{position:absolute;border:2px solid rgba(34,197,94,.7);border-radius:12px;opacity:0;animation:vfxRing .6s var(--out) var(--vd,0ms) forwards}
 @keyframes vfxRing{0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(var(--sx,1.05),var(--sy,1.2))}}
@@ -1108,8 +1110,9 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
-   The closest sits first, top left, then the next closest, and so on. */
-.drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
+   The closest sits first, top right (right thumb), then the next closest to its left, and so on. */
+.drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px;direction:rtl} /* fills right to left: the closest sits top RIGHT, under the right thumb (Justin) */
+.drv-list>*{direction:ltr}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
 .pick.drv .avatar{width:34px;height:34px;font-size:13px;background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
@@ -1130,7 +1133,9 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .pick.drv .drv-tag{margin:0 0 2px;font-size:9px;line-height:14px}
 .pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
 .pick.drv.novan .avatar{background:var(--ink-3)}
-.pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
+.pick.drv.best{border:2px solid #1f9d4f;background:linear-gradient(160deg,#e3fbec,#c9f2d9);box-shadow:0 0 0 3px rgba(38,163,86,.3),0 0 16px 2px rgba(63,207,120,.55);animation:drvBest 1.6s ease-in-out infinite} /* closest: a stronger green glow (Justin) */
+@keyframes drvBest{50%{box-shadow:0 0 0 4px rgba(38,163,86,.4),0 0 24px 5px rgba(63,207,120,.75)}}
+@media (prefers-reduced-motion:reduce){.pick.drv.best{animation:none}}
 .drv-tag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:#26a356;color:#fff;font-size:10px;font-weight:800;line-height:15px;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px}
 /* Hold to send: a green ring runs clockwise round the button */
 .hold-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -6049,7 +6054,7 @@ function vanOf(d, list) {
   return onMap ? Object.assign({ name: hit.name }, onMap) : { id: hit.id, nick: hit.nick, name: hit.name, label: hit.name, color: (sp.vans[hit.id] && sp.vans[hit.id].color) || '', km: null, pos: null, nogps: true };
 }
 /* Driver rows, updated in place (so a hold in progress isn't broken): van colour, van name, distance and
-   drive time. The closest goes first, top left; drivers with no van go last (greyed, still sendable). */
+   drive time. The closest goes first, top right; drivers with no van go last (greyed, still sendable). */
 function spDrivers(list) {
   const rows = $$('#nd-pop-list [data-hold-driver]');
   if (!rows.length) return;
@@ -6073,7 +6078,7 @@ function spDrivers(list) {
     $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : '';
     b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
-  // Order: closest first (top left), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
+  // Order: closest first (top right), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
   const group = (x) => (!x.v ? 2 : x.v.km == null ? 1 : 0);
   const sorted = info.slice().sort((a, b) => group(a) - group(b) || (group(a) === 0 ? a.v.km - b.v.km : 0) || String(a.d.name || '').localeCompare(String(b.d.name || '')));
   const order = sorted.map((x) => x.b.dataset.holdDriver).join('|');
@@ -7720,6 +7725,7 @@ function voiceStart() {
 }
 function voiceStop(quiet) {
   if (!voice) return;
+  voice.userStop = true; // a tap on the mic: don't start listening again
   if (quiet) { const v = voice; voice = null; v.ctl.cleanup && v.ctl.cleanup(); v.ctl.stop(); micListening(false); return; }
   voice.ctl.stop();
 }
@@ -7806,7 +7812,7 @@ function voiceFill(v, t, alts, final) {
   if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
 }
 
-// Light up the boxes the mic filled: top to bottom, each a moment after the last, a soft green pop with a thin ring
+// Light up the boxes the mic filled: top to bottom, each a moment after the last, a green outline that stays a moment and fades
 function voiceBurst(list) {
   const els = list.filter((el) => el && el.isConnected && el.getBoundingClientRect().width)
     .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
@@ -7819,7 +7825,7 @@ function voiceBurst(list) {
     el.style.setProperty('--vd', d);
     el.classList.add('vfill');
     clearTimeout(el._vfill);
-    el._vfill = setTimeout(() => { el.classList.remove('vfill'); el.style.removeProperty('--vd'); }, 1000 + i * 110);
+    el._vfill = setTimeout(() => { el.classList.remove('vfill'); el.style.removeProperty('--vd'); }, 3500 + i * 110);
     if (!fx) return;
     const r = el.getBoundingClientRect();
     const ring = document.createElement('i');
@@ -7838,8 +7844,13 @@ function voiceBurst(list) {
 function voiceType(box, join, small) {
   const start = box.selectionStart != null ? box.selectionStart : box.value.length;
   const endSel = box.selectionEnd != null ? box.selectionEnd : start;
-  const before = box.value.slice(0, start), after = box.value.slice(endSel);
+  let before = box.value.slice(0, start), after = box.value.slice(endSel);
+  let caret = start; // where the words said so far end
   const v = { mode: 'type', box, small: !!small }; // small: started from a small mic in a text box (only that one lights up)
+  // The small mic keeps listening like the big one: the phone stops after a short pause, so it starts again
+  // until you tap it, or nothing is said for a while (8 s at first, 6 s after the last words), or 60 s pass.
+  const startedAt = Date.now();
+  let heardAt = 0;
   // join: the words are added on as a new part of the driver text (", side door please")
   voice = v;
   micListening(true);
@@ -7863,21 +7874,32 @@ function voiceType(box, join, small) {
       const gapR = after && !/^[\s,.!?]/.test(after) ? ' ' : '';
       box.value = before + gapL + s + gapR + after;
       const at = (before + gapL + s).length;
+      caret = at;
       try { box.setSelectionRange(at, at); } catch (e) { /* */ }
     }
     box.dispatchEvent(new Event('input', { bubbles: true }));
   };
-  v.ctl = voiceListen({
-    text: (t) => { if (voice !== v) return; micSay(t); put(t); },
+  const listen = () => voiceListen({
+    text: (t) => { if (voice !== v) return; heardAt = Date.now(); micSay(t); put(t); },
     end: (t, err) => {
       if (voice !== v) return;
+      if (t) { heardAt = Date.now(); put(t); }
+      const now = Date.now();
+      const more = v.small && !v.userStop && err !== 'denied' && now - startedAt < 60000
+        && (heardAt ? now - heardAt < 6000 : now - startedAt < 8000);
+      if (more && box.isConnected) {
+        // Carry on after the words said so far
+        if (t) { before = box.value.slice(0, caret); after = box.value.slice(caret); }
+        v.ctl = listen();
+        return;
+      }
       voice = null;
       micListening(false);
       if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
-      if (t) put(t);
       box.dispatchEvent(new Event('change', { bubbles: true }));
     }
   });
+  v.ctl = listen();
 }
 
 /* The small mic inside the driver text box: says words onto the end of the text, no keyboard */
