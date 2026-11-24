@@ -994,6 +994,19 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForFunction(() => document.getElementById('nd-notes').value === 'Back door ask for Dave');
       assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
       await shot(pg, 'voice');
+      // The big mic is still going and the small mic in the driver text is tapped: the big one finishes now (its words
+      // fill in) and the small one starts listening at once
+      await pg.click('.nd-route .nd-clear');
+      await pg.waitForTimeout(300);
+      await pg.click('#mic-fab');
+      await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box', false));
+      await pg.evaluate(() => document.querySelector('.nd-text-box .nd-te-mic').click());
+      assert.ok(await pg.evaluate(() => !!voice && voice.mode === 'type' && voice.box.id === 'nd-text'), 'small mic listening right away');
+      assert.strictEqual(await pg.inputValue('#nd-delivery-name'), 'AAA Bobcat', 'the big mic\'s words filled in');
+      await pg.evaluate(() => __say('side door', false));
+      assert.match(await pg.inputValue('#nd-text'), /Prepaid, side door$/);
+      await pg.evaluate(() => document.querySelector('.nd-text-box .nd-te-mic').click());
+      assert.ok(await pg.evaluate(() => !voice), 'tap = off');
       // A name that's not a saved customer never goes in a box (like Route Planner): a message says so instead
       await pg.click('.nd-route .nd-clear');
       await pg.waitForTimeout(300);
