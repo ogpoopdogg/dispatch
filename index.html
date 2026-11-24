@@ -778,6 +778,9 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .addr-line .grow small{flex:none;font-size:12px;color:var(--ink-3)}
 .addr-line .i{flex:none;width:14px;height:14px;color:var(--ink-3)}
 .addr-line .link-btn{min-height:36px;padding:0 4px 0 10px;font-size:14px}
+.ed-tag{flex:none;display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 7px;margin-left:2px;border:1px solid #d9a400;border-radius:11px;background:#fff6d6;color:#6b4e00;font:600 11.5px/1 inherit;cursor:pointer}
+.ed-tag span{font-size:10px;opacity:.7}
+.ed-tag.off{border-color:var(--line,#ccc);background:transparent;color:var(--ink-2)}
 .addr-ok.err{color:var(--danger)}
 /* A name that isn't a saved customer: "New customer +" with a Google address bar under it */
 .nc-row{display:flex;align-items:center;gap:8px;margin:-2px 0 6px;animation:riseIn var(--t) var(--out)}
@@ -2287,6 +2290,7 @@ const S = {
   msgs: {},         // messages with customers, the last 7 days (messages/)
   quick: null,      // quick replies (dispatch_settings/quick_replies); null = the starting ones
   addrPrefs: {},    // address switch per customer (dispatch_settings/addr_prefs)
+  edited: {},       // addresses dispatchers changed (dispatch_settings/edited_addresses), never written into address_lookup
   queueSearch: false, // search and filters open on the Queue
   settings: loadSettings()
 };
@@ -3255,6 +3259,7 @@ function startListening() {
     () => { S.remindersError = true; refreshSettings(); });
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
+  listen(db.ref('dispatch_settings/edited_addresses'), (snap) => { S.edited = snap.val() || {}; ndRefreshTags(); if (ndOpen()) ndUpdate(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
   // Days closed (Settings) and customers asking to delete their account
   listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
@@ -4972,6 +4977,19 @@ const itemsText = (items) => (items || []).filter((it) => Number(it.qty) > 0).ma
 const clampText = (s, max) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
 const lookupKey = (name) => String(name || '').replace(/[.#$[\]/]/g, '').trim(); // how Route Planner keys address_lookup
 const meName = () => String((S.user && S.user.email) || '').split('@')[0];
+/* Edited addresses: when a dispatcher changes a saved customer's address and taps "Save this one?",
+   it's kept in dispatch_settings/edited_addresses (shared by every dispatcher) and never written into
+   address_lookup, which Route Planner uses. Next time the customer is picked, the edited one is used. */
+const editedFor = (name) => { const e = S.edited && S.edited[lookupKey(name)]; return e && String(e.address || '').trim() ? e : null; };
+const sameAddr = (a, b) => String((a && a.address) || '').trim() === String((b && b.address) || '').trim() && String((a && a.city) || '').trim() === String((b && b.city) || '').trim();
+// A saved customer as a form leg: their edited address if there is one (unless useLookup), else address lookup's
+function savedLeg(name, useLookup) {
+  const base = S.lookup[name] || S.lookup[lookupKey(name)] || {};
+  const ed = useLookup ? null : editedFor(name);
+  const c = ed || base;
+  const num = (v) => (typeof v === 'number' ? v : null);
+  return { name, address: c.address || '', city: c.city || '', lat: num(c.lat), lng: num(c.lng), ok: !!c.address, from: c.address ? 'saved' : '', edited: !!ed, useLookup: !!useLookup && !!editedFor(name) };
+}
 
 /* ---------- Google Maps: loads the first time the form opens ---------- */
 const MAPS_KEY = 'AIzaSyA6umETP8wBUEV41ugAtiNiChUeLmmwmZI'; // same key as Route Planner and Request Pickup
@@ -5042,7 +5060,7 @@ function openNewDispatch(opts) {
       <div class="nc-row" id="nd-${k}-nc" hidden><span class="grow" id="nd-${k}-nc-t"></span><button class="nc-btn" type="button" id="nd-${k}-nc-btn" data-act="nd-add-customer" data-leg="${k}" aria-disabled="true">${icon('user-plus')}New customer<span class="nc-plus" aria-hidden="true">+</span></button></div>
       <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
       <div class="field addr-box" id="nd-${k}-box" hidden><div class="addr-row"><input id="nd-${k}-address" data-nd-addr="${k}" maxlength="250" placeholder="Address" autocomplete="off" aria-label="${label} address"><input id="nd-${k}-city" data-nd-city="${k}" maxlength="60" placeholder="City" autocomplete="off" aria-label="${label} city"><button class="icon-btn" type="button" data-act="nd-map" data-leg="${k}" aria-label="Pick the ${label.toLowerCase()} on the map" title="Pick on the map">${icon('pin')}</button></div><p class="addr-ok" id="nd-${k}-ok"></p></div>
-      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
+      <div class="addr-diff" id="nd-${k}-diff" hidden><span class="grow">Different from the saved address. Save this one for next time?</span><button type="button" data-act="nd-diff" data-leg="${k}" data-v="yes">Yes</button><button type="button" data-act="nd-diff" data-leg="${k}" data-v="no">No</button></div>
     </section>`;
   const html = `<form class="nd" data-nd novalidate autocomplete="off">
     <div class="nd-route">${leg('pickup', 'Pickup')}${leg('delivery', 'Delivery')}</div>
@@ -5288,7 +5306,7 @@ function ndValid() {
     const L = ND[k];
     L.bad = false;
     if (!L.name.trim()) bad.push(`#nd-${k}-name`);
-    else if (!L.address.trim() || (mapsUsable() && !L.ok)) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
+    else if (!L.address.trim() || (mapsUsable() && !L.ok && !isSavedName(L))) { L.bad = true; L.edit = true; bad.push(`#nd-${k}-address`); }
     else if (ndIsNew(L)) bad.push(`#nd-${k}-nc-btn`); // only saved customers go out: add it first
   });
   if (!itemsText(ND.items)) { bad.push('[data-x=items]'); ndX = 'items'; }
@@ -5347,10 +5365,15 @@ function ndLegUi(k) {
   const showBox = !showLine && !typingSaved && !!(L.name.trim() || L.address.trim() || L.edit || L.bad);
   const was = [line.hidden, box.hidden, diff.hidden, $(`#nd-${k}-nc`).hidden].join();
   line.hidden = !showLine;
-  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}`;
+  // An edited address says so, with one tap back to the address lookup one (and one tap to the edited one again)
+  const edTag = L.from === 'saved' && L.edited ? `<button class="ed-tag" type="button" data-act="nd-use-lookup" data-leg="${k}" aria-label="Edited address. Tap to use the address lookup address instead">Edited<span aria-hidden="true">✕</span></button>`
+    : L.from === 'saved' && L.useLookup && editedFor(L.name) ? `<button class="ed-tag off" type="button" data-act="nd-use-edited" data-leg="${k}" aria-label="Use the edited address">Use edited</button>` : '';
+  if (showLine) $(`#nd-${k}-line-t`).innerHTML = `${icon('pin', 'sm')}<span>${esc([L.address.trim(), L.city.trim()].filter(Boolean).join(', '))}</span>${L.from === 'company' && L.company ? `<small>${esc(L.company)}</small>` : ''}${edTag}`;
   box.hidden = !showBox;
   if (L.ok) { ok.className = 'addr-ok ok'; ok.innerHTML = `${icon('check')}${esc([L.from === 'saved' ? 'Saved customer' : 'Checked with Google', mapsUsable() ? L.city.trim() : ''].filter(Boolean).join(' · '))}`; }
+  else if (L.address.trim() && mapsUsable() && isSavedName(L)) { ok.className = 'addr-ok'; ok.textContent = 'Typed as is (not from Google). Fine for plus codes and docks.'; }
   else if (L.address.trim() && mapsUsable()) { ok.className = `addr-ok${L.bad ? ' err' : ''}`; ok.textContent = 'Pick the address from Google’s list, or tap the pin to use the map.'; }
+  else if (L.address.trim() && ndIsNew(L) && !mapsUsable()) { ok.className = 'addr-ok err'; ok.textContent = 'Google isn’t working right now. A new customer needs a Google address.'; }
   else if (L.bad) { ok.className = 'addr-ok err'; ok.textContent = 'Type the address.'; }
   else { ok.className = 'addr-ok'; ok.textContent = maps === 'failed' && !L.address.trim() ? 'Type the street address and the city.' : ''; }
   diff.hidden = customerAction(k) !== 'update' || !!L.keep;
@@ -5401,27 +5424,75 @@ function customerAction(k) {
   const c = S.lookup[key];
   if (!c) return L.addPending ? '' : 'add';
   const addr = L.address.trim();
-  if (!addr || !c.address || L.from === 'saved') return '';
-  if (mapsUsable() && !L.ok) return ''; // only once the new address is picked
-  return addr !== c.address || (L.city.trim() && L.city.trim() !== (c.city || '')) ? 'update' : '';
+  if (!addr || L.from === 'saved') return '';
+  // Compared with the address this customer gets when picked: the edited one, or address lookup's
+  const now = (!L.useLookup && editedFor(L.name)) || c;
+  if (!now.address) return '';
+  return addr !== String(now.address).trim() || (L.city.trim() && L.city.trim() !== String(now.city || '').trim()) ? 'update' : '';
+}
+// The name is a saved customer (in address lookup)
+const isSavedName = (L) => !!lookupKey(L.name) && !!S.lookup[lookupKey(L.name)];
+/* "Save this one?" Yes: kept in the dispatchers' own section, never in address_lookup.
+   Changed back to exactly the address lookup one: the edited one is forgotten. */
+function saveEditedNow(k) {
+  const L = ND[k];
+  const key = lookupKey(L.name);
+  const base = S.lookup[key];
+  if (!key || !base || !db || !S.user) return;
+  const name = L.name.trim();
+  const ref = db.ref(`dispatch_settings/edited_addresses/${key}`);
+  const fail = (err) => toast(`${name}’s address couldn’t be saved: ${friendlyError(err)}`, 'error', 10000);
+  if (sameAddr(L, base)) {
+    S.edited = Object.assign({}, S.edited); delete S.edited[key];
+    Object.assign(L, { from: 'saved', ok: true, edit: false, edited: false, useLookup: false, keep: false });
+    ndUpdate();
+    ref.remove().then(() => toast(`${name} is back to the address lookup address.`, 'ok')).catch(fail);
+    return;
+  }
+  const rec = { address: L.address.trim(), city: L.city.trim(), by: meName(), at: TS, lookup_address: [base.address, base.city].filter(Boolean).join(', ') };
+  if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; }
+  S.edited = Object.assign({}, S.edited, { [key]: Object.assign({}, rec, { at: Date.now() }) });
+  Object.assign(L, { from: 'saved', ok: true, edit: false, edited: true, useLookup: false, keep: false });
+  ndUpdate();
+  ref.set(rec).then(() => toast(`${name}’s edited address is saved for every dispatcher. Address lookup isn’t changed.`, 'ok', 6000)).catch(fail);
+}
+// The Edited tag: this job goes back to the address lookup address (the edited one stays saved)
+function ndUseLookup(k, useLookup) {
+  const L = ND && ND[k];
+  if (!L || !isSavedName(L)) return;
+  ND[k] = Object.assign(savedLeg(lookupKey(L.name), useLookup), { name: L.name, voiceHeard: L.voiceHeard });
+  ndFillLeg(k);
+  ndUpdate();
+  const ta = $('#nd-text');
+  if (ta && !ndEdited()) { ta.value = ndAutoText(); ndTextUi(); }
+  if (useLookup) toast('Using the address lookup address for this job.', 'ok', 7000, { label: 'Forget edited', run: () => forgetEdited(L.name) });
+}
+function forgetEdited(name) {
+  const key = lookupKey(name);
+  if (!key || !db || !S.user) return;
+  S.edited = Object.assign({}, S.edited); delete S.edited[key];
+  if (ndOpen()) ndUpdate();
+  db.ref(`dispatch_settings/edited_addresses/${key}`).remove().then(() => toast(`${name.trim()}’s edited address is forgotten.`, 'ok')).catch((err) => toast(friendlyError(err), 'error'));
 }
 // Typed a name that isn't a saved customer (or one of a customer's own contacts)
 const ndIsNew = (L) => !!lookupKey(L.name) && !S.lookup[lookupKey(L.name)] && L.from !== 'company';
 // Address good enough to save: picked from Google or the map, or typed when Google isn't available
-const legAddrReady = (L) => !!L.address.trim() && (L.ok || !mapsUsable());
+// New customers only go into address lookup with a proper Google address (picked from Google's list or the map)
+const legAddrReady = (L) => !!L.address.trim() && !!L.ok && L.lat != null && L.from === 'google';
 function saveCustomerNow(k) {
   const L = ND[k];
   const key = lookupKey(L.name);
   if (!key || !db || !S.user) return;
   const was = S.lookup[key];
-  const rec = { address: L.address.trim(), city: L.city.trim(), last_edit_by: meName() };
-  if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; } else if (was) { rec.lat = null; rec.lng = null; }
+  if (was) return; // a saved customer is never changed here: edits go to the dispatchers' own section
+  if (!legAddrReady(L)) return;
+  const rec = { address: L.address.trim(), city: L.city.trim(), last_edit_by: meName(), lat: L.lat, lng: L.lng };
   L.addPending = false;
   // Shown as saved straight away; the live list confirms it a moment later
   S.lookup = Object.assign({}, S.lookup, { [key]: Object.assign({}, was || {}, rec) });
   ndUpdate();
   db.ref('address_lookup').child(key).update(rec)
-    .then(() => toast(was ? `${L.name.trim()}’s address updated.` : `${L.name.trim()} added as a customer.`, 'ok'))
+    .then(() => toast(`${L.name.trim()} added as a customer.`, 'ok'))
     .catch((err) => toast(`${L.name.trim()} couldn’t be saved: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
 }
 // Add +: saves now if the address is ready, otherwise as soon as it's picked
@@ -5493,8 +5564,9 @@ function ndSuggest(k) {
     return i < 0 ? esc(name) : `${esc(name.slice(0, i))}<mark>${esc(name.slice(i, i + q.trim().length))}</mark>${esc(name.slice(i + q.trim().length))}`;
   };
   list.innerHTML = found.map((x, i) => {
-    const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
-    const where = [c.address, c.city].filter(Boolean).join(', ') || 'No address saved';
+    const ed = x.src === 'saved' ? editedFor(x.name) : null;
+    const c = x.src === 'saved' ? ed || S.lookup[x.name] || {} : x;
+    const where = (ed ? 'Edited · ' : '') + ([c.address, c.city].filter(Boolean).join(', ') || 'No address saved');
     return `<button class="ac-item${i === 0 ? ' on' : ''}${x.src === 'company' ? ' co' : ''}" type="button" role="option" id="nd-${k}-opt-${i}" aria-selected="${i === 0}" data-act="nd-pick" data-leg="${k}" data-i="${i}"><b>${hl(x.name)}</b><small>${x.src === 'company' ? `<em>${esc(x.company || 'Customer')}’s contact</em> · ` : ''}${esc(where)}</small></button>`;
   }).join('');
   const was = list.hidden;
@@ -5531,8 +5603,8 @@ function ndPick(k, i) {
   // The mic put the wrong customer here (or no one): what was said now means this customer, in Route Planner too
   const heard = ND[k].voiceHeard;
   if (heard && x.src === 'saved' && x.name !== ND[k].name) voiceTeach([heard], x.name);
-  const c = x.src === 'saved' ? S.lookup[x.name] || {} : x;
-  ND[k] = { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
+  const c = x.src === 'saved' ? editedFor(x.name) || S.lookup[x.name] || {} : x;
+  ND[k] = x.src === 'saved' ? savedLeg(x.name) : { name: x.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? x.src : '' };
   if (x.src === 'company') ND[k].company = x.company || '';
   ndFillLeg(k);
   ndHideSuggest(k);
@@ -5653,15 +5725,15 @@ async function nextRefNo() {
 }
 /* New customers go into the shared list when the job is saved, like Route Planner does.
    A saved customer's address is never changed here: a one-off job to another address would
-   otherwise change it for everyone. "Save this one?" in the form does that on purpose. */
+   otherwise change it for everyone. "Save this one?" keeps it in dispatch_settings/edited_addresses instead. */
 function saveCustomers(r) {
   [r.pickup, r.delivery].forEach((L) => {
     const key = lookupKey(L.name);
     if (!key || !L.address) return;
     const was = S.lookup[key];
-    if (was && was.address) return;
-    const rec = { address: L.address, city: L.city || '', last_edit_by: meName() };
-    if (L.lat != null && L.lng != null) { rec.lat = L.lat; rec.lng = L.lng; }
+    if (was) return; // never written over: an edited address goes to dispatch_settings/edited_addresses
+    if (L.lat == null || L.lng == null) return; // only with a proper Google address
+    const rec = { address: L.address, city: L.city || '', last_edit_by: meName(), lat: L.lat, lng: L.lng };
     db.ref('address_lookup').child(key).update(rec)
       .catch((err) => toast(`${L.name} couldn’t be saved as a customer: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
   });
@@ -6069,6 +6141,8 @@ function geoCached(L) {
   if (!L) return null;
   const c = S.lookup && S.lookup[lookupKey(L.name)];
   if (c && c.lat != null && isFinite(+c.lat) && (c.address || '') === (L.address || '')) return { lat: +c.lat, lng: +c.lng };
+  const ed = editedFor(L.name);
+  if (ed && ed.lat != null && isFinite(+ed.lat) && (ed.address || '') === (L.address || '')) return { lat: +ed.lat, lng: +ed.lng };
   return geoCache[geoQuery(L)] || null;
 }
 function geoRemember(L, at) {
@@ -6079,6 +6153,8 @@ function geoRemember(L, at) {
   const pos = { lat: +at.lat.toFixed(6), lng: +at.lng.toFixed(6) };
   const key = lookupKey(L.name), c = S.lookup && S.lookup[key];
   if (key && c && (c.address || '') === (L.address || '')) db.ref(`address_lookup/${key}`).update(pos).catch(() => {});
+  const ed = key && editedFor(L.name);
+  if (ed && (ed.address || '') === (L.address || '')) db.ref(`dispatch_settings/edited_addresses/${key}`).update(pos).catch(() => {});
   if (sp.jobId && S.pending[sp.jobId]) db.ref(`requests/${sp.jobId}/pickup`).update(pos).catch(() => {});
   if (ND && L === ND.pickup) Object.assign(ND.pickup, pos); // a new dispatch saves it with the job
 }
@@ -7055,7 +7131,12 @@ document.addEventListener('click', async (e) => {
     case 'nd-diff': {
       const L = ND && ND[el.dataset.leg];
       if (!L) break;
-      if (el.dataset.v === 'yes') saveCustomerNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      if (el.dataset.v === 'yes') saveEditedNow(el.dataset.leg); else { L.keep = true; ndUpdate(); }
+      break;
+    }
+    case 'nd-use-lookup': ndUseLookup(el.dataset.leg, true); break;
+    case 'nd-use-edited': {
+      ndUseLookup(el.dataset.leg, false);
       break;
     }
     case 'nd-add-customer': ndAddCustomer(el.dataset.leg); break;
@@ -7576,8 +7657,7 @@ function voiceFill(v, t, alts, final) {
     if (!r.src) { if (final) { v.missing.push(r.name); ND[k].voiceHeard = r.heard || ''; } return; }
     if (vNorm(r.name) === vNorm(v.base[k].name)) return;
     if (r.src === 'saved') {
-      const c = S.lookup[r.name] || {};
-      ND[k] = { name: r.name, address: c.address || '', city: c.city || '', lat: typeof c.lat === 'number' ? c.lat : null, lng: typeof c.lng === 'number' ? c.lng : null, ok: !!c.address, from: c.address ? 'saved' : '' };
+      ND[k] = savedLeg(r.name);
     } else if (r.src === 'company') {
       const c = r.co;
       ND[k] = { name: c.name, address: c.address || '', city: c.city || '', lat: c.lat, lng: c.lng, ok: !!c.address, from: c.address ? 'company' : '', company: c.company || '' };

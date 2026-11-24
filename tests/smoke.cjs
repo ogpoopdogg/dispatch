@@ -517,6 +517,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.ok(!(await page.evaluate(() => window.__fakeDb.get('address_lookup/Westman Tire'))), 'nothing saved without an address');
     await page.fill('#nd-pickup-address', '200 18th St');
     await page.fill('#nd-pickup-city', 'Brandon');
+    await page.waitForTimeout(200);
+    assert.strictEqual(await page.getAttribute('#nd-pickup-nc-btn', 'aria-disabled'), 'true', 'a typed address is not enough: new customers need a Google address');
+    // Google is blocked in this browser: act as if the address was picked from Google's list
+    await page.evaluate(() => { Object.assign(ND.pickup, { address: '200 18th St', city: 'Brandon', lat: 49.84, lng: -99.95, ok: true, from: 'google', edit: false, bad: false }); ndFillLeg('pickup'); ndUpdate(); });
     await page.waitForSelector('#nd-pickup-nc-btn.ready');
     assert.ok(await page.isVisible('#nd-pickup-box') && await page.isHidden('#nd-pickup-line'), 'a new customer keeps the address box to tap');
     await page.click('#nd-pickup-nc-btn');
@@ -533,6 +537,24 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.fill('#nd-delivery-address', '3 Other Dock Rd');
     await page.waitForSelector('#nd-delivery-diff:not([hidden])');
     assert.ok(await page.isHidden('#nd-delivery-add'), 'no Add + for a saved customer');
+    // Yes keeps it in the dispatchers' own section (shared), never in address_lookup
+    await page.click('#nd-delivery-diff [data-v=yes]');
+    await page.waitForFunction(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply'));
+    assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply').address), '3 Other Dock Rd');
+    assert.strictEqual(await page.evaluate(() => window.__fakeDb.get('address_lookup/Acme Supply').address), '12 Main St', 'address lookup not changed by Yes');
+    assert.ok(await page.isHidden('#nd-delivery-diff'), 'question goes away once saved');
+    // Next time the customer is picked, the edited address is used, with an Edited tag
+    await page.fill('#nd-delivery-name', 'Acm');
+    await page.click('.ac-item:has-text("Acme Supply")');
+    assert.match(await page.textContent('#nd-delivery-line'), /3 Other Dock Rd/);
+    assert.ok(await page.isVisible('#nd-delivery-line .ed-tag'), 'Edited tag shows');
+    // One tap goes back to the address lookup address for this job, one tap to the edited one again
+    await page.click('#nd-delivery-line [data-act=nd-use-lookup]');
+    assert.match(await page.textContent('#nd-delivery-line'), /12 Main St/);
+    assert.ok(await page.isHidden('#nd-delivery-diff'), 'no question when using the lookup address');
+    await page.click('#nd-delivery-line [data-act=nd-use-edited]');
+    assert.match(await page.textContent('#nd-delivery-line'), /3 Other Dock Rd/);
+    assert.ok(await page.evaluate(() => window.__fakeDb.get('dispatch_settings/edited_addresses/Acme Supply')), 'edited address still saved');
     // Tap buttons start on the usual answers; Prepaid flips to Collect; + Note opens just that box
     assert.match(await page.textContent('[data-x=items]'), /1 box/);
     assert.match(await page.textContent('[data-x=when]'), /Now/);
