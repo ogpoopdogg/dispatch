@@ -469,11 +469,13 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
       await page.click('#msg-btn');
       await page.waitForSelector('#sheet .msg-co');
+      assert.ok(await page.evaluate(() => document.body.classList.contains('msgs-up')), 'the Messages button is lit while Messages is open');
       assert.strictEqual(await page.inputValue('#msg-q'), '', 'search starts empty');
       assert.strictEqual(await page.locator('#sheet .msg-co').count(), 7, 'every chat shows');
       await page.evaluate(() => { for (let i = 0; i < 6; i++) window.__fakeDb.put(`messages/y${i}`, null); });
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
+      assert.ok(!(await page.evaluate(() => document.body.classList.contains('msgs-up'))), 'and stops once it closes');
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .chip.msg').count(), 0, 'read once opened');
       // Details: this pickup's messages, and a way to the whole conversation
       assert.strictEqual(await page.locator('#queue-list .job[data-id=r1] .route[data-act]').count(), 0, 'tapping pickup/delivery does nothing (Details is in ⋯)');
