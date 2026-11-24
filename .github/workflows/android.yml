@@ -56,14 +56,29 @@ jobs:
             echo "::warning::No google-services.json, so this APK can't receive push notifications. See APP-SETUP.md, step 2."
           fi
 
+      # The app's signing key lives in the repo only encrypted (android/signing/ec-dispatch.p12.enc).
+      # The one secret ANDROID_KEYSTORE_PASSWORD unlocks it. Same key every build = updates install over the old app.
       - name: Set up release signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
+          KS="$RUNNER_TEMP/release.p12"
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$KS"
+          elif [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -f android/signing/ec-dispatch.p12.enc ]; then
+            if ! printf '%s' "$ANDROID_KEYSTORE_PASSWORD" | openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
+                -in android/signing/ec-dispatch.p12.enc -out "$KS" -pass stdin; then
+              echo "::error::ANDROID_KEYSTORE_PASSWORD doesn't unlock android/signing/ec-dispatch.p12.enc. Check the secret has no extra spaces."
+              exit 1
+            fi
+            echo "ANDROID_KEY_ALIAS=ecdispatch" >> "$GITHUB_ENV"
+          fi
+          if [ -s "$KS" ]; then
+            echo "ANDROID_KEYSTORE_FILE=$KS" >> "$GITHUB_ENV"
             echo "VARIANT=release" >> "$GITHUB_ENV"
+            echo "Signing key fingerprint (must stay the same on every build):"
+            keytool -list -v -keystore "$KS" -storepass "$ANDROID_KEYSTORE_PASSWORD" | grep -E 'SHA1:|SHA256:' || true
           else
             echo "VARIANT=debug" >> "$GITHUB_ENV"
             echo "::warning::No signing key secrets, so this is a debug build. Each debug build has a different key: uninstall the old app before installing a new one. See APP-SETUP.md, step 5."
@@ -73,9 +88,12 @@ jobs:
         working-directory: android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SECRET_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          # Older 4-secret setup still works; the encrypted key uses one password for the store and the key
+          export ANDROID_KEY_ALIAS="${SECRET_KEY_ALIAS:-${ANDROID_KEY_ALIAS:-}}"
+          export ANDROID_KEY_PASSWORD="${SECRET_KEY_PASSWORD:-$ANDROID_KEYSTORE_PASSWORD}"
           chmod +x gradlew
           TASK=assemble$(echo "${VARIANT:0:1}" | tr a-z A-Z)${VARIANT:1}
           ./gradlew "$TASK" -PversionCode=${{ github.run_number }} --no-daemon --stacktrace

@@ -152,34 +152,38 @@ way, with nothing to install, is **Google Cloud Shell**:
 
 On any computer with Node.js 22, the same commands work too.
 
-### 5. (Recommended) Create a signing key, so updates install over the old app
+### 5. Signing key, so updates install over the old app
 
-Without a signing key, GitHub builds a **debug** APK. Each debug build is signed
-with a different key, so to install a newer build you have to uninstall the
-old one first, and then sign in again.
+Android only installs an update over the app when both are signed with the
+**same key**. Without one, GitHub builds a **debug** APK with a new random key
+every time, so each update means uninstalling first.
 
-To fix that, make one release key, using a computer with Java or Android Studio
-installed:
-
-```sh
-keytool -genkeypair -v -keystore ec-dispatch.jks -alias ecdispatch \
-  -keyalg RSA -keysize 2048 -validity 10000
-base64 -w0 ec-dispatch.jks > ec-dispatch.jks.b64   # macOS: base64 -i ec-dispatch.jks -o ec-dispatch.jks.b64
-```
-
-Then add four repository secrets (*Settings* → *Secrets and variables* →
-*Actions*):
+The app's key is already made and saved in this repo **encrypted**:
+`android/signing/ec-dispatch.p12.enc` (alias `ecdispatch`). It can't be used
+without its password. To switch it on, add **one** repository secret
+(*Settings* → *Secrets and variables* → *Actions* → *New repository secret*):
 
 | Secret | Value |
 |---|---|
-| `ANDROID_KEYSTORE_BASE64` | contents of `ec-dispatch.jks.b64` |
-| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
-| `ANDROID_KEY_ALIAS` | `ecdispatch` |
-| `ANDROID_KEY_PASSWORD` | the key password (same as the keystore password if you pressed Enter) |
+| `ANDROID_KEYSTORE_PASSWORD` | the key password (kept by the owner, not in this repo) |
 
-Keep `ec-dispatch.jks` and its password somewhere safe and **never commit
-it**. If it's lost, phones won't accept updates: everyone has to uninstall and
-reinstall.
+After that every build is a `-release` APK signed with the same key, and the
+build log prints the key's fingerprint, which must never change:
+
+- SHA-1 `58:68:BC:33:56:99:27:CF:46:0F:03:2F:95:4F:4C:0E:C0:21:28:58`
+- SHA-256 `0C:BA:77:FB:5B:9F:21:52:3B:8B:FE:1D:3C:25:A5:F7:AC:9C:6F:CE:E0:B4:96:18:22:94:46:5B:C3:DD:75:44`
+
+Keep the password in a password manager. **If the password is lost, phones
+can never get an update again** without uninstalling. Never change or delete
+the `.enc` file. (Phones moving from a debug build to the first signed build
+must uninstall once; after that, never again.)
+
+The SHA-1 above is also what you add to the Google Maps key's Android
+restriction (package `com.eandc.dispatch`).
+
+The older way (four secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) still works and wins if
+`ANDROID_KEYSTORE_BASE64` is set. Don't set it unless you mean to replace the key.
 
 ---
 
