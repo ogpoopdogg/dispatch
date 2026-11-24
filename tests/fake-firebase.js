@@ -56,8 +56,16 @@
     update(o) { Object.entries(o).forEach(([k, v]) => put(`${this.path}/${k}`, v)); notify(); return Promise.resolve(); }
     remove() { return this.set(null); }
     push(v) { const r = this.child(pushId()); const p = v === undefined ? Promise.resolve() : r.set(v); r.then = p.then.bind(p); return r; }
-    transaction(fn) { const next = fn(clone(get(this.path))); put(this.path, next); notify(); return Promise.resolve({ committed: true, snapshot: snap(this.key, get(this.path)) }); }
+    // Returning undefined aborts, like the real one (nothing is written)
+    transaction(fn) {
+      const next = fn(clone(get(this.path)));
+      if (next === undefined) return Promise.resolve({ committed: false, snapshot: snap(this.key, get(this.path)) });
+      put(this.path, next); notify();
+      return Promise.resolve({ committed: true, snapshot: snap(this.key, get(this.path)) });
+    }
   }
+  // For tests: change the data without telling the app (another phone, a moment ago)
+  window.__fakeDb = { get: (p) => clone(get(p)), put: (p, v) => put(p, v) };
   // .info/connected is always true
   put('.info/connected', true);
   const db = { ref: (p) => new Ref(p) };

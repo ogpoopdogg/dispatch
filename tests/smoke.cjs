@@ -1002,6 +1002,63 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.deepStrictEqual(p5.errors, []);
       await pg.close();
     }
+    // Launch fixes: a job cancelled (or sent by someone else) a moment ago isn't marked sent;
+    // with no internet sends are kept on the phone and saved once it's back; the last quick reply
+    // can go; driver phones need 10 digits and can be edited; edited texts come from other phones
+    {
+      const p6 = await open(browser, base, { user: STAFF, data: DATA });
+      const pg = p6.page;
+      await pg.waitForSelector('#view-app:not([hidden])'); await pg.waitForFunction(() => S.loaded && S.pending.r3);
+      const toastHas = (re) => pg.waitForFunction((src) => [...document.querySelectorAll('.toast')].some((x) => new RegExp(src).test(x.textContent)), re.source, { timeout: 5000 });
+      // The customer cancels r1 on their phone just before the dispatcher sends it
+      assert.strictEqual(await pg.evaluate(async () => { __fakeDb.put('requests/r1/status', 'cancelled'); return markRequestDispatched('r1', S.pending.r1, 'Mike'); }), false);
+      await toastHas(/1201 was just cancelled by the customer\. Nothing was sent/);
+      assert.strictEqual(await pg.evaluate(() => __fakeDb.get('requests/r1/status')), 'cancelled', 'a cancel is never overwritten');
+      // Another dispatcher already sent r2
+      assert.strictEqual(await pg.evaluate(async () => { __fakeDb.put('requests/r2/status', 'dispatched'); __fakeDb.put('requests/r2/dispatched_to', 'Sara'); __fakeDb.put('requests/r2/dispatched_by', 'staff2'); __fakeDb.put('requests/r2/dispatched_by_email', 'gil@ec.com'); return markRequestDispatched('r2', S.pending.r2, 'Mike'); }), false);
+      await toastHas(/1202 was already sent to Sara by Gil/);
+      assert.strictEqual(await pg.evaluate(() => __fakeDb.get('requests/r2/dispatched_to')), 'Sara');
+      // No internet: r3 is kept on this phone, even if the app closes before it's saved
+      assert.strictEqual(await pg.evaluate(async () => { __fakeDb.put('.info/connected', false); online = false; return markRequestDispatched('r3', S.pending.r3, 'Mike'); }), true);
+      assert.deepStrictEqual(await pg.evaluate(() => JSON.parse(localStorage.getItem('ecd_outbox')).map((e) => e.k + ':' + e.id)), ['mark:r3']);
+      assert.match(await pg.textContent('#live-text'), /No internet · 1 to save/);
+      await shot(pg, 'offline-to-save');
+      await pg.evaluate(() => { ['status', 'dispatched_at', 'dispatched_to', 'dispatched_by', 'dispatched_by_email'].forEach((k) => __fakeDb.put(`requests/r3/${k}`, k === 'status' ? 'new' : null)); });
+      // A New dispatch with no internet: texted, kept, then saved once with one number
+      const job = await pg.evaluate(() => ndSent({ source: 'dispatcher', pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: 'Smith Co', address: '40 Park Ave' }, items_text: '1 box', payment: 'prepaid', when: 'asap' }, 'Mike', null).then((j) => ({ id: j.id, queued: !!j.queued })));
+      assert.ok(job.queued, 'kept on the phone with no internet');
+      assert.strictEqual(await pg.evaluate(() => outbox.length), 2);
+      await pg.evaluate(async () => { __fakeDb.put('.info/connected', true); online = true; await flushOutbox(); });
+      assert.strictEqual(await pg.evaluate(() => outbox.length), 0, 'all saved when the internet is back');
+      assert.strictEqual(await pg.evaluate(() => __fakeDb.get('requests/r3/dispatched_to')), 'Mike');
+      const saved = await pg.evaluate((id) => __fakeDb.get(`requests/${id}`), job.id);
+      assert.strictEqual(saved.status, 'dispatched'); assert.strictEqual(saved.dispatched_to, 'Mike'); assert.strictEqual(saved.ref_no, 1204);
+      // Saving the same one again (the app closed just after it went in) makes no second job
+      await pg.evaluate(async (id) => { outboxAdd({ k: 'new', key: id, r: {}, status: 'dispatched', to: 'Mike', uid: 'staff1' }); await flushOutbox(); }, job.id);
+      assert.strictEqual(await pg.evaluate(() => __fakeDb.get('counters/request_no')), 1204);
+      assert.match(await pg.textContent('#live-text'), /^Live$/);
+      // Quick replies: removing every one leaves none
+      await pg.evaluate(async () => { for (let i = 0; i < 10 && quickList().length; i++) { await delQuick(quickList()[0].id); await new Promise((ok) => setTimeout(ok, 50)); } });
+      await pg.waitForFunction(() => quickList().length === 0);
+      // Drivers: a number with no area code is refused; a driver can be edited
+      await pg.evaluate(() => openSheet('Drivers', driversEditor()));
+      await pg.fill('form[data-form=add-driver] input[name=name]', 'Tom');
+      await pg.fill('form[data-form=add-driver] input[name=phone]', '555-0123');
+      await pg.click('form[data-form=add-driver] button[type=submit]');
+      await toastHas(/10-digit phone number/);
+      assert.strictEqual(Object.keys(await pg.evaluate(() => __fakeDb.get('dispatch_contacts/drivers'))).length, 2);
+      await pg.click('#drivers-edit [data-act=edit-driver][data-driver=d1]');
+      assert.strictEqual(await pg.inputValue('form[data-form=add-driver] input[name=name]'), 'Mike');
+      await pg.fill('form[data-form=add-driver] input[name=phone]', '(204) 555-0199');
+      await pg.click('form[data-form=add-driver] button[type=submit]');
+      await pg.waitForFunction(() => __fakeDb.get('dispatch_contacts/drivers/d1/phone') === '(204) 555-0199');
+      assert.strictEqual(Object.keys(await pg.evaluate(() => __fakeDb.get('dispatch_contacts/drivers'))).length, 2, 'edited, not added');
+      // A text edited on another phone is the one this phone sends
+      await pg.evaluate(() => { const k = editKey('r4', doneReq('r4')); return db.ref(`dispatch_settings/text_edits/${editRemoteKey(k)}`).set({ k, text: 'Edited on the other phone', t: Date.now() }); });
+      await pg.waitForFunction(() => textFor('r4', doneReq('r4')) === 'Edited on the other phone');
+      assert.deepStrictEqual(p6.errors, []);
+      await pg.close();
+    }
     console.log('dispatch smoke test passed');
   } finally {
     await browser.close();

@@ -232,7 +232,6 @@ button.kpi:hover,button.kpi:active{background:var(--surface-2)}
 /* Queue is only yellow while jobs are waiting; empty, it looks like the others */
 .tab[data-tab=queue][aria-current=page]:not(.has-jobs) .ti{background:none;box-shadow:none;transform:none}
 /* Queue tab glows while requests are waiting */
-.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
 .tab.has-jobs .i{animation:tabNudge 1.3s ease-in-out infinite}
 .tab.has-jobs:not([aria-current=page]) .ti{color:#000;background:var(--yellow)}
 .tab.has-jobs:not([aria-current=page]){color:var(--ink)}
@@ -840,78 +839,16 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 @keyframes mic-wave{0%{transform:scale(.95);opacity:.9}100%{transform:scale(1.9);opacity:0}}
 @media (prefers-reduced-motion:reduce){.mic-fab.on,.mic-fab.on::before,.mic-fab.on::after{animation:none}}
 /* Room for the mic: above the Send bar on the form, and under the last card in the queue */
-.nd-mic-gap{display:none;flex:none;height:62px}
-body.mic-ok .nd-mic-gap{display:block}
-body.mic-ok main.app-main{padding-bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 78px)}
-body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - var(--nav-h) - var(--safe-b) - var(--dock-h,0px) - 88px)}
 /* Teach the mic */
-.vl-label{display:block;font-size:12.5px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px}
-.vl .ac-list{position:static;flex-direction:column;max-height:230px;margin-top:4px;box-shadow:none;animation:none}
-.vl-rec{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:8px 14px;border:2px solid #2563eb;border-radius:var(--r-md);background:var(--surface);color:#2563eb;font:inherit;font-size:16px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.vl-rec .i{width:28px;height:28px;stroke-width:2.2}
-.vl-rec.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 20% 35%,#7dd3fc,#38bdf8 35%,#2563eb);box-shadow:0 0 0 4px rgba(56,189,248,.28),0 0 24px 4px rgba(56,189,248,.55)}
-.vl-status{margin:8px 0 0;padding:8px 10px;border-radius:var(--r-sm);font-size:14px;font-weight:650;background:var(--surface-2)}
-.vl-status.err{background:var(--danger-bg);color:var(--danger)}
-.vl-status.ok{background:rgba(22,163,74,.12);color:#15803d}
-.vl-known{margin-top:10px}
-.vl-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.vl-chip{display:inline-flex;align-items:center;gap:2px;padding:0 2px 0 10px;min-height:34px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;font-weight:650;background:var(--surface-2)}
-.vl-chip button{border:0;background:none;color:var(--ink-2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px}
 /* What the mic is hearing: a strip to the left of the mic */
-.mic-hear{position:fixed;left:12px;right:84px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 16px);z-index:66;min-height:48px;display:flex;align-items:center;padding:6px 12px;border-radius:12px;background:#0b1a33;color:#e0f2fe;font-size:15px;line-height:1.25;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);pointer-events:none;animation:slideUp .18s var(--out)}
-.mic-hear span{opacity:.8;font-weight:600}
-.mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
 /* A box the mic just filled flashes blue for a moment */
-.vfill{animation:vfill 1s var(--out)}
 @keyframes vfill{0%{box-shadow:0 0 0 3px rgba(56,189,248,.75);background-color:rgba(186,230,253,.55)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
 /* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
-body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on) [data-nd] textarea:focus{padding-right:48px}
-.nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
-.nd-preview::placeholder{color:var(--ink-3);font-weight:500}
-.nd-preview:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
-.nd-pen{position:absolute;right:10px;top:12px;display:flex;color:var(--ink-2);pointer-events:none}
-.nd-pen .i{width:16px;height:16px}
-.nd-text-box:focus-within .nd-pen,.nd-text-box.edited .nd-pen{display:none}
-.nd-text-box.edited .nd-preview{border-color:var(--yellow-lo)}
-.nd-text-reset{position:absolute;right:3px;top:3px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);cursor:pointer}
-.nd-text-reset:active{background:var(--surface-2)}
-.nd-cal-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px;margin-bottom:4px}
-.nd-cal-top .btn{min-height:42px;gap:6px}
-.nd-cal-top small{font-weight:600;opacity:.75;margin-left:2px}
-.nd-cal-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 4px}
-.nd-cal-head b{font-size:14.5px}
-.nd-cal-head button{width:44px;height:32px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
-.nd-cal-head button:disabled{opacity:.3;cursor:default}
-.nd-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding-bottom:6px}
-.nd-cal-grid .wd{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-3);padding:2px 0}
-.nd-cal-grid button{height:34px;border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font:inherit;font-size:14.5px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.nd-cal-grid button:disabled{color:var(--ink-3);opacity:.5;cursor:default}
-.nd-cal-grid button.today{box-shadow:inset 0 0 0 1px var(--line-strong)}
-.nd-cal-grid button.on{background:var(--yellow);color:#000}
-.nd-cal-grid button:not(:disabled):active{background:var(--yellow-soft)}
-.nd-go{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:6px}
-.nd-go>span{display:block}
 /* Group Chat and Send to driver, side by side and the same size */
-.nd-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
-.nd-pair .btn{width:100%;min-width:0;padding:0 8px}
-.nd-big{width:100%;min-height:52px;font-size:16.5px}
-.nd-dots{min-height:52px;padding:0;color:var(--ink)}
-.nd-dots .i{width:24px;height:24px}
-.btn.nd-dots.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.nd-more{margin-bottom:8px;animation:riseIn var(--t) var(--out)}
-.nd-more-list{display:grid;gap:6px;margin-bottom:8px}
-.nd-more-list button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.nd-more-list button:active{background:var(--surface-3)}
-.nd-more-list button .i{flex:none;width:22px;height:22px;color:var(--ink-2)}
-.nd-more-list small{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:1px}
-.nd-more-note{font-size:12px;color:var(--ink-3);margin:4px 2px 0}
 /* A missing box shakes and turns red */
-.shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97)}
 @keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
 @media (prefers-reduced-motion:reduce){.shake{animation:none}}
-.set-seg{flex:none;width:190px}
-.set-select{flex:none;width:150px;min-height:var(--ctl);padding:0 28px 0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;font:inherit;font-size:16px;font-weight:600;color:var(--ink);-webkit-appearance:none;appearance:none}
 /* The form starts mid-screen (where Pieces and count used to sit), in easy reach of the right thumb;
    the dimmed backdrop fills the top.
    While typing (keyboard up) it grows to full height like before. */
@@ -931,74 +868,15 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
   /* Fills the gap under the sheet while it glides to a new spot */
   .sheet.mid::after{content:'';position:absolute;left:-1px;right:-1px;top:100%;height:60vh;background:var(--surface);pointer-events:none}
 }
-#sheet{padding-bottom:var(--kb,0px)}
-.sheet.moving .ac-list{visibility:hidden}
-.head-link{flex:none;border:0;background:none;color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;min-height:var(--ctl-sm);padding:0 10px;border-radius:var(--r-sm);cursor:pointer;-webkit-tap-highlight-color:transparent}
-.head-link:active{background:var(--yellow-soft)}
 /* New dispatch: "Clear" right after the title, ✕ stays at the far right */
-.sheet.mid .sheet-titles{flex:0 1 auto}
-.sheet.mid #sheet-reset{margin-right:auto;margin-left:4px;padding:0 12px;border:1px solid var(--line-strong);border-radius:99px;font-size:14px;min-height:32px;color:var(--ink-2)}
-.nd-pop{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-end;border-radius:inherit;overflow:hidden}
 /* ---------- Send to driver panel ---------- */
-.sp{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end}
-.sp-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background-color var(--t-slow) ease}
-.sp.open .sp-scrim{background:rgba(0,0,0,.5)}
-.sp-card{position:relative;display:flex;flex-direction:column;height:calc(100dvh - var(--safe-t) - 10px);max-width:680px;width:100%;margin:0 auto;background:var(--surface);border:1px solid var(--yellow);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow);padding:0 10px calc(10px + var(--safe-b));transform:translateY(100%);transition:transform .26s var(--out);overflow:hidden}
-.sp.open .sp-card{transform:none}
-.sp-head{flex:none;display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0 4px 4px}
-.sp-titles{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}
-.sp-head b{font-stretch:85%;font-size:19px;font-weight:800;white-space:nowrap}
-.sp-to{min-width:0;font-size:13px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sp-head .icon-btn{margin-right:-6px}
 /* The text the driver gets, right where you send it, and changeable there */
-.sp-text{flex:none;display:block;margin:0 0 8px;padding:6px 8px 8px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2)}
-.sp-text-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 3px}
-.sp-text-head span{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
-.sp-text-head small{font-size:11.5px;font-weight:650;color:var(--ink-3)}
-.sp-text textarea{display:block;width:100%;min-height:44px;max-height:96px;resize:none;field-sizing:content;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);padding:6px 9px;font:inherit;font-size:15px;line-height:1.35;color:var(--ink);outline:none}
-.sp-text textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
-.sp-card.nomap .sp-map{display:none}
-.sp-card.nomap .sp-drivers{flex:1 1 auto}
 /* The vehicles: a soft strip of chips, centred, wrapping when there are many */
-.van{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:1px solid rgba(0,0,0,.1);border-radius:99px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
-.van:active{transform:scale(.95)}
-.van i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.12)}
-.van small{font-size:12.5px;font-weight:700;color:var(--ink-2)}
-.van.idle{opacity:.55;box-shadow:none;background:rgba(255,255,255,.6)}
 /* Closest vehicle in use: green pulse and glow. Second closest: the same pulse, no colour */
-.van.c1{border-color:#26a356;background:linear-gradient(160deg,#eafff2,#d3f8e2);color:#0b5f2c;animation:vanPulse 1.6s ease-in-out infinite}
-.van.c1 small{color:#11803c}
-.van.c1::after{content:'Closest';position:absolute;top:-7px;right:6px;padding:0 5px;border-radius:6px;background:#26a356;color:#fff;font-size:9px;font-weight:800;line-height:13px;letter-spacing:.04em;text-transform:uppercase}
-.van.c2{border-color:rgba(0,0,0,.28);animation:vanPulse2 1.6s ease-in-out .2s infinite}
 @keyframes vanPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(38,163,86,.55),0 2px 10px -2px rgba(38,163,86,.5)}50%{transform:scale(1.06);box-shadow:0 0 0 7px rgba(38,163,86,0),0 4px 18px 0 rgba(38,163,86,.6)}}
 @keyframes vanPulse2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,0,0,.18)}50%{transform:scale(1.04);box-shadow:0 0 0 6px rgba(0,0,0,0)}}
-.sp-map{position:relative;flex:1 1 auto;min-height:110px;margin-bottom:8px;border-radius:14px;overflow:hidden;background:#e8e6df;border:1px solid var(--line)}
-.sp-canvas{position:absolute;inset:0}
 /* Full map: the map takes the whole panel for a closer look; the button (or Back) brings the drivers back */
-.sp-full{position:absolute;top:8px;right:8px;z-index:2;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px 0 9px;border:1px solid rgba(0,0,0,.12);border-radius:99px;background:rgba(255,255,255,.95);color:#111;font:inherit;font-size:13px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;-webkit-tap-highlight-color:transparent}
-.sp-full .i{width:15px;height:15px}
-.sp-card.mapfull .sp-text,.sp-card.mapfull .sp-drivers{display:none}
-.sp-card.mapfull .sp-map{flex:1 1 auto;margin-bottom:0}
 /* Full map: one button per driver along the bottom; tapping one zooms to the van and shows where it is */
-.sp-fvans,.sp-where{display:none}
-.sp-card.mapfull .sp-fvans{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:6px;padding:8px;overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.22))}
-.sp-fvans::-webkit-scrollbar{display:none}
-.sp-fvan{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:46px;padding:0 14px 0 10px;border:1px solid rgba(0,0,0,.14);border-radius:99px;background:#fff;color:#111;font:inherit;font-size:15px;font-weight:800;line-height:1.1;text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform var(--t-fast) ease}
-.sp-fvan:active{transform:scale(.95)}
-.sp-fvan i{flex:none;width:14px;height:14px;border-radius:50%;background:var(--c,#f7c948);box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.15)}
-.sp-fvan small{display:block;font-size:12px;font-weight:650;color:#555}
-.sp-fvan.on{background:#111;border-color:#111;color:#fff}
-.sp-fvan.on small{color:#ccc}
-.sp-fnone{margin:auto;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.92);font-size:13px;font-weight:650;color:#444}
-.sp-card.mapfull .sp-where:not([hidden]){position:absolute;left:8px;right:8px;bottom:68px;z-index:3;display:flex;align-items:flex-start;gap:6px;padding:10px 4px 10px 12px;border-radius:14px;background:#fff;color:#111;box-shadow:0 4px 18px rgba(0,0,0,.28);animation:riseIn var(--t) var(--out)}
-.sp-where .grow{min-width:0}
-.sp-where b{font-size:16px;font-weight:800}
-.sp-where small{font-size:12.5px;font-weight:650;color:#555}
-.sp-where p{margin:3px 0 0;font-size:15.5px;font-weight:650;line-height:1.3;user-select:text;-webkit-user-select:text}
-.sp-where p.wait{color:#777}
-.sp-where .icon-btn{flex:none;color:#111}
-.sp-card.mapfull .sp-msg{bottom:auto;top:52px}
-.sp-msg{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:650;color:var(--ink-2);text-align:center;box-shadow:var(--sh-1)}
 /* Live GPS check: driver buttons dimmed and locked under a spinner until fresh spots are in */
 .sp-gps{position:sticky;top:0;z-index:3;flex:none;height:0;display:flex;justify-content:center;overflow:visible;pointer-events:none;transition:opacity .3s ease}
 .sp-gps.gone{opacity:0}
@@ -1014,60 +892,14 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .sp-card.gps-wait .drv-tag{visibility:hidden}
 .pick.drv.gps-old small,.pick.drv.gps-old .drv-d{color:#b45309}
 /* The drivers get a fixed half of the panel (all of it with no map); the buttons stretch to fill it */
-.sp-drivers{flex:0 0 52%;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.sp-drivers .pick{min-height:54px;animation:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.sp-drivers .pick-note{margin-top:6px;text-align:center}
 /* Drivers in a grid of 2 (3 on a wide screen), so most fit without scrolling: van colour, name, van, distance.
    The closest sits first, top left, then the next closest, and so on. */
-.drv-list{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(54px,1fr);gap:6px}
 @media (min-width:560px){.drv-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.sp-drivers .pick.drv{height:100%;min-height:54px;gap:8px;padding:6px 8px 6px 7px;background:var(--surface)}
-.pick.drv .avatar{width:34px;height:34px;font-size:13px;background:var(--c,var(--yellow));color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
-.pick.drv .grow{min-width:0;font-size:17px;font-weight:800;line-height:1.2}
-.pick.drv .drv-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pick.drv small{display:block;font-size:13px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.drv-km{flex:none;display:flex;flex-direction:column;align-items:flex-end;font-size:13px;font-weight:800;line-height:1.15}
-.drv-km:empty{display:none}
 /* Big buttons (few drivers): bigger name, van and distance */
-.drv-list.roomy .pick.drv .grow{font-size:20px}
-.drv-list.roomy .pick.drv small{font-size:14.5px}
-.drv-list.roomy .pick.drv .avatar{width:40px;height:40px;font-size:15px}
-.drv-list.roomy .drv-km{font-size:15px}
-.drv-list.roomy .drv-km small{font-size:12.5px}
-.drv-km small{font-size:11px;color:var(--ink-2)}
-.pick.drv .drv-name{display:flex;align-items:center;gap:5px}
-.pick.drv .drv-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.pick.drv .drv-tag{margin:0 0 2px;font-size:9px;line-height:14px}
-.pick.drv.novan{opacity:.62;box-shadow:none;background:var(--surface-2)}
-.pick.drv.novan .avatar{background:var(--ink-3)}
-.pick.drv.best{border:2px solid #26a356;background:linear-gradient(160deg,#f2fff7,#e2f9eb);box-shadow:0 0 0 3px rgba(38,163,86,.14)}
-.drv-tag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:#26a356;color:#fff;font-size:10px;font-weight:800;line-height:15px;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px}
 /* Hold to send: a green ring runs clockwise round the button */
-.hold-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.hold-ring path{fill:none;stroke:#26a356;stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 3px rgba(63,207,120,.8))}
-.pick.unwind .hold-ring path{transition:stroke-dashoffset .25s var(--ease)}
-.pick.holding{border-color:rgba(38,163,86,.5);background:var(--ok-bg);transform:scale(.985)}
-.pick.held{border-color:#26a356;background:rgba(63,207,120,.22)}
-.setting.range{flex-wrap:wrap}
-.setting.range input[type=range]{width:100%;accent-color:var(--yellow-lo)}
-.nd-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
-.nd-actions .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
-.nd-actions .full{grid-column:1/-1}
-.pac-container{z-index:120!important;border-radius:var(--r-md);border:1px solid var(--line);font-family:var(--font);margin-top:4px;box-shadow:var(--shadow);overflow:hidden}
 /* Map picker */
-.map-overlay{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;background:var(--bg);animation:riseIn var(--t-slow) var(--out)}
-.map-top{padding:calc(8px + var(--safe-t)) 10px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
-.map-canvas{flex:1;min-height:0}
-.map-bar{padding:10px 12px calc(10px + var(--safe-b));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px -12px rgba(0,0,0,.5)}
-.map-addr{font-weight:650;font-size:14.5px;line-height:1.3;margin-bottom:8px;min-height:19px;overflow-wrap:anywhere}
-.map-btns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:6px}
-.map-btns .btn-primary{min-height:calc(var(--ctl) + 4px);font-size:16px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.banner-alert{animation:none}}
 /* The top bar stays dark in both themes */
-.topbar{--ink:#f3f2ec;--ink-2:#a7a59e;--ink-3:#73716b;--surface-2:#1b1b1b;--surface-3:#232323;--line-strong:#383838;color:var(--ink)}
-[data-theme=light] .wordmark b{color:#b88f00}
-[data-theme=light] .topbar .wordmark b{color:var(--yellow)}
-[data-theme=light] .auth .wordmark b{color:inherit;background:var(--yellow);padding:1px 5px 2px;border-radius:4px;margin-left:2px}
 
 /* =========================================================
    Color and depth layer (2026-11-18): more color, shadows and motion so the
@@ -1085,76 +917,24 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
   --sh-card:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(20,18,10,.08),0 10px 24px -10px rgba(20,18,10,.28);
 }
 /* Page: a soft warm wash with a faint dot grid instead of flat grey */
-[data-theme=light] body{background:radial-gradient(700px 300px at 100% 0,rgba(255,209,0,.12),transparent 70%),radial-gradient(600px 400px at 0 100%,rgba(31,111,235,.06),transparent 70%),radial-gradient(circle at 1px 1px,rgba(0,0,0,.05) 1px,transparent 1.3px) 0 0/18px 18px,var(--bg);background-attachment:fixed}
 /* Top bar: deep gradient, a slow shine running along the yellow line */
-.topbar{background:linear-gradient(180deg,#1c1c1c,#060606 85%)}
-.topbar::after{background:linear-gradient(90deg,var(--yellow-lo),var(--yellow) 30%,#fff3b0 50%,var(--yellow) 70%,var(--yellow-lo));background-size:200% 100%;animation:lineShine 4s linear infinite}
 @keyframes lineShine{to{background-position:-200% 0}}
-.topbar .logo-tile{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(255,209,0,.35),0 4px 14px -4px rgba(255,209,0,.8)}
 /* Cards: white with a light top glow and a deeper soft shadow */
-[data-theme=light] .job-top{background:linear-gradient(180deg,#fffdf3 0,#fff 46px);box-shadow:0 1px 0 #fff inset}
-[data-theme=light] .job.overdue .job-top{background:linear-gradient(180deg,#fff3f2 0,#fff 46px)}
-.job .req-no{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 10px -4px rgba(230,160,0,.75)}
-.job.overdue .req-no{background:linear-gradient(160deg,#ff6b66,var(--danger));box-shadow:0 3px 10px -4px rgba(196,36,30,.6)}
 /* Payment chips get their own color */
-[data-theme=light] .chip.pay-prepaid{background:var(--green-bg);border-color:var(--green-line);color:var(--ok)}
-[data-theme=light] .chip.pay-collect{background:var(--orange-bg);border-color:var(--orange-line);color:var(--orange)}
 /* Route box: pickup = yellow, delivery = blue, colored line between them */
-[data-theme=light] .route{background:linear-gradient(90deg,#fffbe8,#f7f9ff);border-color:#ece6cf}
-.route::before{border-left:2px dashed transparent;border-image:linear-gradient(var(--yellow),var(--blue,#1f6feb)) 1}
-[data-theme=light] .stop.to::before,[data-theme=light] .nd-leg.to>h3::before{background:var(--blue);box-shadow:0 0 6px rgba(31,111,235,.45)}
 /* Driver text box: soft inner shade so it reads as "the message" */
-[data-theme=light] .text-edit textarea{background:linear-gradient(180deg,#fff,#fbfaf6);box-shadow:inset 0 1px 2px rgba(20,18,10,.06)}
 /* Buttons: Send to driver glossy yellow with a slow shine; Group Chat blue */
-.btn-primary{background:linear-gradient(180deg,var(--yellow-hi),var(--yellow) 55%,#f2c400)}
-.btn-primary:not(:disabled):hover{background:linear-gradient(180deg,#ffe25c,var(--yellow-hi))}
-.job .btn-primary::after,.nd-pair .btn-primary::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.6) 50%,transparent 65%);transform:translateX(-120%);animation:btnShine 5s ease-in-out infinite;pointer-events:none}
 @keyframes btnShine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
-[data-theme=light] .btn-secondary[data-act=dispatch],[data-theme=light] .btn-secondary[data-act=nd-group]{background:linear-gradient(180deg,#f4f8ff,var(--blue-bg));border-color:var(--blue-line);color:var(--blue-ink);box-shadow:0 1px 0 #fff inset,0 2px 6px -3px rgba(31,111,235,.4)}
-.btn:not(:disabled):active{box-shadow:0 0 0 rgba(0,0,0,0)!important;filter:brightness(.97)}
-[data-theme=light] .addr-chip{background:linear-gradient(180deg,#fff,#f5f3ec);box-shadow:0 1px 2px rgba(20,18,10,.08)}
 /* Group headings (Today, Thu Nov 19): a colored label */
-.group-head{background:transparent}
-.group-head span:first-child{padding:2px 8px;border-radius:99px;background:var(--ink);color:#fff;box-shadow:0 2px 6px -2px rgba(0,0,0,.35)}
-#panel-scheduled .group-head span:first-child{background:var(--purple,#7048e8)}
 /* Done list: green / red / grey edge glow on each row by how it ended */
-[data-theme=light] .list,[data-theme=light] .board-group{box-shadow:var(--sh-card)}
-.row{transition:background-color var(--t-fast) ease}
-.row::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ok)}
 .row.cancelled::before{background:var(--danger)}.row.removed::before{background:var(--ink-3)}
 /* Messages: customer bubbles light blue, ours glossy yellow, colored avatars */
-[data-theme=light] .msg.them{background:var(--blue-bg);border-color:var(--blue-line);color:#0d1b33;box-shadow:0 2px 6px -3px rgba(31,111,235,.35)}
-.msg.me{background:linear-gradient(170deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 2px 8px -3px rgba(230,160,0,.6)}
-.msg-list>.msg:last-child{animation:msgIn .28s var(--out) both}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px) scale(.98)}}
-.msg-day{color:var(--blue-ink,var(--ink-3))}
-.msg-cos .msg-co:nth-child(5n+1) .avatar{background:#ffe9a8;color:#7a5600}
-.msg-cos .msg-co:nth-child(5n+2) .avatar{background:#dbe8ff;color:#0b4fb3}
-.msg-cos .msg-co:nth-child(5n+3) .avatar{background:#d9f5e1;color:#11803c}
-.msg-cos .msg-co:nth-child(5n+4) .avatar{background:#ece5ff;color:#5a36c9}
-.msg-cos .msg-co:nth-child(5n+5) .avatar{background:#ffe1d1;color:#b33d0c}
-.msg-send{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 60%,#f2c400);box-shadow:0 4px 12px -4px rgba(230,160,0,.8)}
 /* Send to driver: tiles lift, closest glows */
-[data-theme=light] .pick.drv{background:linear-gradient(180deg,#fff,#f7f6f1);box-shadow:0 1px 2px rgba(20,18,10,.08),0 6px 14px -8px rgba(20,18,10,.3)}
-.pick.drv .avatar{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 8px -3px rgba(0,0,0,.35)}
 /* New dispatch: Pickup leg warm yellow, Delivery leg cool blue */
-[data-theme=light] .nd-route{background:linear-gradient(180deg,#fffbe6,#fff 48%,#f3f7ff);border-color:#e6dfc4;box-shadow:0 1px 0 #fff inset,0 4px 12px -8px rgba(20,18,10,.25)}
-[data-theme=light] .nd-leg.to>h3{color:var(--blue-ink)}
 /* Bottom bar: every tab has its own color, the chosen one fills in */
-.tabbar{box-shadow:0 -8px 24px -12px rgba(20,18,10,.25)}
-.tab[data-tab=messages] .i{color:var(--blue,#1f6feb)}
-.tab[data-tab=done] .i{color:var(--ok)}
-.tab[data-tab=scheduled] .i{color:var(--purple,#7048e8)}
-.tab[data-tab=messages][aria-current=page] .ti{background:var(--blue,#1f6feb);box-shadow:0 4px 12px -4px rgba(31,111,235,.6)}
-.tab[data-tab=done][aria-current=page] .ti{background:var(--ok);box-shadow:0 4px 12px -4px rgba(17,128,60,.55)}
-.tab[data-tab=scheduled][aria-current=page] .ti{background:var(--purple,#7048e8);box-shadow:0 4px 12px -4px rgba(112,72,232,.55)}
-.tab[data-tab=messages][aria-current=page] .i,.tab[data-tab=done][aria-current=page] .i,.tab[data-tab=scheduled][aria-current=page] .i{color:#fff}
-.tab[aria-current=page] .ti{animation:tabPop .38s var(--spring)}
-.tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
 @keyframes tabPop{0%{transform:scale(.8)}100%{transform:translateY(-1px) scale(1)}}
-.tab-new .ti{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo))}
 /* Sheets: a little more depth */
-[data-theme=light] .sheet,[data-theme=light] .sp-card{box-shadow:0 -12px 40px -12px rgba(20,18,10,.45)}
 @media (prefers-reduced-motion:reduce){.mic-fab.on,.mic-fab.on::before,.mic-fab.on::after{animation:none}}
 /* Room for the mic: above the Send bar on the form, and under the last card in the queue */
 .nd-mic-gap{display:none;flex:none;height:62px}
@@ -2224,6 +2004,7 @@ const DONE_DAYS = 2;             // Done tab shows today and yesterday
 let auth = null;
 let db = null;
 let TS = null;
+let online = false, serverOffset = 0; // Firebase reachable now; server clock minus this phone's
 function startFirebase() {
   if (typeof firebase === 'undefined') { toast('Couldn\u2019t connect. Check the internet connection, then close and reopen the app.', 'error', 15000); return; }
   firebase.initializeApp({
@@ -2467,6 +2248,47 @@ function saveEdits() {
   Object.keys(edits).forEach((k) => { if (!edits[k] || edits[k].t < cutoff) delete edits[k]; });
   try { localStorage.setItem('ecd_edits', JSON.stringify(edits)); } catch (e) { /* ignore */ }
 }
+/* Edits are shared by every dispatcher phone (dispatch_settings/text_edits), so the text another
+   phone sends is the edited one. Newest wins; a reset is saved as {del} so it reaches the others. */
+const editRemoteKey = (k) => k.replace(/[.#$\[\]\/]/g, '_');
+const editTimers = {};
+function shareEdit(k) {
+  clearTimeout(editTimers[k]);
+  editTimers[k] = setTimeout(() => {
+    if (!db || !S.user) return;
+    const e = edits[k];
+    db.ref(`dispatch_settings/text_edits/${editRemoteKey(k)}`).set(e ? { k, text: e.text, t: e.t } : { k, del: true, t: Date.now() }).catch(() => { /* kept on this phone */ });
+  }, 700);
+}
+let editsSynced = false;
+function onRemoteEdits(all) {
+  const cutoff = Date.now() - DONE_DAYS * 86400000;
+  let changed = false;
+  Object.entries(all || {}).forEach(([rk, v]) => {
+    if (!v || !v.k) return;
+    if (v.t < cutoff) { db.ref(`dispatch_settings/text_edits/${rk}`).set(null).catch(() => {}); return; }
+    const mine = edits[v.k];
+    if (mine && mine.t >= v.t) return;
+    if (v.del) { if (mine) { delete edits[v.k]; changed = true; } return; }
+    if (!mine || mine.text !== v.text) changed = true;
+    edits[v.k] = { text: v.text, t: v.t };
+  });
+  // First time on this version: edits made on this phone before go up for the others
+  if (!editsSynced) { editsSynced = true; Object.keys(edits).forEach((k) => { const v = all && all[editRemoteKey(k)]; if (!v || v.t < edits[k].t) shareEdit(k); }); }
+  if (!changed) return;
+  saveEdits();
+  // Text boxes someone is typing in are left alone
+  $$('[data-edit-box]').forEach((b) => {
+    const id = b.dataset.editBox, r = S.pending[id] || doneReq(id);
+    const ta = $('textarea', b);
+    if (!r || !ta || ta === document.activeElement) return;
+    const edited = !!edits[editKey(id, r)];
+    ta.value = textFor(id, r);
+    b.classList.toggle('edited', edited);
+    const reset = $('[data-act=reset-edit]', b); if (reset) reset.hidden = !edited;
+    const c = $('[data-sms-count]', b); if (c) c.textContent = smsCountText(ta.value);
+  });
+}
 /* Address switch above the text: None / Pickup / Delivery / Both, plus Map link (pickup only).
    Remembered for each customer (dispatch_settings/addr_prefs, shared by every dispatcher phone):
    a customer's company for their requests, the pickup name for a dispatcher's own jobs. */
@@ -2578,9 +2400,11 @@ function setEdit(id, text) {
   const r = S.pending[id] || doneReq(id);
   if (!r) return;
   const k = editKey(id, r);
+  const had = !!edits[k];
   if (text == null || text.trim() === baseText(id, r)) delete edits[k];
   else edits[k] = { text, t: Date.now() };
   saveEdits();
+  if (had || edits[k]) shareEdit(k);
   const edited = !!edits[k];
   $$('[data-edit-box]').filter((b) => b.dataset.editBox === id).forEach((b) => {
     b.classList.toggle('edited', edited);
@@ -3222,12 +3046,16 @@ function startListening() {
   let offTimer = null;
   const onConn = (s) => {
     clearTimeout(offTimer);
-    const live = $('#live');
-    if (s.val() === true) { live.className = 'live on'; $('#live-text').textContent = 'Live'; }
-    else offTimer = setTimeout(() => { live.className = 'live off'; $('#live-text').textContent = 'Reconnecting'; }, 2000);
+    online = s.val() === true;
+    if (online) { liveText(); flushOutbox(); }
+    else offTimer = setTimeout(liveText, 2000);
   };
   conn.on('value', onConn);
   S.listeners.push(() => conn.off('value', onConn));
+  const offs = db.ref('.info/serverTimeOffset');
+  const onOff = (s) => { serverOffset = +s.val() || 0; };
+  offs.on('value', onOff);
+  S.listeners.push(() => offs.off('value', onOff));
 
   // Saved customers for the New dispatch name boxes (same list as Route Planner)
   listen(db.ref('address_lookup'), (snap) => { S.lookup = snap.val() || {}; ndRefreshTags(); });
@@ -3244,6 +3072,7 @@ function startListening() {
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
+  listen(db.ref('dispatch_settings/text_edits'), (snap) => onRemoteEdits(snap.val()), () => {});
   // Days closed (Settings) and customers asking to delete their account
   listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
   listen(db.ref('deletion_requests'), (snap) => { S.deletions = snap.val() || {}; S.deletionsError = false; refreshSettings(); }, () => { S.deletionsError = true; refreshSettings(); });
@@ -3926,7 +3755,7 @@ function dispatch(id) {
   const r = S.pending[id];
   if (!r) { toast('That request is no longer waiting. It may have been cancelled or dispatched.', 'error'); return; }
   if (sharing) return;
-  if (S.fromCache || !db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return; }
+  if (!db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return; }
   const text = textFor(id, r);
   // Doesn't touch the clipboard: a copied text can reappear in the message box after sending
   acked.add(alertKey(id, r));
@@ -3937,7 +3766,7 @@ function dispatch(id) {
       toast(`#${r.ref_no} posted to the group`, 'ok');
       db.ref(`requests/${id}`).update({ posted_at: TS, posted_by_email: S.user.email || null }).catch(() => { /* the tag is only a reminder */ });
     }
-    : (msg) => markRequestDispatched(id, r, null, msg);
+    : () => markRequestDispatched(id, r, null, ' The text was already shared, so tell the group.');
   if (canShare()) {
     // Opens Android's share menu: pick Messages, then the conversation. The text arrives already typed in.
     sharing = true;
@@ -3954,13 +3783,116 @@ function dispatch(id) {
   launch(`sms:?body=${encodeURIComponent(text)}`);
 }
 // Resolves once the database has it (true), or false if it couldn't be saved
-function markRequestDispatched(id, r, to) {
+/* Marks a waiting job sent, but only if it's still waiting: the customer may have just cancelled it,
+   or another dispatcher sent it. Resolves true when it's marked (or saved on this phone with no
+   internet), false when it's no longer waiting. `after` is added to the message when a text
+   already went another way (Group Chat, Messages). */
+async function markRequestDispatched(id, r, to, after) {
   acked.add(alertKey(id, r));
   saveAcked();
+  const anim = leaveCard(id);
+  const c = await claimJob(id, r, to);
+  if (c.s === 'gone') { renderAll(); toast(`${goneText(c.v, r.ref_no)}${after || ' Nothing was sent.'}`, 'error', 12000); return false; }
   showSent(to ? `Sent to ${to}` : 'Dispatched');
-  return leaveCard(id).then(() => db.ref(`requests/${id}`).update({ status: 'dispatched', dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null })
-    .then(() => true)
-    .catch((err) => { toast(`#${r.ref_no} couldn\u2019t be marked dispatched: ${friendlyError(err)}`, 'error', 9000); return false; }));
+  if (c.s === 'offline') toast(`No internet. #${r.ref_no} is saved on this phone and goes into Done when the internet is back.`, 'info', 7000);
+  await anim;
+  return true;
+}
+const sentRec = (to, uid, email) => ({ status: 'dispatched', dispatched_at: Date.now() + serverOffset, dispatched_to: to || null, dispatched_by: uid, dispatched_by_email: email || null });
+const sameSend = (v, rec) => !!v && v.status === 'dispatched' && v.dispatched_by === rec.dispatched_by && (v.dispatched_to || null) === rec.dispatched_to;
+function goneText(v, refNo) {
+  const n = `#${refNo || (v && v.ref_no) || ''}`;
+  if (!v) return `${n} isn\u2019t there any more.`;
+  if (v.status === 'cancelled') return `${n} was just cancelled by the customer.`;
+  if (v.status === 'removed') return `${n} was removed.`;
+  if (v.status === 'dispatched') return `${n} was already sent to ${v.dispatched_to || 'a driver'}${v.dispatched_by_email ? ` by ${staffName(v.dispatched_by_email)}` : ''}.`;
+  return `${n} is no longer waiting.`;
+}
+// One write for the status and the sent details together, so a job is never half moved
+function claimTx(id, rec) {
+  return db.ref(`requests/${id}`).transaction((cur) => {
+    if (!cur) return cur; // not loaded yet: the server answers with the real job
+    if (sameSend(cur, rec) || cur.status !== 'new') return undefined; // done already, or no longer waiting
+    return Object.assign({}, cur, rec);
+  }, undefined, false).then(({ snapshot }) => {
+    const v = snapshot.val();
+    return sameSend(v, rec) ? { s: 'ok' } : { s: 'gone', v };
+  });
+}
+// 'ok', 'gone' (+ the job as it is now), or 'offline': no answer in 4 s, so it's kept on this phone
+function claimJob(id, r, to) {
+  const rec = sentRec(to, S.user.uid, S.user.email);
+  const keep = () => { outboxAdd({ k: 'mark', id, ref: r.ref_no, rec }); db.ref(`requests/${id}`).update(rec).catch(() => { /* the outbox has it */ }); return { s: 'offline' }; };
+  if (!online) return Promise.resolve(keep());
+  return new Promise((resolve) => {
+    let late = false;
+    const t = setTimeout(() => { late = true; resolve(keep()); }, 4000);
+    claimTx(id, rec).then((c) => {
+      if (!late) { clearTimeout(t); resolve(c); return; }
+      // Answered after the text went: tidy up
+      outboxDrop(`m:${id}`);
+      if (c.s === 'gone') toast(`${goneText(c.v, r.ref_no)} The text had already gone to ${to || 'the driver'}.`, 'error', 15000);
+    }).catch(() => { if (!late) { clearTimeout(t); late = true; resolve(keep()); } });
+  });
+}
+
+/* ---------- Saving with no internet ----------
+   Texts go by SMS, which works with no internet. What Firebase hasn't got yet is kept on this
+   phone (localStorage ecd_outbox), even if the app is closed, and saved as soon as it's back. */
+let outbox = [];
+try { outbox = JSON.parse(localStorage.getItem('ecd_outbox') || '[]') || []; } catch (e) { outbox = []; }
+const obKey = (e) => (e.k === 'mark' ? `m:${e.id}` : `n:${e.key}`);
+function saveOutbox() { try { localStorage.setItem('ecd_outbox', JSON.stringify(outbox)); } catch (e) { /* ignore */ } liveText(); }
+function outboxAdd(e) { e.t = e.t || Date.now(); outbox = outbox.filter((x) => obKey(x) !== obKey(e)).concat(e); saveOutbox(); return e; }
+function outboxDrop(key) { const n = outbox.length; outbox = outbox.filter((x) => obKey(x) !== key); if (outbox.length !== n) saveOutbox(); }
+function liveText() {
+  const live = $('#live'), txt = $('#live-text');
+  if (!live || !txt) return;
+  const n = outbox.length;
+  if (online) { live.className = 'live on'; txt.textContent = n ? 'Saving\u2026' : 'Live'; }
+  else { live.className = 'live off'; txt.textContent = n ? `No internet \u00b7 ${n} to save` : 'Reconnecting'; }
+}
+let flushing = false;
+async function flushOutbox() {
+  if (flushing || !online || !db || !S.user || !outbox.length) return;
+  flushing = true;
+  try {
+    for (const e of outbox.slice()) {
+      if (!online) break;
+      try {
+        if (e.k === 'mark') {
+          const c = await claimTx(e.id, e.rec);
+          outboxDrop(obKey(e));
+          if (c.s === 'gone' && !(c.v && c.v.status === 'dispatched')) toast(`${goneText(c.v, e.ref)} The text had already gone to ${e.rec.dispatched_to || 'the driver'}.`, 'error', 15000);
+        } else await commitNew(e);
+      } catch (err) {
+        // Kept for the next try; something refused 5 times is dropped so it can't block the rest
+        e.tries = (e.tries || 0) + 1;
+        if (e.tries >= 5) { outboxDrop(obKey(e)); toast(`A job sent with no internet couldn\u2019t be saved: ${deniedMsg(err)}`, 'error', 15000); } else saveOutbox();
+        break;
+      }
+    }
+  } finally { flushing = false; liveText(); }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flushOutbox(); });
+// A New dispatch kept on this phone goes into Firebase (once: its key is picked before it's sent)
+const newBusy = new Set();
+async function commitNew(e) {
+  if (newBusy.has(e.key)) return null;
+  newBusy.add(e.key);
+  try {
+    const have = (await db.ref(`requests/${e.key}`).once('value')).val();
+    if (have) { outboxDrop(obKey(e)); return { id: e.key, ref_no: have.ref_no }; }
+    const status = e.status;
+    const job = await ndCommit(e.r, status, e.to, e.text, e);
+    outboxDrop(obKey(e));
+    if (e.status !== status) await backToQueue(e.key, null); // its text failed while it was being saved
+    return job;
+  } finally { newBusy.delete(e.key); }
+}
+// The phone didn't say whether the text went: it's kept as sent, so it isn't sent twice by mistake
+function smsUnsure(refNo, d, inMessages) {
+  toast(`The phone didn\u2019t confirm the text${refNo ? ` for #${refNo}` : ''} to ${d.name}. It\u2019s kept as sent. Check Messages, and only if it isn\u2019t there tap Open in Messages.`, 'error', 20000, { label: 'Open in Messages', run: inMessages });
 }
 // The text didn't go: quietly put it back in the queue
 function backToQueue(id, r) {
@@ -4071,7 +4003,7 @@ async function restoreRemoved(id, known) {
 function readyToSend(id) {
   const r = S.pending[id];
   if (!r) { toast('That request is no longer waiting. It may have been cancelled or dispatched.', 'error'); return null; }
-  if (S.fromCache || !db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return null; }
+  if (!db || !S.user) { toast('Still connecting. Try again in a moment.', 'info'); return null; }
   return r;
 }
 function pickDriver(id) {
@@ -4089,7 +4021,7 @@ const sendingIds = new Set(); // jobs whose text is on its way
 function smsSend(to, body) {
   return Promise.race([
     SmsSender.send({ to, body }),
-    new Promise((_, no) => setTimeout(() => no(new Error('The phone didn’t confirm the text. Check Messages to see if it went.')), 25000))
+    new Promise((_, no) => setTimeout(() => { const e = new Error('The phone didn’t confirm the text. Check Messages to see if it went.'); e.unsure = true; no(e); }, 25000))
   ]);
 }
 /* The job is marked sent the moment it's tapped, while the text goes out in the background.
@@ -4101,19 +4033,21 @@ async function sendToDriver(id, did) {
   if (!r || !d) return;
   const text = textFor(id, r);
   const inMessages = () => launch(`sms:${encodeURIComponent(cleanPhone(d.phone))}?body=${encodeURIComponent(text)}`);
-  if (!SmsSender) { inMessages(); markRequestDispatched(id, r, d.name); return; }
+  if (!SmsSender) { inMessages(); markRequestDispatched(id, r, d.name, ' Don\u2019t send the text in Messages.'); return; }
   sendingIds.add(id);
   const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
-  const sms = smsSend(cleanPhone(d.phone), text);
-  const saved = markRequestDispatched(id, r, d.name);
-  try { await sms; }
+  // Checked before the text goes: a job just cancelled (or sent by someone else) gets no text
+  const ok = await markRequestDispatched(id, r, d.name).catch(() => false);
+  if (!ok) { sendingIds.delete(id); done(); return; }
+  try { await smsSend(cleanPhone(d.phone), text); }
   catch (err) {
-    if (await saved) await backToQueue(id, r);
+    if (err && err.unsure) { smsUnsure(r.ref_no, d, inMessages); return; }
+    await backToQueue(id, r);
     // Backup: the phone's Messages app with the text typed in; it's dispatched once that opens
     toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}, so it\u2019s back in the queue. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
       const again = S.pending[id];
       inMessages();
-      if (again) markRequestDispatched(id, again, d.name);
+      if (again) markRequestDispatched(id, again, d.name, ' Don\u2019t send the text in Messages.');
     } });
   } finally { sendingIds.delete(id); done(); }
 }
@@ -4157,7 +4091,10 @@ async function resendTo(id, did) {
   if (!SmsSender) { inMessages(); note(); return; }
   const done = toast(`Sending #${r.ref_no} to ${d.name}\u2026`, 'info', 25000);
   try { await smsSend(cleanPhone(d.phone), text); showSent(`Sent to ${d.name}`); note(); }
-  catch (err) { toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => { inMessages(); note(); } }); }
+  catch (err) {
+    if (err && err.unsure) { note(); smsUnsure(r.ref_no, d, inMessages); return; }
+    toast(`#${r.ref_no} wasn\u2019t sent to ${d.name}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => { inMessages(); note(); } });
+  }
   finally { done(); }
 }
 function recopy(id) {
@@ -4677,7 +4614,7 @@ async function editQuick(id, text) {
   try {
     const map = await quickSeed();
     const key = map[id] || id;
-    if (!text) await db.ref(`dispatch_settings/quick_replies/${key}`).remove();
+    if (!text) await quickRemove(key);
     else await db.ref(`dispatch_settings/quick_replies/${key}/text`).set(text);
   } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 9000); }
 }
@@ -4694,7 +4631,12 @@ async function addQuick(text) {
   } catch (err) { toast(`Couldn’t save: ${deniedMsg(err)}`, 'error', 9000); }
 }
 async function delQuick(id) {
-  try { const map = await quickSeed(); await db.ref(`dispatch_settings/quick_replies/${map[id] || id}`).remove(); } catch (err) { toast(`Couldn’t remove: ${deniedMsg(err)}`, 'error', 9000); }
+  try { const map = await quickSeed(); await quickRemove(map[id] || id); } catch (err) { toast(`Couldn’t remove: ${deniedMsg(err)}`, 'error', 9000); }
+}
+// The last one out leaves a marker, so an empty list stays empty
+function quickRemove(key) {
+  const ref = db.ref('dispatch_settings/quick_replies');
+  return quickList().filter((q) => q.id !== key).length ? ref.child(key).remove() : ref.set({ _empty: true });
 }
 
 /* =========================================================
@@ -5654,10 +5596,10 @@ function saveCustomers(r) {
       .catch((err) => toast(`${L.name} couldn’t be saved as a customer: ${/permission/i.test(String(err && (err.code || err.message))) ? 'publish the updated Firebase rules first.' : friendlyError(err)}`, 'error', 10000));
   });
 }
-async function ndCommit(r, status, to, text) {
-  const ref = db.ref('requests').push();
+async function ndCommit(r, status, to, text, by) {
+  const ref = by && by.key ? db.ref(`requests/${by.key}`) : db.ref('requests').push();
   const rec = Object.assign({}, r, { status, created_at: TS });
-  if (status === 'dispatched') Object.assign(rec, { dispatched_at: TS, dispatched_to: to || null, dispatched_by: S.user.uid, dispatched_by_email: S.user.email || null });
+  if (status === 'dispatched') Object.assign(rec, { dispatched_at: TS, dispatched_to: to || null, dispatched_by: (by && by.uid) || S.user.uid, dispatched_by_email: (by && by.email) || S.user.email || null });
   saveCustomers(r);
   rec.ref_no = await nextRefNo();
   await ref.set(rec);
@@ -5667,6 +5609,7 @@ async function ndCommit(r, status, to, text) {
     if (!v) return;
     edits[editKey(ref.key, v)] = { text, t: Date.now() };
     saveEdits();
+    shareEdit(editKey(ref.key, v));
     if (S.pending[ref.key]) renderQueue();
   }).catch(() => { /* the text was still used */ });
   return { id: ref.key, ref_no: rec.ref_no };
@@ -5677,9 +5620,13 @@ function ndSent(r, to, text) {
   if (popOpen && history.state && history.state.pop) { _hidePop(); history.go(-2); } else closeSheet();
   showSent(to ? `Sent to ${to}` : 'Dispatched');
   clearDraft();
-  const file = () => ndCommit(r, 'dispatched', to, text)
-    .catch((err) => { toast(`It was sent, but couldn’t be saved in Done: ${deniedMsg(err)}`, 'error', 15000, { label: 'Try again', run: file }); return null; });
-  return file();
+  const e = outboxAdd({ k: 'new', key: db.ref('requests').push().key, r, status: 'dispatched', to: to || null, text: text || null, uid: S.user.uid, email: S.user.email || null });
+  const later = { id: e.key, ref_no: null, queued: e };
+  if (!online) { toast('No internet. The job is saved on this phone and goes into Done when the internet is back.', 'info', 7000); return Promise.resolve(later); }
+  return Promise.race([
+    commitNew(e).then((job) => job || later).catch(() => later), // tried again on the next connect
+    new Promise((ok) => setTimeout(() => ok(later), 8000))
+  ]);
 }
 // Group Chat only shares the text. It's dispatched (and filed in Done) once it's sent to a driver.
 function ndSendGroup() {
@@ -6316,11 +6263,14 @@ async function ndSendDriver(did) {
   try { await sms; }
   catch (err) {
     const job = await saved;
-    if (job) await backToQueue(job.id, null);
-    toast(`${job ? `#${job.ref_no} ` : ''}wasn’t sent to ${d.name}${job ? ', so it’s in the queue' : ''}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
+    if (err && err.unsure) { smsUnsure(job && job.ref_no, d, inMessages); return; }
+    const kept = job && job.queued && outbox.includes(job.queued);
+    if (kept) { job.queued.status = 'new'; saveOutbox(); flushOutbox(); }
+    else if (job) await backToQueue(job.id, null);
+    toast(`${job && job.ref_no ? `#${job.ref_no} ` : 'The job '}wasn’t sent to ${d.name}${job ? ', so it’s in the queue' : ''}. ${(err && err.message) || ''}`, 'error', 15000, { label: 'Open in Messages', run: () => {
       inMessages();
       const again = job && S.pending[job.id];
-      if (again) markRequestDispatched(job.id, again, d.name);
+      if (again) markRequestDispatched(job.id, again, d.name, ' Don\u2019t send the text in Messages.');
     } });
   } finally { done(); }
 }
@@ -6633,7 +6583,7 @@ function micSettings() {
 }
 // The driver list, in its own sheet so Settings stays short
 function driversEditor() {
-  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(formatPhone(d.phone))}</small></span><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
+  const drivers = byName(S.contacts.drivers).map(([did, d]) => `<div class="contact"><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><b>${esc(d.name)}</b><small>${esc(formatPhone(d.phone))}</small></span><button class="icon-btn sm" type="button" data-act="edit-driver" data-driver="${esc(did)}" aria-label="Edit ${esc(d.name)}" title="Edit">${icon('edit')}</button><button class="icon-btn sm del" type="button" data-act="del-driver" data-driver="${esc(did)}" aria-label="Remove ${esc(d.name)}" title="Remove">${icon('trash')}</button></div>`).join('');
   return `<div id="drivers-edit">${drivers || '<p class="card-note">No drivers yet.</p>'}
     <form class="add-row" data-form="add-driver"><input name="name" placeholder="Name" aria-label="Driver name" autocomplete="off"><input name="phone" type="tel" inputmode="tel" placeholder="Phone" aria-label="Driver phone"><button class="btn btn-secondary" type="submit">Add</button></form></div>`;
 }
@@ -6651,8 +6601,12 @@ document.addEventListener('submit', async (e) => {
   if (f.dataset.form === 'add-driver') {
     const name = ins[0].value.trim();
     const phone = ins[1].value.trim();
-    if (!name || cleanPhone(phone).replace('+', '').length < 7) { toast('Enter the driver\u2019s name and full phone number.', 'error'); return; }
-    if (await saveContact((ref) => ref.child('drivers').push({ name, phone }))) toast(`${name} added.`, 'ok');
+    const digits = phoneDigits(phone), ten = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
+    if (!name || ten.length !== 10) { toast('Enter the driver\u2019s name and 10-digit phone number, with the area code.', 'error'); return; }
+    const did = f.dataset.edit;
+    if (did && S.contacts.drivers[did]) {
+      if (await saveContact((ref) => ref.child(`drivers/${did}`).update({ name, phone }))) { toast(`${name} saved.`, 'ok'); openSheet('Drivers', driversEditor()); }
+    } else if (await saveContact((ref) => ref.child('drivers').push({ name, phone }))) toast(`${name} added.`, 'ok');
   }
   if (f.dataset.form === 'add-quick') { const v = ins[0].value; ins[0].value = ''; await addQuick(v); }
 });
@@ -7065,6 +7019,17 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'edit-drivers': openSheet('Drivers', driversEditor()); break;
+    case 'edit-driver': {
+      // The add row becomes this driver's edit row
+      const d = S.contacts.drivers[el.dataset.driver], f = $('form[data-form=add-driver]');
+      if (!d || !f) break;
+      f.dataset.edit = el.dataset.driver;
+      const [n, ph] = $$('input', f);
+      n.value = d.name || ''; ph.value = d.phone || '';
+      $('button[type=submit]', f).textContent = 'Save';
+      n.focus();
+      break;
+    }
     case 'teach-mic': openVoiceLearner(); break;
     case 'vl-close': closeVoiceLearner(); break;
     case 'vl-rec': voiceLearnRecord(); break;
@@ -7478,7 +7443,7 @@ let micRaf = 0;
 function micFollow() {
   cancelAnimationFrame(micRaf);
   if (!sheetOpen) { micPlace(); return; }
-  const tick = () => { micPlace(); if (sheetOpen) micRaf = requestAnimationFrame(tick); };
+  const tick = () => { micPlace(); if (sheetOpen && ndOpen()) micRaf = requestAnimationFrame(tick); };
   micRaf = requestAnimationFrame(tick);
 }
 // Keep the cursor (and keyboard) where it is when the mic is touched
