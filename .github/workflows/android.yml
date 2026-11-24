@@ -2,7 +2,7 @@ name: Build Android app
 
 on:
   push:
-    branches: ['**']
+    branches: ['**', '!live']
   workflow_dispatch:
     inputs:
       release:
@@ -41,6 +41,28 @@ jobs:
 
       - name: Copy the web app into the Android project
         run: npm ci && npm run sync
+
+      - name: Test updates without a new APK (starter page)
+        run: |
+          npm install --no-save playwright@1.63.0   # npm ci above cleared the one the smoke test used
+          node tests/live-update.cjs
+
+      # Phones with the app pick these screens up by themselves (see "Updates without a new APK" in
+      # APP-SETUP.md). Only from main, and only after the tests above passed.
+      - name: Publish the screens for phones (live branch)
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          D="$RUNNER_TEMP/live"
+          rm -rf "$D" && mkdir -p "$D"
+          cp www/app.html "$D/app.html"
+          cd "$D"
+          git init -q -b live
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" add app.html
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Screens from build ${{ github.run_number }} (${{ github.sha }})"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" live
+          echo "Published build ${{ github.run_number }} to the live branch"
 
       - name: Add Firebase config (google-services.json)
         env:
