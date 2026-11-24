@@ -4810,10 +4810,10 @@ async function mtPoll(force) {
   mt.busy = true; mt.last = Date.now();
   let out = null;
   try {
-    const t = await auth.currentUser.getIdToken();
-    const res = await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } });
-    out = res.ok ? await res.json().catch(() => ({})) : null;
-  } catch (e) { /* next tick tries again */ }
+    const r = await askPollNow();
+    out = r.ok ? r.data : null;
+    mt.why = r.ok ? '' : `answer ${r.status}`;
+  } catch (e) { mt.why = String((e && e.message) || e).slice(0, 80); /* next tick tries again */ }
   mt.busy = false;
   if (out && out.paj !== 'failed') { mt.ok = Date.now(); mt.fail = 0; } else mt.fail++;
   mtLiveUi();
@@ -4829,6 +4829,7 @@ function mtLiveUi() {
   const txt = st === 'live' ? (secs != null && secs < 3600 ? `Live \u00b7 ${secs < 60 ? `${secs}s` : `${Math.round(secs / 60)} min`} ago` : 'Live') : st === 'off' ? 'GPS not answering' : 'Getting live GPS\u2026';
   if (el.dataset.st !== st) { el.dataset.st = st; el.className = `mt-live ${st}`; }
   if (el.textContent !== txt) el.innerHTML = `<i></i>${esc(txt)}`;
+  el.title = st === 'off' && mt.why ? `Last try: ${mt.why}` : '';
 }
 function mtStart() {
   mt.fitted = false; mt.err = false; mt.ok = 0; mt.fail = 0;
@@ -5742,6 +5743,23 @@ const MAP_TYPES = [['roadmap', 'Map'], ['satellite', 'Satellite'], ['hybrid', 'H
 const GPS_ROOT = 'developer/dispatch_dashboard'; // RouteWatcher's live vehicles and their nicknames
 const ALERT_CHECK_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/alertCheck'; // functions/index.js
 const POLL_NOW_URL = 'https://us-central1-eandccourier-36fcc.cloudfunctions.net/pollNow'; // asks for fresh GPS, as RouteWatcher does
+/* pollNow (RouteWatcher's gps-functions) only lets Route Watcher's own web address read its answers (CORS),
+   so a plain fetch from this app is turned away before it is even sent. In the phone app the call goes
+   through Capacitor's built-in native HTTP instead, which isn't a web page and has no such limit
+   (CapacitorHttp is part of every Capacitor app: no new APK needed). Answers { ok, data }. */
+const NativeHttp = CAP ? ((CAP.Plugins && CAP.Plugins.CapacitorHttp) || CAP.registerPlugin('CapacitorHttp')) : null;
+async function askPollNow() {
+  const t = await auth.currentUser.getIdToken();
+  const headers = { Authorization: `Bearer ${t}` };
+  if (NativeHttp) {
+    const r = await NativeHttp.request({ url: POLL_NOW_URL, method: 'GET', headers, responseType: 'json', connectTimeout: 15000, readTimeout: 30000 });
+    let data = r && r.data;
+    if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = {}; } }
+    return { ok: !!r && r.status >= 200 && r.status < 300, status: r && r.status, data: data || {} };
+  }
+  const res = await fetch(POLL_NOW_URL, { headers });
+  return { ok: res.ok, status: res.status, data: res.ok ? await res.json().catch(() => ({})) : {} };
+}
 const sp = { got: {}, onSend: null, pickup: null, at: null, jobId: null, vans: {}, nicks: {}, claims: {}, tcVans: {}, map: null, markers: {}, pin: null, dots: {}, traffic: null, focus: '', fitted: false, poll: 0, order: '' };
 const routeLabel = (r) => [r && r.pickup && r.pickup.name, r && r.delivery && r.delivery.name].filter(Boolean).join(' \u2192 ');
 // The panel's text box: a job's text (same as its card), or the New dispatch text
@@ -5832,9 +5850,8 @@ function spListen() {
     const run = sp.gpsRun;
     let out = null;
     try {
-      const t = await auth.currentUser.getIdToken();
-      const res = await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } });
-      out = res.ok ? await res.json().catch(() => ({})) : null;
+      const r = await askPollNow();
+      out = r.ok ? r.data : null;
     } catch (e) { /* next tick tries again */ }
     if (!popOpen || run !== sp.gpsRun) return; // the panel closed or started over meanwhile
     if (!out || out.paj === 'failed') { if (sp.gps === 'wait') spGpsDone(false); return; }
