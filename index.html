@@ -959,21 +959,15 @@ body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - 
 .mic-hear span{opacity:.8;font-weight:600}
 .mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
-/* Every box the mic just filled lights up green and pulses twice, with a ring and sparks bursting out
-   of it (one box after another, top to bottom), so you see what the mic put in and where */
-.vfill{animation:vfill 1.9s var(--out) var(--vd,0ms) both}
-@keyframes vfill{0%{box-shadow:0 0 0 0 rgba(34,197,94,.95),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.85);transform:scale(1)}
-  12%{box-shadow:0 0 0 7px rgba(34,197,94,.35),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.8);transform:scale(1.03)}
-  28%{box-shadow:0 0 0 0 rgba(34,197,94,.9),inset 0 0 0 2px #22c55e;background-color:rgba(187,247,208,.9);transform:scale(1)}
-  42%{box-shadow:0 0 0 7px rgba(34,197,94,.3),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.75);transform:scale(1.02)}
-  70%{box-shadow:0 0 0 2px rgba(34,197,94,.5),inset 0 0 0 2px #22c55e;background-color:rgba(220,252,231,.9)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0),inset 0 0 0 2px rgba(34,197,94,0)}}
+/* Every box the mic just filled gives a light green pop with a thin ring pulsing out (one box after another,
+   top to bottom), so you can see which boxes it filled. Kept soft on purpose (Justin). */
+.vfill{animation:vfill .9s var(--out) var(--vd,0ms) both}
+@keyframes vfill{0%{box-shadow:0 0 0 0 rgba(34,197,94,.45);background-color:rgba(187,247,208,.55);transform:scale(1)}
+  18%{box-shadow:0 0 0 4px rgba(34,197,94,.18);background-color:rgba(187,247,208,.5);transform:scale(1.012)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0);transform:scale(1)}}
 .vfx{position:fixed;inset:0;z-index:130;pointer-events:none;overflow:hidden}
-.vfx-ring{position:absolute;border:3px solid #22c55e;border-radius:12px;opacity:0;animation:vfxRing .7s var(--out) var(--vd,0ms) forwards}
-@keyframes vfxRing{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(var(--sx,1.1),var(--sy,1.4))}}
-.vfx-dot{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #4ade80;opacity:0;animation:vfxDot .65s cubic-bezier(.2,.7,.3,1) var(--vd,0ms) forwards}
-.vfx-dot:nth-child(3n){background:#facc15;box-shadow:0 0 6px #fde047}
-@keyframes vfxDot{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+.vfx-ring{position:absolute;border:2px solid rgba(34,197,94,.7);border-radius:12px;opacity:0;animation:vfxRing .6s var(--out) var(--vd,0ms) forwards}
+@keyframes vfxRing{0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(var(--sx,1.05),var(--sy,1.2))}}
 @media (prefers-reduced-motion:reduce){.vfx{display:none}}
 /* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
 body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on) [data-nd] textarea:focus{padding-right:48px}
@@ -7623,11 +7617,12 @@ let voice = null; // { mode: 'form'|'type', ctl, ... }
 const micBtn = $('#mic-fab');
 const micHear = $('#mic-hear');
 function micListening(on) {
-  micBtn.classList.toggle('on', on);
+  const small = !!(on && voice && voice.small);
+  micBtn.classList.toggle('on', on && !small); // the big mic stays calm while a small text-box mic listens
   micBtn.setAttribute('aria-pressed', String(on));
   micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
   document.body.classList.toggle('voice-on', on);
-  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(on && voice && voice.mode === 'type' && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text' : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
+  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(small && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text' : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
@@ -7811,7 +7806,7 @@ function voiceFill(v, t, alts, final) {
   if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
 }
 
-// Light up the boxes the mic filled: top to bottom, each a moment after the last, a green pulse with a burst
+// Light up the boxes the mic filled: top to bottom, each a moment after the last, a soft green pop with a thin ring
 function voiceBurst(list) {
   const els = list.filter((el) => el && el.isConnected && el.getBoundingClientRect().width)
     .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
@@ -7824,42 +7819,27 @@ function voiceBurst(list) {
     el.style.setProperty('--vd', d);
     el.classList.add('vfill');
     clearTimeout(el._vfill);
-    el._vfill = setTimeout(() => { el.classList.remove('vfill'); el.style.removeProperty('--vd'); }, 2100 + i * 110);
+    el._vfill = setTimeout(() => { el.classList.remove('vfill'); el.style.removeProperty('--vd'); }, 1000 + i * 110);
     if (!fx) return;
     const r = el.getBoundingClientRect();
     const ring = document.createElement('i');
     ring.className = 'vfx-ring';
     Object.assign(ring.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: getComputedStyle(el).borderRadius || '12px' });
     ring.style.setProperty('--vd', d);
-    ring.style.setProperty('--sx', String(1 + 36 / Math.max(r.width, 1))); // grows about 18 px out on every side
-    ring.style.setProperty('--sy', String(1 + 36 / Math.max(r.height, 1)));
+    ring.style.setProperty('--sx', String(1 + 16 / Math.max(r.width, 1))); // grows about 8 px out on every side
+    ring.style.setProperty('--sy', String(1 + 16 / Math.max(r.height, 1)));
     fx.appendChild(ring);
-    // Sparks fly out from all around the box
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    for (let k = 0; k < 12; k++) {
-      const a = (k / 12) * Math.PI * 2 + i;
-      const dot = document.createElement('i');
-      dot.className = 'vfx-dot';
-      const ex = Math.cos(a), ey = Math.sin(a);
-      dot.style.left = `${cx + ex * r.width / 2}px`;
-      dot.style.top = `${cy + ey * r.height / 2}px`;
-      const far = 16 + (k % 3) * 9;
-      dot.style.setProperty('--dx', `${ex * far}px`);
-      dot.style.setProperty('--dy', `${ey * far}px`);
-      dot.style.setProperty('--vd', d);
-      fx.appendChild(dot);
-    }
   });
   if (fx) setTimeout(() => fx.remove(), 1000 + els.length * 110);
-  buzz([18, 40, 18]);
+  buzz(14);
 }
 
 /* Say words into a box, at the cursor. The words show in the box as they come. */
-function voiceType(box, join) {
+function voiceType(box, join, small) {
   const start = box.selectionStart != null ? box.selectionStart : box.value.length;
   const endSel = box.selectionEnd != null ? box.selectionEnd : start;
   const before = box.value.slice(0, start), after = box.value.slice(endSel);
-  const v = { mode: 'type', box };
+  const v = { mode: 'type', box, small: !!small }; // small: started from a small mic in a text box (only that one lights up)
   // join: the words are added on as a new part of the driver text (", side door please")
   voice = v;
   micListening(true);
@@ -7909,7 +7889,7 @@ function teMic(b) {
   listenVoiceAliases();
   // Words go on the end, unless the cursor is already in this box
   if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
-  voiceType(box, true);
+  voiceType(box, true, true);
 }
 // New dispatch: the small mic in the driver text only adds words to that text (never fills in a new dispatch)
 function ndTeMic() {
@@ -7919,7 +7899,7 @@ function ndTeMic() {
   if (!box) return;
   listenVoiceAliases();
   if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
-  voiceType(box, true);
+  voiceType(box, true, true);
 }
 // Keep the keyboard closed (and the cursor where it is) when the small mic is touched
 document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.te-mic')) { e.preventDefault(); if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* */ } } } });

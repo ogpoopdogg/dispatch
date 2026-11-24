@@ -651,6 +651,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.click('.nd-text-box .nd-te-mic');
       assert.ok(await page.evaluate(() => !!voice && voice.mode === 'type' && voice.box && voice.box.id === 'nd-text'), 'it types into the driver text only');
       assert.ok(await page.evaluate(() => document.querySelector('.nd-te-mic').classList.contains('on')), 'it glows while listening');
+      assert.ok(await page.evaluate(() => !document.getElementById('mic-fab').classList.contains('on')), 'only the small mic lights up, not the big one');
       await page.evaluate(() => voiceStop(true));
     }
     assert.match(await page.textContent('.nd-route .nd-clear'), /^\s*Clear\s*$/);
@@ -968,7 +969,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       // Everything the mic filled lights up green (top to bottom), with a ring and sparks bursting out
       const lit = await pg.evaluate(() => window.__lit);
       assert.deepStrictEqual(['nd-pickup-name', 'nd-delivery-name', 'items', 'nd-text'].filter((q) => !lit.some((x) => x.q === q)), [], `filled boxes flash green: ${JSON.stringify(lit)}`);
-      assert.ok(lit.every((x) => x.anim === 'vfill' && x.rings >= 1 && x.dots >= 12), 'a green pulse and a burst for each box');
+      assert.ok(lit.every((x) => x.anim === 'vfill' && x.rings >= 1 && x.dots === 0), 'a soft green pop and a thin ring for each box, no sparks');
       await shot(pg, 'voice-green');
       await pg.waitForFunction(() => !document.querySelector('.vfx') && !document.querySelector('.vfill'), null, { timeout: 4000 });
       await pg.waitForFunction(() => !document.getElementById('mic-fab').classList.contains('on'));
