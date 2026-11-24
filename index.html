@@ -832,8 +832,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .mic-fab:active{transform:scale(.93)}
 .mic-fab:not(.on):not(.inline){animation:micIn .22s var(--out) .06s both} /* fades back in after a page or sheet closes, no pop */
 @keyframes micIn{from{opacity:0;transform:scale(.85)}}
-.mic-fab.inline{width:40px;height:40px;border-width:1.5px;box-shadow:none}
-.mic-fab.inline .i{width:21px;height:21px}
+.mic-fab.inline{width:34px;height:34px;border-width:1.5px;box-shadow:none}
+.mic-fab.inline .i{width:19px;height:19px}
 .mic-fab.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite;transform:scale(1.08)}
 .mic-fab.on::before,.mic-fab.on::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(56,189,248,.8);animation:mic-wave 1.1s ease-out infinite;pointer-events:none}
 .mic-fab.on::after{animation-delay:.55s}
@@ -1778,7 +1778,22 @@ body:not(.mic-ok) .nd-mic-slot{display:none}
 #nd-chips .nd-chip{padding:0 4px;gap:3px}
 .nd-mic-slot{grid-area:M;min-height:42px}
 /* Clear: a small red tag at the top right of the Pickup box */
-.nd-clear{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;margin:-6px -2px -6px auto;padding:0 10px;border:1.5px solid #f87171;border-radius:99px;background:var(--danger-bg);color:var(--danger);font:inherit;font-size:13px;font-weight:800;letter-spacing:0;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* Spacing (Justin picked idea 4): plain red Clear word inside the Pickup box, nothing touching a line */
+.nd-clear{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:28px;margin:0 -4px 0 auto;padding:0 8px;border:0;border-radius:8px;background:none;color:var(--danger);font:inherit;font-size:13px;font-weight:800;letter-spacing:0;text-decoration:underline;text-underline-offset:3px;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-route .nd-leg:first-child{padding-top:9px}
+.nd-route .nd-leg:first-child>h3{height:28px;margin-bottom:6px}
+#nd-chips{margin:10px 0 14px}
+/* Teach the mic in the middle, under the grab line */
+.sheet.mid .sheet-head{position:relative}
+.sheet.mid #sheet-title{font-size:16.5px}
+.sheet.mid #sheet-teach{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;font-size:13px;padding:0 9px 0 7px;min-height:30px}
+.sheet.mid #sheet-teach .i{width:15px;height:15px}
+/* Typing a name or address: the mic sits on its own beside the box, not inside it */
+body.mic-ok .sheet.kb .nd-leg .field:focus-within{margin-right:54px}
+.mic-fab.inline.beside{width:44px;height:44px}
+.mic-fab.inline.beside .i{width:22px;height:22px}
+/* Typing the pickup name: the card ends just under the box (no dashed line peeking at the keyboard) */
+.sheet.kb .nd-route:has(#nd-pickup-name:focus) .nd-leg.to::before{display:none}
 .nd-leg h3 .tag:not([hidden])~.nd-clear,.nd-leg h3 .tag-add:not([hidden])~.nd-clear{margin-left:6px}
 .nd-clear .i{width:15px;height:15px;stroke-width:2.3}
 .nd-clear:active{transform:scale(.96)}
@@ -1794,6 +1809,8 @@ body.mic-ok .nd-mic-gap{display:none}
 .sheet.big .addr-line{min-height:30px;margin:0 0 2px}
 .sheet.big .addr-line .link-btn{min-height:30px}
 .sheet.big .nd-route{margin-bottom:6px}
+.sheet.big .nd-route .nd-leg:first-child{padding-top:7px}
+.sheet.big .nd-route .nd-leg:first-child>h3{height:28px;margin-bottom:4px}
 .sheet.big #nd-text.nd-preview{min-height:0;padding:8px 40px 8px 12px;font-size:20px}
 .sheet.big .nd-pen{top:12px}
 .sheet.big .nd-text-box{margin-bottom:6px}
@@ -7595,7 +7612,7 @@ function micPlace() {
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
   if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
   if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
-  micBtn.classList.remove('inline');
+  micBtn.classList.remove('inline', 'beside');
   micBtn.style.top = '';
   micBtn.style.right = '';
   micBtn.style.width = '';
@@ -7610,8 +7627,19 @@ function micPlace() {
       if (a.type === 'number') { micBtn.hidden = true; return; }
       const r = a.getBoundingClientRect();
       micBtn.classList.add('inline');
-      micBtn.style.top = `${Math.round(r.top + Math.min(r.height, 52) / 2 - 20)}px`;
-      micBtn.style.right = `${Math.round(document.documentElement.clientWidth - r.right + 4)}px`;
+      const W = document.documentElement.clientWidth, h = Math.min(r.height, 52);
+      const fld = a.closest('.nd-leg .field');
+      if (fld) {
+        // Name or address: on its own just right of the box (the box makes room for it)
+        const f = fld.getBoundingClientRect();
+        micBtn.classList.add('beside');
+        micBtn.style.top = `${Math.round(r.top + h / 2 - 22)}px`;
+        micBtn.style.right = `${Math.round(W - f.right - 54)}px`;
+      } else {
+        // Other boxes (note, PO): a small mic inside the end of the box, clear of its edges
+        micBtn.style.top = `${Math.round(r.top + h / 2 - 17)}px`;
+        micBtn.style.right = `${Math.round(W - r.right + 6)}px`;
+      }
       micBtn.style.bottom = 'auto';
       micHear.style.bottom = `${Math.round(window.innerHeight - r.top + 8)}px`;
       return;
