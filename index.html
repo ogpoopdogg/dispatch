@@ -7380,7 +7380,7 @@ function voiceListen(h) {
   const timers = [];
   const end = (err) => { if (ended) return; ended = true; timers.forEach(clearTimeout); clearInterval(poll); if (ctl.cleanup) ctl.cleanup(); h.end(last, err, alts); };
   const got = (t, a) => { t = String(t || '').trim(); if (!t || ended) return; last = t; alts = a || [t]; h.text(t, alts); };
-  const ctl = { stop: () => {}, cleanup: null };
+  const ctl = { stop: () => {}, cleanup: null, finish: () => end() }; // finish: done now, with the words heard so far
   let poll = 0;
   // Nothing heard at all in 8 s: stop. Never longer than 40 s.
   timers.push(setTimeout(() => { if (!last) ctl.stop(); }, 8000), setTimeout(() => ctl.stop(), 40000));
@@ -7405,7 +7405,9 @@ function voiceListen(h) {
         await NativeSpeech.start({ language: 'en-CA', maxResults: 5, partialResults: true, popup: false });
         if (ended || stopped) { NativeSpeech.stop().catch(() => {}); return; } // tapped off while it was starting
         // The phone can stop on its own without saying so (an error): check now and then
-        poll = setInterval(() => { NativeSpeech.isListening().then((r) => { if (r && r.listening === false && !stopped) afterStop(); }).catch(() => {}); }, 1000);
+        // Stopped with no words and no "stopped" from the phone = it couldn't start (often still busy finishing the
+        // last listen, e.g. the big mic just before): say so at once, so a small mic can try again right away.
+        poll = setInterval(() => { NativeSpeech.isListening().then((r) => { if (r && r.listening === false && !stopped) { if (last) afterStop(); else { stopped = true; end('failed'); } } }).catch(() => {}); }, 400);
       } catch (e) { end(String((e && e.message) || e)); }
     })();
     return ctl;
@@ -7908,6 +7910,7 @@ function voiceType(box, join, small) {
       if (more && box.isConnected) {
         // Carry on after the words said so far (a plain space, not another comma)
         if (t) { before = box.value.slice(0, caret); after = box.value.slice(caret); join = false; }
+        if (err === 'failed') { v.ctl = { stop: () => {}, cleanup: null }; setTimeout(() => { if (voice === v && !v.userStop) v.ctl = listen(); }, 250); return; } // the phone was busy: try again in a moment
         v.ctl = listen();
         return;
       }
@@ -7922,6 +7925,7 @@ function voiceType(box, join, small) {
 
 /* The small mic inside the driver text box: says words onto the end of the text, no keyboard */
 function teMic(b) {
+  if (voice && voice.mode === 'form') { const f = voice; f.userStop = true; if (f.ctl && f.ctl.finish) f.ctl.finish(); if (voice === f) voiceStop(true); } // the big mic still finishing: done now (its words fill in), the small mic starts
   if (voice) { voiceStop(); return; }
   if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
   const box = $$('textarea[data-edit]').find((x) => x.dataset.edit === b.dataset.id && x.dataset.where === b.dataset.where);
@@ -7933,6 +7937,7 @@ function teMic(b) {
 }
 // New dispatch: the small mic in the driver text only adds words to that text (never fills in a new dispatch)
 function ndTeMic() {
+  if (voice && voice.mode === 'form') { const f = voice; f.userStop = true; if (f.ctl && f.ctl.finish) f.ctl.finish(); if (voice === f) voiceStop(true); } // the big mic still finishing: done now (its words fill in), the small mic starts
   if (voice) { voiceStop(); return; }
   if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
   const box = $('#nd-text');
