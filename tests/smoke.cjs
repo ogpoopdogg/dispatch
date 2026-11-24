@@ -158,6 +158,14 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.evaluate(() => { window.__fakeDb.put('developer/dispatch_dashboard/driver_nicknames', { v1: 'Mike' }); window.__fakeDb.put('developer/dispatch_dashboard/drivers', { v1: { name: 'Van 3', color: '#f7c948', lastLocation: { lat: 49.85, lng: -99.95, updatedAt: Date.now() - 60000 } }, v2: { name: 'Van 5', lastLocation: { lat: 49.84, lng: -99.93, updatedAt: Date.now() } } }); });
     await page.waitForSelector('#mt-drivers .mt-drv[data-driver=d1]');
     assert.strictEqual(await page.locator('#mt-drivers .mt-drv').count(), 1, 'Sara has no van today, so no button');
+    // Opening the map starts its own live GPS (asks pollNow), like Route Watcher, and says it's live
+    await page.waitForSelector('#mt-live.live');
+    assert.match(await page.textContent('#mt-live'), /Live/);
+    assert.strictEqual(await page.evaluate(() => mtGapMs()), 15000, 'no driver refresh set: every 15 s');
+    await page.evaluate(() => window.__fakeDb.put('developer/dispatch_dashboard/drivers/v1/gpsIntervalSec', 5));
+    await page.waitForFunction(() => mtGapMs() === 5000);
+    // A waiting pickup is a map pin with its number (and the pickup name) in a label above it
+    assert.ok(await page.evaluate(() => { const had = window.google; window.google = had || { maps: { Size: function (w, h) { this.width = w; this.height = h; }, Point: function (x, y) { this.x = x; this.y = y; } } }; const ic = pickupPin(1120, 'Brandon Tire Shop', false); const svg = decodeURIComponent(ic.url.split(',')[1]); if (!had) delete window.google; return /#1120/.test(svg) && /Brandon Tire Shop/.test(svg) && /font-size="15"/.test(svg) && ic.anchor.y > 50; }), 'pin with a label on top, bigger text');
     assert.ok(await page.evaluate(() => { const r = document.querySelector('#mt-drivers .mt-drv').getBoundingClientRect(), m = document.getElementById('mic-fab'); const mr = m.hidden ? null : m.getBoundingClientRect(); return r.height >= 40 && (!mr || r.right <= mr.left); }), 'thumb-sized, and the row stops before the mic');
     await page.click('#mt-drivers .mt-drv');
     await page.waitForSelector('#mt-where:not([hidden])');
@@ -931,8 +939,16 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await pg.evaluate(() => document.getElementById('mic-fab').classList.contains('on')), 'the mic glows while listening');
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'nothing fills in while still talking');
       await shot(pg, 'voice-talking');
+      // Note every box the mic lights up (the check doesn't depend on how fast the test machine is)
+      await pg.evaluate(() => { window.__lit = []; const real = voiceBurst; voiceBurst = (l) => { real(l); l.forEach((e) => { if (e && e.classList.contains('vfill')) window.__lit.push({ q: e.id || e.dataset.x, rings: document.querySelectorAll('.vfx .vfx-ring').length, dots: document.querySelectorAll('.vfx .vfx-dot').length, anim: getComputedStyle(e).animationName }); }); }; });
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box 25 pounds', true));
       await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
+      // Everything the mic filled lights up green (top to bottom), with a ring and sparks bursting out
+      const lit = await pg.evaluate(() => window.__lit);
+      assert.deepStrictEqual(['nd-pickup-name', 'nd-delivery-name', 'items', 'nd-text'].filter((q) => !lit.some((x) => x.q === q)), [], `filled boxes flash green: ${JSON.stringify(lit)}`);
+      assert.ok(lit.every((x) => x.anim === 'vfill' && x.rings >= 1 && x.dots >= 12), 'a green pulse and a burst for each box');
+      await shot(pg, 'voice-green');
+      await pg.waitForFunction(() => !document.querySelector('.vfx') && !document.querySelector('.vfill'), null, { timeout: 4000 });
       await pg.waitForFunction(() => !document.getElementById('mic-fab').classList.contains('on'));
       assert.strictEqual(await pg.inputValue('#nd-text'), 'GNR Electric for AAA Bobcat, 1 box 25 lbs, Prepaid');
       await pg.waitForTimeout(900); // the blue flash has faded

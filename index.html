@@ -842,8 +842,6 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 /* Teach the mic */
 /* What the mic is hearing: a strip to the left of the mic */
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
-/* A box the mic just filled flashes blue for a moment */
-@keyframes vfill{0%{box-shadow:0 0 0 3px rgba(56,189,248,.75);background-color:rgba(186,230,253,.55)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
 /* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
 /* Group Chat and Send to driver, side by side and the same size */
 /* A missing box shakes and turns red */
@@ -959,9 +957,22 @@ body.mic-ok #panel-queue:not([hidden]){min-height:calc(100dvh - var(--head-h) - 
 .mic-hear span{opacity:.8;font-weight:600}
 .mic-hear b{font-weight:750;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @keyframes slideUp{from{transform:translateY(8px);opacity:0}}
-/* A box the mic just filled flashes blue for a moment */
-.vfill{animation:vfill 1s var(--out)}
-@keyframes vfill{0%{box-shadow:0 0 0 3px rgba(56,189,248,.75);background-color:rgba(186,230,253,.55)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
+/* Every box the mic just filled lights up green and pulses twice, with a ring and sparks bursting out
+   of it (one box after another, top to bottom), so you see what the mic put in and where */
+.vfill{animation:vfill 1.9s var(--out) var(--vd,0ms) both}
+@keyframes vfill{0%{box-shadow:0 0 0 0 rgba(34,197,94,.95),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.85);transform:scale(1)}
+  12%{box-shadow:0 0 0 7px rgba(34,197,94,.35),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.8);transform:scale(1.03)}
+  28%{box-shadow:0 0 0 0 rgba(34,197,94,.9),inset 0 0 0 2px #22c55e;background-color:rgba(187,247,208,.9);transform:scale(1)}
+  42%{box-shadow:0 0 0 7px rgba(34,197,94,.3),inset 0 0 0 2px #22c55e;background-color:rgba(134,239,172,.75);transform:scale(1.02)}
+  70%{box-shadow:0 0 0 2px rgba(34,197,94,.5),inset 0 0 0 2px #22c55e;background-color:rgba(220,252,231,.9)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0),inset 0 0 0 2px rgba(34,197,94,0)}}
+.vfx{position:fixed;inset:0;z-index:130;pointer-events:none;overflow:hidden}
+.vfx-ring{position:absolute;border:3px solid #22c55e;border-radius:12px;opacity:0;animation:vfxRing .7s var(--out) var(--vd,0ms) forwards}
+@keyframes vfxRing{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(var(--sx,1.1),var(--sy,1.4))}}
+.vfx-dot{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #4ade80;opacity:0;animation:vfxDot .65s cubic-bezier(.2,.7,.3,1) var(--vd,0ms) forwards}
+.vfx-dot:nth-child(3n){background:#facc15;box-shadow:0 0 6px #fde047}
+@keyframes vfxDot{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+@media (prefers-reduced-motion:reduce){.vfx{display:none}}
 /* Keyboard up: the small mic sits at the end of the box being typed in, so the words don't go under it */
 body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on) [data-nd] textarea:focus{padding-right:48px}
 .nd-preview{display:block;width:100%;min-height:42px;max-height:112px;margin:0;padding:9px 36px 9px 11px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font:inherit;font-size:15px;font-weight:550;line-height:1.35;resize:none;overflow-y:auto;overflow-wrap:anywhere;outline:none;box-shadow:inset 0 1px 2px rgba(0,0,0,.07);cursor:text}
@@ -1563,6 +1574,8 @@ button.kp-mini{cursor:pointer}
 @keyframes qrBack{from{opacity:0;transform:translateX(-14px)}}
 /* Not opened yet: green glow that pulses */
 .qrow.unseen{border-color:#16a34a;animation:qrIn .32s var(--out) both,qrGlow 1.5s ease-in-out infinite;animation-delay:calc(var(--i) * 35ms),0s}
+.qrow.calm{animation:none}
+.qrow.unseen.calm{animation:qrGlow 1.5s ease-in-out infinite}
 @keyframes qrGlow{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.55),0 0 10px 0 rgba(22,163,74,.35)}50%{box-shadow:0 0 0 5px rgba(22,163,74,0),0 0 18px 3px rgba(22,163,74,.55)}}
 .qr-top{display:flex;align-items:center;gap:8px;min-width:0}
 .qrow .req-no{flex:none;font-size:17px;padding:1px 7px;border-radius:6px;background:var(--yellow);color:#000;font-stretch:75%;font-weight:850}
@@ -1717,6 +1730,14 @@ body:not(.mic-ok) .te-mic{display:none}
 body.mic-ok .mt-drivers{padding-right:68px} /* the row stops before the mic; more drivers go on a new line */
 .mt-drv{min-height:42px;padding:0 12px 0 9px;font-size:14.5px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .mt-drv small{font-size:11.5px}
+.page-head .mt-live{margin-left:auto}
+.mt-live{flex:none;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 8px;border-radius:99px;font-size:12.5px;font-weight:800;white-space:nowrap;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink-2)}
+.mt-live i{width:9px;height:9px;border-radius:50%;background:#9ca3af}
+.mt-live.wait i{width:11px;height:11px;background:none;border:2px solid rgba(0,0,0,.18);border-top-color:#e6bc00;animation:gpsSpin .7s linear infinite}
+.mt-live.live{border-color:rgba(22,163,74,.45);color:#15803d;background:#f0fdf4}
+.mt-live.live i{background:#16a34a;animation:pulse 2s ease-out infinite}
+.mt-live.off{border-color:rgba(217,119,6,.5);color:#b45309;background:#fffbeb}
+.mt-live.off i{background:#d97706}
 .mt-none{align-self:center;font-size:13.5px;font-weight:650;color:var(--ink-3)}
 .mt-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);margin:0;padding:10px 14px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);font-weight:700;text-align:center}
 /* Today page: a column per driver, swipe sideways when there are more than three */
@@ -1913,7 +1934,7 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
 
     <!-- Map: every waiting pickup and every van -->
     <section id="panel-map" hidden>
-      <div class="page-head"><h1>Map</h1><p id="mt-sub">Waiting pickups and vans</p></div>
+      <div class="page-head"><h1>Map</h1><p id="mt-sub">Waiting pickups and vans</p><span class="mt-live wait" id="mt-live" data-st="wait"><i></i>Getting live GPS…</span></div>
       <div class="mt-wrap"><div class="mt-map" id="mt-map"></div><p class="mt-msg" id="mt-msg" hidden></p><div class="sp-where mt-where" id="mt-where" hidden></div></div>
       <div class="mt-drivers" id="mt-drivers" role="group" aria-label="Drivers: tap one to see where they are"></div>
     </section>
@@ -3069,9 +3090,10 @@ function startListening() {
   listen(db.ref(`${GPS_ROOT}/drivers`), (snap) => { sp.vans = snap.val() || {}; sp.got.vans = true; spRender(); mtRender(); }, () => {});
   listen(db.ref(`${GPS_ROOT}/driver_nicknames`), (snap) => { sp.nicks = snap.val() || {}; sp.got.nicks = true; spRender(); mtRender(); }, () => {});
   // Who has which van today, from Timeclock: GPS vans and vans with no GPS yet (timeclock/vans, ids start with van_)
-  listen(db.ref('timeclock/vehicle_claims'), (snap) => { sp.claims = snap.val() || {}; sp.claimsOk = true; spRender(); }, () => { sp.claimsOk = false; });
-  listen(db.ref('timeclock/vans'), (snap) => { sp.tcVans = snap.val() || {}; spRender(); }, () => {});
-  setTimeout(() => { loadMaps(); spMapReady(); }, 1200);
+  listen(db.ref('timeclock/vehicle_claims'), (snap) => { sp.claims = snap.val() || {}; sp.claimsOk = true; spRender(); if (S.tab === 'map') mtDriversRender(); }, () => { sp.claimsOk = false; });
+  listen(db.ref('timeclock/vans'), (snap) => { sp.tcVans = snap.val() || {}; spRender(); if (S.tab === 'map') mtDriversRender(); }, () => {});
+  // Google Maps is big: load it once the app has settled (Map, Send to driver and New dispatch load it at once when opened)
+  setTimeout(() => { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 0)); idle(() => { loadMaps(); spMapReady(); }, { timeout: 3000 }); }, 3000);
   // Business hours for the 10-minute "jobs waiting" reminders (sent by the remindQueue function)
   listen(db.ref('dispatch_settings/reminders'), (snap) => { S.reminders = Object.assign({}, REMINDER_DEFAULTS, snap.val() || {}); refreshSettings(); },
     () => { S.remindersError = true; refreshSettings(); });
@@ -3245,7 +3267,7 @@ function fullCard(id, r, { unseen, tags, chips, enter }) {
   </article>`;
 }
 // Which job the queue shows, kept by id so a new arrival never swaps the card under the dispatcher's thumb
-const Q = { id: null, idx: 0, shown: null, anim: '' };
+const Q = { id: null, idx: 0, shown: null, anim: '', drawn: new Set() };
 function qList(list, anim) {
   const rows = list.map(([id, r], i) => {
     const unseen = !acked.has(alertKey(id, r));
@@ -3254,7 +3276,8 @@ function qList(list, anim) {
     const unread = unreadMsgs(id);
     const late = isOverdue(r) || ageCls(r.created_at) === 'late';
     const sched = r.when === 'scheduled' && r.scheduled_for;
-    return `<button class="qrow${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
+    const calm = !anim && Q.drawn.has(id) ? ' calm' : '';
+    return `<button class="qrow${calm}${unseen ? ' unseen' : ''}${disp ? ' by-disp' : ' by-cust'}${isOverdue(r) ? ' overdue' : ''}" type="button" data-act="q-open" data-id="${esc(id)}" style="--i:${Math.min(i, 10)}">
       <span class="qr-top"><span class="req-no">#${esc(r.ref_no)}</span><b class="qr-name">${esc(jobName(r))}</b>${unseen ? '<span class="qr-new">New</span>' : ''}<span class="qr-age ${late ? 'late' : 'fresh'}" data-age-short="${esc(r.created_at || 0)}" data-noage>${esc(shortAgo(r.created_at))}</span></span>
       <span class="qr-route"><span class="qr-dot p"></span><b>${esc((r.pickup && r.pickup.name) || '–')}</b><span class="qr-arrow">→</span><span class="qr-dot d"></span><b>${esc((r.delivery && r.delivery.name) || '–')}</b></span>
       <span class="qr-meta"><span class="qr-src ${disp ? 'disp' : 'cust'}">${disp ? esc(madeBy(r)) : icon('building') + 'Customer'}</span><span class="qr-pay ${collect ? 'collect' : 'prepaid'}">${collect ? 'Collect' : 'Prepaid'}</span>${sched ? `<span class="qr-flag${isOverdue(r) ? ' bad' : ''}">${isOverdue(r) ? 'Was due ' : ''}${esc(fmtDay(r.scheduled_for))}</span>` : ''}${unread ? `<span class="qr-msg">${icon('chat')}${unread}</span>` : ''}<span class="qr-when">${esc(fmtDateTime(r.created_at))}</span></span>
@@ -3524,12 +3547,12 @@ function renderKpis() {
   const n = list.length;
   const bump = (key, val) => { const b = lastKpi[key] !== undefined && lastKpi[key] !== String(val); lastKpi[key] = String(val); return b ? ' bump' : ''; };
   const back = S.tab === 'queue' && !!Q.id && !!S.pending[Q.id];
-  box.innerHTML = `<button class="kp kp-wait${n ? ' hot' : ''}${back ? ' back' : ''}" type="button" data-act="q-first" aria-label="${back ? `Back to all jobs, ${n} waiting` : `${n} waiting`}"><b class="kp-n${bump('waiting', n)}">${back ? `<svg class="i kp-arrow" aria-hidden="true"><use href="#i-back"/></svg>` : ''}${n}</b><span>${back ? 'all jobs' : n ? 'waiting' : 'none waiting'}</span></button>
+  setHtml(box, `<button class="kp kp-wait${n ? ' hot' : ''}${back ? ' back' : ''}" type="button" data-act="q-first" aria-label="${back ? `Back to all jobs, ${n} waiting` : `${n} waiting`}"><b class="kp-n${bump('waiting', n)}">${back ? `<svg class="i kp-arrow" aria-hidden="true"><use href="#i-back"/></svg>` : ''}${n}</b><span>${back ? 'all jobs' : n ? 'waiting' : 'none waiting'}</span></button>
     <button class="kp kp-sched${sched ? ' on' : ''}" type="button" data-tab="scheduled" aria-label="${sched} scheduled"><b class="kp-n${bump('sched', sched)}">${sched}</b><span>scheduled</span></button>
     <div class="kp-side">
       <div class="kp-mini${old ? ' warn' : ''}"><b${oldest !== Infinity ? ` data-age-short="${oldest}"` : ''}>${esc(oldest === Infinity ? '–' : shortAgo(oldest))}</b><span>oldest</span></div>
       <button class="kp-mini" type="button" data-act="day-board" aria-label="Day summary"><b class="${bump('done', doneToday).trim()}">${doneToday}</b><span>sent today</span></button>
-    </div>`;
+    </div>`);
 }
 function renderQueue() {
   enterIdx = 0;
@@ -3555,10 +3578,11 @@ function renderQueue() {
   const listAnim = !cur && (Q.shown || Q.anim === 'back') ? ' back' : '';
   Q.shown = Q.id; Q.anim = '';
   $('#queue-list').__list = list;
-  $('#queue-list').innerHTML = (filtering || cur ? '' : unreadBlock()) + (cur ? `<div class="qone">${jobCard(cur[0], cur[1], { anim })}</div>`
+  setHtml($('#queue-list'), (filtering || cur ? '' : unreadBlock()) + (cur ? `<div class="qone">${jobCard(cur[0], cur[1], { anim })}</div>`
     : list.length ? qList(list, listAnim)
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
-    : (S.loaded ? caughtUp() : skeletons()));
+    : (S.loaded ? caughtUp() : skeletons())));
+  if (!cur) list.forEach(([id]) => Q.drawn.add(id)); // these rows have slid in once: they stay still on later redraws
   if (GA.open && GA.src === 'queue') renderGroupAll();
   if (keep) {
     const ta = $$('#queue-list textarea[data-edit]').find((t) => t.dataset.edit === keep.id);
@@ -3617,7 +3641,7 @@ function renderScheduled() {
     }
     html += jobCard(id, r);
   });
-  $('#scheduled-list').innerHTML = html + '</div>';
+  setHtml($('#scheduled-list'), html + '</div>');
   if (GA.open && GA.src === 'scheduled') renderGroupAll();
 }
 function doneRow({ id, r, t, kind }) {
@@ -3680,7 +3704,7 @@ function renderDone() {
     html += doneRow(row);
   });
   if (open) html += '</div>';
-  $('#done-list').innerHTML = html + more;
+  setHtml($('#done-list'), html + more);
 }
 function renderCounts() {
   const q = queueList().length;
@@ -3689,6 +3713,22 @@ function renderCounts() {
   const ds = $('#dot-scheduled');
   if (dq) { dq.textContent = q; dq.hidden = !q; dq.parentNode.classList.toggle('has-jobs', !!q); }
   if (ds) { ds.textContent = s; ds.hidden = !s; }
+}
+/* Smooth start: while the app opens, the data comes in a piece at a time and each piece redraws the
+   page. Redrawing a list that didn't change made every row slide in and every glow restart again and
+   again (the "fidgety" start). setHtml only touches the page when the new HTML is different, and
+   syncAnims keeps the never-ending glows and flashes in step, so a redraw doesn't restart them. */
+function setHtml(el, html) {
+  if (!el) return false;
+  if (el.__html === html && el.innerHTML) return false;
+  el.__html = html;
+  el.innerHTML = html;
+  syncAnims(el);
+  return true;
+}
+function syncAnims(el) {
+  if (!el || !el.getAnimations) return;
+  try { el.getAnimations({ subtree: true }).forEach((a) => { const t = a.effect && a.effect.getTiming && a.effect.getTiming(); if (t && t.iterations === Infinity) a.startTime = 0; }); } catch (e) { /* older WebView: glows just restart */ }
 }
 function renderAll() {
   if ($('#view-app').hidden) return;
@@ -4741,8 +4781,8 @@ function vanMapDraw(st, onPin, onVan) {
       p.addListener('click', () => onPin(id));
     }
     p.setPosition(at);
-    p.setLabel({ text: `#${r.ref_no}`, fontWeight: '800', fontSize: '11px', color: '#000' });
-    p.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 15, fillColor: isOverdue(r) ? '#ff6461' : '#FFD100', fillOpacity: 1, strokeColor: '#000', strokeWeight: 1.5 });
+    const pk = `${r.ref_no}|${L.name || ''}|${isOverdue(r) ? 1 : 0}`;
+    if (p._key !== pk) { p.setIcon(pickupPin(r.ref_no, L.name, isOverdue(r))); p._key = pk; }
     p.setTitle(`#${r.ref_no} ${L.name || ''}`);
     b.extend(at);
   });
@@ -4752,22 +4792,55 @@ function vanMapDraw(st, onPin, onVan) {
 }
 
 /* =========================================================
-   Map page (bottom bar): every waiting pickup (yellow, its number) and every van, live.
-   Tap a pickup to open that job. While the page is open, fresh GPS is asked for every 15 s.
+   Map page (bottom bar): every waiting pickup (a pin with its number) and every van, live.
+   Tap a pickup to open that job. Opening the page starts its own live GPS, the same way Route Watcher
+   does: it asks pollNow for fresh spots as often as the fastest driver's GPS refresh (5, 10 or 15 s,
+   set in Route Watcher), right away when the page opens or the phone wakes up, and stops when it closes.
    ========================================================= */
-const mt = { map: null, vans: {}, pins: {}, fitted: false, poll: 0, sel: '', glide: 0 };
+const mt = { map: null, vans: {}, pins: {}, fitted: false, poll: 0, sel: '', glide: 0, busy: false, last: 0, ok: 0, fail: 0, state: '' };
+// As often as the fastest driver needs (Route Watcher saves it per driver as gpsIntervalSec)
+function mtGapMs() {
+  let s = 15;
+  Object.values(sp.vans || {}).forEach((v) => { const n = Number(v && v.gpsIntervalSec); if ([5, 10, 15].includes(n) && (v.deviceId || v.lastLocation)) s = Math.min(s, n); });
+  return s * 1000;
+}
+async function mtPoll(force) {
+  if (S.tab !== 'map' || document.hidden || mt.busy || !auth || !auth.currentUser || $('#view-app').hidden) return;
+  if (!force && Date.now() - mt.last < mtGapMs() - 500) return; // 500 ms slack for timer drift
+  mt.busy = true; mt.last = Date.now();
+  let out = null;
+  try {
+    const t = await auth.currentUser.getIdToken();
+    const res = await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } });
+    out = res.ok ? await res.json().catch(() => ({})) : null;
+  } catch (e) { /* next tick tries again */ }
+  mt.busy = false;
+  if (out && out.paj !== 'failed') { mt.ok = Date.now(); mt.fail = 0; } else mt.fail++;
+  mtLiveUi();
+}
+// The little live badge next to the title: spinner first, then a green dot with how fresh the vans are
+function mtLiveUi() {
+  const el = $('#mt-live');
+  if (!el) return;
+  const st = mt.ok && Date.now() - mt.ok < 40000 ? 'live' : mt.fail >= 2 ? 'off' : 'wait';
+  let newest = 0;
+  Object.values(sp.vans || {}).forEach((v) => { const t = v && v.lastLocation && +v.lastLocation.updatedAt; if (t > newest) newest = t; });
+  const secs = newest ? Math.max(0, Math.round((Date.now() + serverOffset - newest) / 1000)) : null;
+  const txt = st === 'live' ? (secs != null && secs < 3600 ? `Live \u00b7 ${secs < 60 ? `${secs}s` : `${Math.round(secs / 60)} min`} ago` : 'Live') : st === 'off' ? 'GPS not answering' : 'Getting live GPS\u2026';
+  if (el.dataset.st !== st) { el.dataset.st = st; el.className = `mt-live ${st}`; }
+  if (el.textContent !== txt) el.innerHTML = `<i></i>${esc(txt)}`;
+}
 function mtStart() {
-  mt.fitted = false; mt.err = false;
+  mt.fitted = false; mt.err = false; mt.ok = 0; mt.fail = 0;
   loadMaps();
   mtRender();
   clearInterval(mt.poll);
-  const poll = async () => {
-    if (S.tab !== 'map' || document.hidden || !auth || !auth.currentUser) return;
-    try { const t = await auth.currentUser.getIdToken(); await fetch(POLL_NOW_URL, { headers: { Authorization: `Bearer ${t}` } }); } catch (e) { /* next tick tries again */ }
-  };
-  poll();
-  mt.poll = setInterval(poll, 15000);
+  mtLiveUi();
+  mtPoll(true); // don't make the dispatcher wait for the first fix
+  mt.poll = setInterval(() => { mtPoll(false); mtLiveUi(); }, 1000); // checks each second, polls only when due (see mtGapMs)
 }
+// Back from the background: fresh spots at once
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.tab === 'map' && mt.poll) mtPoll(true); });
 // Tap a pickup: its regular job card in the Queue
 function mtOpenJob(id) { if (!S.pending[id]) return; switchTab('queue'); qOpen(id); }
 /* Driver buttons under the map: tap one and the map glides to their van and shows its street address
@@ -4791,7 +4864,7 @@ function mtDriversRender() {
   box._key = key;
   box.innerHTML = list.length
     ? list.map((x) => `<button type="button" class="sp-fvan mt-drv${mt.sel === x.did ? ' on' : ''}" data-act="mt-drv" data-driver="${esc(x.did)}" style="--c:${esc(x.color)}" aria-pressed="${mt.sel === x.did}" aria-label="${esc(x.name)}, ${esc(x.vname)}. Show where they are"><i></i><span>${esc(x.name.split(' ')[0] || x.name)}<small>${esc(x.vname)}</small></span></button>`).join('')
-    : '<span class="mt-none">No driver vans on the map right now.</span>';
+    : `<span class="mt-none">${Object.keys(sp.vans || {}).length ? 'No driver has picked a van in Timeclock right now.' : 'No driver vans on the map right now.'}</span>`;
 }
 // Glide: pan first, then zoom one step at a time so it moves smoothly instead of jumping
 function mtGlide(pos, zoom) {
@@ -4855,6 +4928,7 @@ function mtRender() {
   if (!mt.map) mt.map = new google.maps.Map($('#mt-map'), { center: { lat: 49.8485, lng: -99.9501 }, zoom: 11, disableDefaultUI: true, zoomControl: true, zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_TOP }, gestureHandling: 'greedy', clickableIcons: false, styles: MAP_STYLE });
   const c = vanMapDraw(mt, mtOpenJob, (id) => { const x = mtDrivers().find((f) => f.van === id); if (x) mtShowDriver(x.did); });
   const off = n - c.pins;
+  mtLiveUi();
   $('#mt-sub').textContent = `${n} waiting \u00b7 ${c.vans} ${c.vans === 1 ? 'van' : 'vans'}${off > 0 ? ` \u00b7 ${off} with no map spot` : ''}`;
 }
 
@@ -6049,6 +6123,27 @@ function vanIcon(v) {
   const arrow = v.heading == null ? '' : `<path d="M${cx} ${cy - 13} l5 7 h-10 z" fill="${esc(v.color)}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" transform="rotate(${v.heading} ${cx} ${cy})"/>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="54"><rect x="1" y="1" width="${w - 2}" height="24" rx="12" fill="${fill}" stroke="rgba(0,0,0,.25)"/><text x="${cx}" y="17.5" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${ink}">${esc(v.label)}</text>${arrow}<circle cx="${cx}" cy="${cy}" r="6.5" fill="${esc(v.color)}" stroke="#fff" stroke-width="2.5"/></svg>`;
   return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, 54), anchor: new google.maps.Point(cx, cy) };
+}
+/* A waiting pickup on the map: a real map pin (yellow, red when it's late) with a label above it,
+   the job number big and the pickup name under it, so the words never touch the edges. The pin's
+   point sits on the pickup spot. */
+function pickupPin(no, name, late) {
+  const num = `#${no}`;
+  let nm = oneLine(name || '');
+  if (nm.length > 20) nm = nm.slice(0, 19).trim() + '\u2026';
+  const textW = Math.max(num.length * 9.4, nm.length * 6.9);
+  const w = Math.round(Math.max(64, Math.min(170, textW + 22)));
+  const lh = nm ? 40 : 26; // label height
+  const cx = w / 2, pinTop = lh + 5, h = pinTop + 34;
+  const fill = late ? '#ef4444' : '#FFD100', ink = late ? '#fff' : '#000';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">`
+    + `<rect x="1.5" y="1.5" width="${w - 3}" height="${lh - 3}" rx="9" fill="#111" stroke="${fill}" stroke-width="2"/>`
+    + `<path d="M${cx - 6} ${lh - 1.5} L${cx} ${lh + 5} L${cx + 6} ${lh - 1.5} Z" fill="#111"/>`
+    + `<text x="${cx}" y="${nm ? 19 : 18.5}" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="15" font-weight="800" fill="${fill}">${esc(num)}</text>`
+    + (nm ? `<text x="${cx}" y="33" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#fff">${esc(nm)}</text>` : '')
+    + `<g transform="translate(${cx - 11} ${pinTop})"><path d="M11 0C4.9 0 0 4.8 0 10.8 0 18.6 11 29 11 29S22 18.6 22 10.8C22 4.8 17.1 0 11 0Z" fill="${fill}" stroke="#000" stroke-width="1.6"/><circle cx="11" cy="10.6" r="4.2" fill="${ink === '#fff' ? '#fff' : '#111'}"/></g>`
+    + `</svg>`;
+  return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, h), anchor: new google.maps.Point(cx, pinTop + 29) };
 }
 // A van slides to its new spot over about a second instead of jumping
 function glide(m, to) {
@@ -7564,6 +7659,7 @@ function voiceFill(v, t, alts, final) {
   v.shown = key;
   v.missing = [];
   const was = JSON.parse(JSON.stringify(ND));
+  const wasText = $('#nd-text') ? $('#nd-text').value : '';
   ND = JSON.parse(JSON.stringify(v.base));
   ['pickup', 'delivery'].forEach((k) => {
     const r = p[k];
@@ -7592,15 +7688,60 @@ function voiceFill(v, t, alts, final) {
   ndFillAll($('#sheet-body'));
   if (final) ['pickup', 'delivery'].forEach((k) => ndHideSuggest(k));
   ndUpdate();
-  const flash = (el) => { if (!el) return; el.classList.remove('vfill'); void el.offsetWidth; el.classList.add('vfill'); };
-  ['pickup', 'delivery'].forEach((k) => { if (ND[k].name !== was[k].name) flash($(`#nd-${k}-name`)); });
-  if (itemsText(ND.items) !== itemsText(was.items)) flash($('[data-act=nd-x][data-x=items]'));
-  if (ND.payment !== was.payment) flash($('[data-act=nd-pay]'));
-  if (ND.notes !== was.notes) flash($('[data-act=nd-x][data-x=notes]'));
-  if (ND.po !== was.po) flash($('[data-act=nd-x][data-x=po]'));
+  const lit = [];
+  ['pickup', 'delivery'].forEach((k) => { if (ND[k].name !== was[k].name) lit.push($(`#nd-${k}-name`)); });
+  if (itemsText(ND.items) !== itemsText(was.items)) lit.push($('[data-act=nd-x][data-x=items]'));
+  if (ND.payment !== was.payment) lit.push($('[data-act=nd-pay]'));
+  if (ND.notes !== was.notes) lit.push($('[data-act=nd-x][data-x=notes]'));
+  if (ND.po !== was.po) lit.push($('[data-act=nd-x][data-x=po]'));
+  if (lit.length && $('#nd-text') && $('#nd-text').value !== wasText) lit.push($('#nd-text')); // the driver text it made
+  voiceBurst(lit);
   if (!final) return;
   // Like Route Planner: a name that matches no saved customer gets a message instead
   if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
+}
+
+// Light up the boxes the mic filled: top to bottom, each a moment after the last, a green pulse with a burst
+function voiceBurst(list) {
+  const els = list.filter((el) => el && el.isConnected && el.getBoundingClientRect().width)
+    .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+  if (!els.length) return;
+  const fx = reduceMotion() ? null : document.createElement('div');
+  if (fx) { fx.className = 'vfx'; document.body.appendChild(fx); }
+  els.forEach((el, i) => {
+    const d = `${i * 110}ms`;
+    el.classList.remove('vfill'); void el.offsetWidth;
+    el.style.setProperty('--vd', d);
+    el.classList.add('vfill');
+    clearTimeout(el._vfill);
+    el._vfill = setTimeout(() => { el.classList.remove('vfill'); el.style.removeProperty('--vd'); }, 2100 + i * 110);
+    if (!fx) return;
+    const r = el.getBoundingClientRect();
+    const ring = document.createElement('i');
+    ring.className = 'vfx-ring';
+    Object.assign(ring.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: getComputedStyle(el).borderRadius || '12px' });
+    ring.style.setProperty('--vd', d);
+    ring.style.setProperty('--sx', String(1 + 36 / Math.max(r.width, 1))); // grows about 18 px out on every side
+    ring.style.setProperty('--sy', String(1 + 36 / Math.max(r.height, 1)));
+    fx.appendChild(ring);
+    // Sparks fly out from all around the box
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2 + i;
+      const dot = document.createElement('i');
+      dot.className = 'vfx-dot';
+      const ex = Math.cos(a), ey = Math.sin(a);
+      dot.style.left = `${cx + ex * r.width / 2}px`;
+      dot.style.top = `${cy + ey * r.height / 2}px`;
+      const far = 16 + (k % 3) * 9;
+      dot.style.setProperty('--dx', `${ex * far}px`);
+      dot.style.setProperty('--dy', `${ey * far}px`);
+      dot.style.setProperty('--vd', d);
+      fx.appendChild(dot);
+    }
+  });
+  if (fx) setTimeout(() => fx.remove(), 1000 + els.length * 110);
+  buzz([18, 40, 18]);
 }
 
 /* Say words into a box, at the cursor. The words show in the box as they come. */
