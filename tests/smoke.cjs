@@ -629,10 +629,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     assert.match(await page.textContent('[data-act=nd-save]'), /^Schedule for /);
     await page.click('[data-x=when]');
     // Clear sits under the mic, lined up with the chips (bin + word on one line)
-    assert.ok(await page.evaluate(() => { const sh = document.querySelector('#sheet .sheet'); if (!sh.classList.contains('big') || sh.classList.contains('kb') || innerWidth >= 720) return true; return sh.getBoundingClientRect().top >= document.querySelector('.app-head').getBoundingClientRect().bottom + 2 && document.getElementById('mic-fab').classList.contains('slot'); }), 'the filled-in form never covers the numbers, and the mic sits in its spot');
+    assert.ok(await page.evaluate(() => { const sh = document.querySelector('#sheet .sheet'); if (!sh.classList.contains('big') || sh.classList.contains('kb') || innerWidth >= 720) return true; return sh.getBoundingClientRect().top >= document.querySelector('.app-head').getBoundingClientRect().bottom + 2 && (() => { const m = document.getElementById('mic-fab').getBoundingClientRect(), r = document.querySelector('#nd-chips .nd-mic-slot').getBoundingClientRect(); return Math.round(m.width) === 56 && Math.round(m.height) === 56 && m.left >= r.left - 4 && m.right <= r.right + 4; })(); }), 'the filled-in form never covers the numbers, and the round mic sits in its spot');
     assert.ok(await page.isHidden('#sheet-reset'), 'no Clear in the top line');
-    assert.match(await page.textContent('#nd-chips .nd-clear'), /^\s*Clear\s*$/);
-    await page.click('#nd-chips .nd-clear');
+    assert.match(await page.textContent('.nd-route .nd-clear'), /^\s*Clear\s*$/);
+    await page.click('.nd-route .nd-clear');
     assert.strictEqual(await page.inputValue('#nd-pickup-name'), '', 'Clear empties the form');
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
@@ -962,7 +962,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await pg.inputValue('#nd-text'), /Prepaid, Back door ask for Dave$/);
       await shot(pg, 'voice');
       // A name that's not a saved customer never goes in a box (like Route Planner): a message says so instead
-      await pg.click('#nd-chips .nd-clear');
+      await pg.click('.nd-route .nd-clear');
       await pg.waitForTimeout(300);
       await pg.click('#mic-fab');
       await pg.evaluate(() => __say('Brandon hospital to', false));
