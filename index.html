@@ -1568,6 +1568,8 @@ button.kp-mini{cursor:pointer}
 .qlist{display:flex;flex-direction:column;gap:8px;padding-bottom:6px}
 .qrow{position:relative;display:flex;flex-direction:column;gap:5px;width:100%;padding:10px 12px 10px 14px;border:1.5px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08),0 6px 14px -8px rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease),box-shadow .2s ease;animation:qrIn .32s var(--out) both;animation-delay:calc(var(--i) * 35ms)}
 .qrow:active{transform:scale(.985);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.qrow.holding{transform:scale(.97);transition:transform .5s var(--ease),box-shadow .5s ease;box-shadow:0 0 0 3px var(--yellow-ring)} /* held: opens the job's info */
+.qrow{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .qrow::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:#3b82f6}
 .qrow.by-disp::before{background:var(--yellow)}
 .qrow.overdue{border-color:var(--danger)}
@@ -3470,6 +3472,29 @@ document.addEventListener('pointermove', (e) => { if (kpHold && Math.hypot(e.cli
 // The click that ends a hold doesn't also switch pages; no long-press menu on the numbers
 document.addEventListener('click', (e) => { if (kpHeldAt && Date.now() - kpHeldAt < 1500 && e.target.closest && e.target.closest('#queue-kpis')) { e.preventDefault(); e.stopImmediatePropagation(); kpHeldAt = 0; } }, true);
 document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('#queue-kpis')) e.preventDefault(); });
+/* Hold a job in the list for half a second: its info (Request details) opens. A quick tap still opens the job. */
+const QR_HOLD_MS = 500;
+let qrHold = null, qrHeldAt = 0;
+function qrHoldStop() { if (!qrHold) return; clearTimeout(qrHold.t); qrHold.b.classList.remove('holding'); qrHold = null; }
+document.addEventListener('pointerdown', (e) => {
+  qrHeldAt = 0; // a new touch: only the click ending a hold is dropped
+  const b = e.target.closest && e.target.closest('#queue-list .qrow[data-id]');
+  if (!b) return;
+  qrHoldStop();
+  b.classList.add('holding');
+  qrHold = { b, x: e.clientX, y: e.clientY, t: setTimeout(() => {
+    const id = b.dataset.id;
+    qrHoldStop();
+    qrHeldAt = Date.now();
+    if (navigator.vibrate) { try { navigator.vibrate(30); } catch (err) { /* */ } }
+    openDetails(id);
+  }, QR_HOLD_MS) };
+});
+document.addEventListener('pointermove', (e) => { if (qrHold && Math.hypot(e.clientX - qrHold.x, e.clientY - qrHold.y) > 10) qrHoldStop(); });
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, qrHoldStop));
+// The click that ends a hold doesn't also open the job; no long-press menu on the jobs
+document.addEventListener('click', (e) => { if (qrHeldAt && Date.now() - qrHeldAt < 1500) { e.preventDefault(); e.stopImmediatePropagation(); qrHeldAt = 0; } }, true); // ...nor taps whatever slid under the finger
+document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('#queue-list .qrow')) e.preventDefault(); });
 /* ---------- Send all to Group Chat ----------
    Every job zoomed out to one line with a box to tick. Quick picks at the top tick a whole day.
    The ticked jobs are copied as a list, one driver text per line, ready to paste in the group chat. */
