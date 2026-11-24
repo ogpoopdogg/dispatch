@@ -1233,6 +1233,11 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .tab[data-tab=scheduled][aria-current=page] .ti{background:var(--purple,#7048e8);box-shadow:0 4px 12px -4px rgba(112,72,232,.55)}
 .tab[data-tab=messages][aria-current=page] .i,.tab[data-tab=done][aria-current=page] .i,.tab[data-tab=scheduled][aria-current=page] .i{color:#fff}
 .tab[aria-current=page] .ti{animation:tabPop .38s var(--spring)}
+/* Messages open: its button lights up blue with a slow soft glow (it's a panel, not a page, so it's lit by body.msgs-up) */
+body.msgs-up #msg-btn{color:var(--ink)}
+body.msgs-up #msg-btn .ti{background:var(--blue,#1f6feb);transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(31,111,235,.6);animation:tabPop .38s var(--spring),msgGlow 2s ease-in-out .38s infinite}
+body.msgs-up #msg-btn .i{color:#fff;stroke-width:2.3}
+@keyframes msgGlow{0%,100%{box-shadow:0 0 0 0 rgba(31,111,235,.55),0 4px 12px -4px rgba(31,111,235,.6)}50%{box-shadow:0 0 0 7px rgba(31,111,235,0),0 0 18px 3px rgba(31,111,235,.55)}}
 .tab.has-jobs .ti{animation:tabGlow 1.3s ease-in-out infinite}
 @keyframes tabPop{0%{transform:scale(.8)}100%{transform:translateY(-1px) scale(1)}}
 .tab-new .ti{background:linear-gradient(160deg,var(--yellow-hi),var(--yellow) 55%,var(--yellow-lo))}
@@ -2717,6 +2722,7 @@ function syncLayers() {
   if (vlOpen) { [app, sheet, pop, map].forEach((el) => { if (el) el.inert = true; }); micSoon(); return; }
   const top = mapOpen ? map : popOpen ? pop : sheetOpen ? sheet : null;
   document.body.classList.toggle('layer-up', !!top); // you've left the page: its bottom-bar button stops being lit
+  document.body.classList.toggle('msgs-up', top === sheet && msgSheetOpen()); // Messages open: its button is lit instead
   [app, sheet, pop, map].forEach((el) => { if (el) el.inert = !!top && el !== top; });
   // Over a sheet (not the New dispatch form) the top bar with the numbers stays tappable
   const headUp = top === sheet && document.body.classList.contains('head-up');
