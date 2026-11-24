@@ -90,6 +90,20 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     // The numbers sit in the pinned top bar
     assert.ok(await page.evaluate(() => !!document.querySelector('.app-head #qbar:not([hidden]) .kp-wait')), 'numbers are part of the pinned top');
     assert.match(await page.textContent('.kp-wait'), /2\s*waiting/i);
+    // Hold a button: the job's info (Request details) opens; the job itself does not
+    {
+      const box = await page.locator('#queue-list .qrow[data-id=r2]').boundingBox();
+      await page.mouse.move(box.x + 40, box.y + 20);
+      await page.mouse.down();
+      await page.waitForTimeout(650);
+      await page.mouse.up();
+      await page.waitForSelector('#sheet:not([hidden])');
+      assert.match(await page.textContent('#sheet-title'), /Request #1202/, 'holding a job opens its info');
+      assert.strictEqual(await page.locator('#queue-list .job.full').count(), 0, 'the hold does not also open the job');
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => !document.getElementById('view-app').inert);
+      await page.waitForTimeout(300);
+    }
     // Tap a button: the job opens on the whole page, with Back to the list
     await page.click('#queue-list .qrow[data-id=r1]');
     await page.waitForSelector('#queue-list .job.full[data-id=r1]');
