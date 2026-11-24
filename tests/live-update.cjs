@@ -37,7 +37,7 @@ const version = (build, native = NATIVE, extra = '') => APP
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await ctx.addInitScript((f) => { window.__FAKE = f; }, { user: { uid: 'staff1', email: 'dana@ec.com' }, data: DATA });
   await ctx.route(/vendor\/firebase-/, (r) => r.fulfill({ contentType: 'text/javascript', body: /app-compat/.test(r.request().url()) ? FAKE : '' }));
-  await ctx.route(/googleapis\.com|gstatic\.com|cloudfunctions\.net|raw\.githubusercontent\.com/, (r) => r.abort());
+  await ctx.route(/googleapis\.com|gstatic\.com|cloudfunctions\.net|raw\.githubusercontent\.com|api\.github\.com/, (r) => r.abort());
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -83,12 +83,14 @@ const version = (build, native = NATIVE, extra = '') => APP
 
     // 6. The app finds a newer version online by itself: just opened and idle, so it switches at once
     const online = { build: BUILT + 5 };
-    await ctx.unroute(/googleapis\.com|gstatic\.com|cloudfunctions\.net|raw\.githubusercontent\.com/);
+    await ctx.unroute(/googleapis\.com|gstatic\.com|cloudfunctions\.net|raw\.githubusercontent\.com|api\.github\.com/);
     await ctx.route(/googleapis\.com|gstatic\.com|cloudfunctions\.net/, (r) => r.abort());
-    let asked = 0;
-    await ctx.route(/raw\.githubusercontent\.com\/ogpoopdogg\/dispatch\/live\//, (r) => {
-      asked++;
+    let asked = 0, viaApi = 0, apiDown = false;
+    // GitHub's API first (always fresh), raw files as the backup
+    await ctx.route(/raw\.githubusercontent\.com\/ogpoopdogg\/dispatch\/live\/|api\.github\.com\/repos\/ogpoopdogg\/dispatch\/contents\//, (r) => {
       const u = r.request().url();
+      if (/api\.github\.com/.test(u)) { if (apiDown) { r.fulfill({ status: 403, headers: { 'Access-Control-Allow-Origin': '*' }, body: '{"message":"rate limit"}' }); return; } viaApi++; }
+      asked++;
       if (/version\.json/.test(u)) r.fulfill({ contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ build: online.build, native: NATIVE }) });
       else r.fulfill({ contentType: 'text/plain', headers: { 'Access-Control-Allow-Origin': '*' }, body: version(online.build) });
     });
@@ -102,6 +104,12 @@ const version = (build, native = NATIVE, extra = '') => APP
     await page.evaluate(() => { liveChecked = 0; return liveCheck(true); });
     assert.strictEqual(asked - before, 1, 'only version.json when nothing is newer');
     assert.strictEqual(await page.evaluate(() => liveWaiting), 0);
+    assert.ok(viaApi >= 1, 'asks GitHub\'s API first, so a merge is seen at once');
+    // The API says no (too many asks): the raw files still bring the update
+    apiDown = true;
+    online.build += 1;
+    await page.evaluate(() => { window.liveSwitch = () => {}; liveChecked = 0; return liveCheck(true); });
+    assert.strictEqual(await page.evaluate(() => liveWaiting), online.build, 'falls back to the raw files');
 
     assert.deepStrictEqual(errors.filter((e) => !/broken on purpose/.test(e)), []);
     console.log('live update test passed');

@@ -939,8 +939,17 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.click('#queue-list .job.full .te-mic');
       await pg.waitForFunction(() => document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
       await pg.evaluate(() => __say('side door please', true));
-      await pg.waitForFunction(() => !document.querySelector('#queue-list .job.full .te-mic').classList.contains('on'));
-      assert.strictEqual(await pg.inputValue('#queue-list .job.full textarea[data-edit]'), `${before}, side door please`);
+      // A pause: it keeps listening like talk to text, and the next words go on with a space (no extra comma)
+      await pg.waitForTimeout(300);
+      assert.ok(await pg.evaluate(() => document.querySelector('#queue-list .job.full .te-mic').classList.contains('on')), 'still listening after a pause');
+      await pg.evaluate(() => __say('call when there', false));
+      assert.strictEqual(await pg.inputValue('#queue-list .job.full textarea[data-edit]'), `${before}, side door please call when there`);
+      // A tap on the glowing mic turns it off at once
+      await pg.click('#queue-list .job.full .te-mic');
+      assert.ok(await pg.evaluate(() => !voice && !document.querySelector('#queue-list .job.full .te-mic').classList.contains('on')), 'tap = off right away');
+      await pg.waitForTimeout(1500);
+      assert.ok(await pg.evaluate(() => !voice), 'and it does not start listening again');
+      assert.strictEqual(await pg.inputValue('#queue-list .job.full textarea[data-edit]'), `${before}, side door please call when there`);
       assert.ok(await pg.evaluate(() => !document.activeElement.matches('textarea')), 'no keyboard: the text box was never focused');
       assert.ok(await pg.evaluate(() => document.querySelector('#queue-list .job.full .text-edit').classList.contains('edited')), 'counts as an edit');
       await shot(pg, 'text-mic');
