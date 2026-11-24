@@ -43,7 +43,9 @@ jobs:
         run: npm ci && npm run sync
 
       - name: Test updates without a new APK (starter page)
-        run: node tests/live-update.cjs
+        run: |
+          npm install --no-save playwright@1.63.0   # npm ci above cleared the one the smoke test used
+          node tests/live-update.cjs
 
       # Phones with the app pick these screens up by themselves (see "Updates without a new APK" in
       # APP-SETUP.md). Only from main, and only after the tests above passed.
