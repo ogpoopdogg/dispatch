@@ -7277,7 +7277,7 @@ document.addEventListener('DOMContentLoaded', startFirebase);
 /* ---------- Updates without a new APK ----------
    Every merge to main publishes the app's screens to the repo's `live` branch (the GitHub workflow,
    only after the tests pass). The phone app checks when it opens, each time it comes back to the
-   front and every 10 minutes, keeps the newest in Cache Storage, and switches by itself (no button)
+   front and every 2 minutes, keeps the newest in Cache Storage, and switches by itself (no button)
    as soon as nothing is open, typed or being sent, or when the app is left for 5 s. The starter page (scripts/live-loader.html) picks which screens to run. */
 const LIVE_BASE = 'https://raw.githubusercontent.com/ogpoopdogg/dispatch/live/';
 const metaNum = (html, name) => { const m = String(html || '').match(new RegExp(`<meta name="${name}" content="(\\d+)"`)); return m ? +m[1] : 0; };
@@ -7286,11 +7286,21 @@ let liveWaiting = 0, liveChecked = 0, liveNeedsApk = 0, liveBusy = false, liveFr
 // Started fine: the starter page won't treat this version as broken
 function liveReady() { try { localStorage.removeItem('ecd_live_boot'); } catch (e) { /* ignore */ } }
 document.addEventListener('DOMContentLoaded', () => setTimeout(liveReady, 0));
-const liveFetch = (f) => fetch(`${LIVE_BASE}${f}?t=${Date.now()}`, { cache: 'no-store' });
+// GitHub's raw file server keeps a copy for up to 5 minutes (it ignores ?t=), so a fresh merge could take that long
+// to be seen. GitHub's API gives the file as it is now (kept 60 s at most); raw is the backup if the API says no
+// (it allows 60 asks an hour per phone without a sign-in, so the checks below stay well under that).
+const LIVE_API = 'https://api.github.com/repos/ogpoopdogg/dispatch/contents/';
+async function liveFetch(f) {
+  try {
+    const r = await fetch(`${LIVE_API}${f}?ref=live`, { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw' } });
+    if (r.ok) return r;
+  } catch (e) { /* try raw */ }
+  return fetch(`${LIVE_BASE}${f}?t=${Date.now()}`, { cache: 'no-store' });
+}
 // Checks for newer screens: first the tiny version.json, then the screens themselves only if newer
 async function liveCheck(force) {
   if (!(CAP || window.__ecdLiveTest) || !window.caches || !window.__ecdNative || liveBusy) return; // only the phone app, with the starter page (tests/live-update.cjs sets __ecdLiveTest)
-  if (!force && Date.now() - liveChecked < 20000) return;
+  if (!force && Date.now() - liveChecked < 45000) return;
   liveChecked = Date.now();
   liveBusy = true;
   try {
@@ -7342,7 +7352,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden && liveWaiting && !sendingIds.size && !flushing) location.reload();
   }, 5000);
 });
-if (CAP || window.__ecdLiveTest) { setTimeout(() => liveCheck(true), 1500); setInterval(() => liveCheck(), 10 * 60000); }
+if (CAP || window.__ecdLiveTest) { setTimeout(() => liveCheck(true), 1500); setInterval(() => liveCheck(), 2 * 60000); } // every 2 minutes while open
 // After switching, say so once
 if (RUN.live) {
   let seen = 0; try { seen = +localStorage.getItem('ecd_live_seen') || 0; } catch (e) { /* ignore */ }
@@ -7364,6 +7374,7 @@ const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition || 
 const voiceCan = () => !!(NativeSpeech || WebSpeech);
 
 // Listens once. h.text(words, alternatives) as they come; h.end(lastWords, error) once, when it stops.
+let nsAllowed = false; // the phone already said yes to the mic: skip asking again (starts faster)
 function voiceListen(h) {
   let ended = false, last = '', alts = [];
   const timers = [];
@@ -7381,13 +7392,18 @@ function voiceListen(h) {
     ctl.stop = () => { if (stopped) return; NativeSpeech.stop().catch(() => {}); afterStop(); };
     (async () => {
       try {
-        let p = await NativeSpeech.checkPermissions();
-        if (p.speechRecognition !== 'granted') p = await NativeSpeech.requestPermissions();
-        if (p.speechRecognition !== 'granted') { end('denied'); return; }
+        if (!nsAllowed) {
+          let p = await NativeSpeech.checkPermissions();
+          if (p.speechRecognition !== 'granted') p = await NativeSpeech.requestPermissions();
+          if (p.speechRecognition !== 'granted') { end('denied'); return; }
+          nsAllowed = true;
+        }
+        if (ended || stopped) { end(); return; } // tapped off before it started: never start
         subs.push(await NativeSpeech.addListener('partialResults', (d) => { const m = (d && d.matches) || []; got(m[0], m); if (stopped && m.length) end(); }));
         subs.push(await NativeSpeech.addListener('listeningState', (d) => { if (d && d.status === 'stopped' && !stopped) afterStop(); }));
-        if (ended) return;
+        if (ended || stopped) { end(); return; }
         await NativeSpeech.start({ language: 'en-CA', maxResults: 5, partialResults: true, popup: false });
+        if (ended || stopped) { NativeSpeech.stop().catch(() => {}); return; } // tapped off while it was starting
         // The phone can stop on its own without saying so (an error): check now and then
         poll = setInterval(() => { NativeSpeech.isListening().then((r) => { if (r && r.listening === false && !stopped) afterStop(); }).catch(() => {}); }, 1000);
       } catch (e) { end(String((e && e.message) || e)); }
@@ -7726,6 +7742,8 @@ function voiceStart() {
 function voiceStop(quiet) {
   if (!voice) return;
   voice.userStop = true; // a tap on the mic: don't start listening again
+  // A typing mic goes off at once on a tap (the words are already in the box as they were heard)
+  if (!quiet && voice.mode === 'type') { const box = voice.box; voiceStop(true); if (box && box.isConnected) box.dispatchEvent(new Event('change', { bubbles: true })); return; }
   if (quiet) { const v = voice; voice = null; v.ctl.cleanup && v.ctl.cleanup(); v.ctl.stop(); micListening(false); return; }
   voice.ctl.stop();
 }
@@ -7847,8 +7865,8 @@ function voiceType(box, join, small) {
   let before = box.value.slice(0, start), after = box.value.slice(endSel);
   let caret = start; // where the words said so far end
   const v = { mode: 'type', box, small: !!small }; // small: started from a small mic in a text box (only that one lights up)
-  // The small mic keeps listening like the big one: the phone stops after a short pause, so it starts again
-  // until you tap it, or nothing is said for a while (8 s at first, 6 s after the last words), or 60 s pass.
+  // The small mic keeps listening like talk to text: the phone stops after a short pause, so it starts again
+  // until you tap it, or nothing is said for 10 s, or 2 minutes pass. After a pause the words go on with a space.
   const startedAt = Date.now();
   let heardAt = 0;
   // join: the words are added on as a new part of the driver text (", side door please")
@@ -7885,11 +7903,11 @@ function voiceType(box, join, small) {
       if (voice !== v) return;
       if (t) { heardAt = Date.now(); put(t); }
       const now = Date.now();
-      const more = v.small && !v.userStop && err !== 'denied' && now - startedAt < 60000
-        && (heardAt ? now - heardAt < 6000 : now - startedAt < 8000);
+      const more = v.small && !v.userStop && err !== 'denied' && now - startedAt < 120000
+        && now - (heardAt || startedAt) < 10000;
       if (more && box.isConnected) {
-        // Carry on after the words said so far
-        if (t) { before = box.value.slice(0, caret); after = box.value.slice(caret); }
+        // Carry on after the words said so far (a plain space, not another comma)
+        if (t) { before = box.value.slice(0, caret); after = box.value.slice(caret); join = false; }
         v.ctl = listen();
         return;
       }
