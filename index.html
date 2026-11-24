@@ -830,6 +830,8 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
 .mic-fab{position:fixed;right:14px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 12px);z-index:66;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;border:2px solid #2563eb;background:var(--surface);color:#2563eb;box-shadow:0 10px 24px -10px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s var(--out),background .12s,color .12s,border-color .12s}
 .mic-fab .i{width:26px;height:26px;stroke-width:2.2;position:relative;z-index:1}
 .mic-fab:active{transform:scale(.93)}
+.mic-fab:not(.on):not(.inline){animation:micIn .22s var(--out) .06s both} /* fades back in after a page or sheet closes, no pop */
+@keyframes micIn{from{opacity:0;transform:scale(.85)}}
 .mic-fab.inline{width:40px;height:40px;border-width:1.5px;box-shadow:none}
 .mic-fab.inline .i{width:21px;height:21px}
 .mic-fab.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite;transform:scale(1.08)}
@@ -1648,6 +1650,13 @@ body.head-up #sheet{padding-top:var(--head-h)}
 body.head-up #sheet .sheet{max-height:calc(100dvh - var(--head-h) - 4px)}
 body.head-up #sheet .sheet.tall:not(.mid){height:min(92dvh,calc(100dvh - var(--head-h) - 4px))}
 body.head-up .toasts{top:calc(var(--head-h) + 8px)}
+/* Full-page sheets (Messages, Day summary...) come and go like the bottom-bar pages: a quick fade and a small rise */
+@media (max-width:719px){
+  #sheet.page{transition:background-color .2s ease}
+  #sheet.page.open{background:rgba(0,0,0,.12)}
+  #sheet.page .sheet{transform:translateY(12px);opacity:0;transition:transform .24s var(--out),opacity .18s ease}
+  #sheet.page.open .sheet{transform:none;opacity:1}
+}
 /* Emojis on the ⋯ menu and Send to driver */
 .em{flex:none;display:inline-grid;place-items:center;width:24px;font-size:20px;line-height:1;font-style:normal}
 .btn .em{width:auto;font-size:18px;margin-right:2px}
@@ -1761,20 +1770,18 @@ body.head-up:not(.kb-chat) #sheet .sheet.tall:not(.mid){height:min(92dvh,calc(10
 body.head-up.kb-chat .tabbar{display:none}
 /* Driver text: always the whole text, the box grows instead of scrolling */
 textarea[data-edit]{overflow:hidden!important;resize:none!important;field-sizing:content}
-/* New dispatch: chips, mic and Clear in one tidy grid (Justin picked layout 1). Mic top right, Clear under it. */
-#nd-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 86px;grid-template-areas:"P P P P M" "Pr N No PO C";gap:6px 5px;margin:4px 0 6px}
-body:not(.mic-ok) #nd-chips{grid-template-areas:"P P P P C" "Pr N No PO C"}
+/* New dispatch: chips in a tidy grid, the round mic (same as the main page) on the right across both rows (Justin picked idea 9) */
+#nd-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 62px;grid-template-areas:"P P P P M" "Pr N No PO M";gap:6px 5px;margin:4px 0 6px}
+body:not(.mic-ok) #nd-chips{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"P P P P" "Pr N No PO"}
 body:not(.mic-ok) .nd-mic-slot{display:none}
 #nd-chips>:nth-child(1){grid-area:P}#nd-chips>:nth-child(2){grid-area:Pr}#nd-chips>:nth-child(3){grid-area:N}#nd-chips>:nth-child(4){grid-area:No}#nd-chips>:nth-child(5){grid-area:PO}
 #nd-chips .nd-chip{padding:0 4px;gap:3px}
 .nd-mic-slot{grid-area:M;min-height:42px}
-.nd-clear{grid-area:C;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:42px;padding:0 6px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:#b42318;font:inherit;font-size:14px;font-weight:750;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.nd-clear .i{width:17px;height:17px;stroke-width:2.2}
+/* Clear: a small red tag at the top right of the Pickup box */
+.nd-clear{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;margin:-6px -2px -6px auto;padding:0 10px;border:1.5px solid #f87171;border-radius:99px;background:var(--danger-bg);color:var(--danger);font:inherit;font-size:13px;font-weight:800;letter-spacing:0;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nd-leg h3 .tag:not([hidden])~.nd-clear,.nd-leg h3 .tag-add:not([hidden])~.nd-clear{margin-left:6px}
+.nd-clear .i{width:15px;height:15px;stroke-width:2.3}
 .nd-clear:active{transform:scale(.96)}
-.mic-fab.slot{border-radius:12px;box-shadow:none}
-.mic-fab.slot .i{width:22px;height:22px}
-.mic-fab.slot.on{transform:none}
-.mic-fab.slot.on::before,.mic-fab.slot.on::after{border-radius:12px}
 /* The mic is inside the form now: no extra room above the Send bar, so the driver text sits right under the buttons */
 body.mic-ok .nd-mic-gap{display:none}
 /* New dispatch (filled in): the form reaches up to the Waiting / Scheduled numbers and is tighter, so the mic and
@@ -2765,6 +2772,7 @@ function openSheet(title, html, onMount, tall) {
   $('#sheet-reset').hidden = true; // New dispatch: Clear now sits under the mic, beside the chips
   $('#sheet-teach').hidden = tall !== 'mid' || !voiceCan(); // ...and Teach the mic between Clear and ✕
   document.body.classList.toggle('head-up', tall !== 'mid'); // the top bar and numbers stay in sight above the sheet
+  $('#sheet').classList.toggle('page', tall === true); // Messages, Day summary...: fades in like a bottom-bar page, no slide from the bottom
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-back').hidden = true;
@@ -2804,10 +2812,11 @@ function _hideSheet() {
   const el = $('#sheet');
   clearTimeout(liftTimer);
   el.classList.remove('open', 'hold', 'lift');
-  document.body.classList.remove('no-scroll', 'head-up');
+  document.body.classList.remove('no-scroll');
   syncLayers();
   micFollow();
-  setTimeout(() => { if (!sheetOpen) { el.hidden = true; $('#sheet-body').innerHTML = ''; } }, 200);
+  // The top bar and bottom bar stay put until the sheet is gone (taking them away first made the sheet jump up and the bar blink)
+  setTimeout(() => { if (!sheetOpen) { el.hidden = true; el.classList.remove('page'); document.body.classList.remove('head-up'); $('#sheet-body').innerHTML = ''; } }, 240);
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
 window.addEventListener('popstate', () => { if (Q.skipPop) { Q.skipPop = false; return; } if (vlOpen) { _hideVoiceLearner(); return; } if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) { _hideSheet(); return; } if (Q.id && S.tab === 'queue') qBack(true); });
@@ -5048,7 +5057,7 @@ function openNewDispatch(opts) {
   loadMaps();
   loadCompanyBooks();
   const leg = (k, label) => `<section class="nd-leg${k === 'delivery' ? ' to' : ''}">
-      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden>Add +</button></h3>
+      <h3>${label}<span class="tag" id="nd-${k}-tag" hidden></span><button class="tag-add" type="button" id="nd-${k}-add" data-act="nd-add-customer" data-leg="${k}" hidden>Add +</button>${k === 'pickup' ? `<button type="button" class="nd-clear" data-act="nd-reset" aria-label="Clear the form and start over">${icon('trash', 'sm')}<span>Clear</span></button>` : ''}</h3>
       <div class="field ac"><input id="nd-${k}-name" data-nd-name="${k}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nd-${k}-ac" maxlength="120" placeholder="Contact or business name" autocomplete="off" autocapitalize="words" enterkeyhint="next" aria-label="${label} contact name"><div class="ac-list" id="nd-${k}-ac" role="listbox" hidden></div></div>
       <div class="nc-row" id="nd-${k}-nc" hidden><span class="grow" id="nd-${k}-nc-t"></span><button class="nc-btn" type="button" id="nd-${k}-nc-btn" data-act="nd-add-customer" data-leg="${k}" aria-disabled="true">${icon('user-plus')}New customer<span class="nc-plus" aria-hidden="true">+</span></button></div>
       <div class="addr-line" id="nd-${k}-line" hidden><span class="grow" id="nd-${k}-line-t"></span><button class="link-btn" type="button" data-act="nd-addr-edit" data-leg="${k}" aria-label="Change the ${label.toLowerCase()} address">Change</button></div>
@@ -5115,8 +5124,7 @@ function ndChips() {
     chip('when', `${icon(later ? 'calendar' : 'clock', 'sm')}<span>${later && ND.date ? esc(fmtDay(ND.date)) : 'Now'}</span>`, later, later ? `Booked for ${ND.date ? fmtDay(ND.date) : 'a later day'}. Tap to go back to Now` : 'Now. Tap to pick a day'),
     chip('notes', note ? `${icon('edit', 'sm')}<span>${esc(clampText(note, 18))}</span>` : '+ Note', !!note, note ? `Note: ${note}` : 'Add a note for the driver'),
     chip('po', po ? `<span>PO ${esc(clampText(po, 12))}</span>` : '+ PO', !!po, po ? `PO ${po}` : 'Add a PO number'),
-    '<span class="nd-mic-slot" aria-hidden="true"></span>',
-    `<button type="button" class="nd-clear" data-act="nd-reset" aria-label="Clear the form and start over">${icon('trash', 'sm')}<span>Clear</span></button>`
+    '<span class="nd-mic-slot" aria-hidden="true"></span>'
   ].join('');
 }
 // Opens one extra (or closes it when it's tapped again)
@@ -7587,7 +7595,7 @@ function micPlace() {
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
   if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
   if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
-  micBtn.classList.remove('inline', 'slot');
+  micBtn.classList.remove('inline');
   micBtn.style.top = '';
   micBtn.style.right = '';
   micBtn.style.width = '';
@@ -7613,14 +7621,13 @@ function micPlace() {
     if (slot && slot.offsetParent) {
       const r = slot.getBoundingClientRect(), body = $('#sheet-body').getBoundingClientRect();
       const st = send ? send.getBoundingClientRect().top : window.innerHeight;
-      if (r.height > 0 && r.top >= body.top - 1 && r.bottom <= st + 1) {
-        micBtn.classList.add('slot');
-        micBtn.style.top = `${Math.round(r.top)}px`;
-        micBtn.style.right = `${Math.round(document.documentElement.clientWidth - r.right)}px`;
-        micBtn.style.width = `${Math.round(r.width)}px`;
-        micBtn.style.height = `${Math.round(r.height)}px`;
+      // The same round mic as on the main page, in the middle of its spot right of the buttons
+      const cy = r.top + r.height / 2;
+      if (r.height > 0 && cy - 28 >= body.top - 1 && cy + 28 <= st + 1) {
+        micBtn.style.top = `${Math.round(cy - 28)}px`;
+        micBtn.style.right = `${Math.round(document.documentElement.clientWidth - r.right + (r.width - 56) / 2)}px`;
         micBtn.style.bottom = 'auto';
-        micHear.style.bottom = `${Math.round(window.innerHeight - r.top + 8)}px`;
+        micHear.style.bottom = `${Math.round(window.innerHeight - cy + 36)}px`;
         return;
       }
     }
