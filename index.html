@@ -5091,7 +5091,7 @@ let ndAddrPick = null; // address choice made in this form; otherwise the one re
 /* The "two names and go" form: Pickup and Delivery names (a saved customer's address is one grey
    line), a row of tap buttons that start on the usual answers, and the Send button in a bar at the bottom. */
 function openNewDispatch(opts) {
-  const byVoice = !!(opts && opts.voice);
+  const byVoice = !!(opts && (opts.voice || opts.full));
   if (!S.user || $('#view-app').hidden) return;
   if (!ND) ND = blankDraft();
   ndX = '';
@@ -6645,11 +6645,15 @@ function ndTypeNow() {
   if ($('#sheet').classList.contains('hold')) liftTimer = setTimeout(sheetLift, kbKnown ? 320 : 650);
 }
 // Reset: empty form, cursor back in Pickup, form back to its starting spot. No question asked.
+// A full-page form (after the mic) stays full page and ready for the mic: no keyboard, no drop to the half page.
 function ndReset() {
+  const sh = $('#sheet .sheet');
+  const full = !!(sh && sh.classList.contains('big') && !sh.classList.contains('kb'));
   if (voice) voiceStop(true);
   clearDraft();
   ndMode = '';
-  openNewDispatch();
+  if (full) { ND = blankDraft(); ND.voiced = true; }
+  openNewDispatch(full ? { full: true } : undefined);
 }
 
 /* ---------- Typing in the form ---------- */
