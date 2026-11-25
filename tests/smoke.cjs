@@ -167,8 +167,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.click('.tabbar [data-tab=map]');
     await page.waitForSelector('#panel-map:not([hidden])');
     await page.waitForFunction(() => /couldn.t load/.test(document.getElementById('mt-msg').textContent));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'the Map page fits the screen (no page scroll)');
     assert.match(await page.textContent('#mt-sub'), /^2 waiting/);
-    // Driver buttons under the map (only drivers with a van on the map), tap one: their van and address
+    // Driver buttons above the map (only drivers with a van on the map), tap one: their van and address
     await page.evaluate(() => { window.__fakeDb.put('developer/dispatch_dashboard/driver_nicknames', { v1: 'Mike' }); window.__fakeDb.put('developer/dispatch_dashboard/drivers', { v1: { name: 'Van 3', color: '#f7c948', lastLocation: { lat: 49.85, lng: -99.95, updatedAt: Date.now() - 60000 } }, v2: { name: 'Van 5', lastLocation: { lat: 49.84, lng: -99.93, updatedAt: Date.now() } } }); });
     await page.waitForSelector('#mt-drivers .mt-drv[data-driver=d1]');
     assert.strictEqual(await page.locator('#mt-drivers .mt-drv').count(), 1, 'Sara has no van today, so no button');
@@ -180,7 +181,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
     await page.waitForFunction(() => mtGapMs() === 5000);
     // A waiting pickup is a map pin with its number (and the pickup name) in a label above it
     assert.ok(await page.evaluate(() => { const had = window.google; window.google = had || { maps: { Size: function (w, h) { this.width = w; this.height = h; }, Point: function (x, y) { this.x = x; this.y = y; } } }; const ic = pickupPin(1120, 'Brandon Tire Shop', false); const svg = decodeURIComponent(ic.url.split(',')[1]); if (!had) delete window.google; return /#1120/.test(svg) && /Brandon Tire Shop/.test(svg) && /font-size="15"/.test(svg) && ic.anchor.y > 50; }), 'pin with a label on top, bigger text');
-    assert.ok(await page.evaluate(() => { const r = document.querySelector('#mt-drivers .mt-drv').getBoundingClientRect(), m = document.getElementById('mic-fab'); const mr = m.hidden ? null : m.getBoundingClientRect(); return r.height >= 40 && (!mr || r.right <= mr.left); }), 'thumb-sized, and the row stops before the mic');
+    assert.ok(await page.evaluate(() => { const r = document.querySelector('#mt-drivers .mt-drv').getBoundingClientRect(), m = document.getElementById('mic-fab'); const mr = m.hidden ? null : m.getBoundingClientRect(); const mp = document.getElementById('mt-map').getBoundingClientRect(); return r.height >= 40 && r.bottom <= mp.top && (!mr || r.bottom <= mr.top); }), 'thumb-sized, above the map and the mic');
     await page.click('#mt-drivers .mt-drv');
     await page.waitForSelector('#mt-where:not([hidden])');
     assert.match(await page.textContent('#mt-where'), /Mike\s*Van 3/);
@@ -790,7 +791,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await pg.isHidden('#nd-pop-list'), 'drivers hidden while the map is full');
       const mh = await pg.evaluate(() => document.querySelector('.sp-map').getBoundingClientRect().height);
       assert.ok(mh > 600, `map fills the panel (${mh}px)`);
-      assert.ok(await pg.isVisible('.sp-fvan:has-text("Mike")'), 'a button for each driver whose van is on the map');
+      assert.ok(await pg.isVisible('#sp-fvans .mt-drv:has-text("Mike")'), 'a button for each driver whose van is on the map');
       await shot(pg, 'send-fullmap');
       await pg.goBack();
       await pg.waitForSelector('#nd-pop-list', { state: 'visible' });
