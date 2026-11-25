@@ -931,6 +931,45 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.deepStrictEqual(p4.errors, []);
       await pg.close();
     }
+    // Smooth moves (Justin): the keyboard opening or closing never shoves the form; it glides in one direction to its new spot
+    {
+      const pS = await open(browser, base, { user: STAFF, data: DATA });
+      const pg = pS.page;
+      await pg.waitForSelector('#view-app:not([hidden]) .qrow');
+      const track = () => pg.evaluate(() => { window.__tops = []; const s = document.querySelector('#sheet .sheet'); const f = () => { if (!document.getElementById('sheet').hidden) window.__tops.push(Math.round(s.getBoundingClientRect().top)); window.__tr = requestAnimationFrame(f); }; f(); });
+      const tops = () => pg.evaluate(() => { cancelAnimationFrame(window.__tr); return window.__tops; });
+      const oneWay = (t, dir) => t.every((v, i) => !i || (v - t[i - 1]) * dir >= -2);
+      await pg.click('[data-act=new-dispatch]');
+      await pg.waitForTimeout(150);
+      await pg.setViewportSize({ width: 390, height: 544 }); // keyboard up
+      await pg.waitForTimeout(800);
+      // Done: keyboard goes down, the form glides up to full page (it never drops first)
+      await track();
+      await pg.evaluate(() => ndDone());
+      await pg.waitForTimeout(60);
+      await pg.setViewportSize({ width: 390, height: 844 });
+      await pg.waitForTimeout(600);
+      let t = await tops();
+      assert.ok(oneWay(t, -1) && t[t.length - 1] < 140, `Done: the form only moves up (${t.join(',')})`);
+      // Tap Pickup: it glides down onto the keyboard, never flying up off the screen
+      await track();
+      await pg.focus('#nd-pickup-name');
+      await pg.waitForTimeout(120);
+      await pg.setViewportSize({ width: 390, height: 544 });
+      await pg.waitForTimeout(600);
+      t = await tops();
+      assert.ok(oneWay(t, 1) && Math.min(...t) >= 100, `keyboard up: the form only moves down (${t.join(',')})`);
+      // Closing with the keyboard up: it slides away down, no jump first
+      await track();
+      await pg.evaluate(() => document.activeElement.blur());
+      await pg.click('[data-act=sheet-close]');
+      await pg.setViewportSize({ width: 390, height: 844 });
+      await pg.waitForTimeout(500);
+      t = await tops();
+      assert.ok(oneWay(t, 1) && t.every((v, i) => !i || v - t[i - 1] < 260), `close: one smooth slide down (${t.join(',')})`);
+      assert.deepStrictEqual(pS.errors, []);
+      await pg.close();
+    }
     // The mic: a spoken dispatch fills the form in as it's said; with the cursor in a text box the words go there
     {
       const fakeSpeech = () => {
