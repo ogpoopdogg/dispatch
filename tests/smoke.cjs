@@ -738,9 +738,9 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.match(await sub('Mike'), /^Van 1$/, 'GPS van');
       assert.match(await sub('Sara'), /^Van 9 · no GPS$/, 'van with no GPS unit, picked in Timeclock');
       assert.match(await sub('Jen'), /^Van 4 · no GPS$/, 'GPS van that has no position yet');
-      assert.match(await sub('Tom'), /^No van today$/);
-      assert.match(await sub('Mike Jones'), /^No van today$/, "two Mikes: the other Mike doesn't get Mike's van");
-      assert.match(await sub('Kim'), /^No van today$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
+      assert.match(await sub('Tom'), /^Not assigned$/);
+      assert.match(await sub('Mike Jones'), /^Not assigned$/, "two Mikes: the other Mike doesn't get Mike's van");
+      assert.match(await sub('Kim'), /^Not assigned$/, 'a van picked 20 hours ago (forgot to punch out) is ignored');
       assert.strictEqual(await pg.locator('#nd-pop-list .pick-note').count(), 0, 'no hint under the drivers');
       // Order: the closest driver is the first button (top right), then the next closest; no GPS, then no van, last
       const order = await pg.evaluate(() => {
