@@ -996,8 +996,15 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await shot(pg, 'voice');
       // The big mic is still going and the small mic in the driver text is tapped: the big one finishes now (its words
       // fill in) and the small one starts listening at once
+      // (Clear on the full-page form after the mic: it stays full page, empty, no keyboard)
+      await pg.evaluate(() => document.activeElement && document.activeElement.blur());
+      await pg.waitForTimeout(400);
+      const wasBig = await pg.evaluate(() => { const sh = document.querySelector('#sheet .sheet'); return sh.classList.contains('big') && !sh.classList.contains('kb'); });
       await pg.click('.nd-route .nd-clear');
       await pg.waitForTimeout(300);
+      assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'Clear empties it');
+      assert.ok(wasBig, 'full page after the mic');
+      assert.ok(await pg.evaluate(() => document.querySelector('#sheet .sheet').classList.contains('big') && !document.activeElement.matches('input, textarea')), 'still full page after Clear, no keyboard');
       await pg.click('#mic-fab');
       await pg.evaluate(() => __say('GNR Electric to AAA Bobcat one box', false));
       await pg.evaluate(() => document.querySelector('.nd-text-box .nd-te-mic').click());
