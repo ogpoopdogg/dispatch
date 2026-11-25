@@ -6040,7 +6040,7 @@ function openSendPanel(title, pickup, onSend, swap, jobId, route) {
   $('#sp-title').textContent = title;
   $('#sp-to').textContent = route || (pickup && pickup.name ? `Pickup: ${pickup.name}` : '');
   spTextUi();
-  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>No van today</small></span><span class="drv-km"></span></button>`).join('');
+  const rows = byName(S.contacts.drivers).map(([did, d]) => `<button class="pick drv novan" type="button" data-hold-driver="${esc(did)}" aria-label="${esc(d.name)}. Hold to send."><span class="avatar">${esc(initials(d.name))}</span><span class="grow"><span class="drv-name">${esc(d.name)}</span><small>Not assigned</small></span><span class="drv-km"></span></button>`).join('');
   $('#nd-pop-list').innerHTML = rows ? `<div class="drv-list">${rows}</div>` : '<p class="pick-note">No drivers yet. Add them in Settings › Drivers.</p>';
   sp.order = '';
   $('.sp-card').classList.toggle('nomap', maps === 'failed');
@@ -6269,11 +6269,11 @@ function spDrivers(list) {
     b.style.setProperty('--c', v ? v.color : '');
     const name = $('.drv-name', b);
     name.innerHTML = `<span>${esc(d.name || '')}</span>`;
-    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'No van today';
+    $('small', b).textContent = v ? `${v.name || (sp.vans[v.id] && sp.vans[v.id].name) || 'Van'}${v.nogps ? ' · no GPS' : ''}` : 'Not assigned';
 
     // "Closest" sits over the distance, so the name and van keep their full width
     $('.drv-km', b).innerHTML = v && v.km != null ? `${best && best.b === b ? '<span class="drv-tag">Closest</span>' : ''}<span class="drv-d">${esc(fmtKm(v.km))}</span>` : '';
-    b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', no van today'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
+    b.setAttribute('aria-label', `${d.name || ''}${v && v.km != null ? `, ${fmtKm(v.km)}, about ${fmtDrive(v.km).slice(1)} from the pickup` : v ? '' : ', not assigned'}${best && best.b === b ? ', closest' : ''}. Hold to send.`);
   });
   // Order: closest first (top right), then farther, then vans with no GPS, then no van. Not while a finger is on a row.
   const group = (x) => (!x.v ? 2 : x.v.km == null ? 1 : 0);
