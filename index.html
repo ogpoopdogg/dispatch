@@ -873,7 +873,7 @@ body.no-scroll .toasts{bottom:auto;top:calc(var(--safe-t) + 8px)}
    While typing (keyboard up) it grows to full height like before. */
 @media (max-width:719px){
   .sheet{position:relative}
-  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height .28s var(--out)}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out)} /* no height animation: ndGlide moves it in one smooth glide */
   /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
      of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
   .sheet.tall.mid.big{height:var(--nd-big-h,75dvh)}
@@ -1042,7 +1042,7 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
    While typing (keyboard up) it grows to full height like before. */
 @media (max-width:719px){
   .sheet{position:relative}
-  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out),height .28s var(--out)}
+  .sheet.tall.mid{height:max(45dvh,calc(92dvh - 330px));transition:transform var(--t-slow) var(--out)} /* no height animation: ndGlide moves it in one smooth glide */
   /* Empty, it stays low in reach of the thumb. Once Pickup and Delivery both have a name it grows to 3/4
      of the screen, with a bigger text box and bigger text (the Send bar stays at the bottom). */
   .sheet.tall.mid.big{height:var(--nd-big-h,75dvh)}
@@ -1673,6 +1673,8 @@ button.kp-mini{cursor:pointer}
 @media (max-width:360px){.head-teach{font-size:12.5px;padding:0 8px 0 6px}}
 @keyframes vlFade{from{background:rgba(0,0,0,0)}}
 @keyframes vlIn{from{opacity:0;transform:translateY(-12px) scale(.98)}}
+.map-overlay.leaving,.vl-ov.leaving{animation:layerOut .17s ease forwards;pointer-events:none}
+@keyframes layerOut{to{opacity:0;transform:translateY(6px)}}
 /* Numbers bar on every page: sheets open below the top bar, which stays above the dim */
 body.head-up .app-head{z-index:65}
 body.head-up #sheet{padding-top:var(--head-h)}
@@ -1901,6 +1903,16 @@ body.mic-ok .nd-mic-gap{display:none}
   #sheet .sheet.tall.mid:not(.kb) .nd-send{flex:1 0 auto;display:flex;flex-direction:column;margin-top:0}
   #sheet .sheet.tall.mid:not(.kb) .nd-text-box{flex:1 0 auto;display:flex;flex-direction:column}
   #sheet .sheet.tall.mid:not(.kb) #nd-text{flex:1 0 auto;max-height:none}
+}
+/* New dispatch on a phone: the dimmed layer is always the whole screen tall, and the keyboard's room is a
+   space the app keeps itself (--sheet-kb). So the phone resizing the page when the keyboard opens or closes
+   never shoves the form; it only moves when the app glides it (ndGlide), in one smooth motion. */
+@media (max-width:719px){
+  #sheet.ndv{bottom:auto;height:var(--full-h,100vh);padding-bottom:var(--sheet-kb,0px)}
+  #sheet.ndv .sheet{max-height:none}
+  #sheet.ndv .sheet.tall.mid:not(.kb){height:calc(var(--full-h,100dvh) - var(--sheet-kb,0px) - var(--head-h) - 4px)}
+  /* Closing (and waiting for the keyboard): slides all the way off the bottom, past the keyboard's room too */
+  #sheet.ndv:not(.open) .sheet,#sheet.ndv.hold .sheet{transform:translateY(calc(100% + var(--sheet-kb,0px) + 24px))}
 }
 body.layer-up .tab[aria-current=page] .ti{background:none!important;box-shadow:none!important;transform:none!important;animation:none!important}
 body.layer-up .tab[aria-current=page]{color:var(--ink-3)}
@@ -2859,14 +2871,23 @@ function syncLayers() {
 }
 function openSheet(title, html, onMount, tall) {
   if (sheetResolver) { const r = sheetResolver; sheetResolver = null; r(false); }
+  // One sheet straight to another (the mic on Messages opening New dispatch…): the new one fades in, no jump
+  const sh0 = $('#sheet .sheet');
+  const kind = tall === 'mid' ? 'mid' : tall ? 'tall' : '';
+  const swap = sheetOpen && (sh0.dataset.kind !== kind || $('#sheet-title').textContent !== title);
+  sh0.dataset.kind = kind;
   $('#sheet .sheet').classList.toggle('tall', !!tall);
   $('#sheet .sheet').classList.toggle('mid', tall === 'mid');
   $('#sheet .sheet').classList.remove('big');
-  if (!sheetOpen) { $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
+  if (!sheetOpen) { ndGlideStop(); $('#sheet .sheet').classList.remove('kb', 'moving'); ndLastTop = null; }
   $('#sheet-reset').hidden = true; // New dispatch: Clear now sits under the mic, beside the chips
   $('#sheet-teach').hidden = tall !== 'mid' || !voiceCan(); // ...and Teach the mic between Clear and ✕
   document.body.classList.toggle('head-up', tall !== 'mid'); // the top bar and numbers stay in sight above the sheet
   $('#sheet').classList.toggle('page', tall === true); // Messages, Day summary...: fades in like a bottom-bar page, no slide from the bottom
+  // New dispatch: the layer stays the whole screen tall and the app keeps the keyboard's room itself (see ndGlide)
+  if (tall === 'mid') { fullH = Math.max(fullH, window.innerHeight); document.documentElement.style.setProperty('--full-h', `${fullH}px`); }
+  else $('#sheet').style.removeProperty('--sheet-kb');
+  $('#sheet').classList.toggle('ndv', tall === 'mid');
   _hidePop();
   $('#sheet-title').textContent = title;
   $('#sheet-back').hidden = true;
@@ -2885,6 +2906,11 @@ function openSheet(title, html, onMount, tall) {
     requestAnimationFrame(() => el.classList.add('open'));
   }
   if (onMount) onMount($('#sheet-body'));
+  if (swap && !reduceMotion() && sh0.animate) {
+    if (kind === 'mid') { ndLastTop = sh0.offsetTop; ndGlideStop(); }
+    sh0.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.22,1,.36,1)' });
+    if (micBtn && !micBtn.hidden) { micBtn.style.animation = 'none'; void micBtn.offsetWidth; micBtn.style.animation = ''; }
+  }
   syncLayers();
   micFollow();
 }
@@ -2910,7 +2936,9 @@ function _hideSheet() {
   syncLayers();
   micFollow();
   // The top bar and bottom bar stay put until the sheet is gone (taking them away first made the sheet jump up and the bar blink)
-  setTimeout(() => { if (!sheetOpen) { el.hidden = true; el.classList.remove('page'); document.body.classList.remove('head-up'); $('#sheet-body').innerHTML = ''; } }, 240);
+  setTimeout(() => { if (!sheetOpen) { el.hidden = true; el.classList.remove('page', 'ndv'); el.style.removeProperty('--sheet-kb'); ndGlideStop(); document.body.classList.remove('head-up'); $('#sheet-body').innerHTML = ''; } }, 260);
+  // Closing New dispatch: the mic goes back to its spot on the page with a soft fade, not a jump
+  if (el.classList.contains('ndv') && micBtn && !micBtn.hidden && !reduceMotion()) { micBtn.style.animation = 'none'; void micBtn.offsetWidth; micBtn.style.animation = ''; }
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
 window.addEventListener('popstate', () => { if (Q.skipPop) { Q.skipPop = false; return; } if (vlOpen) { _hideVoiceLearner(); return; } if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) { _hideSheet(); return; } if (Q.id && S.tab === 'queue') qBack(true); });
@@ -2949,6 +2977,14 @@ function confirmSheet(title, body, ok, danger) {
    ========================================================= */
 function show(view) { ['loading', 'auth', 'denied', 'app'].forEach((v) => { $('#view-' + v).hidden = v !== view; }); micSoon(); }
 // The mic button shows only in the app, and not under other pop-ups
+// A full-screen layer (the map, Teach the mic) fades away instead of vanishing in one frame
+function fadeHide(el, still, after) {
+  if (!el || el.hidden) return;
+  const done = () => { el.classList.remove('leaving'); if (still()) { el.hidden = true; if (after) after(); } };
+  if (reduceMotion()) { done(); return; }
+  el.classList.add('leaving');
+  setTimeout(done, 170);
+}
 function micSoon() { setTimeout(() => { try { micPlace(); } catch (e) { /* not set up yet */ } }, 0); }
 
 $('#auth-form').addEventListener('submit', async (e) => {
@@ -3700,7 +3736,13 @@ function renderQueue() {
   const idx = Q.id ? list.findIndex(([id]) => id === Q.id) : -1;
   const cur = idx >= 0 ? list[idx] : null;
   if (!cur && Q.id) { Q.id = null; Q.anim = 'back'; }
-  const anim = cur && cur[0] !== Q.shown ? (Q.anim || 'opening') : '';
+  let anim = cur && cur[0] !== Q.shown ? (Q.anim || 'opening') : '';
+  // A redraw right after opening (it's marked seen, a new job comes in…) keeps the card's slide-in going
+  // from where it had got to, instead of cutting it off so the card pops in
+  const tNow = performance.now();
+  if (anim) Q.animKeep = { id: cur[0], cls: anim, at: tNow };
+  const keepAnim = !anim && cur && Q.animKeep && Q.animKeep.id === cur[0] && tNow - Q.animKeep.at < 400 ? Q.animKeep : null;
+  if (keepAnim) anim = keepAnim.cls;
   const listAnim = !cur && (Q.shown || Q.anim === 'back') ? ' back' : '';
   Q.shown = Q.id; Q.anim = '';
   $('#queue-list').__list = list;
@@ -3708,6 +3750,7 @@ function renderQueue() {
     : list.length ? qList(list, listAnim)
     : filtering && all.length ? `<div class="empty"><span class="empty-ic">${icon('search')}</span><h3>No matches</h3><p>${all.length} ${all.length === 1 ? 'job is' : 'jobs are'} waiting, but none match.</p><button class="btn btn-secondary" type="button" data-act="queue-clear">Show all</button></div>`
     : (S.loaded ? caughtUp() : skeletons())));
+  if (keepAnim) { const j = $('#queue-list .job.full'); if (j && j.getAnimations) j.getAnimations().forEach((a) => { if (a.animationName === 'qOpenIn') a.currentTime = tNow - keepAnim.at; }); }
   if (!cur) list.forEach(([id]) => Q.drawn.add(id)); // these rows have slid in once: they stay still on later redraws
   if (GA.open && GA.src === 'queue') renderGroupAll();
   if (keep) {
@@ -5499,6 +5542,7 @@ function ndDone() {
   ndHoldKb = false; // after the blur, so the redraw below can't take the keyboard's space again
   if (ndX === 'items') { ndX = ''; ndUpdate(); }
   if (Keyboard) Keyboard.hide().catch(() => {});
+  ndKeyboard(); // the form glides up to full page now, while the keyboard goes down (not after)
   const show = () => {
     const body = $('#sheet-body'), send = $('#sheet-body .nd-send');
     if (!body || !send || !ndOpen()) return;
@@ -5904,6 +5948,7 @@ function ndOpenMap(k) {
   if (!mapsUsable()) { toast(maps === 'loading' ? 'The map is still loading. Try again in a moment.' : 'The map isn’t available right now. Type the address and city instead.', 'error'); return; }
   const L = ND[k];
   const el = $('#map-overlay');
+  el.classList.remove('leaving');
   el.hidden = false;
   mapOpen = true;
   history.pushState({ map: true }, '');
@@ -5954,7 +5999,7 @@ function mapUse() {
   closeMap();
   if (ndOpen()) { ndFillLeg(k); ndUpdate(); ndAddressReady(k); }
 }
-function _hideMap() { mapOpen = false; $('#map-overlay').hidden = true; syncLayers(); }
+function _hideMap() { mapOpen = false; fadeHide($('#map-overlay'), () => !mapOpen); syncLayers(); }
 function closeMap() { if (!mapOpen) return; if (history.state && history.state.map) history.back(); else _hideMap(); }
 
 /* ---------- Saving and sending ---------- */
@@ -6809,6 +6854,45 @@ let expectKb = 0;  // when the keyboard was asked for and hasn't shown yet
 // While filling the form, the keyboard's space is kept even between boxes (keyboard closing, number pad
 // opening, the list of kinds), so the boxes don't move. Done (or sending, or closing) lets it go.
 let ndHoldKb = false;
+/* One smooth glide for every move of the form (keyboard up or down, growing, Clear): note where it is on
+   screen now, make the change, then slide it from the old spot to the new one. Uses the separate `translate`
+   property, so it adds to the open/close slide (on `transform`) instead of fighting it, and a new move
+   picks up from wherever the last one had got to. */
+let ndGlideAnim = null;
+const phoneW = () => !!(window.matchMedia && matchMedia('(max-width:719px)').matches);
+const glideProp = !!(window.CSS && CSS.supports && CSS.supports('translate', '0 1px'));
+function ndGlideOffset(sheet) {
+  if (!ndGlideAnim) return 0;
+  if (!glideProp) { const m = getComputedStyle(sheet).transform; const v = m && m !== 'none' ? m.match(/-?[\d.]+/g) : null; return v ? +v[v.length === 6 ? 5 : 13] || 0 : 0; }
+  const t = getComputedStyle(sheet).translate;
+  const v = t && t !== 'none' ? t.split(' ') : [];
+  return parseFloat(v[1] || 0) || 0;
+}
+// Where the form is on screen right now (its spot plus any glide still running); null if it has no spot yet
+function ndGlideFrom(sheet) { return ndLastTop == null ? null : ndLastTop + ndGlideOffset(sheet); }
+function ndGlideStop() { if (ndGlideAnim) { const g = ndGlideAnim; ndGlideAnim = null; g.cancel(); } $('#sheet .sheet').classList.remove('moving'); }
+function ndGlideTo(sheet, from) {
+  const now = sheet.offsetTop; // its new spot, not counting any slide
+  const same = ndLastTop != null && Math.abs(now - ndLastTop) < 1;
+  ndLastTop = now;
+  if (from == null || reduceMotion() || !sheet.animate || !phoneW()) { if (from != null) ndGlideStop(); return; }
+  const d = from - now;
+  if (same && ndGlideAnim) return; // already gliding there
+  ndGlideStop();
+  if (Math.abs(d) < 3) return;
+  sheet.classList.add('moving');
+  const kf = glideProp ? [{ translate: `0 ${d}px` }, { translate: '0 0' }] : [{ transform: `translateY(${d}px)` }, { transform: 'translateY(0)' }];
+  const g = sheet.animate(kf, { duration: Math.round(Math.min(340, 220 + Math.abs(d) * 0.2)), easing: 'cubic-bezier(.22,1,.36,1)' });
+  ndGlideAnim = g;
+  g.onfinish = () => {
+    if (ndGlideAnim !== g) return;
+    ndGlideAnim = null;
+    sheet.classList.remove('moving');
+    ['pickup', 'delivery'].forEach(ndPlaceSuggest);
+    const a = document.activeElement; // the box being typed in, right on the keyboard again once it's settled
+    if (a && a.closest && a.closest('[data-nd]') && sheet.classList.contains('kb')) ndReveal(a);
+  };
+}
 function ndKeyboard() {
   const sheet = $('#sheet .sheet');
   const vv = window.visualViewport;
@@ -6828,29 +6912,21 @@ function ndKeyboard() {
   const waiting = !!(((expectKb && inForm) || holding) && shown <= 120 && ndOpen());
   if (!typing) expectKb = 0;
   document.documentElement.style.setProperty('--kb', `${waiting ? kbKnown : inset > 80 ? inset : 0}px`);
-  if (!ndOpen() || !sheet.classList.contains('mid')) { ndLastTop = null; return; }
+  if (!ndOpen() || !sheet.classList.contains('mid')) { if (!sheetOpen) ndLastTop = null; return; } // closing: stays put while it slides away
   const up = typing && (shown > 120 || waiting);
+  const ov = $('#sheet');
+  const before = ndGlideFrom(sheet);
+  document.documentElement.style.setProperty('--full-h', `${fullH}px`);
+  ov.style.setProperty('--sheet-kb', `${up ? (shown > 120 ? shown : kbKnown) : 0}px`);
   if (up) {
     const head = $('#sheet .sheet-head').getBoundingClientRect().bottom - sheet.getBoundingClientRect().top;
     // Sized to the box being filled, so it sits right on the keyboard (the same spot for both names)
     sheet.style.setProperty('--nd-kb-h', `${ndKbHeight(a, head, shown > 120 ? shown : kbKnown)}px`);
   }
-  const before = ndLastTop;
-  // Keyboard going away after the form has grown: it keeps its top where it reached (it doesn't shrink back)
-  if (!up && sheet.classList.contains('kb')) {
-    const top = sheet.getBoundingClientRect().top;
-    if (top > 0 && fullH - top > fullH * 0.75) sheet.style.setProperty('--nd-big-h', `${Math.round(fullH - top)}px`);
-  }
   sheet.classList.toggle('kb', up);
-  const now = sheet.offsetTop; // layout spot, ignoring any slide that's still running
-  ndLastTop = now;
-  const held = $('#sheet').classList.contains('hold');
+  const held = ov.classList.contains('hold');
   if (held && shown > 120) requestAnimationFrame(sheetLift);
-  if (!held && before != null && Math.abs(before - now) > 4 && !reduceMotion() && sheet.animate) {
-    sheet.classList.add('moving');
-    const anim = sheet.animate([{ transform: `translateY(${before - now}px)` }, { transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
-    anim.onfinish = anim.oncancel = () => { sheet.classList.remove('moving'); ['pickup', 'delivery'].forEach(ndPlaceSuggest); };
-  }
+  ndGlideTo(sheet, held ? null : before);
   if (up && inForm) ndReveal(a);
   ['pickup', 'delivery'].forEach(ndPlaceSuggest);
 }
@@ -6883,13 +6959,7 @@ window.addEventListener('resize', chatKeyboard);
 if (window.visualViewport) visualViewport.addEventListener('resize', chatKeyboard);
 document.addEventListener('focusin', () => setTimeout(chatKeyboard, 0));
 document.addEventListener('focusout', () => setTimeout(chatKeyboard, 50));
-// The keyboard often lands while the form is still growing: once the height has settled, the box
-// being typed in (the weight with its Done button, a name, …) is put right on the keyboard again
-document.addEventListener('transitionend', (e) => {
-  if (e.propertyName !== 'height' || !e.target.matches || !e.target.matches('#sheet .sheet.kb')) return;
-  const a = document.activeElement;
-  if (a && a.closest && a.closest('[data-nd]')) ndReveal(a);
-});
+
 // Cursor in Pickup with the keyboard up, ready to type. Once the keyboard's height is known,
 // the card is put straight where it'll sit on the keyboard, so nothing bounces.
 function ndTypeNow() {
@@ -8290,6 +8360,7 @@ function openVoiceLearner() {
       <div class="vl-known" id="vl-known" hidden></div>
       <p class="card-note" style="margin-top:10px">Record 2 or 3 times. Everything the phone hears is saved for this customer, for you only (the way you say it), so the mic finds them next time.</p>
     </div>`;
+  ov.classList.remove('leaving');
   ov.hidden = false;
   if (!vlOpen) { vlOpen = true; vlReturn = document.activeElement; history.pushState({ vl: true }, ''); }
   syncLayers();
@@ -8302,8 +8373,7 @@ function _hideVoiceLearner() {
   if (!vlOpen) return;
   vlOpen = false;
   if (vlRec) { vlRec.stop(); vlRec = null; }
-  $('#vl-ov').hidden = true;
-  $('#vl-body').innerHTML = '';
+  fadeHide($('#vl-ov'), () => !vlOpen, () => { $('#vl-body').innerHTML = ''; });
   syncLayers();
   const back = vlReturn; vlReturn = null;
   if (back && back.isConnected && back.focus && !back.closest('[inert]')) back.focus({ preventScroll: true });
