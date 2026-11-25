@@ -5110,9 +5110,9 @@ function mtGlide(pos, zoom) {
     if (z === zoom) return;
     mt.map.setZoom(z + (zoom > z ? 1 : -1));
     mt.map.panTo(pos);
-    mt.glide = setTimeout(step, 170);
+    mt.glide = setTimeout(step, 34);
   };
-  mt.glide = setTimeout(step, 350);
+  mt.glide = setTimeout(step, 70); // 80% quicker than before (Justin): 70 ms, then a step every 34 ms
 }
 function mtShowDriver(did) {
   const x = mtDrivers().find((f) => f.did === did);
@@ -6488,18 +6488,19 @@ function rwVanSvg(c) {
 function vanIcon(v) {
   const c = esc(String(v.color || '#f7c948').replace(/[^#a-zA-Z0-9(),.% ]/g, ''));
   const use = v.use || 'idle', speed = use === 'online' && v.speed != null ? `${v.speed} km/h` : '';
-  const speedW = speed ? speed.length * 7 + 12 : 0;
-  const w = Math.max(64, speedW + 4, Math.min(200, v.label.length * 7.4 + 18));
-  const cx = w / 2, cy = 48, h = speed ? 92 : 72;
+  // About 35% smaller than Route Watcher's (Justin), so vans close together don't bunch up; the words stay readable
+  const speedW = speed ? speed.length * 6 + 10 : 0;
+  const w = Math.max(44, speedW + 4, Math.min(170, v.label.length * 6.3 + 14));
+  const cx = w / 2, cy = 33, h = speed ? 64 : 50;
   const green = v.rank === 1;
-  const ring = use === 'online' ? `<circle cx="${cx}" cy="${cy}" r="22" fill="${c}" fill-opacity=".2" stroke="${c}" stroke-opacity=".65" stroke-width="2"/>` : '';
-  const park = use === 'parked' ? `<g transform="translate(${cx + 11} ${cy - 13})"><rect x="-7" y="-7" width="14" height="14" rx="4" fill="#3b82f6" stroke="#fff" stroke-width="1.2"/><text x="0" y="3.6" text-anchor="middle" fill="#fff" font-family="Archivo,Arial,sans-serif" font-size="10" font-weight="800">P</text></g>` : '';
+  const ring = use === 'online' ? `<circle cx="${cx}" cy="${cy}" r="14.5" fill="${c}" fill-opacity=".2" stroke="${c}" stroke-opacity=".65" stroke-width="1.6"/>` : '';
+  const park = use === 'parked' ? `<g transform="translate(${cx + 8} ${cy - 9})"><rect x="-5" y="-5" width="10" height="10" rx="3" fill="#3b82f6" stroke="#fff" stroke-width="1"/><text x="0" y="2.7" text-anchor="middle" fill="#fff" font-family="Archivo,Arial,sans-serif" font-size="7.5" font-weight="800">P</text></g>` : '';
   const fast = speed && v.speed >= 100;
-  const tag = speed ? `<g transform="translate(${cx} ${cy + 31})"><rect x="${-speedW / 2}" y="-9" width="${speedW}" height="18" rx="9" fill="${fast ? '#dc2626' : '#111827'}"/><text x="0" y="4.2" text-anchor="middle" fill="#fff" font-family="Archivo,Arial,sans-serif" font-size="11.5" font-weight="800">${speed}</text></g>` : '';
+  const tag = speed ? `<g transform="translate(${cx} ${cy + 22})"><rect x="${-speedW / 2}" y="-7" width="${speedW}" height="14" rx="7" fill="${fast ? '#dc2626' : '#111827'}"/><text x="0" y="3.4" text-anchor="middle" fill="#fff" font-family="Archivo,Arial,sans-serif" font-size="9.5" font-weight="800">${speed}</text></g>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${ring}`
-    + `<rect x="1" y="1" width="${w - 2}" height="20" rx="10" fill="${green ? '#16a34a' : '#fff'}" stroke="${green ? '#fff' : c}" stroke-width="1.8"/>`
-    + `<text x="${cx}" y="15.2" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="12.5" font-weight="800" fill="${green ? '#fff' : v.nick ? '#111' : '#666'}">${esc(v.label)}</text>`
-    + `<g transform="translate(${cx} ${cy}) rotate(${v.heading == null ? 0 : v.heading})">${rwVanSvg(c)}</g>${park}${tag}</svg>`;
+    + `<rect x="1" y="1" width="${w - 2}" height="16" rx="8" fill="${green ? '#16a34a' : '#fff'}" stroke="${green ? '#fff' : c}" stroke-width="1.5"/>`
+    + `<text x="${cx}" y="12.6" text-anchor="middle" font-family="Archivo,Arial,sans-serif" font-size="10.5" font-weight="800" fill="${green ? '#fff' : v.nick ? '#111' : '#666'}">${esc(v.label)}</text>`
+    + `<g transform="translate(${cx} ${cy}) rotate(${v.heading == null ? 0 : v.heading}) scale(.65)">${rwVanSvg(c)}</g>${park}${tag}</svg>`;
   return { url: svgUrl(svg), scaledSize: new google.maps.Size(w, h), anchor: new google.maps.Point(cx, cy) };
 }
 /* A waiting pickup on the map: a real map pin (yellow, red when it's late) with a label above it,
@@ -8129,7 +8130,7 @@ function voiceForm(startLeg) {
       voice = null;
       micListening(false);
       if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
-      if (!t) { toast('Didn’t hear anything. Tap the mic and try again.', 'error'); ndUpdate(); return; }
+      if (!t) { ndUpdate(); return; } // nothing heard: no message (Justin), the mic's own sound says it stopped
       voiceFill(v, t, alts, true);
     }
   });
@@ -8182,8 +8183,7 @@ function voiceFill(v, t, alts, final) {
   if (lit.length && $('#nd-text') && $('#nd-text').value !== wasText) lit.push($('#nd-text')); // the driver text it made
   voiceBurst(lit);
   if (!final) return;
-  // Like Route Planner: a name that matches no saved customer gets a message instead
-  if (v.missing.length) toast(`Couldn’t find "${v.missing.join('", "')}" in the customers. Add them as a customer, then the mic will find them.`, 'error', 7000);
+  // A name that matches no saved customer stays empty in its box: no pop-up message in the way (Justin)
 }
 
 // Light up the boxes the mic filled: top to bottom, each a moment after the last, a green outline that stays a moment and fades

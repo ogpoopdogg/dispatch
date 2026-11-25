@@ -1100,7 +1100,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.waitForFunction(() => document.getElementById('nd-delivery-name').value === 'AAA Bobcat');
       await pg.waitForTimeout(300);
       assert.strictEqual(await pg.inputValue('#nd-pickup-name'), '', 'and after');
-      assert.match(await pg.textContent('.toasts'), /Couldn.t find "Brandon Hospital"/);
+      assert.doesNotMatch(await pg.textContent('.toasts'), /Couldn.t find/, 'no pop-up message from the mic (Justin)');
       await shot(pg, 'voice-missing');
       // Picking the right customer after the mic missed teaches it, for this person only
       await pg.fill('#nd-pickup-name', 'Acme');
