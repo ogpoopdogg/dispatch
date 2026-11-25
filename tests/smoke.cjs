@@ -1160,6 +1160,10 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.strictEqual(await pg.evaluate(async () => { __fakeDb.put('requests/r1/status', 'cancelled'); return markRequestDispatched('r1', S.pending.r1, 'Mike'); }), false);
       await toastHas(/1201 was just cancelled by the customer\. Nothing was sent/);
       assert.strictEqual(await pg.evaluate(() => __fakeDb.get('requests/r1/status')), 'cancelled', 'a cancel is never overwritten');
+      // A customer pickup with the delivery left blank: no dangling "for ," in the driver text or the alarm
+      assert.strictEqual(await pg.evaluate(() => dispatchText({ pickup: { name: 'Acme Supply', address: '12 Main St' }, delivery: { name: '', address: '' }, items_text: '1 box', payment: 'prepaid' })), 'Acme Supply, 1 box, Prepaid');
+      assert.strictEqual(await pg.evaluate(() => forText({ pickup: { name: 'Acme Supply' }, delivery: { name: '' } })), 'Acme Supply');
+      assert.strictEqual(await pg.evaluate(() => forText({ pickup: { name: 'Acme Supply' }, delivery: { name: 'Smith Co' } })), 'Acme Supply for Smith Co');
       // Another dispatcher already sent r2
       assert.strictEqual(await pg.evaluate(async () => { __fakeDb.put('requests/r2/status', 'dispatched'); __fakeDb.put('requests/r2/dispatched_to', 'Sara'); __fakeDb.put('requests/r2/dispatched_by', 'staff2'); __fakeDb.put('requests/r2/dispatched_by_email', 'gil@ec.com'); return markRequestDispatched('r2', S.pending.r2, 'Mike'); }), false);
       await toastHas(/1202 was already sent to Sara by Gil/);
