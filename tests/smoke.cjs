@@ -446,6 +446,16 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await page.waitForFunction(() => Object.values(window.__fakeDb.get('messages')).some((m) => m.text === 'Closed weekends.' && m.rid === 'general' && m.company_id === 'c1' && m.from === 'dispatch'));
       await page.waitForTimeout(300);
       await shot(page, 'messages');
+      // What the reply is about: General is pinned at the top of the picker, the pickups scroll under it
+      await page.click('.msg-about-btn');
+      assert.ok(await page.isVisible('#msg-about-pop .about-gen [data-rid=general]'), 'General at the top');
+      await page.evaluate(() => { const l = document.querySelector('#msg-about-pop .about-list'); l.scrollTop = 9999; });
+      assert.ok(await page.isVisible('#msg-about-pop .about-gen [data-rid=general]'), 'General still in sight after scrolling the pickups');
+      await page.click('#msg-about-pop .about-list [data-rid=r1]');
+      assert.strictEqual(await page.inputValue('#msg-about'), 'r1');
+      assert.ok(await page.isHidden('#msg-about-pop'), 'picker closes after a pick');
+      assert.match(await page.textContent('.msg-about-btn'), /#1201/);
+      assert.ok(await page.evaluate(() => document.querySelector('#sheet .msg-form textarea').getBoundingClientRect().height >= 56), 'message box is two lines tall');
       // The newest message always sits at the bottom, fully in sight just above the typing bar
       await page.evaluate(() => { for (let i = 0; i < 14; i++) window.__fakeDb.put(`messages/x${i}`, { rid: 'r1', company_id: 'c1', from: i % 2 ? 'customer' : 'dispatch', text: `Older message number ${i} with a little more text so it wraps`, at: Date.now() - (20 - i) * 60000, by_uid: 'u9', by_name: 'Pat' }); });
       await page.waitForTimeout(300);
@@ -956,6 +966,31 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       await pg.evaluate(() => setEdit('r1', null));
       await pg.evaluate(() => qBack());
       await pg.waitForSelector('#queue-list .qrow');
+      // Messages: the big mic stays in the corner; tapping it opens the full-page voice dispatch
+      await pg.click('#msg-btn');
+      await pg.waitForSelector('[data-msgs-view]');
+      await pg.waitForTimeout(300);
+      assert.ok(await pg.isVisible('#mic-fab'), 'big mic on Messages');
+      await pg.click('#mic-fab');
+      await pg.waitForSelector('#nd-pickup-name');
+      assert.ok(await pg.evaluate(() => voice && voice.mode === 'form' && document.querySelector('#sheet .sheet').classList.contains('big')), 'full-page voice dispatch from Messages');
+      await pg.evaluate(() => voiceStop(true));
+      await pg.keyboard.press('Escape');
+      await pg.waitForTimeout(400);
+      // Today: hold Yesterday to pick other days (From and To, with weekdays)
+      await pg.click('.tabbar [data-tab=today]');
+      await pg.waitForSelector('#td-seg .td-yday');
+      { const b = await pg.locator('#td-seg .td-yday').boundingBox(); await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await pg.mouse.down(); await pg.waitForTimeout(700); await pg.mouse.up(); }
+      await pg.waitForSelector('#dr .dr-wk');
+      assert.match(await pg.textContent('#dr .dr-wk'), /Sun.*Mon.*Sat/);
+      await pg.click('[data-act=dr-quick][data-k="7"]');
+      assert.match(await pg.textContent('#dr .dr-box >> nth=0'), /day/, 'From shows the weekday');
+      await pg.click('[data-act=dr-go]');
+      await pg.waitForFunction(() => /sent on/.test(document.getElementById('td-sub').textContent));
+      assert.ok(await pg.evaluate(() => document.querySelector('#td-seg input[value=range]').checked), 'the picked days show as the chosen tab');
+      await pg.waitForFunction(() => getComputedStyle(document.querySelector('.tabbar [data-tab=today] .ti')).backgroundColor === 'rgb(124, 58, 237)', null, { timeout: 3000 }).catch(() => assert.fail('Today lights up purple, not yellow'));
+      await pg.click('#td-seg input[value=today]');
+      await pg.click('.tabbar [data-tab=done]');
       // Reading what was said
       const said = (t) => pg.evaluate((x) => { const p = voiceParse(x, 'pickup'); return [p.pickup && p.pickup.name, p.delivery && p.delivery.name, itemsText(p.items.map((i) => Object.assign({}, i, { type: i.type || 'piece' }))), p.payment, p.po].join('|'); }, t);
       assert.strictEqual(await said('GNR Electric to AAA Bobcat, one box, 25 pounds'), 'GNR Electric|AAA Bobcat|1 box 25 lbs||');

@@ -454,9 +454,28 @@ body.kb-chat #sheet .pin-bottom,body.kb-chat #sheet .remove-far{display:none}
 .msg-form{display:flex;align-items:flex-end;gap:6px}
 .msg-bar{flex:1;min-width:0;display:flex;align-items:flex-end;gap:4px;min-height:var(--ctl);padding:3px 4px 3px 4px;border:1px solid var(--line-strong);border-radius:22px;background:var(--field);transition:border-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .msg-bar:focus-within{border-color:var(--focus);box-shadow:0 0 0 3px var(--yellow-ring)}
-.msg-bar textarea{flex:1;min-width:0;min-height:36px;max-height:104px;padding:7px 8px 7px 8px;border:0;background:none;resize:none;font:inherit;font-size:16px;line-height:22px;color:var(--ink);outline:none}
+.msg-bar textarea{flex:1;min-width:0;min-height:58px;max-height:126px;padding:7px 8px 7px 8px;border:0;background:none;resize:none;font:inherit;font-size:16px;line-height:22px;color:var(--ink);outline:none}
 .msg-about{position:relative;flex:none;display:flex;align-items:center;max-width:46%;height:34px;margin-bottom:1px;border-radius:17px;background:var(--surface-3)}
-.msg-about select{min-width:0;max-width:100%;height:34px;padding:0 24px 0 11px;border:0;border-radius:17px;background:none;color:var(--ink);font:inherit;font-size:13px;font-weight:800;-webkit-appearance:none;appearance:none;text-overflow:ellipsis;outline:none}
+.msg-about-btn{display:flex;align-items:center;min-width:0;max-width:100%;height:34px;padding:0 24px 0 11px;border:0;border-radius:17px;background:none;color:var(--ink);font:inherit;font-size:13px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.msg-about-btn span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.msg-compose{position:relative}
+/* Conversation: what it's about sits on its own small line at the top of the box, so the words get the whole width */
+.msg-bar.has-about{flex-direction:column;align-items:stretch;gap:0;border-radius:18px;padding:4px 4px 3px 4px}
+.msg-bar.has-about .msg-about{align-self:flex-start;max-width:100%;height:28px;margin:0}
+.msg-bar.has-about .msg-about-btn{height:28px;font-size:12.5px}
+.msg-row{display:flex;align-items:flex-end;gap:4px;min-width:0}
+.about-pop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);z-index:5;display:flex;flex-direction:column;max-height:min(360px,52vh);border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);box-shadow:0 18px 40px -14px rgba(15,23,42,.45);overflow:hidden;animation:aboutIn .16s var(--out,ease-out)}
+.about-pop[hidden]{display:none}
+@keyframes aboutIn{from{opacity:0;transform:translateY(6px)}}
+.about-gen{flex:none;padding:6px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.about-list{flex:1;min-height:0;overflow-y:auto;padding:4px 6px 6px;-webkit-overflow-scrolling:touch}
+.about-head{position:sticky;top:-4px;padding:6px 6px 4px;background:var(--surface);font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.about-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:10px;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.about-opt:active{background:var(--surface-3)}
+.about-opt.on{background:#e8f0fe;color:#1d4ed8}
+.about-gen .about-opt{background:var(--surface);border:1px solid var(--line-strong)}
+.about-gen .about-opt.on{background:#e8f0fe;border-color:#93b4f5}
+.about-none{margin:8px 6px;color:var(--ink-3);font-size:13.5px}
 .msg-about .caret{position:absolute;right:7px;width:13px;height:13px;pointer-events:none}
 .msg-send{flex:none;display:grid;place-items:center;width:var(--ctl);height:var(--ctl);border:1px solid var(--yellow-lo);border-radius:50%;background:var(--yellow);color:#000;cursor:pointer;box-shadow:0 2px 0 var(--yellow-lo);-webkit-tap-highlight-color:transparent}
 .msg-send:active{transform:translateY(1px);box-shadow:none}
@@ -1242,6 +1261,11 @@ body:not(.voice-on) [data-nd] input:not([type=number]):focus,body:not(.voice-on)
 .tab[data-tab=scheduled] .i{color:var(--purple,#7048e8)}
 .tab[data-tab=messages][aria-current=page] .ti{background:var(--blue,#1f6feb);box-shadow:0 4px 12px -4px rgba(31,111,235,.6)}
 .tab[data-tab=done][aria-current=page] .ti{background:var(--ok);box-shadow:0 4px 12px -4px rgba(17,128,60,.55)}
+.tab[data-tab=today] .i{color:#7c3aed}
+.tab[data-tab=map] .i{color:#0d9488}
+.tab[data-tab=today][aria-current=page] .ti{background:#7c3aed;color:#fff;box-shadow:0 4px 12px -4px rgba(124,58,237,.6)}
+.tab[data-tab=map][aria-current=page] .ti{background:#0d9488;color:#fff;box-shadow:0 4px 12px -4px rgba(13,148,136,.6)}
+.tab[data-tab=today][aria-current=page] .i,.tab[data-tab=map][aria-current=page] .i{color:#fff}
 .tab[data-tab=scheduled][aria-current=page] .ti{background:var(--purple,#7048e8);box-shadow:0 4px 12px -4px rgba(112,72,232,.55)}
 .tab[data-tab=messages][aria-current=page] .i,.tab[data-tab=done][aria-current=page] .i,.tab[data-tab=scheduled][aria-current=page] .i{color:#fff}
 .tab[aria-current=page] .ti{animation:tabPop .38s var(--spring)}
@@ -1730,6 +1754,8 @@ body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok
 .te-mic.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite}
 body:not(.mic-ok) .te-mic{display:none}
 /* New dispatch driver text: the same small round mic, bottom right under the pencil. It only adds words to this text. */
+/* The message box: the same small mic, at the end of the box (bottom right) */
+.msg-bar .msg-te-mic{position:relative;top:auto;right:auto;flex:none;align-self:flex-end;width:36px;height:36px;margin:0 0 7px;box-shadow:0 4px 10px -6px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14)}
 .nd-te-mic{top:auto;bottom:8px;right:8px;box-shadow:0 4px 10px -6px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14)} /* same look as the big mic, smaller */
 body.mic-ok .nd-text-box .nd-preview{padding-right:48px;min-height:84px}
 .sheet.kb .nd-te-mic{display:none} /* typing: the mic at the end of the box takes over */
@@ -1757,6 +1783,38 @@ body.mic-ok .mt-drivers{padding-right:68px} /* the row stops before the mic; mor
 .mt-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);margin:0;padding:10px 14px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-1);font-weight:700;text-align:center}
 /* Today page: a column per driver, swipe sideways when there are more than three */
 .td-seg{margin:0 0 10px}
+.td-d{font-size:12px;font-weight:800;color:#7c3aed;white-space:nowrap}
+.td-seg span{flex-direction:column;gap:0}
+.td-hold{display:block;font-size:10.5px;font-weight:650;color:var(--ink-3);line-height:1.1}
+.td-seg input:checked+span .td-hold{color:inherit;opacity:.7}
+.td-yday.holding span{animation:tdHold .55s linear both}
+@keyframes tdHold{to{background:#ede4ff;box-shadow:inset 0 -3px 0 #7c3aed}}
+.td-range-l span{font-size:13px}
+/* Pick days (hold Yesterday) */
+.dr-boxes{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
+.dr-box{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 12px;border:2px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dr-box small{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.dr-box b{font-size:18px;font-weight:800}
+.dr-box span{font-size:13.5px;font-weight:650;color:var(--ink-2)}
+.dr-box.next{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+.dr-box.next small{color:#7c3aed}
+.dr-arrow{font-size:20px;font-weight:800;color:var(--ink-3)}
+.dr-tip{margin:8px 2px 6px;font-size:13.5px;font-weight:700;color:#7c3aed}
+.dr-quick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.dr-quick .chip-btn.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.dr-cal{border:1px solid var(--line);border-radius:14px;padding:8px;background:var(--surface-2)}
+.dr-mon{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dr-mon b{font-size:16px}
+.dr-mon .icon-btn{font-size:22px;font-weight:800;line-height:1}
+.dr-wk,.dr-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dr-wk span{text-align:center;font-size:12px;font-weight:800;color:var(--ink-3);padding:3px 0}
+.dr-grid span{min-height:40px}
+.dr-grid button{min-height:40px;border:0;border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dr-grid button:disabled{opacity:.3;cursor:default}
+.dr-grid button.today{box-shadow:inset 0 0 0 2px var(--line-strong)}
+.dr-grid button.in{background:#ede4ff;color:#5b21b6;border-radius:4px}
+.dr-grid button.from,.dr-grid button.to{background:#7c3aed;color:#fff}
+.dr .sheet-actions{position:sticky;bottom:-14px;z-index:2;margin:10px -12px -14px;padding:10px 12px 12px;background:var(--surface);border-top:1px solid var(--line)}
 .td-cols{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch}
 .td-col{flex:0 0 calc((100% - 16px) / 3);min-width:112px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;padding:8px;min-height:220px}
 .td-head{display:flex;align-items:baseline;gap:6px;padding-bottom:5px;border-bottom:3px solid var(--yellow)}
@@ -1972,7 +2030,7 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
     <!-- Today: one column per driver, what each one got -->
     <section id="panel-today" hidden>
       <div class="page-head"><h1>Today</h1><p id="td-sub"></p></div>
-      <div class="seg td-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="td-day" value="today" checked><span>Today</span></label><label><input type="radio" name="td-day" value="yesterday"><span>Yesterday</span></label></div>
+      <div class="seg td-seg" id="td-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="td-day" value="today" checked><span>Today</span></label><label class="td-yday"><input type="radio" name="td-day" value="yesterday"><span>Yesterday<small class="td-hold">hold for more days</small></span></label><label class="td-range-l" hidden><input type="radio" name="td-day" value="range"><span id="td-range-t"></span></label></div>
       <div id="td-board"></div>
     </section>
 
@@ -4356,7 +4414,7 @@ const quickList = () => {
   return Object.entries(q).map(([id, v]) => ({ id, text: String((v && v.text) || ''), order: (v && v.order) || 0 })).filter((x) => x.text).sort((a, b) => a.order - b.order || a.text.localeCompare(b.text));
 };
 const quickRow = (rid) => `<div class="quick" role="group" aria-label="Quick replies. Tap one to put it in the box.">${quickList().map((q) => `<button class="chip-btn" type="button" data-act="quick-reply" data-id="${esc(rid)}" data-text="${esc(q.text)}">${esc(q.text)}</button>`).join('')}</div>`;
-const msgInput = (ph, label) => `<textarea name="text" rows="1" maxlength="500" placeholder="${esc(ph)}" aria-label="${esc(label)}" autocomplete="off" enterkeyhint="send" spellcheck="true"></textarea>`;
+const msgInput = (ph, label) => `<textarea name="text" rows="2" maxlength="500" placeholder="${esc(ph)}" aria-label="${esc(label)}" autocomplete="off" enterkeyhint="send" spellcheck="true"></textarea><button class="te-mic msg-te-mic" type="button" data-act="msg-te-mic" aria-label="Say words to add to the message">${icon('mic')}</button>`;
 // A quick reply goes into the box (added to what's there), so it can be changed before Send
 function quickFill(el) {
   const form = el.closest('section, [data-msgs-view]') && $('form[data-msg-form]', el.closest('section, [data-msgs-view]'));
@@ -4373,7 +4431,7 @@ function quickFill(el) {
 function msgGrow(ta) {
   if (!ta) return;
   ta.style.height = 'auto';
-  ta.style.height = `${Math.min(ta.scrollHeight + 2, 4 * 22 + 16)}px`;
+  ta.style.height = `${Math.max(2 * 22 + 14, Math.min(ta.scrollHeight + 2, 5 * 22 + 16))}px`; // two lines at least, so more of what's said shows
 }
 document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('form[data-msg-form] textarea')) msgGrow(e.target); });
 // Enter sends (Shift+Enter for a new line), like a regular texting app
@@ -4455,6 +4513,7 @@ document.addEventListener('submit', async (e) => {
   if (!text || msgSending) return;
   const rid = f.dataset.msgForm || msgAboutVal();
   const inMsgs = !!f.closest('[data-msgs-view]');
+  if (voice && voice.mode === 'type' && voice.box === input) voiceStop(true); // sent: the mic stops writing
   // Clear the box and drop the keyboard the moment Send is tapped, so the same text can't go twice.
   // (The screen redraws as soon as the message lands, so the box is found again by where it lives.)
   msgSending = true;
@@ -4590,6 +4649,40 @@ function msgAboutList(cid) {
   return [{ rid: GENERAL, label: 'General' }, ...out];
 }
 const msgAboutVal = () => { const sel = $('#msg-about'); return sel ? sel.value : ''; };
+/* What the reply is about: General is pinned at the top (never scrolled away), the pickups scroll under it */
+function msgAboutPop(about) {
+  const row = (a) => `<button class="about-opt${a.rid === msgAbout ? ' on' : ''}" type="button" role="option" aria-selected="${a.rid === msgAbout}" data-act="msg-about-pick" data-rid="${esc(a.rid)}">${esc(a.label)}${a.rid === msgAbout ? icon('check', 'sm') : ''}</button>`;
+  const gen = about.find((a) => a.rid === GENERAL), rest = about.filter((a) => a.rid !== GENERAL);
+  return `<div class="about-pop" id="msg-about-pop" role="listbox" aria-label="Which pickup the reply is about" hidden>
+    ${gen ? `<div class="about-gen">${row({ rid: GENERAL, label: 'General (not about a pickup)' })}</div>` : ''}
+    <div class="about-list">${rest.length ? `<div class="about-head">Pickups (${rest.length})</div>${rest.map(row).join('')}` : '<p class="about-none">No pickups for this customer right now.</p>'}</div>
+  </div>`;
+}
+function msgAboutToggle(open) {
+  const pop = $('#msg-about-pop'), btn = $('.msg-about-btn');
+  if (!pop) return;
+  const on = open == null ? pop.hidden : open;
+  pop.hidden = !on;
+  if (btn) btn.setAttribute('aria-expanded', String(on));
+  micPlace();
+  if (on) { const l = $('.about-list', pop), sel = $('.about-list .about-opt.on', pop); if (l) l.scrollTop = sel ? sel.offsetTop - l.clientHeight / 2 : 0; }
+}
+function msgAboutPick(rid) {
+  msgAbout = rid;
+  const inp = $('#msg-about'); if (inp) inp.value = rid;
+  const list = msgView && msgView !== 'list' ? msgAboutList(msgView) : [];
+  const a = list.find((x) => x.rid === rid);
+  const t = $('#msg-about-t'); if (t && a) t.textContent = a.label;
+  $$('#msg-about-pop .about-opt').forEach((o) => {
+    const on = o.dataset.rid === rid;
+    o.classList.toggle('on', on); o.setAttribute('aria-selected', String(on));
+    const ic = $('.i', o); if (ic) ic.remove();
+    if (on) o.insertAdjacentHTML('beforeend', icon('check', 'sm'));
+  });
+  msgAboutToggle(false);
+}
+// A tap anywhere else closes the picker
+document.addEventListener('pointerdown', (e) => { const pop = $('#msg-about-pop'); if (pop && !pop.hidden && !(e.target.closest && e.target.closest('#msg-about-pop, .msg-about-btn'))) msgAboutToggle(false); }, true);
 function msgsHtml() {
   if (msgView === 'list' || !msgView) {
     const cos = msgCompanies();
@@ -4619,8 +4712,9 @@ function msgsHtml() {
   return `<div data-msgs-view="thread" data-cid="${esc(cid)}">
     <div class="msg-list" id="msg-list">${list.length ? msgListHtml(list, name, true) : '<p class="msgs-empty">No messages yet.</p>'}</div>
     ${about.length ? `<div class="msg-compose">
+      ${msgAboutPop(about)}
       ${quickRow('')}
-      <form class="msg-form" data-msg-form=""><div class="msg-bar"><span class="msg-about"><select id="msg-about" aria-label="Which pickup the reply is about">${about.map((a) => `<option value="${esc(a.rid)}"${a.rid === msgAbout ? ' selected' : ''}>${esc(a.label)}</option>`).join('')}</select>${icon('caret', 'caret')}</span>${msgInput(`Write to ${name}`, `Message to ${name}`)}</div><button class="msg-send" type="submit" aria-label="Send message">${icon('send')}</button></form>
+      <form class="msg-form" data-msg-form=""><div class="msg-bar has-about"><span class="msg-about"><input type="hidden" id="msg-about" value="${esc(msgAbout)}"><button class="msg-about-btn" type="button" data-act="msg-about-open" aria-haspopup="listbox" aria-expanded="false" aria-label="Which pickup the reply is about"><span id="msg-about-t">${esc((about.find((a) => a.rid === msgAbout) || about[0] || { label: '' }).label)}</span>${icon('caret', 'caret')}</button></span><div class="msg-row">${msgInput(`Write to ${name}`, `Message to ${name}`)}</div></div><button class="msg-send" type="submit" aria-label="Send message">${icon('send')}</button></form>
     </div>` : ''}
   </div>`;
 }
@@ -4685,8 +4779,10 @@ function refreshMsgs() {
   if ((atEnd || grew) && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
   msgWatch();
   const again = $('#sheet-body form[data-msg-form] [name=text]');
-  if (again && draft) again.value = draft;
+  if (again && draft) { again.value = draft; msgGrow(again); }
   if (again && typing) again.focus({ preventScroll: true });
+  if (voice && voice.mode === 'type' && voice.refind && !voice.box.isConnected) { const nb = voice.refind(); if (nb) voice.box = nb; }
+  micListening(!!voice);
 }
 document.addEventListener('change', (e) => { if (e.target.id === 'msg-about') msgAbout = e.target.value; });
 document.addEventListener('input', (e) => { if (e.target.id === 'msg-q') { msgSearch = e.target.value; refreshMsgs(); } });
@@ -4992,19 +5088,120 @@ function mtRender() {
    Today page (bottom bar): one column per driver with the jobs they were sent, oldest at the top
    ========================================================= */
 let tdDay = 'today';
+let tdRange = null; // { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD', rows: [[id, r]] | null while loading }
+const tdRangeLabel = (R) => (R.from === R.to ? fmtDay(R.from) : `${fmtDay(R.from)} \u2013 ${fmtDay(R.to)}`);
 function renderToday() {
-  const was = boardDay; boardDay = tdDay;
-  const rows = boardRows();
-  boardDay = was;
+  let rows;
+  if (tdDay === 'range' && tdRange) rows = tdRange.rows || [];
+  else { const was = boardDay; boardDay = tdDay === 'range' ? 'today' : tdDay; rows = boardRows(); boardDay = was; }
+  const many = tdDay === 'range' && tdRange && tdRange.from !== tdRange.to;
+  if (tdDay === 'range' && tdRange && !tdRange.rows) {
+    $('#td-sub').textContent = `Loading ${tdRangeLabel(tdRange)}\u2026`;
+    $('#td-board').innerHTML = `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Loading\u2026</h3><p>Getting those days from the database.</p></div>`;
+    return;
+  }
   const by = {};
   rows.forEach(([id, r]) => { const k = r.dispatched_to || 'Group Chat'; (by[k] = by[k] || []).push([id, r]); });
   const cols = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-  const day = tdDay === 'today' ? 'today' : 'yesterday';
-  $('#td-sub').textContent = `${rows.length} sent ${day}`;
-  $('#td-board').innerHTML = cols.length ? `<div class="td-cols">${cols.map(([k, list]) => `<div class="td-col"><div class="td-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.length ? list.map(([id, r]) => `<button class="td-job" type="button" data-act="details" data-id="${esc(id)}"><span class="td-t">${esc(fmtTime(r.dispatched_at))}</span><span class="td-r">${esc(oneLine(r.pickup && r.pickup.name))} \u2192 ${esc(oneLine(r.delivery && r.delivery.name))}</span><small class="td-no">#${esc(r.ref_no)}</small></button>`).join('') : '<i class="td-none">Nothing yet</i>'}</div>`).join('')}</div>`
+  const day = tdDay === 'range' && tdRange ? tdRangeLabel(tdRange) : tdDay === 'today' ? 'today' : 'yesterday';
+  $('#td-sub').textContent = `${rows.length} sent ${tdDay === 'range' ? `on ${day}` : day}`;
+  $('#td-board').innerHTML = cols.length ? `<div class="td-cols">${cols.map(([k, list]) => `<div class="td-col"><div class="td-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.length ? list.map(([id, r]) => `<button class="td-job" type="button" data-act="details" data-id="${esc(id)}">${many ? `<span class="td-d">${esc(fmtDayShort(r.dispatched_at))}</span>` : ''}<span class="td-t">${esc(fmtTime(r.dispatched_at))}</span><span class="td-r">${esc(oneLine(r.pickup && r.pickup.name))} \u2192 ${esc(oneLine(r.delivery && r.delivery.name))}</span><small class="td-no">#${esc(r.ref_no)}</small></button>`).join('') : '<i class="td-none">Nothing yet</i>'}</div>`).join('')}</div>`
     : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing sent ${day}</h3><p>Jobs show here once they\u2019re sent to a driver.</p></div>`;
 }
 document.addEventListener('change', (e) => { if (e.target.name === 'td-day') { tdDay = e.target.value; renderToday(); } });
+// Hold Yesterday (about half a second): pick other days
+let tdHoldT = 0, tdHeldAt = 0;
+document.addEventListener('pointerdown', (e) => {
+  const l = e.target.closest && e.target.closest('#td-seg .td-yday');
+  if (!l) return;
+  clearTimeout(tdHoldT);
+  l.classList.add('holding');
+  tdHoldT = setTimeout(() => { l.classList.remove('holding'); tdHeldAt = Date.now(); buzz(18); openDayRange(); }, 550);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => document.addEventListener(t, () => { clearTimeout(tdHoldT); const l = $('#td-seg .td-yday.holding'); if (l) l.classList.remove('holding'); }, true));
+document.addEventListener('click', (e) => { if (tdHeldAt && Date.now() - tdHeldAt < 1500 && e.target.closest && e.target.closest('#td-seg')) { e.preventDefault(); e.stopImmediatePropagation(); tdHeldAt = 0; } }, true);
+
+/* Pick days: From and To, two big boxes. Tap a day for From, then a day for To. Quick picks for the usual ones. */
+const DR = { from: '', to: '', next: 'from', month: null };
+const drAdd = (key, n) => { const d = parseLocalDate(key); d.setDate(d.getDate() + n); return localDateStr(d); };
+function drQuick(k) {
+  const t = todayStr(), now = parseLocalDate(t), dow = now.getDay();
+  const map = {
+    '7': [drAdd(t, -6), t], '14': [drAdd(t, -13), t], '30': [drAdd(t, -29), t],
+    week: [drAdd(t, -dow), t], lastweek: [drAdd(t, -dow - 7), drAdd(t, -dow - 1)],
+    month: [localDateStr(new Date(now.getFullYear(), now.getMonth(), 1)), t],
+    lastmonth: [localDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1)), localDateStr(new Date(now.getFullYear(), now.getMonth(), 0))]
+  };
+  return map[k];
+}
+function drHtml() {
+  const t = todayStr();
+  const m = DR.month || (DR.month = (() => { const d = parseLocalDate(DR.to || t); return new Date(d.getFullYear(), d.getMonth(), 1); })());
+  const first = new Date(m.getFullYear(), m.getMonth(), 1), days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push('<span></span>');
+  for (let d = 1; d <= days; d++) {
+    const key = localDateStr(new Date(m.getFullYear(), m.getMonth(), d));
+    const cls = [key === DR.from && 'from', key === DR.to && 'to', DR.from && DR.to && key > DR.from && key < DR.to && 'in', key === t && 'today'].filter(Boolean).join(' ');
+    cells.push(`<button type="button" class="${cls}" data-act="dr-day" data-d="${key}"${key > t ? ' disabled' : ''}>${d}</button>`);
+  }
+  const box = (k, label) => `<button type="button" class="dr-box${DR.next === k ? ' next' : ''}" data-act="dr-side" data-k="${k}"><small>${label}</small><b>${DR[k] ? esc(parseLocalDate(DR[k]).toLocaleDateString('en-CA', { weekday: 'long' })) : '\u2014'}</b><span>${DR[k] ? esc(parseLocalDate(DR[k]).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })) : 'Tap a day'}</span></button>`;
+  const n = DR.from && DR.to ? Math.round((parseLocalDate(DR.to) - parseLocalDate(DR.from)) / 86400000) + 1 : 0;
+  const quick = [['7', 'Last 7 days'], ['week', 'This week'], ['lastweek', 'Last week'], ['14', 'Last 14 days'], ['month', 'This month'], ['lastmonth', 'Last month']];
+  const canPrev = true, canNext = new Date(m.getFullYear(), m.getMonth() + 1, 1) <= parseLocalDate(t);
+  return `<div class="dr" id="dr">
+    <div class="dr-boxes">${box('from', 'From')}<span class="dr-arrow" aria-hidden="true">\u2192</span>${box('to', 'To')}</div>
+    <p class="dr-tip">${DR.next === 'from' ? 'Tap the first day' : 'Now tap the last day'}</p>
+    <div class="dr-quick">${quick.map(([k, l]) => { const q = drQuick(k); return `<button type="button" class="chip-btn${q[0] === DR.from && q[1] === DR.to ? ' on' : ''}" data-act="dr-quick" data-k="${k}">${l}</button>`; }).join('')}</div>
+    <div class="dr-cal">
+      <div class="dr-mon"><button type="button" class="icon-btn" data-act="dr-month" data-n="-1" aria-label="Month before"${canPrev ? '' : ' disabled'}>\u2039</button><b>${esc(m.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' }))}</b><button type="button" class="icon-btn" data-act="dr-month" data-n="1" aria-label="Next month"${canNext ? '' : ' disabled'}>\u203a</button></div>
+      <div class="dr-wk">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((w) => `<span>${w}</span>`).join('')}</div>
+      <div class="dr-grid">${cells.join('')}</div>
+    </div>
+    <div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="dr-go"${n ? '' : ' disabled'}>${n ? `Show ${n} ${n === 1 ? 'day' : 'days'}` : 'Pick the days'}</button></div>
+  </div>`;
+}
+function openDayRange() {
+  const y = drAdd(todayStr(), -1);
+  DR.from = tdRange ? tdRange.from : drAdd(y, -6);
+  DR.to = tdRange ? tdRange.to : y;
+  DR.next = 'from';
+  DR.month = null;
+  openSheet('Pick days', drHtml(), null, true);
+}
+const drRedraw = () => { const el = $('#dr'); if (el) el.outerHTML = drHtml(); };
+function drAct(act, el) {
+  if (act === 'dr-day') {
+    const d = el.dataset.d;
+    if (DR.next === 'from') { DR.from = d; if (!DR.to || DR.to < d) DR.to = d; DR.next = 'to'; }
+    else { if (d < DR.from) { DR.to = DR.from; DR.from = d; } else DR.to = d; DR.next = 'from'; }
+  } else if (act === 'dr-side') { DR.next = el.dataset.k; DR.month = parseLocalDate(DR[el.dataset.k] || todayStr()); DR.month.setDate(1); }
+  else if (act === 'dr-quick') { const q = drQuick(el.dataset.k); DR.from = q[0]; DR.to = q[1]; DR.next = 'from'; DR.month = parseLocalDate(q[1]); DR.month.setDate(1); }
+  else if (act === 'dr-month') { DR.month = new Date(DR.month.getFullYear(), DR.month.getMonth() + Number(el.dataset.n), 1); }
+  else if (act === 'dr-go') { closeSheet(); showDayRange(DR.from, DR.to); return; }
+  drRedraw();
+}
+async function showDayRange(from, to) {
+  const R = tdRange = { from, to, rows: null };
+  tdDay = 'range';
+  const l = $('#td-seg .td-range-l');
+  l.hidden = false;
+  $('#td-range-t').textContent = tdRangeLabel(R);
+  $('input', l).checked = true;
+  renderToday();
+  const a = parseLocalDate(from).getTime(), b = parseLocalDate(drAdd(to, 1)).getTime();
+  try {
+    const snap = await db.ref('requests').orderByChild('dispatched_at').startAt(a).endAt(b - 1).once('value');
+    if (tdRange !== R) return;
+    R.rows = Object.entries(snap.val() || {}).filter(([, r]) => r.status === 'dispatched' && (r.dispatched_at || 0) >= a && (r.dispatched_at || 0) < b)
+      .sort((x, y) => (x[1].dispatched_at || 0) - (y[1].dispatched_at || 0));
+  } catch (err) {
+    if (tdRange !== R) return;
+    R.rows = [];
+    toast('Couldn\u2019t load those days: ' + friendlyError(err), 'error', 8000);
+  }
+  if (tdDay === 'range' && tdRange === R) renderToday();
+}
 if (window.matchMedia) matchMedia('(min-width:1100px)').addEventListener('change', () => { loadMaps(); deskRender(); });
 
 /* =========================================================
@@ -7084,6 +7281,10 @@ document.addEventListener('click', async (e) => {
     case 'reset-edit': setEdit(id, null); break;
     case 'te-mic': teMic(el); break;
     case 'nd-te-mic': ndTeMic(); break;
+    case 'msg-te-mic': msgTeMic(el); break;
+    case 'dr-day': case 'dr-side': case 'dr-quick': case 'dr-month': case 'dr-go': drAct(el.dataset.act, el); break;
+    case 'msg-about-open': msgAboutToggle(); break;
+    case 'msg-about-pick': msgAboutPick(el.dataset.rid); break;
     case 'mt-drv': mtShowDriver(el.dataset.driver); break;
     case 'mt-where-x': mtHideWhere(); break;
     case 'details': openDetails(id); break;
@@ -7649,7 +7850,9 @@ function micListening(on) {
   micBtn.setAttribute('aria-pressed', String(on));
   micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
   document.body.classList.toggle('voice-on', on);
-  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(small && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text' : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
+  $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(small && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text'
+    : b.classList.contains('msg-te-mic') ? !!b.form && voice.box === b.form.elements.text
+    : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
   micPlace();
 }
@@ -7660,11 +7863,16 @@ function micSay() { micHear.hidden = true; }
 function micPlace() {
   const appOn = !$('#view-app').hidden && S.user;
   const nd = ndOpen();
-  const hide = !appOn || !voiceCan() || vlOpen || mapOpen || popOpen || (sheetOpen && !nd);
+  const msgs = msgSheetOpen();
+  const hide = !appOn || !voiceCan() || vlOpen || mapOpen || popOpen || (sheetOpen && !nd && !msgs);
   micBtn.hidden = hide;
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
   if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
   if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
+  // Messages: typing a message (keyboard up) the small mic in the box is the one to use
+  const ae = document.activeElement;
+  const aboutPop = $('#msg-about-pop');
+  if (msgs && ((ae && ae.matches && ae.matches('#sheet-body form[data-msg-form] textarea, #msg-q')) || (aboutPop && !aboutPop.hidden))) { micBtn.hidden = true; return; } // ...and the pickup picker is on top
   micBtn.classList.remove('inline', 'beside');
   micBtn.style.top = '';
   micBtn.style.right = '';
@@ -7716,6 +7924,10 @@ function micPlace() {
       const st = Math.min(send.getBoundingClientRect().top, window.innerHeight);
       bottom = Math.round(window.innerHeight - st + 10);
     }
+  } else if (msgs) {
+    // A conversation: just above the typing bar, so it never covers Send
+    const c = $('#sheet-body .msg-compose');
+    if (c) bottom = Math.round(window.innerHeight - Math.min(c.getBoundingClientRect().top, window.innerHeight) + 10);
   }
   micBtn.style.bottom = bottom == null ? '' : `${bottom}px`;
   micHear.style.bottom = bottom == null ? '' : `${bottom + 4}px`;
@@ -7736,11 +7948,13 @@ function voiceStart() {
   if (!voiceCan()) { toast('Voice isn’t available on this phone.', 'error'); return; }
   listenVoiceAliases();
   const a = document.activeElement;
-  const box = a && a.matches && a.matches('textarea, input:not([type=checkbox]):not([type=radio]):not([type=button])') && !a.readOnly && !a.disabled ? a : null;
+  const fromMsgs = msgSheetOpen(); // the big mic on Messages always starts a voice dispatch (full page)
+  const box = !fromMsgs && a && a.matches && a.matches('textarea, input:not([type=checkbox]):not([type=radio]):not([type=button])') && !a.readOnly && !a.disabled ? a : null;
   // In a text box (not a Pickup/Delivery name): the words go into that box
   if (box && !box.dataset.ndName) { voiceType(box); return; }
   if (!ndOpen()) {
-    if (sheetOpen) return;
+    if (sheetOpen && !fromMsgs) return;
+    if (fromMsgs && a && a.blur) a.blur();
     openNewDispatch({ voice: true });
   }
   voiceForm(box && box.dataset.ndName ? box.dataset.ndName : (ND.pickup.name.trim() && !ND.delivery.name.trim() ? 'delivery' : 'pickup'));
@@ -7865,12 +8079,12 @@ function voiceBurst(list) {
 }
 
 /* Say words into a box, at the cursor. The words show in the box as they come. */
-function voiceType(box, join, small) {
+function voiceType(box, join, small, refind) {
   const start = box.selectionStart != null ? box.selectionStart : box.value.length;
   const endSel = box.selectionEnd != null ? box.selectionEnd : start;
   let before = box.value.slice(0, start), after = box.value.slice(endSel);
   let caret = start; // where the words said so far end
-  const v = { mode: 'type', box, small: !!small }; // small: started from a small mic in a text box (only that one lights up)
+  const v = { mode: 'type', box, small: !!small, refind }; // small: started from a small mic in a text box (only that one lights up)
   // The small mic keeps listening like talk to text: the phone stops after a short pause, so it starts again
   // until you tap it, or nothing is said for 10 s, or 2 minutes pass. After a pause the words go on with a space.
   const startedAt = Date.now();
@@ -7879,12 +8093,17 @@ function voiceType(box, join, small) {
   voice = v;
   micListening(true);
   micSay('', 'Listening… say the words');
-  const put = (t) => {
+  // The box may have been drawn again (a new message, a card refresh): find it again
+  const live = () => {
+    if (v.box !== box && v.box && v.box.isConnected) box = v.box;
     if (!box.isConnected) {
-      const nb = box.dataset.edit ? $$('textarea[data-edit]').find((x) => x.dataset.edit === box.dataset.edit && x.dataset.where === box.dataset.where) : null;
-      if (!nb) return;
-      box = nb; v.box = nb;
+      const nb = refind ? refind() : box.dataset.edit ? $$('textarea[data-edit]').find((x) => x.dataset.edit === box.dataset.edit && x.dataset.where === box.dataset.where) : null;
+      if (nb) { box = nb; v.box = nb; }
     }
+    return box.isConnected;
+  };
+  const put = (t) => {
+    if (!live()) return;
     if (box.type === 'number') {
       const ws = String(t).split(/\s+/).map(vWord);
       let num = null;
@@ -7911,7 +8130,7 @@ function voiceType(box, join, small) {
       const now = Date.now();
       const more = v.small && !v.userStop && err !== 'denied' && now - startedAt < 120000
         && now - (heardAt || startedAt) < 10000;
-      if (more && box.isConnected) {
+      if (more && live()) {
         // Carry on after the words said so far (a plain space, not another comma)
         if (t) { before = box.value.slice(0, caret); after = box.value.slice(caret); join = false; }
         if (err === 'failed') { v.ctl = { stop: () => {}, cleanup: null }; setTimeout(() => { if (voice === v && !v.userStop) v.ctl = listen(); }, 250); return; } // the phone was busy: try again in a moment
@@ -7921,7 +8140,7 @@ function voiceType(box, join, small) {
       voice = null;
       micListening(false);
       if (err === 'denied') { toast('The microphone is blocked. Allow it in the phone’s settings for this app.', 'error', 7000); return; }
-      box.dispatchEvent(new Event('change', { bubbles: true }));
+      if (live()) box.dispatchEvent(new Event('change', { bubbles: true }));
     }
   });
   v.ctl = listen();
@@ -7940,6 +8159,18 @@ function teMic(b) {
   voiceType(box, true, true);
 }
 // New dispatch: the small mic in the driver text only adds words to that text (never fills in a new dispatch)
+// The small mic in a message box: words go on the end of the message (no keyboard), like talk to text
+function msgTeMic(b) {
+  if (voice && voice.mode === 'form') { const f = voice; f.userStop = true; if (f.ctl && f.ctl.finish) f.ctl.finish(); if (voice === f) voiceStop(true); }
+  if (voice) { voiceStop(); return; }
+  if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
+  const form = b.form, box = form && form.elements.text;
+  if (!box) return;
+  const key = form.dataset.msgForm, inSheet = !!form.closest('#sheet-body');
+  const refind = () => { const f = $$(inSheet ? '#sheet-body form[data-msg-form]' : 'form[data-msg-form]').find((x) => x.dataset.msgForm === key); return f ? f.elements.text : null; };
+  if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
+  voiceType(box, false, true, refind);
+}
 function ndTeMic() {
   if (voice && voice.mode === 'form') { const f = voice; f.userStop = true; if (f.ctl && f.ctl.finish) f.ctl.finish(); if (voice === f) voiceStop(true); } // the big mic still finishing: done now (its words fill in), the small mic starts
   if (voice) { voiceStop(); return; }
