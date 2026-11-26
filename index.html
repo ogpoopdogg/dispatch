@@ -444,6 +444,38 @@ body.kb-chat #sheet .sheet-body{flex:1 1 auto;min-height:0}
 body.kb-chat #sheet .msgs .msg-form{position:sticky;bottom:-14px;z-index:3;margin:0 -12px -14px;padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--line)}
 body.kb-chat #sheet .pin-bottom,body.kb-chat #sheet .remove-far{display:none}
 .msg-search{margin-bottom:8px}
+/* Messages: search box with the Archive button beside it */
+.msg-tools{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.msg-tools .msg-search{flex:1;min-width:0;margin:0}
+.msg-arch-btn{flex:none;display:inline-flex;align-items:center;gap:5px;height:var(--ctl);padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface-2);color:var(--ink);font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.msg-arch-btn .i{width:17px;height:17px}
+.msg-arch-btn b{min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--surface-3);font-size:12px;line-height:20px;text-align:center}
+.msg-arch-btn:active{transform:scale(.97)}
+.msg-co mark{background:var(--yellow-soft,#fff1b8);color:inherit;border-radius:3px;padding:0 1px}
+.msg-co-top .chip.arch{height:19px;padding:0 5px;font-size:11px;flex:none;gap:3px}
+.msg-co-top .chip.arch .i{width:12px;height:12px}
+.msg-tip{margin:10px 0 2px;text-align:center;font-size:12px;color:var(--ink-3)}
+[data-msgs-view].swap{animation:msgSwap .22s var(--out,ease-out) both}
+@keyframes msgSwap{from{opacity:0;transform:translateY(6px)}}
+/* Holding a chat: it sinks a little, then the menu comes up from the bottom */
+.msg-cos .msg-co{transition:transform .5s var(--ease,ease),background-color .2s ease}
+.msg-cos .msg-co.holding{transform:scale(.97);background:var(--surface-2)}
+.msg-cos .msg-co.picked{background:var(--yellow-soft,#fff6d6)}
+.msg-cos .msg-co.leaving{overflow:hidden;opacity:0;transform:translateX(-30%);height:0!important;padding-top:0;padding-bottom:0;transition:opacity .2s ease,transform .22s var(--ease,ease),height .22s var(--ease,ease) .04s,padding .22s ease .04s}
+.co-menu{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.co-menu-bg{position:absolute;inset:0;background:rgba(0,0,0,.32);opacity:0;transition:opacity .2s ease}
+.co-menu-card{position:relative;width:min(100% - 16px,480px);margin:0 8px calc(8px + var(--safe-b,0px));padding:8px;border-radius:18px;background:var(--surface);box-shadow:0 18px 40px -12px rgba(15,23,42,.5);transform:translateY(24px);opacity:0;transition:transform .22s var(--out,ease-out),opacity .18s ease}
+.co-menu.open .co-menu-bg{opacity:1}
+.co-menu.open .co-menu-card{transform:none;opacity:1}
+.co-menu-head{display:flex;align-items:center;gap:9px;padding:4px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.co-menu-head .avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--surface-2);font-weight:800;font-size:12.5px}
+.co-menu-head b{font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-menu-btn{display:grid;grid-template-columns:24px 1fr;align-items:center;column-gap:10px;width:100%;min-height:48px;padding:6px 8px;border:0;border-radius:12px;background:none;color:var(--ink);font:inherit;font-size:16px;font-weight:750;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.co-menu-btn .i{width:20px;height:20px}
+.co-menu-btn small{grid-column:2;font-size:12px;font-weight:550;color:var(--ink-2);line-height:1.25}
+.co-menu-btn:active{background:var(--surface-2)}
+.co-menu-btn.del{color:var(--danger)}
+.co-menu-btn.cancel{grid-template-columns:1fr;justify-items:center;margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 12px 12px;color:var(--ink-2)}
 .msg-co-top .needs{height:19px;padding:0 5px;font-size:11px;flex:none}
 .notice-err{color:var(--danger);font-size:13.5px;margin:0 0 10px}
 /* Quick replies: one row that slides sideways */
@@ -1953,6 +1985,7 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
   <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="5" rx="1.2"/><path d="M4.5 8.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V8.5"/><path d="M10 12.5h4"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></symbol>
 </svg>
 
@@ -2944,7 +2977,7 @@ function _hideSheet() {
   if (el.classList.contains('ndv') && micBtn && !micBtn.hidden && !reduceMotion()) { micBtn.style.animation = 'none'; void micBtn.offsetWidth; micBtn.style.animation = ''; }
 }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else _hideSheet(); }
-window.addEventListener('popstate', () => { if (Q.skipPop) { Q.skipPop = false; return; } if (vlOpen) { _hideVoiceLearner(); return; } if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) { _hideSheet(); return; } if (Q.id && S.tab === 'queue') qBack(true); });
+window.addEventListener('popstate', () => { coMenuClose(); if (Q.skipPop) { Q.skipPop = false; return; } if (vlOpen) { _hideVoiceLearner(); return; } if (mapOpen) { _hideMap(); return; } if (popOpen && $('.sp-card').classList.contains('mapfull')) { spFull(false, true); return; } if (popOpen) { _hidePop(); return; } if (sheetOpen) { _hideSheet(); return; } if (Q.id && S.tab === 'queue') qBack(true); });
 /* A tap on the dimmed area closes the sheet, but only if the finger went down there too:
    the form can slide down under the finger while the keyboard closes. */
 let sheetDownOnBack = false;
@@ -3242,6 +3275,8 @@ function startListening() {
   // Address switch remembered per customer, and the quick replies, shared by every dispatcher phone
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
+  // Chats archived or deleted from Messages, shared by every dispatcher phone
+  listen(db.ref('dispatch_settings/msg_inbox'), (snap) => { S.msgInbox = snap.val() || {}; renderMsgUi(); refreshMsgs(); }, () => {});
   listen(db.ref('dispatch_settings/text_edits'), (snap) => onRemoteEdits(snap.val()), () => {});
   // Days closed (Settings) and customers asking to delete their account
   listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
@@ -4529,7 +4564,7 @@ async function sendMsg(rid, text) {
   const f = findReq(rid);
   const m0 = (msgsFor(rid)[0] || [])[1];
   text = String(text || '').trim().slice(0, 500);
-  const cid = rid === GENERAL ? (msgView && msgView !== 'list' ? msgView : '') : (f && f.r.company_id) || (m0 && m0.company_id) || '';
+  const cid = rid === GENERAL ? (msgInChat() ? msgView : '') : (f && f.r.company_id) || (m0 && m0.company_id) || '';
   if (!rid || !cid || !text) { if (text && !rid) toast('Pick which pickup it’s about first.', 'info'); return false; }
   if (!db || !S.user || S.fromCache) { toast('Still connecting. Try again in a moment.', 'info'); return false; }
   try {
@@ -4558,7 +4593,7 @@ function onMessages(snap) {
     }
   }
   firstMsgs = false;
-  if (msgSheetOpen() && msgView && msgView !== 'list') markCoSeen(msgView);
+  if (msgSheetOpen() && msgInChat()) markCoSeen(msgView);
   renderAll();
   renderMsgUi();
   refreshMsgs();
@@ -4600,12 +4635,21 @@ let msgView = null; // 'list', or the company id of the open conversation
 let msgAbout = '';  // the pickup the next reply is about
 let msgAboutNext = ''; // set when the customer writes in the open conversation
 let msgSearch = '';   // search on the list of customers
+let msgFrom = 'list'; // where the back arrow in a conversation goes: 'list' or 'archive'
+/* Archive and delete (hold a chat on the Messages list). Saved for every dispatcher phone at
+   dispatch_settings/msg_inbox/<customer> as { archived: time, cleared: time }, both times of the
+   newest message in the chat then. Archived: the chat moves to the Archive until a newer message
+   comes in, then it's back in Messages. Deleted: every message up to then is gone from Messages here
+   (the customer still has theirs; messages themselves can't be removed from the database). */
+const inboxOf = (cid) => ((S.msgInbox || {})[readKey(cid)]) || {};
+const clearedAt = (cid) => Number(inboxOf(cid).cleared) || 0;
 // Title line: a back arrow to all customers, and this customer's waiting pickups under the name
 function msgHead() {
   const back = $('#sheet-back'), sub = $('#sheet-sub');
   if (!back || !sub) return;
-  const thread = msgView && msgView !== 'list';
-  back.hidden = !thread;
+  const thread = msgInChat();
+  back.hidden = !thread && msgView !== 'archive';
+  back.setAttribute('aria-label', thread && msgFrom === 'archive' ? 'Archive' : 'All customers');
   const mine = thread ? Object.entries(S.pending || {}).filter(([, r]) => r && r.company_id === msgView).sort((a, b) => (a[1].created_at || 0) - (b[1].created_at || 0)) : [];
   sub.hidden = !mine.length;
   sub.innerHTML = mine.length ? `<span>Waiting:</span>${mine.slice(0, 4).map(([id, r]) => `<button class="msg-ref${isFuture(r) ? '' : ' now'}" type="button" data-act="details" data-id="${esc(id)}">#${esc(r.ref_no)}${isFuture(r) ? ` ${esc(fmtDay(r.scheduled_for).split(',')[0])}` : ''}</button>`).join('')}${mine.length > 4 ? `<span>+${mine.length - 4}</span>` : ''}` : '';
@@ -4614,6 +4658,8 @@ let msgAlert = null; // { cid, rid } of the newest message nobody has opened yet
 // The pickup number on a message (older messages may not carry it)
 const msgRef = (m) => { if (m.ref_no) return m.ref_no; const f = findReq(m.rid); return f ? f.r.ref_no : ''; };
 const msgSheetOpen = () => !!(sheetOpen && $('#sheet-body [data-msgs-view]'));
+const msgInChat = () => !!msgView && msgView !== 'list' && msgView !== 'archive'; // a conversation is open
+let msgSwap = false; // the next redraw is a move between Messages, the Archive and a chat: it fades in
 function coName(cid) {
   if (coBooks.names && coBooks.names[cid]) return coBooks.names[cid];
   const r = Object.values(S.pending || {}).find((x) => x && x.company_id === cid && x.company_name);
@@ -4621,17 +4667,18 @@ function coName(cid) {
   for (const [, m] of Object.entries(S.msgs || {})) { if (m && m.company_id === cid) { const f = findReq(m.rid); if (f && f.r.company_name) return f.r.company_name; } }
   return 'Customer';
 }
-const coMsgs = (cid) => Object.entries(S.msgs || {}).filter(([, m]) => m && m.company_id === cid).sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
+const coMsgs = (cid) => { const cut = clearedAt(cid); return Object.entries(S.msgs || {}).filter(([, m]) => m && m.company_id === cid && (m.at || 0) > cut).sort((a, b) => (a[1].at || 0) - (b[1].at || 0)); };
 // A message not about any pickup has rid "general"; it's counted per customer, so one customer's
 // general messages being read doesn't mark another's as read
 const seenKeyOf = (m) => (m.rid === GENERAL ? `${GENERAL}:${m.company_id}` : m.rid);
 const coUnread = (cid) => (msgReadReady ? coMsgs(cid).filter(([, m]) => m.from === 'customer' && (m.at || 0) > seenAt(seenKeyOf(m))).length : 0);
 function msgCompanies() {
   const by = {};
-  Object.values(S.msgs || {}).forEach((m) => { if (m && m.company_id) (by[m.company_id] = by[m.company_id] || []).push(m); });
+  Object.values(S.msgs || {}).forEach((m) => { if (m && m.company_id && (m.at || 0) > clearedAt(m.company_id)) (by[m.company_id] = by[m.company_id] || []).push(m); });
   return Object.entries(by).map(([cid, list]) => {
     list.sort((a, b) => (a.at || 0) - (b.at || 0));
-    return { cid, last: list[list.length - 1], unread: coUnread(cid) };
+    const last = list[list.length - 1];
+    return { cid, last, unread: coUnread(cid), archived: (Number(inboxOf(cid).archived) || 0) >= (last.at || 0) };
   }).sort((a, b) => (b.last.at || 0) - (a.last.at || 0));
 }
 const msgUnreadTotal = () => msgCompanies().reduce((n, c) => n + c.unread, 0);
@@ -4729,7 +4776,7 @@ function msgAboutToggle(open) {
 function msgAboutPick(rid) {
   msgAbout = rid;
   const inp = $('#msg-about'); if (inp) inp.value = rid;
-  const list = msgView && msgView !== 'list' ? msgAboutList(msgView) : [];
+  const list = msgInChat() ? msgAboutList(msgView) : [];
   const a = list.find((x) => x.rid === rid);
   const t = $('#msg-about-t'); if (t && a) t.textContent = a.label;
   $$('#msg-about-pop .about-opt').forEach((o) => {
@@ -4742,24 +4789,52 @@ function msgAboutPick(rid) {
 }
 // A tap anywhere else closes the picker
 document.addEventListener('pointerdown', (e) => { const pop = $('#msg-about-pop'); if (pop && !pop.hidden && !(e.target.closest && e.target.closest('#msg-about-pop, .msg-about-btn'))) msgAboutToggle(false); }, true);
-function msgsHtml() {
-  if (msgView === 'list' || !msgView) {
-    const cos = msgCompanies();
-    const err = S.msgsError ? `<p class="notice-err">Messages couldn’t load: ${esc(S.msgsError)}</p>` : '';
-    if (!cos.length) return `<div data-msgs-view="list">${err}<div class="empty"><h3>No messages yet</h3><p>When a customer writes from Request Pickup, it shows here and on their card. The last ${MSG_DAYS} days are kept here.</p></div></div>`;
-    // The search only applies while its box shows (more than 5 customers), so it can never hide chats unseen
-    const q = cos.length > 5 ? msgSearch.trim().toLowerCase() : '';
-    const shown = q ? cos.filter((c) => coName(c.cid).toLowerCase().includes(q) || coMsgs(c.cid).some(([, m]) => String(m.text || '').toLowerCase().includes(q) || String(msgRef(m)).includes(q))) : cos;
-    const search = cos.length > 5 ? `<div class="searchbox msg-search">${icon('search')}<input id="msg-q" type="search" value="${esc(msgSearch)}" placeholder="Search customers or messages" aria-label="Search messages" autocomplete="off"></div>` : '';
-    return `<div data-msgs-view="list">${err}${search}<div class="list msg-cos">${shown.map((c) => {
-      const name = coName(c.cid), m = c.last;
-      const owe = m.from === 'customer';
-      return `<button class="row msg-co${c.unread ? ' unread' : ''}" type="button" data-act="msg-co" data-cid="${esc(c.cid)}">
+// The search finds a word in the customer's name, any message, or a pickup number
+function msgMatch(c, q) {
+  if (!q) return { ok: true };
+  if (coName(c.cid).toLowerCase().includes(q)) return { ok: true };
+  const hit = coMsgs(c.cid).reverse().find(([, m]) => String(m.text || '').toLowerCase().includes(q) || String(msgRef(m)).includes(q));
+  return hit ? { ok: true, m: hit[1] } : { ok: false };
+}
+// The words with the part that matched the search lit up
+function msgMark(text, q) {
+  const t = String(text || '');
+  const i = q ? t.toLowerCase().indexOf(q) : -1;
+  if (i < 0) return esc(t);
+  const from = i > 40 ? i - 30 : 0; // a match far along still shows on the one line
+  return `${from ? '…' : ''}${esc(t.slice(from, i))}<mark>${esc(t.slice(i, i + q.length))}</mark>${esc(t.slice(i + q.length))}`;
+}
+function msgCoRow(c, q, hit, tagArchived) {
+  const name = coName(c.cid), m = hit || c.last;
+  const owe = c.last.from === 'customer' && !c.archived;
+  return `<button class="row msg-co${c.unread ? ' unread' : ''}" type="button" data-act="msg-co" data-cid="${esc(c.cid)}">
         <span class="avatar" aria-hidden="true">${esc(initials(name) || '?')}</span>
-        <span class="grow"><span class="msg-co-top"><b>${esc(name)}</b>${owe ? '<span class="chip warn needs">Needs reply</span>' : ''}<small>${esc(msgDayLabel(m.at) === 'Today' ? fmtTime(m.at) : msgDayLabel(m.at))}</small></span>
-        <span class="msg-co-last">${m.from === 'dispatch' ? 'You: ' : ''}${msgRef(m) ? `#${esc(msgRef(m))} · ` : ''}${esc(m.text)}</span></span>
+        <span class="grow"><span class="msg-co-top"><b>${q ? msgMark(name, q) : esc(name)}</b>${tagArchived ? `<span class="chip arch">${icon('archive', 'sm')}Archived</span>` : ''}${owe ? '<span class="chip warn needs">Needs reply</span>' : ''}<small>${esc(msgDayLabel(m.at) === 'Today' ? fmtTime(m.at) : msgDayLabel(m.at))}</small></span>
+        <span class="msg-co-last">${m.from === 'dispatch' ? 'You: ' : ''}${msgRef(m) ? `#${q ? msgMark(String(msgRef(m)), q) : esc(msgRef(m))} · ` : ''}${hit ? msgMark(m.text, q) : esc(m.text)}</span></span>
         ${c.unread ? `<span class="msg-count" aria-label="${c.unread} new">${c.unread}</span>` : ''}</button>`;
-    }).join('') || `<p class="msgs-empty">No match for \u201c${esc(msgSearch.trim())}\u201d. <button class="head-link" type="button" data-act="msg-q-clear">Show all</button></p>`}</div></div>`;
+}
+function msgsHtml() {
+  if (msgView === 'list' || msgView === 'archive' || !msgView) {
+    const inArch = msgView === 'archive';
+    const all = msgCompanies();
+    const archived = all.filter((c) => c.archived);
+    const cos = inArch ? archived : all.filter((c) => !c.archived);
+    const err = S.msgsError ? `<p class="notice-err">Messages couldn’t load: ${esc(S.msgsError)}</p>` : '';
+    const view = inArch ? 'archive' : 'list';
+    const swap = msgSwap ? ' swap' : '';
+    msgSwap = false;
+    if (!all.length) return `<div data-msgs-view="list" class="${swap}">${err}<div class="empty"><h3>No messages yet</h3><p>When a customer writes from Request Pickup, it shows here and on their card. The last ${MSG_DAYS} days are kept here.</p></div></div>`;
+    const q = msgSearch.trim().toLowerCase();
+    // Searching from Messages looks in the Archive too; those chats say Archived
+    const pool = inArch || !q ? cos : all;
+    const shown = pool.map((c) => ({ c, r: msgMatch(c, q) })).filter((x) => x.r.ok);
+    const archBtn = !inArch && archived.length ? `<button class="msg-arch-btn" type="button" data-act="msg-archive" aria-label="Archive, ${archived.length} chats">${icon('archive')}<span>Archive</span><b>${archived.length}</b></button>` : '';
+    const tools = `<div class="msg-tools"><div class="searchbox msg-search">${icon('search')}<input id="msg-q" type="search" value="${esc(msgSearch)}" placeholder="${inArch ? 'Search the archive' : 'Search messages'}" aria-label="${inArch ? 'Search the archive' : 'Search messages'}" autocomplete="off" enterkeyhint="search"></div>${archBtn}</div>`;
+    const rows = shown.map(({ c, r }) => msgCoRow(c, q, r.m, !inArch && c.archived)).join('');
+    const none = q ? `<p class="msgs-empty">No match for “${esc(msgSearch.trim())}”. <button class="head-link" type="button" data-act="msg-q-clear">Show all</button></p>`
+      : inArch ? '<p class="msgs-empty">Nothing in the archive.</p>' : '<p class="msgs-empty">No chats here. Archived ones are in the Archive.</p>';
+    const tip = shown.length && !q ? `<p class="msg-tip">${inArch ? 'Hold a chat to move it back or delete it.' : 'Hold a chat to archive or delete it.'}</p>` : '';
+    return `<div data-msgs-view="${view}" class="${swap}">${err}${tools}<div class="list msg-cos">${rows || none}</div>${tip}</div>`;
   }
   const cid = msgView, name = coName(cid);
   const list = coMsgs(cid);
@@ -4789,12 +4864,12 @@ function msgScrollEnd() {
   msgPinned = true;
   b.scrollTop = b.scrollHeight;
   // Again after the layout settles (fonts, the keyboard, the bar resizing)
-  requestAnimationFrame(() => { if (msgPinned && msgSheetOpen() && msgView !== 'list') b.scrollTop = b.scrollHeight; });
+  requestAnimationFrame(() => { if (msgPinned && msgSheetOpen() && msgInChat()) b.scrollTop = b.scrollHeight; });
 }
 function msgWatch() {
   const b = $('#sheet-body');
   if (!b || typeof ResizeObserver === 'undefined') return;
-  if (!msgRO) msgRO = new ResizeObserver(() => { if (msgPinned && msgSheetOpen() && msgView !== 'list') b.scrollTop = b.scrollHeight; });
+  if (!msgRO) msgRO = new ResizeObserver(() => { if (msgPinned && msgSheetOpen() && msgInChat()) b.scrollTop = b.scrollHeight; });
   msgRO.disconnect();
   msgRO.observe(b);
   ['#msg-list', '#sheet-body .msg-compose'].forEach((q) => { const el = $(q); if (el) msgRO.observe(el); });
@@ -4803,7 +4878,7 @@ function msgWatch() {
 let msgUserScroll = 0;
 ['touchmove', 'wheel'].forEach((t) => document.addEventListener(t, (e) => { if (e.target.closest && e.target.closest('#sheet-body [data-msgs-view=thread]')) msgUserScroll = Date.now(); }, { passive: true, capture: true }));
 document.addEventListener('scroll', (e) => {
-  if (!e.target || e.target.id !== 'sheet-body' || !msgSheetOpen() || msgView === 'list') return;
+  if (!e.target || e.target.id !== 'sheet-body' || !msgSheetOpen() || !msgInChat()) return;
   const b = e.target;
   const atEnd = b.scrollHeight - b.scrollTop - b.clientHeight < 60;
   if (atEnd) msgPinned = true;
@@ -4813,6 +4888,7 @@ function openMessages(cid, rid) {
   loadCompanyBooks();
   msgSearch = ''; // a search left from last time hid chats until the app restarted
   msgView = cid || 'list';
+  msgFrom = 'list';
   if (rid) msgAbout = rid;
   openSheet(cid ? coName(cid) : 'Messages', msgsHtml(), () => { if (cid) msgScrollEnd(); msgWatch(); }, true);
   msgHead();
@@ -4828,14 +4904,14 @@ function refreshMsgs() {
   if (msgAboutNext) { msgAbout = msgAboutNext; msgAboutNext = ''; }
   const atEnd = msgPinned || body.scrollHeight - body.scrollTop - body.clientHeight < 60, top = body.scrollTop;
   // A new message in this chat (sent or received) always shows at the bottom
-  const count = msgView !== 'list' ? $$('#msg-list .msg').length : 0;
-  $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : coName(msgView);
+  const count = msgInChat() ? $$('#msg-list .msg').length : 0;
+  $('#sheet-title').textContent = msgView === 'list' ? 'Messages' : msgView === 'archive' ? 'Archive' : coName(msgView);
   const q = $('#msg-q'), searching = q && q === document.activeElement;
   body.innerHTML = msgsHtml();
   msgHead();
   if (searching) { const again = $('#msg-q'); if (again) { again.focus({ preventScroll: true }); again.setSelectionRange(again.value.length, again.value.length); } }
-  const grew = msgView !== 'list' && $$('#msg-list .msg').length > count;
-  if ((atEnd || grew) && msgView !== 'list') msgScrollEnd(); else body.scrollTop = top;
+  const grew = msgInChat() && $$('#msg-list .msg').length > count;
+  if ((atEnd || grew) && msgInChat()) msgScrollEnd(); else body.scrollTop = top;
   msgWatch();
   const again = $('#sheet-body form[data-msg-form] [name=text]');
   if (again && draft) { again.value = draft; msgGrow(again); }
@@ -4845,6 +4921,92 @@ function refreshMsgs() {
 }
 document.addEventListener('change', (e) => { if (e.target.id === 'msg-about') msgAbout = e.target.value; });
 document.addEventListener('input', (e) => { if (e.target.id === 'msg-q') { msgSearch = e.target.value; refreshMsgs(); } });
+/* Hold a chat on the Messages list (or in the Archive) for half a second: a small menu comes up
+   from the bottom with Archive (or Back to Messages) and Delete. A quick tap still opens the chat. */
+const CO_HOLD_MS = 500;
+let coHold = null, coHeldAt = 0, coMenu = null;
+function coHoldStop() { if (!coHold) return; clearTimeout(coHold.t); coHold.b.classList.remove('holding'); coHold = null; }
+document.addEventListener('pointerdown', (e) => {
+  coHeldAt = 0;
+  const b = e.target.closest && e.target.closest('#sheet-body .msg-cos .msg-co[data-cid]');
+  if (!b) return;
+  coHoldStop();
+  b.classList.add('holding');
+  coHold = { b, x: e.clientX, y: e.clientY, t: setTimeout(() => {
+    const cid = b.dataset.cid;
+    coHoldStop();
+    coHeldAt = Date.now();
+    buzz(30);
+    coMenuOpen(cid, b);
+  }, CO_HOLD_MS) };
+});
+document.addEventListener('pointermove', (e) => { if (coHold && Math.hypot(e.clientX - coHold.x, e.clientY - coHold.y) > 10) coHoldStop(); });
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, coHoldStop));
+document.addEventListener('scroll', coHoldStop, true);
+// The click that ends a hold doesn't also open the chat; no long-press menu from the phone
+document.addEventListener('click', (e) => { if (coHeldAt && Date.now() - coHeldAt < 1500 && e.target.closest && e.target.closest('#sheet-body .msg-cos')) { e.preventDefault(); e.stopImmediatePropagation(); coHeldAt = 0; } }, true);
+document.addEventListener('contextmenu', (e) => { if (e.target.closest && e.target.closest('#sheet-body .msg-co')) e.preventDefault(); });
+function coMenuOpen(cid, row) {
+  coMenuClose(true);
+  const c = msgCompanies().find((x) => x.cid === cid);
+  if (!c) return;
+  if (row) row.classList.add('picked');
+  const el = document.createElement('div');
+  el.className = 'co-menu';
+  el.innerHTML = `<div class="co-menu-bg" data-act="co-menu-close"></div>
+    <div class="co-menu-card" role="dialog" aria-label="${esc(coName(cid))}">
+      <div class="co-menu-head"><span class="avatar" aria-hidden="true">${esc(initials(coName(cid)) || '?')}</span><b>${esc(coName(cid))}</b></div>
+      ${c.archived ? `<button class="co-menu-btn" type="button" data-act="co-menu-do" data-do="unarchive">${icon('inbox')}<span>Back to Messages</span></button>`
+        : `<button class="co-menu-btn" type="button" data-act="co-menu-do" data-do="archive">${icon('archive')}<span>Archive</span><small>Comes back if they write again</small></button>`}
+      <button class="co-menu-btn del" type="button" data-act="co-menu-do" data-do="delete">${icon('trash')}<span>Delete</span><small>Gone from every dispatch phone. The customer still has theirs.</small></button>
+      <button class="co-menu-btn cancel" type="button" data-act="co-menu-close"><span>Cancel</span></button>
+    </div>`;
+  document.body.appendChild(el);
+  coMenu = { el, cid };
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+function coMenuClose(now) {
+  $$('#sheet-body .msg-co.picked').forEach((r) => r.classList.remove('picked'));
+  if (!coMenu) return;
+  const { el } = coMenu;
+  coMenu = null;
+  if (now) { el.parentNode && el.parentNode.removeChild(el); return; }
+  el.classList.remove('open');
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+}
+// Saves this chat's archive/delete marks for every dispatcher phone; shows the change at once
+function setInbox(cid, val) {
+  const k = readKey(cid);
+  const before = (S.msgInbox || {})[k] || null;
+  S.msgInbox = Object.assign({}, S.msgInbox || {});
+  if (val) S.msgInbox[k] = val; else delete S.msgInbox[k];
+  renderMsgUi(); refreshMsgs();
+  return db.ref(`dispatch_settings/msg_inbox/${k}`).set(val).catch((err) => {
+    S.msgInbox = Object.assign({}, S.msgInbox || {});
+    if (before) S.msgInbox[k] = before; else delete S.msgInbox[k];
+    renderMsgUi(); refreshMsgs();
+    toast(`That didn\u2019t save: ${friendlyError(err)}`, 'error', 8000);
+  });
+}
+function coMenuDo(what) {
+  if (!coMenu) return;
+  const cid = coMenu.cid, name = coName(cid);
+  const c = msgCompanies().find((x) => x.cid === cid);
+  coMenuClose();
+  if (!c) return;
+  const before = Object.assign({}, inboxOf(cid));
+  const keep = (o) => { const v = {}; Object.entries(o).forEach(([k, x]) => { if (x != null) v[k] = x; }); return Object.keys(v).length ? v : null; };
+  const undo = () => setInbox(cid, keep(before));
+  const row = $(`#sheet-body .msg-co[data-cid="${CSS.escape(cid)}"]`);
+  const go = () => {
+    if (what === 'unarchive') { setInbox(cid, keep(Object.assign({}, before, { archived: null }))); tick('Back in Messages'); return; }
+    markCoSeen(cid); // archived or deleted chats don't count as new
+    if (what === 'archive') { setInbox(cid, keep(Object.assign({}, before, { archived: c.last.at || Date.now(), by: S.user.uid }))); toast(`${name} archived`, 'info', 6000, { label: 'Undo', run: undo }); }
+    if (what === 'delete') { setInbox(cid, keep({ cleared: c.last.at || Date.now(), by: S.user.uid })); toast(`Chat with ${name} deleted`, 'info', 8000, { label: 'Undo', run: undo }); }
+  };
+  // The row slides away and the ones under it close up, then the list redraws
+  if (row && !reduceMotion()) { row.style.height = `${row.offsetHeight}px`; void row.offsetHeight; row.classList.add('leaving'); setTimeout(go, 230); } else go();
+}
 // Quick replies are shared by every dispatcher phone (dispatch_settings/quick_replies) and edited in Settings
 // Up to 10. Each one can be typed over in place (saved when you leave the box) or removed.
 const QUICK_MAX = 10;
@@ -7444,9 +7606,12 @@ document.addEventListener('click', async (e) => {
     case 'addr-map': setAddrMode(id, { map: el.getAttribute('aria-pressed') !== 'true' }); break;
     case 'quick-reply': quickFill(el); break;
     case 'open-msgs': openMessages(el.dataset.cid || '', id); break;
-    case 'msg-co': msgView = el.dataset.cid; msgAbout = ''; refreshMsgs(); msgScrollEnd(); markCoSeen(msgView); break;
+    case 'msg-co': msgFrom = msgView === 'archive' ? 'archive' : 'list'; msgView = el.dataset.cid; msgAbout = ''; msgSwap = true; refreshMsgs(); msgScrollEnd(); markCoSeen(msgView); break;
     case 'msg-q-clear': msgSearch = ''; refreshMsgs(); break;
-    case 'msg-list': msgView = 'list'; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
+    case 'msg-list': if (!msgInChat()) msgSearch = ''; msgView = msgInChat() && msgFrom === 'archive' ? 'archive' : 'list'; msgFrom = 'list'; msgSwap = true; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
+    case 'msg-archive': msgView = 'archive'; msgSearch = ''; msgSwap = true; refreshMsgs(); $('#sheet-body').scrollTop = 0; break;
+    case 'co-menu-do': coMenuDo(el.dataset.do); break;
+    case 'co-menu-close': coMenuClose(); break;
     case 'msg-banner': { const a = msgAlert; msgAlert = null; renderMsgUi(); if (a) openMessages(a.cid, a.rid); else openMessages(); break; }
     case 'edit-quick': openSheet('Quick replies', quickEditor()); break;
     case 'cal-move': calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + Number(el.dataset.n), 1); refreshCalendar(); break;

@@ -505,6 +505,69 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       assert.ok(await page.evaluate(() => document.body.classList.contains('msgs-up')), 'the Messages button is lit while Messages is open');
       assert.strictEqual(await page.inputValue('#msg-q'), '', 'search starts empty');
       assert.strictEqual(await page.locator('#sheet .msg-co').count(), 7, 'every chat shows');
+      // Search finds words inside messages and lights them up
+      await page.fill('#msg-q', 'hello 3');
+      await page.waitForFunction(() => document.querySelectorAll('#sheet .msg-co').length === 1);
+      assert.strictEqual(await page.textContent('#sheet .msg-co mark'), 'Hello 3');
+      await shot(page, 'messages-search');
+      await page.fill('#msg-q', '');
+      await page.waitForFunction(() => document.querySelectorAll('#sheet .msg-co').length === 7);
+      // Hold a chat: Archive / Delete menu; a quick tap still opens the chat
+      const holdCo = async (cid) => { const b = await page.locator(`#sheet .msg-co[data-cid=${cid}]`).boundingBox(); await page.mouse.move(b.x + 40, b.y + b.height / 2); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up(); await page.waitForSelector('.co-menu.open'); };
+      await holdCo('c1');
+      assert.ok(await page.isVisible('#sheet [data-msgs-view=list]'), 'holding does not open the chat');
+      assert.match(await page.textContent('.co-menu'), /Acme Supply[\s\S]*Archive[\s\S]*Delete/);
+      await shot(page, 'messages-hold-menu');
+      await page.click('.co-menu [data-do=archive]');
+      await page.waitForFunction(() => { const v = window.__fakeDb.get('dispatch_settings/msg_inbox/c1'); return v && v.archived > 0; });
+      await page.waitForFunction(() => !document.querySelector('#sheet .msg-co[data-cid=c1]') && document.querySelectorAll('#sheet .msg-co').length === 6);
+      assert.match(await page.textContent('#sheet .msg-arch-btn'), /Archive\s*1/);
+      await page.waitForTimeout(6500); // the Undo note goes
+      await shot(page, 'messages-archive-btn');
+      // Searching from Messages still finds it, marked Archived
+      await page.fill('#msg-q', 'acme');
+      await page.waitForSelector('#sheet .msg-co[data-cid=c1] .chip.arch');
+      await page.fill('#msg-q', '');
+      // The Archive opens from the Messages page; back arrow returns
+      await page.click('#sheet .msg-arch-btn');
+      await page.waitForSelector('#sheet [data-msgs-view=archive] .msg-co[data-cid=c1]');
+      assert.strictEqual(await page.textContent('#sheet-title'), 'Archive');
+      await shot(page, 'messages-archive');
+      await page.click('#sheet .msg-co[data-cid=c1]');
+      await page.waitForSelector('#sheet [data-msgs-view=thread]');
+      await page.click('[data-act=msg-list]');
+      await page.waitForSelector('#sheet [data-msgs-view=archive]', { timeout: 3000 });
+      await holdCo('c1');
+      await page.click('.co-menu [data-do=unarchive]');
+      await page.waitForFunction(() => !(window.__fakeDb.get('dispatch_settings/msg_inbox/c1') || {}).archived);
+      await page.click('[data-act=msg-list]');
+      await page.waitForSelector('#sheet [data-msgs-view=list] .msg-co[data-cid=c1]');
+      assert.strictEqual(await page.locator('#sheet .msg-arch-btn').count(), 0, 'no Archive button when it is empty');
+      // A new message brings an archived chat back
+      await holdCo('cx0');
+      await page.click('.co-menu [data-do=archive]');
+      await page.waitForFunction(() => !document.querySelector('#sheet .msg-co[data-cid=cx0]'));
+      await page.evaluate(() => window.__fakeDb.put('messages/y0b', { rid: 'general', company_id: 'cx0', from: 'customer', text: 'Back again', at: Date.now() + 5000, by_uid: 'u8', by_name: 'Lee' }));
+      await page.waitForSelector('#sheet .msg-co[data-cid=cx0]');
+      // Delete: gone from Messages, Undo brings it back; a later message starts it fresh
+      await holdCo('cx1');
+      await page.click('.co-menu [data-do=delete]');
+      await page.waitForFunction(() => { const v = window.__fakeDb.get('dispatch_settings/msg_inbox/cx1'); return v && v.cleared > 0; });
+      await page.waitForFunction(() => !document.querySelector('#sheet .msg-co[data-cid=cx1]'));
+      await page.locator('.toast button').last().click();
+      await page.waitForFunction(() => !window.__fakeDb.get('dispatch_settings/msg_inbox/cx1'));
+      await page.waitForSelector('#sheet .msg-co[data-cid=cx1]');
+      await holdCo('cx1');
+      await page.click('.co-menu [data-do=delete]');
+      await page.waitForFunction(() => !document.querySelector('#sheet .msg-co[data-cid=cx1]'));
+      await page.evaluate(() => window.__fakeDb.put('messages/y1b', { rid: 'general', company_id: 'cx1', from: 'customer', text: 'New question', at: Date.now() + 6000, by_uid: 'u7', by_name: 'Kim' }));
+      await page.waitForSelector('#sheet .msg-co[data-cid=cx1]');
+      await page.click('#sheet .msg-co[data-cid=cx1]');
+      await page.waitForSelector('#sheet [data-msgs-view=thread]');
+      assert.strictEqual(await page.locator('#msg-list .msg').count(), 1, 'only the message after the delete shows');
+      await page.click('[data-act=msg-list]');
+      await page.waitForSelector('#sheet [data-msgs-view=list]');
+      await page.evaluate(() => { ['y0b', 'y1b'].forEach((k) => window.__fakeDb.put(`messages/${k}`, null)); window.__fakeDb.put('dispatch_settings/msg_inbox', null); });
       await page.evaluate(() => { for (let i = 0; i < 6; i++) window.__fakeDb.put(`messages/y${i}`, null); });
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => !document.getElementById('view-app').inert && !document.querySelector('.app-main').inert);
