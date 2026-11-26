@@ -2125,9 +2125,9 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="sent" id="sent" hidden aria-hidden="true"><div><span class="sent-ring"><svg class="i" viewBox="0 0 24 24"><path pathLength="1" d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span id="sent-text">Sent</span></div></div>
 <!-- capacitor runtime -->
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
 <script>
 'use strict';
 
@@ -7131,7 +7131,7 @@ function remindersSettings() {
   const order = [1, 2, 3, 4, 5, 6, 0];
   return `<section class="card">
       <h2>${icon('bell')}Queue reminders</h2>
-      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
+      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Not on holidays or on days closed in Days closed. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
       <div class="setting"><span class="grow">Reminders</span><span class="switch"><input type="checkbox" data-rem="enabled"${r.enabled !== false ? ' checked' : ''} aria-label="Queue reminders"><span></span></span></div>
       <div class="rem-hours"><label>From<input type="time" data-rem="start" value="${esc(r.start)}"></label><label>To<input type="time" data-rem="end" value="${esc(r.end)}"></label></div>
       <div class="rem-days" role="group" aria-label="Days">${order.map((d) => `<button class="chip-btn" type="button" data-act="rem-day" data-day="${d}" aria-pressed="${(r.days || []).includes(d)}">${days[d]}</button>`).join('')}</div>

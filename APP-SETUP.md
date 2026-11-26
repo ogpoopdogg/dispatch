@@ -123,7 +123,8 @@ way, with nothing to install, is **Google Cloud Shell**:
    If `login` says you're already signed in, carry on.
 
    `remindQueue` sends the 10-minute "Jobs waiting in queue" reminders during
-   the hours set in the app (Settings > Queue reminders). The first time it
+   the hours set in the app (Settings > Queue reminders), skipping Manitoba holidays
+   and days closed in Settings > Days closed. The first time it
    deploys, Firebase may ask to turn on Cloud Scheduler: answer **Yes**.
 
    `alertCheck` tells Settings > Alerts how many staff phones get push alerts.

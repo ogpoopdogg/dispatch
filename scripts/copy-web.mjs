@@ -34,7 +34,7 @@ const swap = (html, from, to) => {
 };
 let html = readFileSync('index.html', 'utf8');
 html = swap(html, '<!-- capacitor runtime -->', '<script src="capacitor.js"></script>');
-html = swap(html, 'https://www.gstatic.com/firebasejs/9.23.0/', 'vendor/');
+html = swap(html, 'https://www.gstatic.com/firebasejs/12.19.0/', 'vendor/');
 html = html.replace(/<link rel="preconnect" href="https:\/\/fonts\.(googleapis|gstatic)\.com"[^>]*>\n?/g, '');
 html = swap(html, '<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" media="print" onload="this.media=\'all\'">',
   `<link rel="preload" href="fonts/${FONT}" as="font" type="font/woff2" crossorigin>
