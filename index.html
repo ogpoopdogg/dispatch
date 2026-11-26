@@ -2125,9 +2125,9 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="sent" id="sent" hidden aria-hidden="true"><div><span class="sent-ring"><svg class="i" viewBox="0 0 24 24"><path pathLength="1" d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span id="sent-text">Sent</span></div></div>
 <!-- capacitor runtime -->
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
 <script>
 'use strict';
 
@@ -2321,6 +2321,8 @@ function friendlyError(err) {
    Order details: items, item description, Prepaid/Collect, PO, driver notes.
    With the address switch: "Acme (12 Main St) for Smith Co (40 Park Ave), ..." and, with Map link,
    a Google Maps link for the pickup at the end. Never included: phone numbers, emails, scheduled date. */
+// 'Acme for Smith Co', or just 'Acme' when the customer left the delivery blank
+function forText(r) { const p = oneLine(r && r.pickup && r.pickup.name), d = oneLine(r && r.delivery && (r.delivery.name || r.delivery.address)); return d ? `${p} for ${d}` : p; }
 function oneLine(s) { return String(s || '').replace(/\s*[\r\n]+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
 // with = { pickup: true, delivery: true, map: true } adds that leg's address after its name: "Acme (12 Main St)"
 const legName = (r, leg, with_) => {
@@ -2336,7 +2338,8 @@ function pickupLink(r) {
   return q ? `https://maps.google.com/?q=${encodeURIComponent(q).replace(/%20/g, '+')}` : '';
 }
 function dispatchText(r, with_) {
-  const head = `${legName(r, 'pickup', with_)} for ${legName(r, 'delivery', with_)}`;
+  const to = legName(r, 'delivery', with_) || oneLine(r.delivery && r.delivery.address); // delivery is optional in Request Pickup
+  const head = to ? `${legName(r, 'pickup', with_)} for ${to}` : legName(r, 'pickup', with_);
   const hide = r.text_hide || {}; // fields a dispatcher left out of a dispatch they made
   const details = [
     r.items_text,
@@ -2776,7 +2779,7 @@ function refreshAlarm() {
   const first = list[0][1];
   const sched = isFuture(first);
   $('#alert-text').innerHTML = list.length === 1
-    ? `${sched ? 'New scheduled request' : first.updated_at ? 'Request updated' : 'New request'} #${esc(first.ref_no)}<small>${esc(first.company_name || '')}: ${esc(first.pickup && first.pickup.name)} for ${esc(first.delivery && first.delivery.name)}${sched ? `, for ${esc(fmtDay(first.scheduled_for))}` : ''}</small>`
+    ? `${sched ? 'New scheduled request' : first.updated_at ? 'Request updated' : 'New request'} #${esc(first.ref_no)}<small>${esc(first.company_name || '')}: ${esc(forText(first))}${sched ? `, for ${esc(fmtDay(first.scheduled_for))}` : ''}</small>`
     : (() => { const now = list.filter(([, r]) => !isFuture(r)).length, later = list.length - now; return `${[now ? `${now} new` : '', later ? `${later} later` : ''].filter(Boolean).join(' \u00b7 ')}<small>Tap to mark seen</small>`; })();
   banner.hidden = false;
   updateSoundUi();
@@ -2789,7 +2792,7 @@ function refreshAlarm() {
     playChime('new');
     buzz([400, 150, 400, 150, 400]);
     systemNotify(list.length === 1 ? `New request #${first.ref_no}` : `${list.length} new requests`,
-      list.length === 1 ? `${first.company_name || ''}: ${first.pickup && first.pickup.name} for ${first.delivery && first.delivery.name}` : 'Open E&C Dispatch to see them.');
+      list.length === 1 ? `${first.company_name || ''}: ${forText(first)}` : 'Open E&C Dispatch to see them.');
   }
   if (!alarmTimer) { // repeats are always on (loadSettings)
     alarmTimer = setInterval(() => { if (unacked().length) { playChime('new'); buzz([300, 150, 300]); } }, REPEAT_ALARM_MS);
@@ -3822,7 +3825,7 @@ function doneRow({ id, r, t, kind }) {
   return `<button class="row ${kind}" type="button" data-act="details" data-id="${esc(id)}">
     <span class="grow">
       <span class="row-top"><span class="req-no">#${esc(r.ref_no)}</span><span class="row-co">${esc(r.company_name || '')}</span><span class="row-time">${esc(fmtTime(t))}</span></span>
-      <span class="row-route">${esc(r.pickup && r.pickup.name)}<span class="arrow">→</span>${esc(r.delivery && r.delivery.name)}</span>
+      <span class="row-route">${esc(r.pickup && r.pickup.name)}<span class="arrow">→</span>${esc((r.delivery && (r.delivery.name || r.delivery.address)) || '–')}</span>
       <span class="row-sub">${who}</span>
     </span>
     ${icon('chevron', 'chev')}
@@ -4191,7 +4194,7 @@ function scheduleFor(id, day) {
 async function askRemove(id) {
   const r = readyToSend(id);
   if (!r) return;
-  const ok = await confirmSheet(`Remove #${r.ref_no}?`, `${esc(r.company_name || 'This request')}: ${esc(r.pickup && r.pickup.name)} for ${esc(r.delivery && r.delivery.name)}.<br>It won\u2019t be dispatched. You can move it back from <b>Done \u203a Removed</b>.`, 'Remove from queue', true);
+  const ok = await confirmSheet(`Remove #${r.ref_no}?`, `${esc(r.company_name || 'This request')}: ${esc(forText(r))}.<br>It won\u2019t be dispatched. You can move it back from <b>Done \u203a Removed</b>.`, 'Remove from queue', true);
   if (ok) removeFromQueue(id);
 }
 function removeFromQueue(id) {
@@ -4921,7 +4924,7 @@ function boardHtml() {
       <div class="seg board-seg" role="radiogroup" aria-label="Day"><label><input type="radio" name="board-day" value="today"${boardDay === 'today' ? ' checked' : ''}><span>Today</span></label><label><input type="radio" name="board-day" value="yesterday"${boardDay === 'yesterday' ? ' checked' : ''}><span>Yesterday</span></label></div>
       <div class="seg board-seg" role="radiogroup" aria-label="Group by"><label><input type="radio" name="board-view" value="driver"${boardView === 'driver' ? ' checked' : ''}><span>By driver</span></label><label><input type="radio" name="board-view" value="customer"${boardView === 'customer' ? ' checked' : ''}><span>By customer</span></label></div>
       <p class="board-total"><b>${total}</b> ${total === 1 ? 'job' : 'jobs'} dispatched ${label}</p>
-      ${groups.length ? groups.map(([k, list]) => `<div class="board-group"><div class="board-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.map(([id, r]) => `<button class="board-row" type="button" data-act="details" data-id="${esc(id)}"><span class="req-no">#${esc(r.ref_no)}</span><span class="grow">${esc(r.pickup && r.pickup.name)} → ${esc(r.delivery && r.delivery.name)}<small>${esc(fmtTime(r.dispatched_at))}${boardView === 'driver' ? ` · ${esc(customerOf(r))}` : r.dispatched_to ? ` · ${esc(r.dispatched_to)}` : ''}</small></span></button>`).join('')}</div>`).join('')
+      ${groups.length ? groups.map(([k, list]) => `<div class="board-group"><div class="board-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.map(([id, r]) => `<button class="board-row" type="button" data-act="details" data-id="${esc(id)}"><span class="req-no">#${esc(r.ref_no)}</span><span class="grow">${esc(r.pickup && r.pickup.name)} → ${esc((r.delivery && (r.delivery.name || r.delivery.address)) || '–')}<small>${esc(fmtTime(r.dispatched_at))}${boardView === 'driver' ? ` · ${esc(customerOf(r))}` : r.dispatched_to ? ` · ${esc(r.dispatched_to)}` : ''}</small></span></button>`).join('')}</div>`).join('')
         : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing dispatched ${label}</h3><p>Jobs show here once they’re sent to a driver.</p></div>`}
       ${total ? `<div class="sheet-actions"><button class="btn btn-primary full" type="button" data-act="board-copy">${icon('copy', 'sm')}Copy the counts</button></div>` : ''}
     </div>`;
@@ -5198,7 +5201,7 @@ function renderToday() {
   const cols = Object.entries(by).sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
   const day = tdDay === 'range' && tdRange ? tdRangeLabel(tdRange) : tdDay === 'today' ? 'today' : 'yesterday';
   $('#td-sub').textContent = `${rows.length} sent ${tdDay === 'range' ? `on ${day}` : day}`;
-  $('#td-board').innerHTML = cols.length ? `<div class="td-cols">${cols.map(([k, list]) => `<div class="td-col"><div class="td-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.length ? list.map(([id, r]) => `<button class="td-job" type="button" data-act="details" data-id="${esc(id)}">${many ? `<span class="td-d">${esc(fmtDayShort(r.dispatched_at))}</span>` : ''}<span class="td-t">${esc(fmtTime(r.dispatched_at))}</span><span class="td-r">${esc(oneLine(r.pickup && r.pickup.name))} \u2192 ${esc(oneLine(r.delivery && r.delivery.name))}</span><small class="td-no">#${esc(r.ref_no)}</small></button>`).join('') : '<i class="td-none">Nothing yet</i>'}</div>`).join('')}</div>`
+  $('#td-board').innerHTML = cols.length ? `<div class="td-cols">${cols.map(([k, list]) => `<div class="td-col"><div class="td-head"><b>${esc(k)}</b><span>${list.length}</span></div>${list.length ? list.map(([id, r]) => `<button class="td-job" type="button" data-act="details" data-id="${esc(id)}">${many ? `<span class="td-d">${esc(fmtDayShort(r.dispatched_at))}</span>` : ''}<span class="td-t">${esc(fmtTime(r.dispatched_at))}</span><span class="td-r">${esc(oneLine(r.pickup && r.pickup.name))} \u2192 ${esc(oneLine(r.delivery && (r.delivery.name || r.delivery.address)) || '–')}</span><small class="td-no">#${esc(r.ref_no)}</small></button>`).join('') : '<i class="td-none">Nothing yet</i>'}</div>`).join('')}</div>`
     : `<div class="empty"><span class="empty-ic">${icon('list')}</span><h3>Nothing sent ${day}</h3><p>Jobs show here once they\u2019re sent to a driver.</p></div>`;
 }
 document.addEventListener('change', (e) => { if (e.target.name === 'td-day') { tdDay = e.target.value; renderToday(); } });
@@ -7128,7 +7131,7 @@ function remindersSettings() {
   const order = [1, 2, 3, 4, 5, 6, 0];
   return `<section class="card">
       <h2>${icon('bell')}Queue reminders</h2>
-      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
+      <p class="card-note">Every 10 minutes during these hours, phones get “Jobs waiting in queue: 25 min” while a job has waited 10 minutes or more. Not on holidays or on days closed in Days closed. Shared with every dispatcher.${S.remindersError ? ' <b style="color:var(--danger)">Couldn’t load: publish the updated Firebase rules.</b>' : ''}</p>
       <div class="setting"><span class="grow">Reminders</span><span class="switch"><input type="checkbox" data-rem="enabled"${r.enabled !== false ? ' checked' : ''} aria-label="Queue reminders"><span></span></span></div>
       <div class="rem-hours"><label>From<input type="time" data-rem="start" value="${esc(r.start)}"></label><label>To<input type="time" data-rem="end" value="${esc(r.end)}"></label></div>
       <div class="rem-days" role="group" aria-label="Days">${order.map((d) => `<button class="chip-btn" type="button" data-act="rem-day" data-day="${d}" aria-pressed="${(r.days || []).includes(d)}">${days[d]}</button>`).join('')}</div>

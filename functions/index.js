@@ -31,7 +31,7 @@ const DEAD_TOKEN_CODES = new Set([
 ]);
 
 const { describeChange, describeMessage } = require('./alerts');
-const { reminderFor, inHours, TIME_ZONE } = require('./reminders');
+const { reminderFor, inHours, localParts, TIME_ZONE } = require('./reminders');
 const { historyKey, missingKeys } = require('./history');
 const { customerAlertForRequest, customerAlertForMessage, recipientsFor, generalRecipients } = require('./customer');
 const { isStaffEmail, emailKey, signUpRefusal } = require('./signup');
@@ -131,15 +131,21 @@ exports.sendTestPush = onValueWritten('/push_tests/{uid}', async (event) => {
   await admin.database().ref(`push_tests/${uid}`).remove();
 });
 
-// Every 10 minutes during business hours (Settings > Queue reminders, saved in dispatch_settings/reminders):
+// Every 10 minutes during business hours (Settings > Queue reminders, saved in dispatch_settings/reminders),
+// except on Manitoba holidays and days closed in Settings > Days closed:
 // "Jobs waiting in queue: 25 min" while anything has waited 10 minutes or more.
 exports.remindQueue = onSchedule({ schedule: 'every 10 minutes', timeZone: TIME_ZONE }, async () => {
   const db = admin.database();
   // Outside business hours, stop before reading the queue (this runs around the clock)
-  const settings = (await db.ref('dispatch_settings/reminders').once('value')).val();
-  if (!inHours(settings, Date.now())) return;
+  const now = Date.now();
+  const [settingsSnap, daySnap] = await Promise.all([
+    db.ref('dispatch_settings/reminders').once('value'),
+    db.ref(`shop_calendar/${localParts(now).date}`).once('value') // Settings > Days closed: holidays and days set closed get no reminders
+  ]);
+  const settings = settingsSnap.val(), today = daySnap.val();
+  if (!inHours(settings, now, today)) return;
   const pendingSnap = await db.ref('requests').orderByChild('status').equalTo('new').once('value');
-  const msg = reminderFor(pendingSnap.val(), settings);
+  const msg = reminderFor(pendingSnap.val(), settings, now, today);
   if (!msg) return;
   await send(await staffTokens(), { ...msg, tag: 'queue-reminder', data: { kind: 'reminder' } });
 });
