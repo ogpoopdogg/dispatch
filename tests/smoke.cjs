@@ -982,6 +982,22 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       const pg = p5.page;
       await pg.waitForSelector('#view-app:not([hidden]) .qrow');
       await pg.waitForSelector('#mic-fab:not([hidden])');
+      // Developer notes button: just left of the big mic, same middle line, not touching it
+      await pg.waitForSelector('#dev-fab:not([hidden])');
+      assert.ok(await pg.evaluate(() => { const d = document.getElementById('dev-fab').getBoundingClientRect(), m = document.getElementById('mic-fab').getBoundingClientRect(); return d.right <= m.left - 6 && Math.abs((d.top + d.bottom) / 2 - (m.top + m.bottom) / 2) < 2; }), 'notes button beside the mic');
+      await shot(pg, 'dev-notes-button');
+      // Its small mic says the note into the box; the big mic stays hidden on the notes page
+      await pg.click('#dev-fab');
+      await pg.waitForSelector('#sheet-body .dn-te-mic');
+      await pg.waitForFunction(() => document.getElementById('mic-fab').hidden);
+      await pg.click('#sheet-body .dn-te-mic');
+      await pg.waitForFunction(() => document.querySelector('#sheet-body .dn-te-mic').classList.contains('on'));
+      await pg.evaluate(() => __say('queue numbers flicker', true));
+      await pg.waitForFunction(() => document.getElementById('dn-text').value === 'Queue numbers flicker');
+      await pg.click('#sheet-body .dn-te-mic');
+      await pg.waitForFunction(() => !voice);
+      await pg.evaluate(() => closeSheet());
+      await pg.waitForFunction(() => !sheetOpen && !document.getElementById('mic-fab').hidden);
       // The small mic inside the driver text box: words go on the end, and the keyboard stays closed
       await pg.evaluate(() => qShow('r1'));
       await pg.waitForSelector('#queue-list .job.full .te-mic');
@@ -1206,6 +1222,31 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: pa
       // A text edited on another phone is the one this phone sends
       await pg.evaluate(() => { const k = editKey('r4', doneReq('r4')); return db.ref(`dispatch_settings/text_edits/${editRemoteKey(k)}`).set({ k, text: 'Edited on the other phone', t: Date.now() }); });
       await pg.waitForFunction(() => textFor('r4', doneReq('r4')) === 'Edited on the other phone');
+      // Developer notes: yellow button beside the mic, saved to dispatch_settings/dev_notes, Copy all
+      await pg.evaluate(() => closeSheet());
+      await pg.waitForFunction(() => !sheetOpen && !document.querySelector('#dev-fab').hidden);
+      await pg.click('#dev-fab');
+      await pg.waitForSelector('#sheet-body [data-dn] #dn-text');
+      await pg.waitForFunction(() => document.querySelector('#dev-fab').hidden); // hidden under the notes page
+      await pg.fill('#dn-text', 'Map button too small');
+      await pg.click('#dn-form .dn-save');
+      await pg.fill('#dn-text', 'Second note');
+      await pg.press('#dn-text', 'Enter');
+      await pg.waitForFunction(() => Object.keys(__fakeDb.get('dispatch_settings/dev_notes') || {}).length === 2);
+      assert.strictEqual(await pg.inputValue('#dn-text'), '');
+      assert.strictEqual(await pg.locator('#sheet-body .dn-row').count(), 2);
+      const firstNote = Object.entries(await pg.evaluate(() => __fakeDb.get('dispatch_settings/dev_notes'))).find(([, n]) => n.text === 'Map button too small');
+      assert.strictEqual(firstNote[1].by, 'dana');
+      await shot(pg, 'dev-notes');
+      const copied = await pg.evaluate(() => { let got = ''; const real = copySync; copySync = (t) => { got = t; return true; }; devNotesCopy(); copySync = real; return got; });
+      assert.match(copied, /^Developer notes \(2\)\n\n1\. Map button too small[\s\S]*2\. Second note/);
+      await pg.click(`#sheet-body [data-act=dn-fix][data-id="${firstNote[0]}"]`);
+      await pg.waitForFunction((id) => __fakeDb.get(`dispatch_settings/dev_notes/${id}/fixed`) === true, firstNote[0]);
+      assert.match(await pg.textContent('#sheet-body .dn-count'), /1 to fix · 1 fixed/);
+      await pg.click(`#sheet-body [data-act=dn-del][data-id="${firstNote[0]}"]`);
+      await pg.waitForFunction((id) => !__fakeDb.get(`dispatch_settings/dev_notes/${id}`), firstNote[0]);
+      await pg.evaluate(() => closeSheet());
+      await pg.waitForFunction(() => !sheetOpen && document.querySelector('#dev-n').textContent === '1');
       assert.deepStrictEqual(p6.errors, []);
       await pg.close();
     }

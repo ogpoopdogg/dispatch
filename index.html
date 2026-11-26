@@ -1759,6 +1759,35 @@ body.mic-ok .text-edit textarea,body.mic-ok .job .text-edit textarea,body.mic-ok
 .te-mic:active{transform:scale(.92)}
 .te-mic.on{color:#fff;border-color:#bae6fd;background:radial-gradient(circle at 50% 35%,#7dd3fc,#38bdf8 45%,#2563eb);animation:mic-glow .9s ease-in-out infinite}
 body:not(.mic-ok) .te-mic{display:none}
+/* Developer notes: small yellow button just left of the big mic on the main page */
+.dev-fab{position:fixed;right:14px;bottom:calc(var(--nav-h) + var(--safe-b) + var(--dock-h,0px) + 18px);z-index:66;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:2px solid #d97706;background:var(--surface);color:#b45309;box-shadow:0 8px 18px -10px rgba(15,23,42,.45),0 0 0 3px rgba(217,119,6,.14);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s var(--out);animation:micIn .22s var(--out) .06s both}
+body.mic-ok .dev-fab{right:80px}
+.dev-fab .i{width:21px;height:21px;stroke-width:2.3}
+.dev-fab:active{transform:scale(.92)}
+.dev-fab b{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#d97706;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center}
+.dn-add{position:relative;display:flex;gap:8px;align-items:flex-end;margin:0 0 10px}
+.dn-add textarea{flex:1;min-height:64px;max-height:180px;resize:none;padding:10px 46px 10px 12px;font:inherit;font-size:15.5px;line-height:1.35;border:1.5px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink)}
+.dn-add textarea:focus{outline:none;border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.18)}
+.dn-add .te-mic{top:auto;bottom:8px;right:84px}
+.dn-save{flex:none;height:44px;padding:0 16px;border:0;border-radius:var(--r-md);background:#d97706;color:#fff;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.dn-save:active{transform:scale(.96)}
+.dn-bar{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.dn-bar .dn-count{flex:1;font-size:13px;font-weight:700;color:var(--ink-3)}
+.dn-copy{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border:1.5px solid #2563eb;border-radius:var(--r-md);background:var(--surface);color:#2563eb;font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.dn-copy .i{width:17px;height:17px}
+.dn-copy:disabled{opacity:.45}
+.dn-list{display:flex;flex-direction:column;gap:6px}
+.dn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 6px 9px 10px;border:1px solid var(--line);border-left:4px solid #d97706;border-radius:var(--r-md);background:var(--surface);animation:riseIn var(--t) var(--out)}
+.dn-row.fixed{border-left-color:#16a34a;opacity:.6}
+.dn-row.fixed .dn-text{text-decoration:line-through}
+.dn-main{flex:1;min-width:0}
+.dn-text{font-size:15px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.dn-meta{margin-top:3px;font-size:12px;font-weight:650;color:var(--ink-3)}
+.dn-row button{flex:none;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--ink-3);cursor:pointer}
+.dn-row button .i{width:19px;height:19px}
+.dn-row button[data-act=dn-fix][aria-pressed=true]{color:#16a34a}
+.dn-row button[data-act=dn-del]:active{color:#b91c1c}
+.dn-fixed-h{margin:12px 0 6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
 /* New dispatch driver text: the same small round mic, bottom right under the pencil. It only adds words to this text. */
 /* The message box: the same small mic, at the end of the box (bottom right) */
 .msg-bar .msg-te-mic{position:relative;top:auto;right:auto;flex:none;align-self:flex-end;width:36px;height:36px;margin:0 0 7px;box-shadow:0 4px 10px -6px rgba(15,23,42,.45),0 0 0 3px rgba(37,99,235,.14)}
@@ -2102,6 +2131,7 @@ body.layer-up .tab[data-tab=done][aria-current=page] .i{color:var(--ok)}
 <!-- Mic: say a dispatch (above + Dispatch, or on the form), or say words into the box being typed in -->
 <div class="vl-ov" id="vl-ov" hidden><div class="vl-card" role="dialog" aria-modal="true" aria-labelledby="vl-title"><div class="vl-head"><h2 id="vl-title"><svg class="i"><use href="#i-mic"/></svg>Teach the mic</h2><button class="icon-btn sm" type="button" data-act="vl-close" aria-label="Close and go back"><svg class="i"><use href="#i-x"/></svg></button></div><div class="vl-body" id="vl-body"></div></div></div>
 <button class="mic-fab" id="mic-fab" type="button" aria-pressed="false" aria-label="Say a dispatch, or say words into the box you are typing in" hidden><svg class="i"><use href="#i-mic"/></svg></button>
+<button class="dev-fab" id="dev-fab" type="button" data-act="dev-notes" aria-label="Developer notes" hidden><svg class="i"><use href="#i-edit"/></svg><b id="dev-n" hidden></b></button>
 <div class="mic-hear" id="mic-hear" role="status" aria-live="polite" hidden></div>
 <!-- Send to driver: vehicles and their distance to the pickup, the live map, then the drivers (hold to send) -->
 <div class="sp" id="nd-pop" hidden>
@@ -2196,6 +2226,7 @@ const S = {
   msgs: {},         // messages with customers, the last 7 days (messages/)
   quick: null,      // quick replies (dispatch_settings/quick_replies); null = the starting ones
   addrPrefs: {},    // address switch per customer (dispatch_settings/addr_prefs)
+  devNotes: {},     // developer notes, things to fix in the app (dispatch_settings/dev_notes)
   queueSearch: false, // search and filters open on the Queue
   settings: loadSettings()
 };
@@ -3243,6 +3274,8 @@ function startListening() {
   listen(db.ref('dispatch_settings/addr_prefs'), (snap) => { S.addrPrefs = snap.val() || {}; renderAll(); }, () => {});
   listen(db.ref('dispatch_settings/quick_replies'), (snap) => { S.quick = snap.val() || null; refreshQuickEditor(); refreshSettings(); }, () => {});
   listen(db.ref('dispatch_settings/text_edits'), (snap) => onRemoteEdits(snap.val()), () => {});
+  // Developer notes (the yellow button beside the mic), shared by every dispatcher phone
+  listen(db.ref('dispatch_settings/dev_notes'), (snap) => { S.devNotes = snap.val() || {}; renderDevNotes(); }, () => {});
   // Days closed (Settings) and customers asking to delete their account
   listen(db.ref('shop_calendar'), (snap) => { S.calendar = snap.val() || {}; S.calendarError = false; refreshCalendar(); }, () => { S.calendarError = true; refreshSettings(); });
   listen(db.ref('deletion_requests'), (snap) => { S.deletions = snap.val() || {}; S.deletionsError = false; refreshSettings(); }, () => { S.deletionsError = true; refreshSettings(); });
@@ -3506,6 +3539,92 @@ function toggleJobText(id) {
   } else { box.hidden = true; box.innerHTML = ''; }
   ack(id);
 }
+/* ---------- Developer notes (yellow button beside the big mic) ----------
+   Things to fix in this app, typed or said. Saved for every dispatcher phone at
+   dispatch_settings/dev_notes/<id> = { text, by, at, fixed? } (staff can already write there, no rules change).
+   Copy all puts every note that isn't ticked fixed on the clipboard, oldest first, numbered. */
+const devNotesOpen = () => !!(sheetOpen && $('#sheet-body [data-dn]'));
+const devNoteList = () => Object.entries(S.devNotes || {}).filter(([, n]) => n && n.text).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+function openDevNotes() {
+  openSheet('Developer notes', `<div data-dn><form class="dn-add" id="dn-form" autocomplete="off">
+      <textarea id="dn-text" rows="2" maxlength="2000" placeholder="What needs fixing?" aria-label="New developer note" enterkeyhint="done" spellcheck="true"></textarea>
+      <button class="te-mic dn-te-mic" type="button" data-act="dn-te-mic" aria-label="Say the note">${icon('mic')}</button>
+      <button class="dn-save" type="submit">Save</button>
+    </form><div data-dn-list></div></div>`, null, true);
+  renderDevNotes();
+  devBadge();
+}
+function devBadge() {
+  const b = $('#dev-n');
+  if (!b) return;
+  const n = devNoteList().filter(([, x]) => !x.fixed).length;
+  b.hidden = !n;
+  b.textContent = n > 99 ? '99+' : String(n);
+}
+function renderDevNotes() {
+  devBadge();
+  const box = $('#sheet-body [data-dn-list]');
+  if (!box) return;
+  const all = devNoteList(), open = all.filter(([, n]) => !n.fixed), fixed = all.filter(([, n]) => n.fixed);
+  const row = ([id, n]) => `<div class="dn-row${n.fixed ? ' fixed' : ''}">
+      <button type="button" data-act="dn-fix" data-id="${esc(id)}" aria-pressed="${!!n.fixed}" aria-label="${n.fixed ? 'Not fixed yet' : 'Mark fixed'}">${icon('check')}</button>
+      <div class="dn-main"><div class="dn-text">${esc(n.text)}</div><div class="dn-meta">${esc([n.by, fmtDateTime(n.at)].filter(Boolean).join(' · '))}</div></div>
+      <button type="button" data-act="dn-del" data-id="${esc(id)}" aria-label="Delete note">${icon('trash')}</button>
+    </div>`;
+  box.innerHTML = `<div class="dn-bar"><span class="dn-count">${open.length} to fix${fixed.length ? ` · ${fixed.length} fixed` : ''}</span>
+      <button class="dn-copy" type="button" data-act="dn-copy"${open.length ? '' : ' disabled'}>${icon('copy')}Copy all</button></div>
+    <div class="dn-list">${open.map(row).join('') || '<p class="msgs-empty">No notes yet. Type or say what needs fixing, then Save.</p>'}</div>
+    ${fixed.length ? `<p class="dn-fixed-h">Fixed</p><div class="dn-list">${fixed.map(row).join('')}</div>` : ''}`;
+}
+function devNoteSave() {
+  const box = $('#dn-text');
+  if (!box) return;
+  const text = box.value.trim().slice(0, 2000);
+  if (!text) { box.focus(); return; }
+  if (!db || !S.user) { toast('Not signed in.', 'error'); return; }
+  const ref = db.ref('dispatch_settings/dev_notes').push();
+  S.devNotes = Object.assign({}, S.devNotes, { [ref.key]: { text, by: meName(), at: Date.now() } }); // shows at once, even before the database answers
+  box.value = '';
+  renderDevNotes();
+  ref.set({ text, by: meName(), at: TS }).then(() => toast('Note saved', 'ok'), (err) => toast(`Note not saved: ${friendlyError(err)}`, 'error'));
+}
+function devNoteFix(id) {
+  const n = S.devNotes && S.devNotes[id];
+  if (!n || !db) return;
+  const fixed = !n.fixed;
+  S.devNotes = Object.assign({}, S.devNotes, { [id]: Object.assign({}, n, { fixed }) });
+  renderDevNotes();
+  db.ref(`dispatch_settings/dev_notes/${id}/fixed`).set(fixed || null).catch((err) => toast(`Not changed: ${friendlyError(err)}`, 'error'));
+}
+function devNoteDel(id) {
+  const n = S.devNotes && S.devNotes[id];
+  if (!n || !db) return;
+  const keep = Object.assign({}, n);
+  const rest = Object.assign({}, S.devNotes); delete rest[id]; S.devNotes = rest;
+  renderDevNotes();
+  db.ref(`dispatch_settings/dev_notes/${id}`).remove().catch((err) => toast(`Not deleted: ${friendlyError(err)}`, 'error'));
+  toast('Note deleted', 'info', 5000, { label: 'Undo', run: () => { db.ref(`dispatch_settings/dev_notes/${id}`).set(keep).catch(() => {}); } });
+}
+function devNotesCopy() {
+  const open = devNoteList().filter(([, n]) => !n.fixed).reverse(); // oldest first
+  if (!open.length) return;
+  const text = `Developer notes (${open.length})\n\n${open.map(([, n], i) => `${i + 1}. ${n.text}${n.by || n.at ? `\n   (${[n.by, fmtDateTime(n.at)].filter(Boolean).join(', ')})` : ''}`).join('\n\n')}`;
+  if (copySync(text)) toast(`Copied ${open.length} note${open.length === 1 ? '' : 's'}`, 'ok');
+  else toast('Couldn’t copy on this phone.', 'error');
+}
+document.addEventListener('submit', (e) => {
+  if (!e.target.closest || !e.target.closest('#dn-form')) return;
+  e.preventDefault();
+  devNoteSave();
+});
+document.addEventListener('input', (e) => { const b = e.target; if (b && b.id === 'dn-text') { b.style.height = 'auto'; b.style.height = `${Math.min(b.scrollHeight + 3, 180)}px`; } });
+// Enter on the keyboard saves the note (the newline key isn't needed for short notes)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.shiftKey || !e.target.matches || !e.target.matches('#dn-text')) return;
+  e.preventDefault();
+  devNoteSave();
+});
+
 /* ---------- A customer's whole request history (⋯ › Request history) ----------
    Like the customer sees it in Request Pickup. Read with the company_id index that's already in the
    rules (staff can read requests), once when it opens, not kept live, then filtered on the phone:
@@ -7432,6 +7551,11 @@ document.addEventListener('click', async (e) => {
     case 'ga-day': gaPickDay(el.dataset.day); break;
     case 'ga-copy': gaCopy(); break;
     case 'cust-history': openCustHistory(el.dataset.cid); break;
+    case 'dev-notes': openDevNotes(); break;
+    case 'dn-copy': devNotesCopy(); break;
+    case 'dn-fix': devNoteFix(id); break;
+    case 'dn-del': devNoteDel(id); break;
+    case 'dn-te-mic': dnTeMic(); break;
     case 'ch-range': CH.range = el.dataset.r; if (CH.range === 'custom' && !CH.from) { CH.to = todayStr(); CH.from = dayStrAgo(30); } renderCustHistory(); break;
     case 'ch-day': { const d = +el.dataset.d; CH.days = CH.days.includes(d) ? CH.days.filter((x) => x !== d) : CH.days.concat(d); renderCustHistory(); break; }
     case 'job-menu': jobMenu(id); break;
@@ -7991,6 +8115,7 @@ function micListening(on) {
   micBtn.setAttribute('aria-label', on ? 'Stop listening' : 'Say a dispatch, or say words into the box you are typing in');
   document.body.classList.toggle('voice-on', on);
   $$('.te-mic').forEach((b) => b.classList.toggle('on', !!(small && voice.box && (b.classList.contains('nd-te-mic') ? voice.box.id === 'nd-text'
+    : b.classList.contains('dn-te-mic') ? voice.box.id === 'dn-text'
     : b.classList.contains('msg-te-mic') ? !!b.form && voice.box === b.form.elements.text
     : b.dataset.id === voice.box.dataset.edit && b.dataset.where === voice.box.dataset.where))));
   if (!on) { micHear.hidden = true; micHear.classList.remove('heard'); }
@@ -8004,11 +8129,15 @@ function micPlace() {
   const appOn = !$('#view-app').hidden && S.user;
   const nd = ndOpen();
   const msgs = msgSheetOpen();
-  const hide = !appOn || !voiceCan() || vlOpen || mapOpen || popOpen || (sheetOpen && !nd && !msgs);
+  const dn = devNotesOpen();
+  const devBtn = $('#dev-fab');
+  if (devBtn) devBtn.hidden = !appOn || vlOpen || mapOpen || popOpen || sheetOpen;
+  const hide = !appOn || !voiceCan() || vlOpen || mapOpen || popOpen || (sheetOpen && !nd && !msgs && !dn);
   micBtn.hidden = hide;
   document.body.classList.toggle('mic-ok', !!(appOn && voiceCan()));
   if (appOn && voiceCan()) listenVoiceAliases(); // taught names ready before the mic is first tapped
   if (hide) { if (voice) voiceStop(true); micHear.hidden = true; return; }
+  if (dn) { micBtn.hidden = true; return; } // Developer notes: only the small mic in the box
   // Messages: typing a message (keyboard up) the small mic in the box is the one to use
   const ae = document.activeElement;
   const aboutPop = $('#msg-about-pop');
@@ -8319,6 +8448,15 @@ function ndTeMic() {
   listenVoiceAliases();
   if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
   voiceType(box, true, true);
+}
+function dnTeMic() {
+  if (voice && voice.mode === 'form') { const f = voice; f.userStop = true; if (f.ctl && f.ctl.finish) f.ctl.finish(); if (voice === f) voiceStop(true); }
+  if (voice) { voiceStop(); return; }
+  if (!voiceCan()) { toast('Voice isn\u2019t available on this phone.', 'error'); return; }
+  const box = $('#dn-text');
+  if (!box) return;
+  if (document.activeElement !== box) { const n = box.value.length; try { box.setSelectionRange(n, n); } catch (e) { /* */ } }
+  voiceType(box, false, true, () => $('#dn-text'));
 }
 // Keep the keyboard closed (and the cursor where it is) when the small mic is touched
 document.addEventListener('pointerdown', (e) => { if (e.target.closest && e.target.closest('.te-mic')) { e.preventDefault(); if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* */ } } } });
